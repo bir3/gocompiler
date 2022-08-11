@@ -5,9 +5,9 @@
 package facts
 
 import (
-	"r2.is/gocompiler/src/go/types"
+	"github.com/bir3/gocompiler/src/go/types"
 
-	"r2.is/gocompiler/src/xvendor/golang.org/x/tools/internal/typeparams"
+	"github.com/bir3/gocompiler/src/xvendor/golang.org/x/tools/internal/typeparams"
 )
 
 // importMap computes the import map for a package by traversing the

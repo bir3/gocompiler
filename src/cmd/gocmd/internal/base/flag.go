@@ -5,11 +5,11 @@
 package base
 
 import (
-	"r2.is/gocompiler/src/cmd/gocmd/flag"
+	"github.com/bir3/gocompiler/src/cmd/gocmd/flag"
 
-	"r2.is/gocompiler/src/cmd/gocmd/internal/cfg"
-	"r2.is/gocompiler/src/cmd/gocmd/internal/fsys"
-	"r2.is/gocompiler/src/cmd/internal/quoted"
+	"github.com/bir3/gocompiler/src/cmd/gocmd/internal/cfg"
+	"github.com/bir3/gocompiler/src/cmd/gocmd/internal/fsys"
+	"github.com/bir3/gocompiler/src/cmd/internal/quoted"
 )
 
 // A StringsFlag is a command-line flag that interprets its argument

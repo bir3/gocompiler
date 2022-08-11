@@ -6,7 +6,7 @@ package ssa
 
 import (
 	"fmt"
-	       "r2.is/gocompiler/vfs/os"
+	       "github.com/bir3/gocompiler/vfs/os"
 )
 
 // If true, check poset integrity after every mutation

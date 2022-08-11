@@ -12,9 +12,9 @@ import (
 	"sort"
 	"sync"
 
-	"r2.is/gocompiler/src/cmd/gocmd/internal/par"
+	"github.com/bir3/gocompiler/src/cmd/gocmd/internal/par"
 
-	"r2.is/gocompiler/src/xvendor/golang.org/x/mod/module"
+	"github.com/bir3/gocompiler/src/xvendor/golang.org/x/mod/module"
 )
 
 // A Reqs is the requirement graph on which Minimal Version Selection (MVS) operates.

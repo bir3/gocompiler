@@ -5,7 +5,7 @@
 package ast
 
 import (
-	"r2.is/gocompiler/src/go/token"
+	"github.com/bir3/gocompiler/src/go/token"
 	"sort"
 )
 

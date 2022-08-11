@@ -4,9 +4,9 @@
 package ifaceassert
 
 import (
-	"r2.is/gocompiler/src/go/types"
+	"github.com/bir3/gocompiler/src/go/types"
 
-	"r2.is/gocompiler/src/xvendor/golang.org/x/tools/internal/typeparams"
+	"github.com/bir3/gocompiler/src/xvendor/golang.org/x/tools/internal/typeparams"
 )
 
 // isParameterized reports whether typ contains any of the type parameters of tparams.

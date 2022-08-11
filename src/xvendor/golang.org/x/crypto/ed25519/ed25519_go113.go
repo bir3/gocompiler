@@ -21,7 +21,7 @@ package ed25519
 
 import (
 	"crypto/ed25519"
-	       "r2.is/gocompiler/vfs/io"
+	       "github.com/bir3/gocompiler/vfs/io"
 )
 
 const (

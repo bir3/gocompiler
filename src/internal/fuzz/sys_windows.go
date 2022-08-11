@@ -6,8 +6,8 @@ package fuzz
 
 import (
 	"fmt"
-	       "r2.is/gocompiler/vfs/os"
-	  "r2.is/gocompiler/vfs/exec"
+	       "github.com/bir3/gocompiler/vfs/os"
+	  "github.com/bir3/gocompiler/vfs/exec"
 	"reflect"
 	"syscall"
 	"unsafe"

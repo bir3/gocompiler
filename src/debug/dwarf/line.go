@@ -7,7 +7,7 @@ package dwarf
 import (
 	"errors"
 	"fmt"
-	       "r2.is/gocompiler/vfs/io"
+	       "github.com/bir3/gocompiler/vfs/io"
 	"path"
 	"strings"
 )

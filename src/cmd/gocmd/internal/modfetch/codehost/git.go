@@ -8,11 +8,11 @@ import (
 	"bytes"
 	"errors"
 	"fmt"
-	exec "r2.is/gocompiler/src/internal/execabs"
-	       "r2.is/gocompiler/vfs/io"
+	exec "github.com/bir3/gocompiler/src/internal/execabs"
+	       "github.com/bir3/gocompiler/vfs/io"
 	"io/fs"
 	"net/url"
-	       "r2.is/gocompiler/vfs/os"
+	       "github.com/bir3/gocompiler/vfs/os"
 	"path/filepath"
 	"sort"
 	"strconv"
@@ -20,11 +20,11 @@ import (
 	"sync"
 	"time"
 
-	"r2.is/gocompiler/src/cmd/gocmd/internal/lockedfile"
-	"r2.is/gocompiler/src/cmd/gocmd/internal/par"
-	"r2.is/gocompiler/src/cmd/gocmd/internal/web"
+	"github.com/bir3/gocompiler/src/cmd/gocmd/internal/lockedfile"
+	"github.com/bir3/gocompiler/src/cmd/gocmd/internal/par"
+	"github.com/bir3/gocompiler/src/cmd/gocmd/internal/web"
 
-	"r2.is/gocompiler/src/xvendor/golang.org/x/mod/semver"
+	"github.com/bir3/gocompiler/src/xvendor/golang.org/x/mod/semver"
 )
 
 // LocalGitRepo is like Repo but accepts both Git remote references

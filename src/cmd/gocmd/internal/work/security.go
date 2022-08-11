@@ -31,12 +31,12 @@ package work
 
 import (
 	"fmt"
-	"r2.is/gocompiler/src/internal/lazyregexp"
+	"github.com/bir3/gocompiler/src/internal/lazyregexp"
 	"regexp"
 	"strings"
 
-	"r2.is/gocompiler/src/cmd/gocmd/internal/cfg"
-	"r2.is/gocompiler/src/cmd/gocmd/internal/load"
+	"github.com/bir3/gocompiler/src/cmd/gocmd/internal/cfg"
+	"github.com/bir3/gocompiler/src/cmd/gocmd/internal/load"
 )
 
 var re = lazyregexp.New

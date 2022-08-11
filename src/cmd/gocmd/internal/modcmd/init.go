@@ -7,8 +7,8 @@
 package modcmd
 
 import (
-	"r2.is/gocompiler/src/cmd/gocmd/internal/base"
-	"r2.is/gocompiler/src/cmd/gocmd/internal/modload"
+	"github.com/bir3/gocompiler/src/cmd/gocmd/internal/base"
+	"github.com/bir3/gocompiler/src/cmd/gocmd/internal/modload"
 	"context"
 )
 

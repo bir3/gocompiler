@@ -7,14 +7,14 @@
 package noder
 
 import (
-	       "r2.is/gocompiler/vfs/io"
+	       "github.com/bir3/gocompiler/vfs/io"
 
-	"r2.is/gocompiler/src/cmd/compile/internal/base"
-	"r2.is/gocompiler/src/cmd/compile/internal/ir"
-	"r2.is/gocompiler/src/cmd/compile/internal/reflectdata"
-	"r2.is/gocompiler/src/cmd/compile/internal/types"
-	"r2.is/gocompiler/src/cmd/internal/goobj"
-	"r2.is/gocompiler/src/cmd/internal/obj"
+	"github.com/bir3/gocompiler/src/cmd/compile/internal/base"
+	"github.com/bir3/gocompiler/src/cmd/compile/internal/ir"
+	"github.com/bir3/gocompiler/src/cmd/compile/internal/reflectdata"
+	"github.com/bir3/gocompiler/src/cmd/compile/internal/types"
+	"github.com/bir3/gocompiler/src/cmd/internal/goobj"
+	"github.com/bir3/gocompiler/src/cmd/internal/obj"
 )
 
 // This file implements the unified IR linker, which combines the

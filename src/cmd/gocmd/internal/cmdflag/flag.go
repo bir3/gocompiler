@@ -7,7 +7,7 @@ package cmdflag
 
 import (
 	"errors"
-	"r2.is/gocompiler/src/cmd/gocmd/flag"
+	"github.com/bir3/gocompiler/src/cmd/gocmd/flag"
 	"fmt"
 	"strings"
 )

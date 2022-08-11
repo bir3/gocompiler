@@ -5,7 +5,7 @@
 package auth
 
 import (
-	       "r2.is/gocompiler/vfs/os"
+	       "github.com/bir3/gocompiler/vfs/os"
 	"path/filepath"
 	"runtime"
 	"strings"

@@ -7,7 +7,7 @@
 package execenv
 
 import (
-	"r2.is/gocompiler/src/internal/syscall/windows"
+	"github.com/bir3/gocompiler/src/internal/syscall/windows"
 	"syscall"
 	"unicode/utf16"
 	"unsafe"

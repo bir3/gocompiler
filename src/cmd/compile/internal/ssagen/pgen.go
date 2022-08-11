@@ -5,21 +5,21 @@
 package ssagen
 
 import (
-	"r2.is/gocompiler/src/internal/buildcfg"
-	"r2.is/gocompiler/src/internal/race"
+	"github.com/bir3/gocompiler/src/internal/buildcfg"
+	"github.com/bir3/gocompiler/src/internal/race"
 	"math/rand"
 	"sort"
 	"sync"
 	"time"
 
-	"r2.is/gocompiler/src/cmd/compile/internal/base"
-	"r2.is/gocompiler/src/cmd/compile/internal/ir"
-	"r2.is/gocompiler/src/cmd/compile/internal/objw"
-	"r2.is/gocompiler/src/cmd/compile/internal/ssa"
-	"r2.is/gocompiler/src/cmd/compile/internal/types"
-	"r2.is/gocompiler/src/cmd/internal/obj"
-	"r2.is/gocompiler/src/cmd/internal/objabi"
-	"r2.is/gocompiler/src/cmd/internal/src"
+	"github.com/bir3/gocompiler/src/cmd/compile/internal/base"
+	"github.com/bir3/gocompiler/src/cmd/compile/internal/ir"
+	"github.com/bir3/gocompiler/src/cmd/compile/internal/objw"
+	"github.com/bir3/gocompiler/src/cmd/compile/internal/ssa"
+	"github.com/bir3/gocompiler/src/cmd/compile/internal/types"
+	"github.com/bir3/gocompiler/src/cmd/internal/obj"
+	"github.com/bir3/gocompiler/src/cmd/internal/objabi"
+	"github.com/bir3/gocompiler/src/cmd/internal/src"
 )
 
 // cmpstackvarlt reports whether the stack variable a sorts before b.

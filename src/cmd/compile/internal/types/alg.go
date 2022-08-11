@@ -4,7 +4,7 @@
 
 package types
 
-import "r2.is/gocompiler/src/cmd/compile/internal/base"
+import "github.com/bir3/gocompiler/src/cmd/compile/internal/base"
 
 // AlgKind describes the kind of algorithms used for comparing and
 // hashing a Type.

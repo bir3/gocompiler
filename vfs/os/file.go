@@ -10,7 +10,7 @@ import (
 	"io"
 	"io/fs"
 	"os"
-	"r2.is/gocompiler/vfs"
+	"github.com/bir3/gocompiler/vfs"
 	"strings"
 	"time"
 )

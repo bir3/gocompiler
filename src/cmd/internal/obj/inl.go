@@ -4,7 +4,7 @@
 
 package obj
 
-import "r2.is/gocompiler/src/cmd/internal/src"
+import "github.com/bir3/gocompiler/src/cmd/internal/src"
 
 // InlTree is a collection of inlined calls. The Parent field of an
 // InlinedCall is the index of another InlinedCall in InlTree.

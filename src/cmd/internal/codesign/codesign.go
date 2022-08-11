@@ -14,7 +14,7 @@ import (
 	"crypto/sha256"
 	"debug/macho"
 	"encoding/binary"
-	       "r2.is/gocompiler/vfs/io"
+	       "github.com/bir3/gocompiler/vfs/io"
 )
 
 // Code signature layout.

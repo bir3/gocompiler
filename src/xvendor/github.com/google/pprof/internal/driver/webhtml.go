@@ -17,8 +17,8 @@ package driver
 import (
 	"html/template"
 
-	"r2.is/gocompiler/src/xvendor/github.com/google/pprof/third_party/d3"
-	"r2.is/gocompiler/src/xvendor/github.com/google/pprof/third_party/d3flamegraph"
+	"github.com/bir3/gocompiler/src/xvendor/github.com/google/pprof/third_party/d3"
+	"github.com/bir3/gocompiler/src/xvendor/github.com/google/pprof/third_party/d3flamegraph"
 )
 
 // addTemplates adds a set of template definitions to templates.

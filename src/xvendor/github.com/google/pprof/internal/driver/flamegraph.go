@@ -20,9 +20,9 @@ import (
 	"net/http"
 	"strings"
 
-	"r2.is/gocompiler/src/xvendor/github.com/google/pprof/internal/graph"
-	"r2.is/gocompiler/src/xvendor/github.com/google/pprof/internal/measurement"
-	"r2.is/gocompiler/src/xvendor/github.com/google/pprof/internal/report"
+	"github.com/bir3/gocompiler/src/xvendor/github.com/google/pprof/internal/graph"
+	"github.com/bir3/gocompiler/src/xvendor/github.com/google/pprof/internal/measurement"
+	"github.com/bir3/gocompiler/src/xvendor/github.com/google/pprof/internal/report"
 )
 
 type treeNode struct {

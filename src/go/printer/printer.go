@@ -7,11 +7,11 @@ package printer
 
 import (
 	"fmt"
-	"r2.is/gocompiler/src/go/ast"
-	"r2.is/gocompiler/src/go/build/constraint"
-	"r2.is/gocompiler/src/go/token"
-	       "r2.is/gocompiler/vfs/io"
-	       "r2.is/gocompiler/vfs/os"
+	"github.com/bir3/gocompiler/src/go/ast"
+	"github.com/bir3/gocompiler/src/go/build/constraint"
+	"github.com/bir3/gocompiler/src/go/token"
+	       "github.com/bir3/gocompiler/vfs/io"
+	       "github.com/bir3/gocompiler/vfs/os"
 	"strings"
 	"text/tabwriter"
 	"unicode"

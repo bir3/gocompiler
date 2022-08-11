@@ -6,7 +6,7 @@ package types2
 
 import (
 	"bytes"
-	"r2.is/gocompiler/src/cmd/compile/internal/syntax"
+	"github.com/bir3/gocompiler/src/cmd/compile/internal/syntax"
 	"fmt"
 	"sort"
 )

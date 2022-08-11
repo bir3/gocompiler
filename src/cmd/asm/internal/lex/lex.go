@@ -8,11 +8,11 @@ package lex
 import (
 	"fmt"
 	"log"
-	       "r2.is/gocompiler/vfs/os"
+	       "github.com/bir3/gocompiler/vfs/os"
 	"strings"
 	"text/scanner"
 
-	"r2.is/gocompiler/src/cmd/internal/src"
+	"github.com/bir3/gocompiler/src/cmd/internal/src"
 )
 
 // A ScanToken represents an input item. It is a simple wrapping of rune, as

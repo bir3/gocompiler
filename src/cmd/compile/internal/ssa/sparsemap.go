@@ -4,7 +4,7 @@
 
 package ssa
 
-import "r2.is/gocompiler/src/cmd/internal/src"
+import "github.com/bir3/gocompiler/src/cmd/internal/src"
 
 // from https://research.swtch.com/sparse
 // in turn, from Briggs and Torczon

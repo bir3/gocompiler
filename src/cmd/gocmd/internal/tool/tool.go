@@ -8,14 +8,14 @@ package tool
 import (
 	"context"
 	"fmt"
-	exec "r2.is/gocompiler/src/internal/execabs"
-	       "r2.is/gocompiler/vfs/os"
+	exec "github.com/bir3/gocompiler/src/internal/execabs"
+	       "github.com/bir3/gocompiler/vfs/os"
 	"os/signal"
 	"sort"
 	"strings"
 
-	"r2.is/gocompiler/src/cmd/gocmd/internal/base"
-	"r2.is/gocompiler/src/cmd/gocmd/internal/cfg"
+	"github.com/bir3/gocompiler/src/cmd/gocmd/internal/base"
+	"github.com/bir3/gocompiler/src/cmd/gocmd/internal/cfg"
 )
 
 var CmdTool = &base.Command{

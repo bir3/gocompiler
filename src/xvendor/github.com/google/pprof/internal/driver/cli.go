@@ -17,11 +17,11 @@ package driver
 import (
 	"errors"
 	"fmt"
-	       "r2.is/gocompiler/vfs/os"
+	       "github.com/bir3/gocompiler/vfs/os"
 	"strings"
 
-	"r2.is/gocompiler/src/xvendor/github.com/google/pprof/internal/binutils"
-	"r2.is/gocompiler/src/xvendor/github.com/google/pprof/internal/plugin"
+	"github.com/bir3/gocompiler/src/xvendor/github.com/google/pprof/internal/binutils"
+	"github.com/bir3/gocompiler/src/xvendor/github.com/google/pprof/internal/plugin"
 )
 
 type source struct {

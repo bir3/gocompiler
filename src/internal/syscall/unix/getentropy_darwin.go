@@ -7,7 +7,7 @@
 package unix
 
 import (
-	"r2.is/gocompiler/src/internal/abi"
+	"github.com/bir3/gocompiler/src/internal/abi"
 	"syscall"
 	"unsafe"
 )

@@ -8,11 +8,11 @@ package cgo
 
 import (
 	"fmt"
-	"r2.is/gocompiler/src/go/ast"
-	"r2.is/gocompiler/src/go/parser"
-	"r2.is/gocompiler/src/go/scanner"
-	"r2.is/gocompiler/src/go/token"
-	       "r2.is/gocompiler/vfs/os"
+	"github.com/bir3/gocompiler/src/go/ast"
+	"github.com/bir3/gocompiler/src/go/parser"
+	"github.com/bir3/gocompiler/src/go/scanner"
+	"github.com/bir3/gocompiler/src/go/token"
+	       "github.com/bir3/gocompiler/vfs/os"
 	"strings"
 )
 

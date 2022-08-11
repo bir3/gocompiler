@@ -8,20 +8,20 @@ package asm
 
 import (
 	"fmt"
-	       "r2.is/gocompiler/vfs/io"
+	       "github.com/bir3/gocompiler/vfs/io"
 	"log"
-	       "r2.is/gocompiler/vfs/os"
+	       "github.com/bir3/gocompiler/vfs/os"
 	"strconv"
 	"text/scanner"
 	"unicode/utf8"
 
-	"r2.is/gocompiler/src/cmd/asm/internal/arch"
-	"r2.is/gocompiler/src/cmd/asm/internal/flags"
-	"r2.is/gocompiler/src/cmd/asm/internal/lex"
-	"r2.is/gocompiler/src/cmd/internal/obj"
-	"r2.is/gocompiler/src/cmd/internal/obj/x86"
-	"r2.is/gocompiler/src/cmd/internal/src"
-	"r2.is/gocompiler/src/cmd/internal/sys"
+	"github.com/bir3/gocompiler/src/cmd/asm/internal/arch"
+	"github.com/bir3/gocompiler/src/cmd/asm/internal/flags"
+	"github.com/bir3/gocompiler/src/cmd/asm/internal/lex"
+	"github.com/bir3/gocompiler/src/cmd/internal/obj"
+	"github.com/bir3/gocompiler/src/cmd/internal/obj/x86"
+	"github.com/bir3/gocompiler/src/cmd/internal/src"
+	"github.com/bir3/gocompiler/src/cmd/internal/sys"
 )
 
 type Parser struct {

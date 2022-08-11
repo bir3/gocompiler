@@ -40,8 +40,8 @@ import (
 	"strings"
 	"time"
 
-	"r2.is/gocompiler/src/xvendor/golang.org/x/mod/internal/lazyregexp"
-	"r2.is/gocompiler/src/xvendor/golang.org/x/mod/semver"
+	"github.com/bir3/gocompiler/src/xvendor/golang.org/x/mod/internal/lazyregexp"
+	"github.com/bir3/gocompiler/src/xvendor/golang.org/x/mod/semver"
 )
 
 var pseudoVersionRE = lazyregexp.New(`^v[0-9]+\.(0\.0-|\d+\.\d+-([^+]*\.)?0\.)\d{14}-[A-Za-z0-9]+(\+[0-9A-Za-z-]+(\.[0-9A-Za-z-]+)*)?$`)

@@ -7,16 +7,16 @@
 package tests
 
 import (
-	"r2.is/gocompiler/src/go/ast"
-	"r2.is/gocompiler/src/go/token"
-	"r2.is/gocompiler/src/go/types"
+	"github.com/bir3/gocompiler/src/go/ast"
+	"github.com/bir3/gocompiler/src/go/token"
+	"github.com/bir3/gocompiler/src/go/types"
 	"regexp"
 	"strings"
 	"unicode"
 	"unicode/utf8"
 
-	"r2.is/gocompiler/src/xvendor/golang.org/x/tools/go/analysis"
-	"r2.is/gocompiler/src/xvendor/golang.org/x/tools/internal/typeparams"
+	"github.com/bir3/gocompiler/src/xvendor/golang.org/x/tools/go/analysis"
+	"github.com/bir3/gocompiler/src/xvendor/golang.org/x/tools/internal/typeparams"
 )
 
 const Doc = `check for common mistaken usages of tests and examples

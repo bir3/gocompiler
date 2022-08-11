@@ -16,12 +16,12 @@
 package plugin
 
 import (
-	       "r2.is/gocompiler/vfs/io"
+	       "github.com/bir3/gocompiler/vfs/io"
 	"net/http"
 	"regexp"
 	"time"
 
-	"r2.is/gocompiler/src/xvendor/github.com/google/pprof/profile"
+	"github.com/bir3/gocompiler/src/xvendor/github.com/google/pprof/profile"
 )
 
 // Options groups all the optional plugins into pprof.

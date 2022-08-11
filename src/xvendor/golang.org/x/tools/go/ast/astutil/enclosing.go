@@ -8,11 +8,11 @@ package astutil
 
 import (
 	"fmt"
-	"r2.is/gocompiler/src/go/ast"
-	"r2.is/gocompiler/src/go/token"
+	"github.com/bir3/gocompiler/src/go/ast"
+	"github.com/bir3/gocompiler/src/go/token"
 	"sort"
 
-	"r2.is/gocompiler/src/xvendor/golang.org/x/tools/internal/typeparams"
+	"github.com/bir3/gocompiler/src/xvendor/golang.org/x/tools/internal/typeparams"
 )
 
 // PathEnclosingInterval returns the node that encloses the source

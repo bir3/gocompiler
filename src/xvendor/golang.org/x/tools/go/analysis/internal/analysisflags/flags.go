@@ -12,15 +12,15 @@ import (
 	"encoding/json"
 	"flag"
 	"fmt"
-	"r2.is/gocompiler/src/go/token"
-	       "r2.is/gocompiler/vfs/io"
-	"r2.is/gocompiler/vfs/ioutil"
+	"github.com/bir3/gocompiler/src/go/token"
+	       "github.com/bir3/gocompiler/vfs/io"
+	"github.com/bir3/gocompiler/vfs/ioutil"
 	"log"
-	       "r2.is/gocompiler/vfs/os"
+	       "github.com/bir3/gocompiler/vfs/os"
 	"strconv"
 	"strings"
 
-	"r2.is/gocompiler/src/xvendor/golang.org/x/tools/go/analysis"
+	"github.com/bir3/gocompiler/src/xvendor/golang.org/x/tools/go/analysis"
 )
 
 // flags common to all {single,multi,unit}checkers.

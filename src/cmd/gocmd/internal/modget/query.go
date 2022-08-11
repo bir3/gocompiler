@@ -11,12 +11,12 @@ import (
 	"strings"
 	"sync"
 
-	"r2.is/gocompiler/src/cmd/gocmd/internal/base"
-	"r2.is/gocompiler/src/cmd/gocmd/internal/modload"
-	"r2.is/gocompiler/src/cmd/gocmd/internal/search"
-	"r2.is/gocompiler/src/cmd/gocmd/internal/str"
+	"github.com/bir3/gocompiler/src/cmd/gocmd/internal/base"
+	"github.com/bir3/gocompiler/src/cmd/gocmd/internal/modload"
+	"github.com/bir3/gocompiler/src/cmd/gocmd/internal/search"
+	"github.com/bir3/gocompiler/src/cmd/gocmd/internal/str"
 
-	"r2.is/gocompiler/src/xvendor/golang.org/x/mod/module"
+	"github.com/bir3/gocompiler/src/xvendor/golang.org/x/mod/module"
 )
 
 // A query describes a command-line argument and the modules and/or packages

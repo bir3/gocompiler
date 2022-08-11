@@ -13,7 +13,7 @@ package execabs
 import (
 	"context"
 	"fmt"
-	  "r2.is/gocompiler/vfs/exec"
+	  "github.com/bir3/gocompiler/vfs/exec"
 	"path/filepath"
 	"reflect"
 	"unsafe"

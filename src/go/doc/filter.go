@@ -4,7 +4,7 @@
 
 package doc
 
-import "r2.is/gocompiler/src/go/ast"
+import "github.com/bir3/gocompiler/src/go/ast"
 
 type Filter func(string) bool
 

@@ -9,7 +9,7 @@ package src
 import (
 	"bytes"
 	"fmt"
-	       "r2.is/gocompiler/vfs/io"
+	       "github.com/bir3/gocompiler/vfs/io"
 )
 
 // A Pos encodes a source position consisting of a (line, column) number pair

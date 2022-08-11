@@ -9,8 +9,8 @@ package obscuretestdata
 
 import (
 	"encoding/base64"
-	       "r2.is/gocompiler/vfs/io"
-	       "r2.is/gocompiler/vfs/os"
+	       "github.com/bir3/gocompiler/vfs/io"
+	       "github.com/bir3/gocompiler/vfs/os"
 )
 
 // DecodeToTempFile decodes the named file to a temporary location.

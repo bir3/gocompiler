@@ -8,16 +8,16 @@ import (
 	"errors"
 	"fmt"
 	"io/fs"
-	       "r2.is/gocompiler/vfs/os"
+	       "github.com/bir3/gocompiler/vfs/os"
 	"path/filepath"
 	"strings"
 	"sync"
 
-	"r2.is/gocompiler/src/cmd/gocmd/internal/base"
+	"github.com/bir3/gocompiler/src/cmd/gocmd/internal/base"
 
-	"r2.is/gocompiler/src/xvendor/golang.org/x/mod/modfile"
-	"r2.is/gocompiler/src/xvendor/golang.org/x/mod/module"
-	"r2.is/gocompiler/src/xvendor/golang.org/x/mod/semver"
+	"github.com/bir3/gocompiler/src/xvendor/golang.org/x/mod/modfile"
+	"github.com/bir3/gocompiler/src/xvendor/golang.org/x/mod/module"
+	"github.com/bir3/gocompiler/src/xvendor/golang.org/x/mod/semver"
 )
 
 var (

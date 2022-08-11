@@ -5,9 +5,9 @@
 package dwarfgen
 
 import (
-	"r2.is/gocompiler/src/cmd/compile/internal/base"
-	"r2.is/gocompiler/src/cmd/compile/internal/ir"
-	"r2.is/gocompiler/src/cmd/internal/src"
+	"github.com/bir3/gocompiler/src/cmd/compile/internal/base"
+	"github.com/bir3/gocompiler/src/cmd/compile/internal/ir"
+	"github.com/bir3/gocompiler/src/cmd/internal/src"
 )
 
 // A ScopeMarker tracks scope nesting and boundaries for later use

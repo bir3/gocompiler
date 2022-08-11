@@ -8,7 +8,7 @@ package typeparams
 
 import (
 	"bytes"
-	"r2.is/gocompiler/src/go/types"
+	"github.com/bir3/gocompiler/src/go/types"
 )
 
 // A termlist represents the type set represented by the union

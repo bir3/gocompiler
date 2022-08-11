@@ -9,7 +9,7 @@
 package arch
 
 import (
-	"r2.is/gocompiler/src/cmd/internal/obj/s390x"
+	"github.com/bir3/gocompiler/src/cmd/internal/obj/s390x"
 )
 
 func jumpS390x(word string) bool {

@@ -6,7 +6,7 @@
 
 package types
 
-import "r2.is/gocompiler/src/go/token"
+import "github.com/bir3/gocompiler/src/go/token"
 
 type substMap map[*TypeParam]Type
 

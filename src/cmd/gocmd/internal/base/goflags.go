@@ -5,12 +5,12 @@
 package base
 
 import (
-	"r2.is/gocompiler/src/cmd/gocmd/flag"
+	"github.com/bir3/gocompiler/src/cmd/gocmd/flag"
 	"fmt"
 	"runtime"
 	"strings"
 
-	"r2.is/gocompiler/src/cmd/gocmd/internal/cfg"
+	"github.com/bir3/gocompiler/src/cmd/gocmd/internal/cfg"
 )
 
 var goflags []string // cached $GOFLAGS list; can be -x or --x form

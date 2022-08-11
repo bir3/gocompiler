@@ -7,9 +7,9 @@
 package types2
 
 import (
-	"r2.is/gocompiler/src/cmd/compile/internal/syntax"
-	"r2.is/gocompiler/src/go/constant"
-	"r2.is/gocompiler/src/go/token"
+	"github.com/bir3/gocompiler/src/cmd/compile/internal/syntax"
+	"github.com/bir3/gocompiler/src/go/constant"
+	"github.com/bir3/gocompiler/src/go/token"
 )
 
 // builtin type-checks a call to the built-in specified by id and

@@ -14,7 +14,7 @@ package constant
 
 import (
 	"fmt"
-	"r2.is/gocompiler/src/go/token"
+	"github.com/bir3/gocompiler/src/go/token"
 	"math"
 	"math/big"
 	"math/bits"

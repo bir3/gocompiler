@@ -7,8 +7,8 @@ package types
 import (
 	"bytes"
 	"fmt"
-	"r2.is/gocompiler/src/go/constant"
-	"r2.is/gocompiler/src/go/token"
+	"github.com/bir3/gocompiler/src/go/constant"
+	"github.com/bir3/gocompiler/src/go/token"
 )
 
 // An Object describes a named language entity such as a package,

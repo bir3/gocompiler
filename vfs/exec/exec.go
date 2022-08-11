@@ -13,7 +13,7 @@ import (
 	"path/filepath"
 	"strings"
 
-	"r2.is/gocompiler/vfs"
+	"github.com/bir3/gocompiler/vfs"
 )
 
 type ExitError = exec.ExitError

@@ -7,12 +7,12 @@ package importer
 
 import (
 	"bufio"
-	"r2.is/gocompiler/src/cmd/compile/internal/types2"
+	"github.com/bir3/gocompiler/src/cmd/compile/internal/types2"
 	"fmt"
-	"r2.is/gocompiler/src/go/build"
-	       "r2.is/gocompiler/vfs/io"
-	"r2.is/gocompiler/vfs/ioutil"
-	       "r2.is/gocompiler/vfs/os"
+	"github.com/bir3/gocompiler/src/go/build"
+	       "github.com/bir3/gocompiler/vfs/io"
+	"github.com/bir3/gocompiler/vfs/ioutil"
+	       "github.com/bir3/gocompiler/vfs/os"
 	"path/filepath"
 	"strings"
 )

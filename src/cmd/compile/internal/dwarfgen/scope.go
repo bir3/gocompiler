@@ -7,11 +7,11 @@ package dwarfgen
 import (
 	"sort"
 
-	"r2.is/gocompiler/src/cmd/compile/internal/base"
-	"r2.is/gocompiler/src/cmd/compile/internal/ir"
-	"r2.is/gocompiler/src/cmd/internal/dwarf"
-	"r2.is/gocompiler/src/cmd/internal/obj"
-	"r2.is/gocompiler/src/cmd/internal/src"
+	"github.com/bir3/gocompiler/src/cmd/compile/internal/base"
+	"github.com/bir3/gocompiler/src/cmd/compile/internal/ir"
+	"github.com/bir3/gocompiler/src/cmd/internal/dwarf"
+	"github.com/bir3/gocompiler/src/cmd/internal/obj"
+	"github.com/bir3/gocompiler/src/cmd/internal/src"
 )
 
 // See golang.org/issue/20390.

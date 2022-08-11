@@ -32,7 +32,7 @@
 package obj
 
 import (
-	"r2.is/gocompiler/src/cmd/internal/objabi"
+	"github.com/bir3/gocompiler/src/cmd/internal/objabi"
 	"log"
 	"math"
 )

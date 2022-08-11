@@ -8,7 +8,7 @@
 package term
 
 import (
-	"r2.is/gocompiler/src/xvendor/golang.org/x/sys/unix"
+	"github.com/bir3/gocompiler/src/xvendor/golang.org/x/sys/unix"
 )
 
 type state struct {

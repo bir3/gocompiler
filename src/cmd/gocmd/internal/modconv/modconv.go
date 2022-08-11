@@ -4,7 +4,7 @@
 
 package modconv
 
-import "r2.is/gocompiler/src/xvendor/golang.org/x/mod/modfile"
+import "github.com/bir3/gocompiler/src/xvendor/golang.org/x/mod/modfile"
 
 var Converters = map[string]func(string, []byte) (*modfile.File, error){
 	"GLOCKFILE":          ParseGLOCKFILE,

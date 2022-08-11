@@ -6,13 +6,13 @@ package base
 
 import (
 	"fmt"
-	"r2.is/gocompiler/src/internal/buildcfg"
-	       "r2.is/gocompiler/vfs/os"
+	"github.com/bir3/gocompiler/src/internal/buildcfg"
+	       "github.com/bir3/gocompiler/vfs/os"
 	"runtime/debug"
 	"sort"
 	"strings"
 
-	"r2.is/gocompiler/src/cmd/internal/src"
+	"github.com/bir3/gocompiler/src/cmd/internal/src"
 )
 
 // An errorMsg is a queued error message, waiting to be printed.

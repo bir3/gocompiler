@@ -23,12 +23,12 @@ package objectpath
 
 import (
 	"fmt"
-	"r2.is/gocompiler/src/go/types"
+	"github.com/bir3/gocompiler/src/go/types"
 	"sort"
 	"strconv"
 	"strings"
 
-	"r2.is/gocompiler/src/xvendor/golang.org/x/tools/internal/typeparams"
+	"github.com/bir3/gocompiler/src/xvendor/golang.org/x/tools/internal/typeparams"
 )
 
 // A Path is an opaque name that identifies a types.Object

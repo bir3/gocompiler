@@ -5,7 +5,7 @@
 package ssa
 
 import (
-	"r2.is/gocompiler/src/cmd/compile/internal/types"
+	"github.com/bir3/gocompiler/src/cmd/compile/internal/types"
 	"sort"
 )
 

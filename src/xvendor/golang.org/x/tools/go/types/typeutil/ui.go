@@ -6,7 +6,7 @@ package typeutil
 
 // This file defines utilities for user interfaces that display types.
 
-import "r2.is/gocompiler/src/go/types"
+import "github.com/bir3/gocompiler/src/go/types"
 
 // IntuitiveMethodSet returns the intuitive method set of a type T,
 // which is the set of methods you can call on an addressable value of

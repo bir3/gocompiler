@@ -7,8 +7,8 @@ package macho
 import (
 	"encoding/binary"
 	"fmt"
-	       "r2.is/gocompiler/vfs/io"
-	       "r2.is/gocompiler/vfs/os"
+	       "github.com/bir3/gocompiler/vfs/io"
+	       "github.com/bir3/gocompiler/vfs/os"
 )
 
 // A FatFile is a Mach-O universal binary that contains at least one architecture.

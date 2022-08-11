@@ -28,7 +28,7 @@
 
 package riscv
 
-import "r2.is/gocompiler/src/cmd/internal/obj"
+import "github.com/bir3/gocompiler/src/cmd/internal/obj"
 
 //go:generate go run ../stringer.go -i $GOFILE -o anames.go -p riscv
 

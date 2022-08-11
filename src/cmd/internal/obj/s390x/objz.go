@@ -30,9 +30,9 @@
 package s390x
 
 import (
-	"r2.is/gocompiler/src/cmd/internal/obj"
-	"r2.is/gocompiler/src/cmd/internal/objabi"
-	"r2.is/gocompiler/src/cmd/internal/sys"
+	"github.com/bir3/gocompiler/src/cmd/internal/obj"
+	"github.com/bir3/gocompiler/src/cmd/internal/objabi"
+	"github.com/bir3/gocompiler/src/cmd/internal/sys"
 	"log"
 	"math"
 )

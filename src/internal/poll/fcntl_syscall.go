@@ -7,7 +7,7 @@
 package poll
 
 import (
-	"r2.is/gocompiler/src/internal/syscall/unix"
+	"github.com/bir3/gocompiler/src/internal/syscall/unix"
 	"syscall"
 )
 

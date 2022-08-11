@@ -5,9 +5,9 @@
 package arm64
 
 import (
-	"r2.is/gocompiler/src/cmd/compile/internal/ssa"
-	"r2.is/gocompiler/src/cmd/compile/internal/ssagen"
-	"r2.is/gocompiler/src/cmd/internal/obj/arm64"
+	"github.com/bir3/gocompiler/src/cmd/compile/internal/ssa"
+	"github.com/bir3/gocompiler/src/cmd/compile/internal/ssagen"
+	"github.com/bir3/gocompiler/src/cmd/internal/obj/arm64"
 )
 
 func Init(arch *ssagen.ArchInfo) {

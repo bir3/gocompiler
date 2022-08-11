@@ -9,11 +9,11 @@ package parser
 import (
 	"bytes"
 	"errors"
-	"r2.is/gocompiler/src/go/ast"
-	"r2.is/gocompiler/src/go/token"
-	       "r2.is/gocompiler/vfs/io"
+	"github.com/bir3/gocompiler/src/go/ast"
+	"github.com/bir3/gocompiler/src/go/token"
+	       "github.com/bir3/gocompiler/vfs/io"
 	"io/fs"
-	       "r2.is/gocompiler/vfs/os"
+	       "github.com/bir3/gocompiler/vfs/os"
 	"path/filepath"
 	"strings"
 )

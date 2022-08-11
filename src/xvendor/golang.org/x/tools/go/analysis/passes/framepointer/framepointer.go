@@ -7,12 +7,12 @@
 package framepointer
 
 import (
-	"r2.is/gocompiler/src/go/build"
+	"github.com/bir3/gocompiler/src/go/build"
 	"regexp"
 	"strings"
 
-	"r2.is/gocompiler/src/xvendor/golang.org/x/tools/go/analysis"
-	"r2.is/gocompiler/src/xvendor/golang.org/x/tools/go/analysis/passes/internal/analysisutil"
+	"github.com/bir3/gocompiler/src/xvendor/golang.org/x/tools/go/analysis"
+	"github.com/bir3/gocompiler/src/xvendor/golang.org/x/tools/go/analysis/passes/internal/analysisutil"
 )
 
 const Doc = "report assembly that clobbers the frame pointer before saving it"

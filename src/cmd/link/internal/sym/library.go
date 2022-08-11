@@ -4,7 +4,7 @@
 
 package sym
 
-import "r2.is/gocompiler/src/cmd/internal/goobj"
+import "github.com/bir3/gocompiler/src/cmd/internal/goobj"
 
 type Library struct {
 	Objref      string

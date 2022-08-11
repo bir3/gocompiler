@@ -5,8 +5,8 @@
 package ir
 
 import (
-	"r2.is/gocompiler/src/cmd/compile/internal/base"
-	"r2.is/gocompiler/src/cmd/internal/src"
+	"github.com/bir3/gocompiler/src/cmd/compile/internal/base"
+	"github.com/bir3/gocompiler/src/cmd/internal/src"
 )
 
 // A Node may implement the Orig and SetOrig method to

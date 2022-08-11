@@ -7,7 +7,7 @@
 package sysinfo
 
 import (
-	internalcpu "r2.is/gocompiler/src/internal/cpu"
+	internalcpu "github.com/bir3/gocompiler/src/internal/cpu"
 	"sync"
 )
 

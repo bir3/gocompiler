@@ -6,12 +6,12 @@ package cache
 
 import (
 	"fmt"
-	       "r2.is/gocompiler/vfs/os"
+	       "github.com/bir3/gocompiler/vfs/os"
 	"path/filepath"
 	"sync"
 
-	"r2.is/gocompiler/src/cmd/gocmd/internal/base"
-	"r2.is/gocompiler/src/cmd/gocmd/internal/cfg"
+	"github.com/bir3/gocompiler/src/cmd/gocmd/internal/base"
+	"github.com/bir3/gocompiler/src/cmd/gocmd/internal/cfg"
 )
 
 // Default returns the default cache to use, or nil if no cache should be used.

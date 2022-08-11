@@ -1,7 +1,7 @@
 package report
 
 import (
-	"r2.is/gocompiler/src/xvendor/github.com/google/pprof/profile"
+	"github.com/bir3/gocompiler/src/xvendor/github.com/google/pprof/profile"
 )
 
 // synthCode assigns addresses to locations without an address.

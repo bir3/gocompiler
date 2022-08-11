@@ -8,7 +8,7 @@
 package gc
 
 import (
-	"r2.is/gocompiler/src/cmd/compile/internal/base"
+	"github.com/bir3/gocompiler/src/cmd/compile/internal/base"
 	"runtime"
 )
 

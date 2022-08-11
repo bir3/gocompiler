@@ -5,8 +5,8 @@
 package typeparams
 
 import (
-	"r2.is/gocompiler/src/go/ast"
-	"r2.is/gocompiler/src/go/token"
+	"github.com/bir3/gocompiler/src/go/ast"
+	"github.com/bir3/gocompiler/src/go/token"
 )
 
 func PackIndexExpr(x ast.Expr, lbrack token.Pos, exprs []ast.Expr, rbrack token.Pos) ast.Expr {

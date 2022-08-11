@@ -6,20 +6,20 @@ package asm
 
 import (
 	"bufio"
-	"r2.is/gocompiler/src/cmd/asm/flag"
+	"github.com/bir3/gocompiler/src/cmd/asm/flag"
 	"fmt"
-	"r2.is/gocompiler/src/internal/buildcfg"
+	"github.com/bir3/gocompiler/src/internal/buildcfg"
 	"log"
-	       "r2.is/gocompiler/vfs/os"
+	       "github.com/bir3/gocompiler/vfs/os"
 
-	"r2.is/gocompiler/src/cmd/asm/internal/arch"
-	"r2.is/gocompiler/src/cmd/asm/internal/asm"
-	"r2.is/gocompiler/src/cmd/asm/internal/flags"
-	"r2.is/gocompiler/src/cmd/asm/internal/lex"
+	"github.com/bir3/gocompiler/src/cmd/asm/internal/arch"
+	"github.com/bir3/gocompiler/src/cmd/asm/internal/asm"
+	"github.com/bir3/gocompiler/src/cmd/asm/internal/flags"
+	"github.com/bir3/gocompiler/src/cmd/asm/internal/lex"
 
-	"r2.is/gocompiler/src/cmd/internal/bio"
-	"r2.is/gocompiler/src/cmd/internal/obj"
-	"r2.is/gocompiler/src/cmd/internal/objabi"
+	"github.com/bir3/gocompiler/src/cmd/internal/bio"
+	"github.com/bir3/gocompiler/src/cmd/internal/obj"
+	"github.com/bir3/gocompiler/src/cmd/internal/objabi"
 )
 
 func Main() {

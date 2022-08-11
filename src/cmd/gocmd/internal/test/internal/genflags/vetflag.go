@@ -6,10 +6,10 @@ package genflags
 
 import (
 	"bytes"
-	"r2.is/gocompiler/src/cmd/gocmd/internal/base"
+	"github.com/bir3/gocompiler/src/cmd/gocmd/internal/base"
 	"encoding/json"
 	"fmt"
-	exec "r2.is/gocompiler/src/internal/execabs"
+	exec "github.com/bir3/gocompiler/src/internal/execabs"
 	"regexp"
 	"sort"
 )

@@ -10,9 +10,9 @@ import (
 	"debug/macho"
 	"encoding/binary"
 	"fmt"
-	       "r2.is/gocompiler/vfs/io"
+	       "github.com/bir3/gocompiler/vfs/io"
 	"io/fs"
-	       "r2.is/gocompiler/vfs/os"
+	       "github.com/bir3/gocompiler/vfs/os"
 )
 
 func readAligned4(r io.Reader, sz int32) ([]byte, error) {

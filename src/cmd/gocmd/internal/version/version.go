@@ -11,12 +11,12 @@ import (
 	"errors"
 	"fmt"
 	"io/fs"
-	       "r2.is/gocompiler/vfs/os"
+	       "github.com/bir3/gocompiler/vfs/os"
 	"path/filepath"
 	"runtime"
 	"strings"
 
-	"r2.is/gocompiler/src/cmd/gocmd/internal/base"
+	"github.com/bir3/gocompiler/src/cmd/gocmd/internal/base"
 )
 
 var CmdVersion = &base.Command{

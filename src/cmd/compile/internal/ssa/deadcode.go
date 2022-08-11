@@ -5,7 +5,7 @@
 package ssa
 
 import (
-	"r2.is/gocompiler/src/cmd/internal/src"
+	"github.com/bir3/gocompiler/src/cmd/internal/src"
 )
 
 // findlive returns the reachable blocks and live values in f.

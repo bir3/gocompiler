@@ -12,16 +12,16 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
-	       "r2.is/gocompiler/vfs/os"
+	       "github.com/bir3/gocompiler/vfs/os"
 	"strings"
 
-	"r2.is/gocompiler/src/cmd/gocmd/internal/base"
-	"r2.is/gocompiler/src/cmd/gocmd/internal/lockedfile"
-	"r2.is/gocompiler/src/cmd/gocmd/internal/modfetch"
-	"r2.is/gocompiler/src/cmd/gocmd/internal/modload"
+	"github.com/bir3/gocompiler/src/cmd/gocmd/internal/base"
+	"github.com/bir3/gocompiler/src/cmd/gocmd/internal/lockedfile"
+	"github.com/bir3/gocompiler/src/cmd/gocmd/internal/modfetch"
+	"github.com/bir3/gocompiler/src/cmd/gocmd/internal/modload"
 
-	"r2.is/gocompiler/src/xvendor/golang.org/x/mod/modfile"
-	"r2.is/gocompiler/src/xvendor/golang.org/x/mod/module"
+	"github.com/bir3/gocompiler/src/xvendor/golang.org/x/mod/modfile"
+	"github.com/bir3/gocompiler/src/xvendor/golang.org/x/mod/module"
 )
 
 var cmdEdit = &base.Command{

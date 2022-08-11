@@ -3,15 +3,15 @@
 package ssa
 
 import (
-	"r2.is/gocompiler/src/cmd/internal/obj"
-	"r2.is/gocompiler/src/cmd/internal/obj/arm"
-	"r2.is/gocompiler/src/cmd/internal/obj/arm64"
-	"r2.is/gocompiler/src/cmd/internal/obj/mips"
-	"r2.is/gocompiler/src/cmd/internal/obj/ppc64"
-	"r2.is/gocompiler/src/cmd/internal/obj/riscv"
-	"r2.is/gocompiler/src/cmd/internal/obj/s390x"
-	"r2.is/gocompiler/src/cmd/internal/obj/wasm"
-	"r2.is/gocompiler/src/cmd/internal/obj/x86"
+	"github.com/bir3/gocompiler/src/cmd/internal/obj"
+	"github.com/bir3/gocompiler/src/cmd/internal/obj/arm"
+	"github.com/bir3/gocompiler/src/cmd/internal/obj/arm64"
+	"github.com/bir3/gocompiler/src/cmd/internal/obj/mips"
+	"github.com/bir3/gocompiler/src/cmd/internal/obj/ppc64"
+	"github.com/bir3/gocompiler/src/cmd/internal/obj/riscv"
+	"github.com/bir3/gocompiler/src/cmd/internal/obj/s390x"
+	"github.com/bir3/gocompiler/src/cmd/internal/obj/wasm"
+	"github.com/bir3/gocompiler/src/cmd/internal/obj/x86"
 )
 
 const (

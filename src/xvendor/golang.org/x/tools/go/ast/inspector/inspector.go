@@ -35,7 +35,7 @@ package inspector
 // and found to degrade performance significantly (30%).
 
 import (
-	"r2.is/gocompiler/src/go/ast"
+	"github.com/bir3/gocompiler/src/go/ast"
 )
 
 // An Inspector provides methods for inspecting

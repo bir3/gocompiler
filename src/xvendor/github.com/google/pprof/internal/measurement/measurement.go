@@ -21,7 +21,7 @@ import (
 	"strings"
 	"time"
 
-	"r2.is/gocompiler/src/xvendor/github.com/google/pprof/profile"
+	"github.com/bir3/gocompiler/src/xvendor/github.com/google/pprof/profile"
 )
 
 // ScaleProfiles updates the units in a set of profiles to make them

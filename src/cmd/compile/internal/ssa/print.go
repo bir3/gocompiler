@@ -6,10 +6,10 @@ package ssa
 
 import (
 	"bytes"
-	"r2.is/gocompiler/src/cmd/internal/src"
+	"github.com/bir3/gocompiler/src/cmd/internal/src"
 	"crypto/sha256"
 	"fmt"
-	       "r2.is/gocompiler/vfs/io"
+	       "github.com/bir3/gocompiler/vfs/io"
 )
 
 func printFunc(f *Func) {

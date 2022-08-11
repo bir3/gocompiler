@@ -5,8 +5,8 @@
 package obj
 
 import (
-	"r2.is/gocompiler/src/cmd/internal/goobj"
-	"r2.is/gocompiler/src/cmd/internal/src"
+	"github.com/bir3/gocompiler/src/cmd/internal/goobj"
+	"github.com/bir3/gocompiler/src/cmd/internal/src"
 )
 
 // AddImport adds a package to the list of imported packages.

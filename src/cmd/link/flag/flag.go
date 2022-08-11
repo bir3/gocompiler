@@ -70,8 +70,8 @@ package flag
 import (
 	"errors"
 	"fmt"
-	       "r2.is/gocompiler/vfs/io"
-	       "r2.is/gocompiler/vfs/os"
+	       "github.com/bir3/gocompiler/vfs/io"
+	       "github.com/bir3/gocompiler/vfs/os"
 	"reflect"
 	"sort"
 	"strconv"

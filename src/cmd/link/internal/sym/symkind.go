@@ -30,7 +30,7 @@
 
 package sym
 
-import "r2.is/gocompiler/src/cmd/internal/objabi"
+import "github.com/bir3/gocompiler/src/cmd/internal/objabi"
 
 // A SymKind describes the kind of memory represented by a symbol.
 type SymKind uint8

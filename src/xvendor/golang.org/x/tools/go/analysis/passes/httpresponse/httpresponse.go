@@ -7,13 +7,13 @@
 package httpresponse
 
 import (
-	"r2.is/gocompiler/src/go/ast"
-	"r2.is/gocompiler/src/go/types"
+	"github.com/bir3/gocompiler/src/go/ast"
+	"github.com/bir3/gocompiler/src/go/types"
 
-	"r2.is/gocompiler/src/xvendor/golang.org/x/tools/go/analysis"
-	"r2.is/gocompiler/src/xvendor/golang.org/x/tools/go/analysis/passes/inspect"
-	"r2.is/gocompiler/src/xvendor/golang.org/x/tools/go/analysis/passes/internal/analysisutil"
-	"r2.is/gocompiler/src/xvendor/golang.org/x/tools/go/ast/inspector"
+	"github.com/bir3/gocompiler/src/xvendor/golang.org/x/tools/go/analysis"
+	"github.com/bir3/gocompiler/src/xvendor/golang.org/x/tools/go/analysis/passes/inspect"
+	"github.com/bir3/gocompiler/src/xvendor/golang.org/x/tools/go/analysis/passes/internal/analysisutil"
+	"github.com/bir3/gocompiler/src/xvendor/golang.org/x/tools/go/ast/inspector"
 )
 
 const Doc = `check for mistakes using HTTP responses

@@ -21,16 +21,16 @@ import (
 	"net"
 	"net/http"
 	gourl "net/url"
-	       "r2.is/gocompiler/vfs/os"
-	  "r2.is/gocompiler/vfs/exec"
+	       "github.com/bir3/gocompiler/vfs/os"
+	  "github.com/bir3/gocompiler/vfs/exec"
 	"strconv"
 	"strings"
 	"time"
 
-	"r2.is/gocompiler/src/xvendor/github.com/google/pprof/internal/graph"
-	"r2.is/gocompiler/src/xvendor/github.com/google/pprof/internal/plugin"
-	"r2.is/gocompiler/src/xvendor/github.com/google/pprof/internal/report"
-	"r2.is/gocompiler/src/xvendor/github.com/google/pprof/profile"
+	"github.com/bir3/gocompiler/src/xvendor/github.com/google/pprof/internal/graph"
+	"github.com/bir3/gocompiler/src/xvendor/github.com/google/pprof/internal/plugin"
+	"github.com/bir3/gocompiler/src/xvendor/github.com/google/pprof/internal/report"
+	"github.com/bir3/gocompiler/src/xvendor/github.com/google/pprof/profile"
 )
 
 // webInterface holds the state needed for serving a browser based interface.

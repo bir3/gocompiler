@@ -9,8 +9,8 @@
 package fuzz
 
 import (
-	       "r2.is/gocompiler/vfs/os"
-	  "r2.is/gocompiler/vfs/exec"
+	       "github.com/bir3/gocompiler/vfs/os"
+	  "github.com/bir3/gocompiler/vfs/exec"
 )
 
 type sharedMemSys struct{}

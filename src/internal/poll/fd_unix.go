@@ -7,8 +7,8 @@
 package poll
 
 import (
-	"r2.is/gocompiler/src/internal/syscall/unix"
-	       "r2.is/gocompiler/vfs/io"
+	"github.com/bir3/gocompiler/src/internal/syscall/unix"
+	       "github.com/bir3/gocompiler/vfs/io"
 	"sync/atomic"
 	"syscall"
 )

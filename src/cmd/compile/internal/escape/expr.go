@@ -5,9 +5,9 @@
 package escape
 
 import (
-	"r2.is/gocompiler/src/cmd/compile/internal/base"
-	"r2.is/gocompiler/src/cmd/compile/internal/ir"
-	"r2.is/gocompiler/src/cmd/compile/internal/types"
+	"github.com/bir3/gocompiler/src/cmd/compile/internal/base"
+	"github.com/bir3/gocompiler/src/cmd/compile/internal/ir"
+	"github.com/bir3/gocompiler/src/cmd/compile/internal/types"
 )
 
 // expr models evaluating an expression n and flowing the result into

@@ -10,15 +10,15 @@ import (
 	"errors"
 	"fmt"
 	"io/fs"
-	       "r2.is/gocompiler/vfs/os"
+	       "github.com/bir3/gocompiler/vfs/os"
 	"runtime"
 
-	"r2.is/gocompiler/src/cmd/gocmd/internal/base"
-	"r2.is/gocompiler/src/cmd/gocmd/internal/modfetch"
-	"r2.is/gocompiler/src/cmd/gocmd/internal/modload"
+	"github.com/bir3/gocompiler/src/cmd/gocmd/internal/base"
+	"github.com/bir3/gocompiler/src/cmd/gocmd/internal/modfetch"
+	"github.com/bir3/gocompiler/src/cmd/gocmd/internal/modload"
 
-	"r2.is/gocompiler/src/xvendor/golang.org/x/mod/module"
-	"r2.is/gocompiler/src/xvendor/golang.org/x/mod/sumdb/dirhash"
+	"github.com/bir3/gocompiler/src/xvendor/golang.org/x/mod/module"
+	"github.com/bir3/gocompiler/src/xvendor/golang.org/x/mod/sumdb/dirhash"
 )
 
 var cmdVerify = &base.Command{

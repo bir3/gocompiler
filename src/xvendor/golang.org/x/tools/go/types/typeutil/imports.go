@@ -4,7 +4,7 @@
 
 package typeutil
 
-import "r2.is/gocompiler/src/go/types"
+import "github.com/bir3/gocompiler/src/go/types"
 
 // Dependencies returns all dependencies of the specified packages.
 //

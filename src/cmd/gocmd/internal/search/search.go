@@ -5,13 +5,13 @@
 package search
 
 import (
-	"r2.is/gocompiler/src/cmd/gocmd/internal/base"
-	"r2.is/gocompiler/src/cmd/gocmd/internal/cfg"
-	"r2.is/gocompiler/src/cmd/gocmd/internal/fsys"
+	"github.com/bir3/gocompiler/src/cmd/gocmd/internal/base"
+	"github.com/bir3/gocompiler/src/cmd/gocmd/internal/cfg"
+	"github.com/bir3/gocompiler/src/cmd/gocmd/internal/fsys"
 	"fmt"
-	"r2.is/gocompiler/src/go/build"
+	"github.com/bir3/gocompiler/src/go/build"
 	"io/fs"
-	       "r2.is/gocompiler/vfs/os"
+	       "github.com/bir3/gocompiler/vfs/os"
 	"path"
 	"path/filepath"
 	"regexp"

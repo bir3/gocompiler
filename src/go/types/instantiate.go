@@ -10,7 +10,7 @@ package types
 import (
 	"errors"
 	"fmt"
-	"r2.is/gocompiler/src/go/token"
+	"github.com/bir3/gocompiler/src/go/token"
 )
 
 // Instantiate instantiates the type orig with the given type arguments targs.

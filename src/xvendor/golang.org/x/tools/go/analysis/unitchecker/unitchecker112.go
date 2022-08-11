@@ -7,7 +7,7 @@
 
 package unitchecker
 
-import "r2.is/gocompiler/src/go/importer"
+import "github.com/bir3/gocompiler/src/go/importer"
 
 func init() {
 	importerForCompiler = importer.ForCompiler

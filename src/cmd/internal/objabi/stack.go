@@ -4,7 +4,7 @@
 
 package objabi
 
-import "r2.is/gocompiler/src/internal/buildcfg"
+import "github.com/bir3/gocompiler/src/internal/buildcfg"
 
 // For the linkers. Must match Go definitions.
 

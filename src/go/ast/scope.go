@@ -9,7 +9,7 @@ package ast
 import (
 	"bytes"
 	"fmt"
-	"r2.is/gocompiler/src/go/token"
+	"github.com/bir3/gocompiler/src/go/token"
 )
 
 // A Scope maintains the set of named language entities declared

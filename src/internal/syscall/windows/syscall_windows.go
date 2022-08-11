@@ -5,7 +5,7 @@
 package windows
 
 import (
-	"r2.is/gocompiler/src/internal/unsafeheader"
+	"github.com/bir3/gocompiler/src/internal/unsafeheader"
 	"sync"
 	"syscall"
 	"unicode/utf16"

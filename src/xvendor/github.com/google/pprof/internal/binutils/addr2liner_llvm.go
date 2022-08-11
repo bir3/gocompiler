@@ -17,13 +17,13 @@ package binutils
 import (
 	"bufio"
 	"fmt"
-	       "r2.is/gocompiler/vfs/io"
-	  "r2.is/gocompiler/vfs/exec"
+	       "github.com/bir3/gocompiler/vfs/io"
+	  "github.com/bir3/gocompiler/vfs/exec"
 	"strconv"
 	"strings"
 	"sync"
 
-	"r2.is/gocompiler/src/xvendor/github.com/google/pprof/internal/plugin"
+	"github.com/bir3/gocompiler/src/xvendor/github.com/google/pprof/internal/plugin"
 )
 
 const (

@@ -6,7 +6,7 @@
 
 package modfetch
 
-import "r2.is/gocompiler/src/xvendor/golang.org/x/mod/module"
+import "github.com/bir3/gocompiler/src/xvendor/golang.org/x/mod/module"
 
 func useSumDB(mod module.Version) bool {
 	return false

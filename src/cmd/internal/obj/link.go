@@ -32,11 +32,11 @@ package obj
 
 import (
 	"bufio"
-	"r2.is/gocompiler/src/cmd/internal/dwarf"
-	"r2.is/gocompiler/src/cmd/internal/goobj"
-	"r2.is/gocompiler/src/cmd/internal/objabi"
-	"r2.is/gocompiler/src/cmd/internal/src"
-	"r2.is/gocompiler/src/cmd/internal/sys"
+	"github.com/bir3/gocompiler/src/cmd/internal/dwarf"
+	"github.com/bir3/gocompiler/src/cmd/internal/goobj"
+	"github.com/bir3/gocompiler/src/cmd/internal/objabi"
+	"github.com/bir3/gocompiler/src/cmd/internal/src"
+	"github.com/bir3/gocompiler/src/cmd/internal/sys"
 	"fmt"
 	"sync"
 	"sync/atomic"

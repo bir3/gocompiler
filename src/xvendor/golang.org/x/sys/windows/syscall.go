@@ -31,7 +31,7 @@ import (
 	"syscall"
 	"unsafe"
 
-	"r2.is/gocompiler/src/xvendor/golang.org/x/sys/internal/unsafeheader"
+	"github.com/bir3/gocompiler/src/xvendor/golang.org/x/sys/internal/unsafeheader"
 )
 
 // ByteSliceFromString returns a NUL-terminated slice of bytes

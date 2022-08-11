@@ -5,7 +5,7 @@
 package types2
 
 import (
-	"r2.is/gocompiler/src/cmd/compile/internal/syntax"
+	"github.com/bir3/gocompiler/src/cmd/compile/internal/syntax"
 )
 
 // This file implements a check to validate that a Go package doesn't

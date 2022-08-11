@@ -19,13 +19,13 @@ import (
 	"net"
 	"net/http"
 	urlpkg "net/url"
-	       "r2.is/gocompiler/vfs/os"
+	       "github.com/bir3/gocompiler/vfs/os"
 	"strings"
 	"time"
 
-	"r2.is/gocompiler/src/cmd/gocmd/internal/auth"
-	"r2.is/gocompiler/src/cmd/gocmd/internal/cfg"
-	"r2.is/gocompiler/src/cmd/internal/browser"
+	"github.com/bir3/gocompiler/src/cmd/gocmd/internal/auth"
+	"github.com/bir3/gocompiler/src/cmd/gocmd/internal/cfg"
+	"github.com/bir3/gocompiler/src/cmd/internal/browser"
 )
 
 // impatientInsecureHTTPClient is used with GOINSECURE,

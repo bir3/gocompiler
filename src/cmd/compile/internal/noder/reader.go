@@ -9,20 +9,20 @@ package noder
 import (
 	"bytes"
 	"fmt"
-	"r2.is/gocompiler/src/go/constant"
-	"r2.is/gocompiler/src/internal/buildcfg"
+	"github.com/bir3/gocompiler/src/go/constant"
+	"github.com/bir3/gocompiler/src/internal/buildcfg"
 	"strings"
 
-	"r2.is/gocompiler/src/cmd/compile/internal/base"
-	"r2.is/gocompiler/src/cmd/compile/internal/deadcode"
-	"r2.is/gocompiler/src/cmd/compile/internal/dwarfgen"
-	"r2.is/gocompiler/src/cmd/compile/internal/inline"
-	"r2.is/gocompiler/src/cmd/compile/internal/ir"
-	"r2.is/gocompiler/src/cmd/compile/internal/reflectdata"
-	"r2.is/gocompiler/src/cmd/compile/internal/typecheck"
-	"r2.is/gocompiler/src/cmd/compile/internal/types"
-	"r2.is/gocompiler/src/cmd/internal/obj"
-	"r2.is/gocompiler/src/cmd/internal/src"
+	"github.com/bir3/gocompiler/src/cmd/compile/internal/base"
+	"github.com/bir3/gocompiler/src/cmd/compile/internal/deadcode"
+	"github.com/bir3/gocompiler/src/cmd/compile/internal/dwarfgen"
+	"github.com/bir3/gocompiler/src/cmd/compile/internal/inline"
+	"github.com/bir3/gocompiler/src/cmd/compile/internal/ir"
+	"github.com/bir3/gocompiler/src/cmd/compile/internal/reflectdata"
+	"github.com/bir3/gocompiler/src/cmd/compile/internal/typecheck"
+	"github.com/bir3/gocompiler/src/cmd/compile/internal/types"
+	"github.com/bir3/gocompiler/src/cmd/internal/obj"
+	"github.com/bir3/gocompiler/src/cmd/internal/src"
 )
 
 // TODO(mdempsky): Suppress duplicate type/const errors that can arise

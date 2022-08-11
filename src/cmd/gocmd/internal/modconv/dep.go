@@ -6,15 +6,15 @@ package modconv
 
 import (
 	"fmt"
-	"r2.is/gocompiler/src/internal/lazyregexp"
+	"github.com/bir3/gocompiler/src/internal/lazyregexp"
 	"net/url"
 	"path"
 	"strconv"
 	"strings"
 
-	"r2.is/gocompiler/src/xvendor/golang.org/x/mod/modfile"
-	"r2.is/gocompiler/src/xvendor/golang.org/x/mod/module"
-	"r2.is/gocompiler/src/xvendor/golang.org/x/mod/semver"
+	"github.com/bir3/gocompiler/src/xvendor/golang.org/x/mod/modfile"
+	"github.com/bir3/gocompiler/src/xvendor/golang.org/x/mod/module"
+	"github.com/bir3/gocompiler/src/xvendor/golang.org/x/mod/semver"
 )
 
 func ParseGopkgLock(file string, data []byte) (*modfile.File, error) {

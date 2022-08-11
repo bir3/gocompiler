@@ -11,15 +11,15 @@ import (
 	"encoding/hex"
 	"errors"
 	"fmt"
-	       "r2.is/gocompiler/vfs/io"
+	       "github.com/bir3/gocompiler/vfs/io"
 	"io/fs"
-	       "r2.is/gocompiler/vfs/os"
+	       "github.com/bir3/gocompiler/vfs/os"
 	"path/filepath"
 	"strconv"
 	"strings"
 	"time"
 
-	"r2.is/gocompiler/src/cmd/gocmd/internal/lockedfile"
+	"github.com/bir3/gocompiler/src/cmd/gocmd/internal/lockedfile"
 )
 
 // An ActionID is a cache action key, the hash of a complete description of a

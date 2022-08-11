@@ -8,11 +8,11 @@ package analysisutil
 
 import (
 	"bytes"
-	"r2.is/gocompiler/src/go/ast"
-	"r2.is/gocompiler/src/go/printer"
-	"r2.is/gocompiler/src/go/token"
-	"r2.is/gocompiler/src/go/types"
-	"r2.is/gocompiler/vfs/ioutil"
+	"github.com/bir3/gocompiler/src/go/ast"
+	"github.com/bir3/gocompiler/src/go/printer"
+	"github.com/bir3/gocompiler/src/go/token"
+	"github.com/bir3/gocompiler/src/go/types"
+	"github.com/bir3/gocompiler/vfs/ioutil"
 )
 
 // Format returns a string representation of the expression.

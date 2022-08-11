@@ -8,8 +8,8 @@ package doc
 
 import (
 	"bytes"
-	"r2.is/gocompiler/src/internal/lazyregexp"
-	       "r2.is/gocompiler/vfs/io"
+	"github.com/bir3/gocompiler/src/internal/lazyregexp"
+	       "github.com/bir3/gocompiler/vfs/io"
 	"strings"
 	"text/template" // for HTMLEscape
 	"unicode"

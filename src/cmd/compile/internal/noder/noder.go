@@ -7,10 +7,10 @@ package noder
 import (
 	"errors"
 	"fmt"
-	"r2.is/gocompiler/src/go/constant"
-	"r2.is/gocompiler/src/go/token"
-	"r2.is/gocompiler/src/internal/buildcfg"
-	       "r2.is/gocompiler/vfs/os"
+	"github.com/bir3/gocompiler/src/go/constant"
+	"github.com/bir3/gocompiler/src/go/token"
+	"github.com/bir3/gocompiler/src/internal/buildcfg"
+	       "github.com/bir3/gocompiler/vfs/os"
 	"path/filepath"
 	"runtime"
 	"strconv"
@@ -18,14 +18,14 @@ import (
 	"unicode"
 	"unicode/utf8"
 
-	"r2.is/gocompiler/src/cmd/compile/internal/base"
-	"r2.is/gocompiler/src/cmd/compile/internal/dwarfgen"
-	"r2.is/gocompiler/src/cmd/compile/internal/ir"
-	"r2.is/gocompiler/src/cmd/compile/internal/syntax"
-	"r2.is/gocompiler/src/cmd/compile/internal/typecheck"
-	"r2.is/gocompiler/src/cmd/compile/internal/types"
-	"r2.is/gocompiler/src/cmd/internal/objabi"
-	"r2.is/gocompiler/src/cmd/internal/src"
+	"github.com/bir3/gocompiler/src/cmd/compile/internal/base"
+	"github.com/bir3/gocompiler/src/cmd/compile/internal/dwarfgen"
+	"github.com/bir3/gocompiler/src/cmd/compile/internal/ir"
+	"github.com/bir3/gocompiler/src/cmd/compile/internal/syntax"
+	"github.com/bir3/gocompiler/src/cmd/compile/internal/typecheck"
+	"github.com/bir3/gocompiler/src/cmd/compile/internal/types"
+	"github.com/bir3/gocompiler/src/cmd/internal/objabi"
+	"github.com/bir3/gocompiler/src/cmd/internal/src"
 )
 
 func LoadPackage(filenames []string) {

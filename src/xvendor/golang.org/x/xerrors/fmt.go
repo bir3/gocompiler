@@ -10,7 +10,7 @@ import (
 	"unicode"
 	"unicode/utf8"
 
-	"r2.is/gocompiler/src/xvendor/golang.org/x/xerrors/internal"
+	"github.com/bir3/gocompiler/src/xvendor/golang.org/x/xerrors/internal"
 )
 
 const percentBangString = "%!"

@@ -8,7 +8,7 @@ package modload
 
 import (
 	"io/fs"
-	       "r2.is/gocompiler/vfs/os"
+	       "github.com/bir3/gocompiler/vfs/os"
 	"syscall"
 )
 

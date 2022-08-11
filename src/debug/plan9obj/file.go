@@ -9,8 +9,8 @@ import (
 	"encoding/binary"
 	"errors"
 	"fmt"
-	       "r2.is/gocompiler/vfs/io"
-	       "r2.is/gocompiler/vfs/os"
+	       "github.com/bir3/gocompiler/vfs/io"
+	       "github.com/bir3/gocompiler/vfs/os"
 )
 
 // A FileHeader represents a Plan 9 a.out file header.

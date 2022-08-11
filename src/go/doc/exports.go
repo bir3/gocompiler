@@ -7,8 +7,8 @@
 package doc
 
 import (
-	"r2.is/gocompiler/src/go/ast"
-	"r2.is/gocompiler/src/go/token"
+	"github.com/bir3/gocompiler/src/go/ast"
+	"github.com/bir3/gocompiler/src/go/token"
 )
 
 // filterIdentList removes unexported names from list in place

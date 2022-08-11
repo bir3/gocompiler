@@ -11,10 +11,10 @@ package format
 
 import (
 	"bytes"
-	"r2.is/gocompiler/src/go/ast"
-	"r2.is/gocompiler/src/go/parser"
-	"r2.is/gocompiler/src/go/printer"
-	"r2.is/gocompiler/src/go/token"
+	"github.com/bir3/gocompiler/src/go/ast"
+	"github.com/bir3/gocompiler/src/go/parser"
+	"github.com/bir3/gocompiler/src/go/printer"
+	"github.com/bir3/gocompiler/src/go/token"
 	"strings"
 )
 

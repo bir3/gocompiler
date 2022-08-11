@@ -7,15 +7,15 @@
 package modcmd
 
 import (
-	"r2.is/gocompiler/src/cmd/gocmd/internal/base"
-	"r2.is/gocompiler/src/cmd/gocmd/internal/cfg"
-	"r2.is/gocompiler/src/cmd/gocmd/internal/imports"
-	"r2.is/gocompiler/src/cmd/gocmd/internal/modload"
+	"github.com/bir3/gocompiler/src/cmd/gocmd/internal/base"
+	"github.com/bir3/gocompiler/src/cmd/gocmd/internal/cfg"
+	"github.com/bir3/gocompiler/src/cmd/gocmd/internal/imports"
+	"github.com/bir3/gocompiler/src/cmd/gocmd/internal/modload"
 	"context"
 	"fmt"
 
-	"r2.is/gocompiler/src/xvendor/golang.org/x/mod/modfile"
-	"r2.is/gocompiler/src/xvendor/golang.org/x/mod/semver"
+	"github.com/bir3/gocompiler/src/xvendor/golang.org/x/mod/modfile"
+	"github.com/bir3/gocompiler/src/xvendor/golang.org/x/mod/semver"
 )
 
 var cmdTidy = &base.Command{

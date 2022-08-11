@@ -4,8 +4,8 @@
 package ssa
 
 import "math"
-import "r2.is/gocompiler/src/cmd/compile/internal/types"
-import "r2.is/gocompiler/src/cmd/internal/obj/s390x"
+import "github.com/bir3/gocompiler/src/cmd/compile/internal/types"
+import "github.com/bir3/gocompiler/src/cmd/internal/obj/s390x"
 
 func rewriteValueS390X(v *Value) bool {
 	switch v.Op {

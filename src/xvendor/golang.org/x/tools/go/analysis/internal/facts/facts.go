@@ -40,15 +40,15 @@ import (
 	"bytes"
 	"encoding/gob"
 	"fmt"
-	"r2.is/gocompiler/src/go/types"
-	"r2.is/gocompiler/vfs/ioutil"
+	"github.com/bir3/gocompiler/src/go/types"
+	"github.com/bir3/gocompiler/vfs/ioutil"
 	"log"
 	"reflect"
 	"sort"
 	"sync"
 
-	"r2.is/gocompiler/src/xvendor/golang.org/x/tools/go/analysis"
-	"r2.is/gocompiler/src/xvendor/golang.org/x/tools/go/types/objectpath"
+	"github.com/bir3/gocompiler/src/xvendor/golang.org/x/tools/go/analysis"
+	"github.com/bir3/gocompiler/src/xvendor/golang.org/x/tools/go/types/objectpath"
 )
 
 const debug = false

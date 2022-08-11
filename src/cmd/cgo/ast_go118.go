@@ -8,8 +8,8 @@
 package cgo
 
 import (
-	"r2.is/gocompiler/src/go/ast"
-	"r2.is/gocompiler/src/go/token"
+	"github.com/bir3/gocompiler/src/go/ast"
+	"github.com/bir3/gocompiler/src/go/token"
 )
 
 func (f *File) walkUnexpected(x interface{}, context astContext, visit func(*File, interface{}, astContext)) {

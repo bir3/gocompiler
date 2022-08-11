@@ -7,8 +7,8 @@
 package types2
 
 import (
-	"r2.is/gocompiler/src/cmd/compile/internal/syntax"
-	"r2.is/gocompiler/src/go/constant"
+	"github.com/bir3/gocompiler/src/cmd/compile/internal/syntax"
+	"github.com/bir3/gocompiler/src/go/constant"
 )
 
 // If e is a valid function instantiation, indexExpr returns true.

@@ -6,18 +6,18 @@ package work
 
 import (
 	"fmt"
-	exec "r2.is/gocompiler/src/internal/execabs"
-	       "r2.is/gocompiler/vfs/os"
+	exec "github.com/bir3/gocompiler/src/internal/execabs"
+	       "github.com/bir3/gocompiler/vfs/os"
 	"path/filepath"
 	"strings"
 	"sync"
 
-	"r2.is/gocompiler/src/cmd/gocmd/internal/base"
-	"r2.is/gocompiler/src/cmd/gocmd/internal/cfg"
-	"r2.is/gocompiler/src/cmd/gocmd/internal/fsys"
-	"r2.is/gocompiler/src/cmd/gocmd/internal/load"
-	"r2.is/gocompiler/src/cmd/gocmd/internal/str"
-	"r2.is/gocompiler/src/cmd/internal/pkgpath"
+	"github.com/bir3/gocompiler/src/cmd/gocmd/internal/base"
+	"github.com/bir3/gocompiler/src/cmd/gocmd/internal/cfg"
+	"github.com/bir3/gocompiler/src/cmd/gocmd/internal/fsys"
+	"github.com/bir3/gocompiler/src/cmd/gocmd/internal/load"
+	"github.com/bir3/gocompiler/src/cmd/gocmd/internal/str"
+	"github.com/bir3/gocompiler/src/cmd/internal/pkgpath"
 )
 
 // The Gccgo toolchain.

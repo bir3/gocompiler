@@ -10,8 +10,8 @@ import (
 	"io/ioutil"
 	"os"
 
-	"r2.is/gocompiler/vfs"
-	vos "r2.is/gocompiler/vfs/os"
+	"github.com/bir3/gocompiler/vfs"
+	vos "github.com/bir3/gocompiler/vfs/os"
 	"strings"
 )
 

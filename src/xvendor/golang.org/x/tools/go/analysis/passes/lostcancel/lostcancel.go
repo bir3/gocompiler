@@ -8,14 +8,14 @@ package lostcancel
 
 import (
 	"fmt"
-	"r2.is/gocompiler/src/go/ast"
-	"r2.is/gocompiler/src/go/types"
+	"github.com/bir3/gocompiler/src/go/ast"
+	"github.com/bir3/gocompiler/src/go/types"
 
-	"r2.is/gocompiler/src/xvendor/golang.org/x/tools/go/analysis"
-	"r2.is/gocompiler/src/xvendor/golang.org/x/tools/go/analysis/passes/ctrlflow"
-	"r2.is/gocompiler/src/xvendor/golang.org/x/tools/go/analysis/passes/inspect"
-	"r2.is/gocompiler/src/xvendor/golang.org/x/tools/go/ast/inspector"
-	"r2.is/gocompiler/src/xvendor/golang.org/x/tools/go/cfg"
+	"github.com/bir3/gocompiler/src/xvendor/golang.org/x/tools/go/analysis"
+	"github.com/bir3/gocompiler/src/xvendor/golang.org/x/tools/go/analysis/passes/ctrlflow"
+	"github.com/bir3/gocompiler/src/xvendor/golang.org/x/tools/go/analysis/passes/inspect"
+	"github.com/bir3/gocompiler/src/xvendor/golang.org/x/tools/go/ast/inspector"
+	"github.com/bir3/gocompiler/src/xvendor/golang.org/x/tools/go/cfg"
 )
 
 const Doc = `check cancel func returned by context.WithCancel is called

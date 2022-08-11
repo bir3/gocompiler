@@ -6,7 +6,7 @@
 
 package bytealg
 
-import "r2.is/gocompiler/src/internal/cpu"
+import "github.com/bir3/gocompiler/src/internal/cpu"
 
 const MaxBruteForce = 16
 

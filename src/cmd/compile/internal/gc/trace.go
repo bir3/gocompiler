@@ -8,10 +8,10 @@
 package gc
 
 import (
-	       "r2.is/gocompiler/vfs/os"
+	       "github.com/bir3/gocompiler/vfs/os"
 	tracepkg "runtime/trace"
 
-	"r2.is/gocompiler/src/cmd/compile/internal/base"
+	"github.com/bir3/gocompiler/src/cmd/compile/internal/base"
 )
 
 func init() {

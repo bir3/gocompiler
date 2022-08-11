@@ -9,8 +9,8 @@ package objfile
 import (
 	"debug/dwarf"
 	"fmt"
-	"r2.is/gocompiler/src/internal/xcoff"
-	       "r2.is/gocompiler/vfs/io"
+	"github.com/bir3/gocompiler/src/internal/xcoff"
+	       "github.com/bir3/gocompiler/vfs/io"
 	"unicode"
 )
 

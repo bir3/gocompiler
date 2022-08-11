@@ -8,7 +8,7 @@ import (
 	"fmt"
 	"runtime"
 
-	"r2.is/gocompiler/src/xvendor/golang.org/x/sys/plan9"
+	"github.com/bir3/gocompiler/src/xvendor/golang.org/x/sys/plan9"
 )
 
 type state struct{}

@@ -16,15 +16,15 @@ package driver
 
 import (
 	"fmt"
-	       "r2.is/gocompiler/vfs/io"
+	       "github.com/bir3/gocompiler/vfs/io"
 	"regexp"
 	"sort"
 	"strconv"
 	"strings"
 
-	"r2.is/gocompiler/src/xvendor/github.com/google/pprof/internal/plugin"
-	"r2.is/gocompiler/src/xvendor/github.com/google/pprof/internal/report"
-	"r2.is/gocompiler/src/xvendor/github.com/google/pprof/profile"
+	"github.com/bir3/gocompiler/src/xvendor/github.com/google/pprof/internal/plugin"
+	"github.com/bir3/gocompiler/src/xvendor/github.com/google/pprof/internal/report"
+	"github.com/bir3/gocompiler/src/xvendor/github.com/google/pprof/profile"
 )
 
 var commentStart = "//:" // Sentinel for comments on options

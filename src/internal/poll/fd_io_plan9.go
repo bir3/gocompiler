@@ -5,7 +5,7 @@
 package poll
 
 import (
-	"r2.is/gocompiler/src/internal/itoa"
+	"github.com/bir3/gocompiler/src/internal/itoa"
 	"runtime"
 	"sync"
 	"syscall"

@@ -12,7 +12,7 @@ package web
 import (
 	"bytes"
 	"fmt"
-	       "r2.is/gocompiler/vfs/io"
+	       "github.com/bir3/gocompiler/vfs/io"
 	"io/fs"
 	"net/url"
 	"strings"

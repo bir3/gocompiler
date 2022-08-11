@@ -12,16 +12,16 @@ import (
 	"archive/zip"
 	"bufio"
 	"bytes"
-	"r2.is/gocompiler/src/cmd/gocmd/flag"
+	"github.com/bir3/gocompiler/src/cmd/gocmd/flag"
 	"fmt"
-	       "r2.is/gocompiler/vfs/io"
+	       "github.com/bir3/gocompiler/vfs/io"
 	"log"
-	       "r2.is/gocompiler/vfs/os"
+	       "github.com/bir3/gocompiler/vfs/os"
 	"strings"
 	"time"
 
-	"r2.is/gocompiler/src/cmd/gocmd/internal/cfg"
-	"r2.is/gocompiler/src/cmd/gocmd/internal/modfetch/codehost"
+	"github.com/bir3/gocompiler/src/cmd/gocmd/internal/cfg"
+	"github.com/bir3/gocompiler/src/cmd/gocmd/internal/modfetch/codehost"
 )
 
 func usage() {

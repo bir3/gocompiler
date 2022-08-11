@@ -5,8 +5,8 @@
 package riscv64
 
 import (
-	"r2.is/gocompiler/src/cmd/compile/internal/ssagen"
-	"r2.is/gocompiler/src/cmd/internal/obj/riscv"
+	"github.com/bir3/gocompiler/src/cmd/compile/internal/ssagen"
+	"github.com/bir3/gocompiler/src/cmd/internal/obj/riscv"
 )
 
 func Init(arch *ssagen.ArchInfo) {

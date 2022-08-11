@@ -5,8 +5,8 @@
 package wasm
 
 import (
-	"r2.is/gocompiler/src/cmd/internal/sys"
-	"r2.is/gocompiler/src/cmd/link/internal/ld"
+	"github.com/bir3/gocompiler/src/cmd/internal/sys"
+	"github.com/bir3/gocompiler/src/cmd/link/internal/ld"
 )
 
 func Init() (*sys.Arch, ld.Arch) {

@@ -7,13 +7,13 @@ package s390x
 import (
 	"math"
 
-	"r2.is/gocompiler/src/cmd/compile/internal/base"
-	"r2.is/gocompiler/src/cmd/compile/internal/logopt"
-	"r2.is/gocompiler/src/cmd/compile/internal/ssa"
-	"r2.is/gocompiler/src/cmd/compile/internal/ssagen"
-	"r2.is/gocompiler/src/cmd/compile/internal/types"
-	"r2.is/gocompiler/src/cmd/internal/obj"
-	"r2.is/gocompiler/src/cmd/internal/obj/s390x"
+	"github.com/bir3/gocompiler/src/cmd/compile/internal/base"
+	"github.com/bir3/gocompiler/src/cmd/compile/internal/logopt"
+	"github.com/bir3/gocompiler/src/cmd/compile/internal/ssa"
+	"github.com/bir3/gocompiler/src/cmd/compile/internal/ssagen"
+	"github.com/bir3/gocompiler/src/cmd/compile/internal/types"
+	"github.com/bir3/gocompiler/src/cmd/internal/obj"
+	"github.com/bir3/gocompiler/src/cmd/internal/obj/s390x"
 )
 
 // markMoves marks any MOVXconst ops that need to avoid clobbering flags.

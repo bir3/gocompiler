@@ -12,23 +12,23 @@ import (
 	"bytes"
 	"errors"
 	"fmt"
-	       "r2.is/gocompiler/vfs/io"
+	       "github.com/bir3/gocompiler/vfs/io"
 	"io/fs"
 	"net/url"
-	       "r2.is/gocompiler/vfs/os"
+	       "github.com/bir3/gocompiler/vfs/os"
 	"path/filepath"
 	"strings"
 	"sync"
 	"time"
 
-	"r2.is/gocompiler/src/cmd/gocmd/internal/base"
-	"r2.is/gocompiler/src/cmd/gocmd/internal/cfg"
-	"r2.is/gocompiler/src/cmd/gocmd/internal/lockedfile"
-	"r2.is/gocompiler/src/cmd/gocmd/internal/web"
+	"github.com/bir3/gocompiler/src/cmd/gocmd/internal/base"
+	"github.com/bir3/gocompiler/src/cmd/gocmd/internal/cfg"
+	"github.com/bir3/gocompiler/src/cmd/gocmd/internal/lockedfile"
+	"github.com/bir3/gocompiler/src/cmd/gocmd/internal/web"
 
-	"r2.is/gocompiler/src/xvendor/golang.org/x/mod/module"
-	"r2.is/gocompiler/src/xvendor/golang.org/x/mod/sumdb"
-	"r2.is/gocompiler/src/xvendor/golang.org/x/mod/sumdb/note"
+	"github.com/bir3/gocompiler/src/xvendor/golang.org/x/mod/module"
+	"github.com/bir3/gocompiler/src/xvendor/golang.org/x/mod/sumdb"
+	"github.com/bir3/gocompiler/src/xvendor/golang.org/x/mod/sumdb/note"
 )
 
 // useSumDB reports whether to use the Go checksum database for the given module.

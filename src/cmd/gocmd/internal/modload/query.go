@@ -10,22 +10,22 @@ import (
 	"errors"
 	"fmt"
 	"io/fs"
-	       "r2.is/gocompiler/vfs/os"
+	       "github.com/bir3/gocompiler/vfs/os"
 	pathpkg "path"
 	"sort"
 	"strings"
 	"sync"
 	"time"
 
-	"r2.is/gocompiler/src/cmd/gocmd/internal/cfg"
-	"r2.is/gocompiler/src/cmd/gocmd/internal/imports"
-	"r2.is/gocompiler/src/cmd/gocmd/internal/modfetch"
-	"r2.is/gocompiler/src/cmd/gocmd/internal/search"
-	"r2.is/gocompiler/src/cmd/gocmd/internal/str"
-	"r2.is/gocompiler/src/cmd/gocmd/internal/trace"
+	"github.com/bir3/gocompiler/src/cmd/gocmd/internal/cfg"
+	"github.com/bir3/gocompiler/src/cmd/gocmd/internal/imports"
+	"github.com/bir3/gocompiler/src/cmd/gocmd/internal/modfetch"
+	"github.com/bir3/gocompiler/src/cmd/gocmd/internal/search"
+	"github.com/bir3/gocompiler/src/cmd/gocmd/internal/str"
+	"github.com/bir3/gocompiler/src/cmd/gocmd/internal/trace"
 
-	"r2.is/gocompiler/src/xvendor/golang.org/x/mod/module"
-	"r2.is/gocompiler/src/xvendor/golang.org/x/mod/semver"
+	"github.com/bir3/gocompiler/src/xvendor/golang.org/x/mod/module"
+	"github.com/bir3/gocompiler/src/xvendor/golang.org/x/mod/semver"
 )
 
 // Query looks up a revision of a given module given a version query string.

@@ -8,14 +8,14 @@
 package importer
 
 import (
-	"r2.is/gocompiler/src/cmd/compile/internal/syntax"
-	"r2.is/gocompiler/src/cmd/compile/internal/typecheck"
-	"r2.is/gocompiler/src/cmd/compile/internal/types2"
+	"github.com/bir3/gocompiler/src/cmd/compile/internal/syntax"
+	"github.com/bir3/gocompiler/src/cmd/compile/internal/typecheck"
+	"github.com/bir3/gocompiler/src/cmd/compile/internal/types2"
 	"encoding/binary"
 	"fmt"
-	"r2.is/gocompiler/src/go/constant"
-	"r2.is/gocompiler/src/go/token"
-	       "r2.is/gocompiler/vfs/io"
+	"github.com/bir3/gocompiler/src/go/constant"
+	"github.com/bir3/gocompiler/src/go/token"
+	       "github.com/bir3/gocompiler/vfs/io"
 	"math/big"
 	"sort"
 	"strings"

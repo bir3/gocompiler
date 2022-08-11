@@ -12,7 +12,7 @@ import (
 	"strconv"
 	"strings"
 
-	"r2.is/gocompiler/src/cmd/gocmd/internal/fsys"
+	"github.com/bir3/gocompiler/src/cmd/gocmd/internal/fsys"
 )
 
 func ScanDir(dir string, tags map[string]bool) ([]string, []string, error) {

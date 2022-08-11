@@ -8,8 +8,8 @@ package ast
 
 import (
 	"fmt"
-	"r2.is/gocompiler/src/go/scanner"
-	"r2.is/gocompiler/src/go/token"
+	"github.com/bir3/gocompiler/src/go/scanner"
+	"github.com/bir3/gocompiler/src/go/token"
 	"strconv"
 )
 

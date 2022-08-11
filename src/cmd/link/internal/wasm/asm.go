@@ -6,12 +6,12 @@ package wasm
 
 import (
 	"bytes"
-	"r2.is/gocompiler/src/cmd/internal/objabi"
-	"r2.is/gocompiler/src/cmd/link/internal/ld"
-	"r2.is/gocompiler/src/cmd/link/internal/loader"
-	"r2.is/gocompiler/src/cmd/link/internal/sym"
-	"r2.is/gocompiler/src/internal/buildcfg"
-	       "r2.is/gocompiler/vfs/io"
+	"github.com/bir3/gocompiler/src/cmd/internal/objabi"
+	"github.com/bir3/gocompiler/src/cmd/link/internal/ld"
+	"github.com/bir3/gocompiler/src/cmd/link/internal/loader"
+	"github.com/bir3/gocompiler/src/cmd/link/internal/sym"
+	"github.com/bir3/gocompiler/src/internal/buildcfg"
+	       "github.com/bir3/gocompiler/vfs/io"
 	"regexp"
 )
 

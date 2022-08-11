@@ -5,12 +5,12 @@
 package ssa
 
 import (
-	"r2.is/gocompiler/src/cmd/compile/internal/abi"
-	"r2.is/gocompiler/src/cmd/compile/internal/ir"
-	"r2.is/gocompiler/src/cmd/compile/internal/types"
-	"r2.is/gocompiler/src/cmd/internal/obj"
-	"r2.is/gocompiler/src/cmd/internal/src"
-	"r2.is/gocompiler/src/internal/buildcfg"
+	"github.com/bir3/gocompiler/src/cmd/compile/internal/abi"
+	"github.com/bir3/gocompiler/src/cmd/compile/internal/ir"
+	"github.com/bir3/gocompiler/src/cmd/compile/internal/types"
+	"github.com/bir3/gocompiler/src/cmd/internal/obj"
+	"github.com/bir3/gocompiler/src/cmd/internal/src"
+	"github.com/bir3/gocompiler/src/internal/buildcfg"
 )
 
 // A Config holds readonly compilation information.

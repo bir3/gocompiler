@@ -6,11 +6,11 @@ package buildid
 
 import (
 	"bytes"
-	"r2.is/gocompiler/src/cmd/internal/codesign"
+	"github.com/bir3/gocompiler/src/cmd/internal/codesign"
 	"crypto/sha256"
 	"debug/macho"
 	"fmt"
-	       "r2.is/gocompiler/vfs/io"
+	       "github.com/bir3/gocompiler/vfs/io"
 )
 
 // FindAndHash reads all of r and returns the offsets of occurrences of id.

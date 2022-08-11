@@ -6,8 +6,8 @@ package fuzz
 
 import (
 	"fmt"
-	"r2.is/gocompiler/vfs/ioutil"
-	       "r2.is/gocompiler/vfs/os"
+	"github.com/bir3/gocompiler/vfs/ioutil"
+	       "github.com/bir3/gocompiler/vfs/os"
 	"unsafe"
 )
 

@@ -4,7 +4,7 @@
 
 package ssa
 
-import "r2.is/gocompiler/src/cmd/internal/src"
+import "github.com/bir3/gocompiler/src/cmd/internal/src"
 
 // branchelim tries to eliminate branches by
 // generating CondSelect instructions.

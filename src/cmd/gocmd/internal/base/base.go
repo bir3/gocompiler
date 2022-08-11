@@ -8,16 +8,16 @@ package base
 
 import (
 	"context"
-	"r2.is/gocompiler/src/cmd/gocmd/flag"
+	"github.com/bir3/gocompiler/src/cmd/gocmd/flag"
 	"fmt"
-	exec "r2.is/gocompiler/src/internal/execabs"
+	exec "github.com/bir3/gocompiler/src/internal/execabs"
 	"log"
-	       "r2.is/gocompiler/vfs/os"
+	       "github.com/bir3/gocompiler/vfs/os"
 	"strings"
 	"sync"
 
-	"r2.is/gocompiler/src/cmd/gocmd/internal/cfg"
-	"r2.is/gocompiler/src/cmd/gocmd/internal/str"
+	"github.com/bir3/gocompiler/src/cmd/gocmd/internal/cfg"
+	"github.com/bir3/gocompiler/src/cmd/gocmd/internal/str"
 )
 
 // A Command is an implementation of a go command

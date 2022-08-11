@@ -18,10 +18,10 @@ import (
 	"encoding/binary"
 	"errors"
 	"fmt"
-	"r2.is/gocompiler/src/internal/xcoff"
-	       "r2.is/gocompiler/vfs/io"
+	"github.com/bir3/gocompiler/src/internal/xcoff"
+	       "github.com/bir3/gocompiler/vfs/io"
 	"io/fs"
-	       "r2.is/gocompiler/vfs/os"
+	       "github.com/bir3/gocompiler/vfs/os"
 	"runtime/debug"
 )
 

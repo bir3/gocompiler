@@ -9,7 +9,7 @@ import (
 	"reflect"
 	"strings"
 
-	"r2.is/gocompiler/src/internal/goexperiment"
+	"github.com/bir3/gocompiler/src/internal/goexperiment"
 )
 
 // Experiment contains the toolchain experiments enabled for the

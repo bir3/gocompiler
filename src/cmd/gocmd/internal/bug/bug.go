@@ -9,20 +9,20 @@ import (
 	"bytes"
 	"context"
 	"fmt"
-	exec "r2.is/gocompiler/src/internal/execabs"
-	       "r2.is/gocompiler/vfs/io"
+	exec "github.com/bir3/gocompiler/src/internal/execabs"
+	       "github.com/bir3/gocompiler/vfs/io"
 	urlpkg "net/url"
-	       "r2.is/gocompiler/vfs/os"
+	       "github.com/bir3/gocompiler/vfs/os"
 	"path/filepath"
 	"regexp"
 	"runtime"
-"r2.is/gocompiler/vfs"
+"github.com/bir3/gocompiler/vfs"
 	"strings"
 
-	"r2.is/gocompiler/src/cmd/gocmd/internal/base"
-	"r2.is/gocompiler/src/cmd/gocmd/internal/cfg"
-	"r2.is/gocompiler/src/cmd/gocmd/internal/envcmd"
-	"r2.is/gocompiler/src/cmd/gocmd/internal/web"
+	"github.com/bir3/gocompiler/src/cmd/gocmd/internal/base"
+	"github.com/bir3/gocompiler/src/cmd/gocmd/internal/cfg"
+	"github.com/bir3/gocompiler/src/cmd/gocmd/internal/envcmd"
+	"github.com/bir3/gocompiler/src/cmd/gocmd/internal/web"
 )
 
 var CmdBug = &base.Command{

@@ -5,9 +5,9 @@
 package ld
 
 import (
-	"r2.is/gocompiler/src/cmd/internal/sys"
+	"github.com/bir3/gocompiler/src/cmd/internal/sys"
 	"fmt"
-	"r2.is/gocompiler/src/internal/buildcfg"
+	"github.com/bir3/gocompiler/src/internal/buildcfg"
 )
 
 // A BuildMode indicates the sort of object we are building.

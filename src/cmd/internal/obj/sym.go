@@ -32,11 +32,11 @@
 package obj
 
 import (
-	"r2.is/gocompiler/src/cmd/internal/goobj"
-	"r2.is/gocompiler/src/cmd/internal/objabi"
+	"github.com/bir3/gocompiler/src/cmd/internal/goobj"
+	"github.com/bir3/gocompiler/src/cmd/internal/objabi"
 	"crypto/md5"
 	"fmt"
-	"r2.is/gocompiler/src/internal/buildcfg"
+	"github.com/bir3/gocompiler/src/internal/buildcfg"
 	"log"
 	"math"
 	"sort"

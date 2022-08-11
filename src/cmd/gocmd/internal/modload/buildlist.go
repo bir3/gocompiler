@@ -5,13 +5,13 @@
 package modload
 
 import (
-	"r2.is/gocompiler/src/cmd/gocmd/internal/base"
-	"r2.is/gocompiler/src/cmd/gocmd/internal/cfg"
-	"r2.is/gocompiler/src/cmd/gocmd/internal/mvs"
-	"r2.is/gocompiler/src/cmd/gocmd/internal/par"
+	"github.com/bir3/gocompiler/src/cmd/gocmd/internal/base"
+	"github.com/bir3/gocompiler/src/cmd/gocmd/internal/cfg"
+	"github.com/bir3/gocompiler/src/cmd/gocmd/internal/mvs"
+	"github.com/bir3/gocompiler/src/cmd/gocmd/internal/par"
 	"context"
 	"fmt"
-	       "r2.is/gocompiler/vfs/os"
+	       "github.com/bir3/gocompiler/vfs/os"
 	"reflect"
 	"runtime"
 	"runtime/debug"
@@ -19,8 +19,8 @@ import (
 	"sync"
 	"sync/atomic"
 
-	"r2.is/gocompiler/src/xvendor/golang.org/x/mod/module"
-	"r2.is/gocompiler/src/xvendor/golang.org/x/mod/semver"
+	"github.com/bir3/gocompiler/src/xvendor/golang.org/x/mod/module"
+	"github.com/bir3/gocompiler/src/xvendor/golang.org/x/mod/semver"
 )
 
 // capVersionSlice returns s with its cap reduced to its length.

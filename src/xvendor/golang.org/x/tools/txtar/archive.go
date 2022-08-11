@@ -34,7 +34,7 @@ package txtar
 import (
 	"bytes"
 	"fmt"
-	"r2.is/gocompiler/vfs/ioutil"
+	"github.com/bir3/gocompiler/vfs/ioutil"
 	"strings"
 )
 

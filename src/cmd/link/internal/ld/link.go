@@ -32,10 +32,10 @@ package ld
 
 import (
 	"bufio"
-	"r2.is/gocompiler/src/cmd/internal/objabi"
-	"r2.is/gocompiler/src/cmd/internal/sys"
-	"r2.is/gocompiler/src/cmd/link/internal/loader"
-	"r2.is/gocompiler/src/cmd/link/internal/sym"
+	"github.com/bir3/gocompiler/src/cmd/internal/objabi"
+	"github.com/bir3/gocompiler/src/cmd/internal/sys"
+	"github.com/bir3/gocompiler/src/cmd/link/internal/loader"
+	"github.com/bir3/gocompiler/src/cmd/link/internal/sym"
 	"debug/elf"
 	"fmt"
 )

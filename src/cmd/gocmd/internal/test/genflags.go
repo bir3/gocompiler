@@ -8,15 +8,15 @@ package main
 
 import (
 	"bytes"
-	"r2.is/gocompiler/src/cmd/gocmd/flag"
-	exec "r2.is/gocompiler/src/internal/execabs"
+	"github.com/bir3/gocompiler/src/cmd/gocmd/flag"
+	exec "github.com/bir3/gocompiler/src/internal/execabs"
 	"log"
-	       "r2.is/gocompiler/vfs/os"
+	       "github.com/bir3/gocompiler/vfs/os"
 	"strings"
 	"testing"
 	"text/template"
 
-	"r2.is/gocompiler/src/cmd/gocmd/internal/test/internal/genflags"
+	"github.com/bir3/gocompiler/src/cmd/gocmd/internal/test/internal/genflags"
 )
 
 func main() {

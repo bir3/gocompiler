@@ -6,19 +6,19 @@ package base
 
 import (
 	"encoding/json"
-	"r2.is/gocompiler/src/cmd/compile/flag"
+	"github.com/bir3/gocompiler/src/cmd/compile/flag"
 	"fmt"
-	"r2.is/gocompiler/src/internal/buildcfg"
-	"r2.is/gocompiler/vfs/ioutil"
+	"github.com/bir3/gocompiler/src/internal/buildcfg"
+	"github.com/bir3/gocompiler/vfs/ioutil"
 	"log"
-	       "r2.is/gocompiler/vfs/os"
+	       "github.com/bir3/gocompiler/vfs/os"
 	"reflect"
 	"runtime"
 	"strings"
 
 
-	"r2.is/gocompiler/src/cmd/compile/flag_objabi"
-	"r2.is/gocompiler/src/cmd/internal/sys"
+	"github.com/bir3/gocompiler/src/cmd/compile/flag_objabi"
+	"github.com/bir3/gocompiler/src/cmd/internal/sys"
 )
 
 func usage() {

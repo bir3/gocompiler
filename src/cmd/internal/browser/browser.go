@@ -6,8 +6,8 @@
 package browser
 
 import (
-	exec "r2.is/gocompiler/src/internal/execabs"
-	       "r2.is/gocompiler/vfs/os"
+	exec "github.com/bir3/gocompiler/src/internal/execabs"
+	       "github.com/bir3/gocompiler/vfs/os"
 	"runtime"
 	"time"
 )

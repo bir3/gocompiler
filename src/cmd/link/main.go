@@ -5,21 +5,21 @@
 package link
 
 import (
-	"r2.is/gocompiler/src/cmd/internal/sys"
-	"r2.is/gocompiler/src/cmd/link/internal/amd64"
-	"r2.is/gocompiler/src/cmd/link/internal/arm"
-	"r2.is/gocompiler/src/cmd/link/internal/arm64"
-	"r2.is/gocompiler/src/cmd/link/internal/ld"
-	"r2.is/gocompiler/src/cmd/link/internal/mips"
-	"r2.is/gocompiler/src/cmd/link/internal/mips64"
-	"r2.is/gocompiler/src/cmd/link/internal/ppc64"
-	"r2.is/gocompiler/src/cmd/link/internal/riscv64"
-	"r2.is/gocompiler/src/cmd/link/internal/s390x"
-	"r2.is/gocompiler/src/cmd/link/internal/wasm"
-	"r2.is/gocompiler/src/cmd/link/internal/x86"
+	"github.com/bir3/gocompiler/src/cmd/internal/sys"
+	"github.com/bir3/gocompiler/src/cmd/link/internal/amd64"
+	"github.com/bir3/gocompiler/src/cmd/link/internal/arm"
+	"github.com/bir3/gocompiler/src/cmd/link/internal/arm64"
+	"github.com/bir3/gocompiler/src/cmd/link/internal/ld"
+	"github.com/bir3/gocompiler/src/cmd/link/internal/mips"
+	"github.com/bir3/gocompiler/src/cmd/link/internal/mips64"
+	"github.com/bir3/gocompiler/src/cmd/link/internal/ppc64"
+	"github.com/bir3/gocompiler/src/cmd/link/internal/riscv64"
+	"github.com/bir3/gocompiler/src/cmd/link/internal/s390x"
+	"github.com/bir3/gocompiler/src/cmd/link/internal/wasm"
+	"github.com/bir3/gocompiler/src/cmd/link/internal/x86"
 	"fmt"
-	"r2.is/gocompiler/src/internal/buildcfg"
-	       "r2.is/gocompiler/vfs/os"
+	"github.com/bir3/gocompiler/src/internal/buildcfg"
+	       "github.com/bir3/gocompiler/vfs/os"
 )
 
 // The bulk of the linker implementation lives in cmd/link/internal/ld.

@@ -10,12 +10,12 @@ import (
 	"bytes"
 	"encoding/binary"
 	"fmt"
-	"r2.is/gocompiler/src/go/constant"
-	       "r2.is/gocompiler/vfs/io"
+	"github.com/bir3/gocompiler/src/go/constant"
+	       "github.com/bir3/gocompiler/vfs/io"
 	"math/big"
 	"runtime"
 
-	"r2.is/gocompiler/src/cmd/compile/internal/base"
+	"github.com/bir3/gocompiler/src/cmd/compile/internal/base"
 )
 
 type pkgEncoder struct {

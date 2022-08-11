@@ -6,12 +6,12 @@ package types
 
 import (
 	"fmt"
-	"r2.is/gocompiler/src/internal/goversion"
+	"github.com/bir3/gocompiler/src/internal/goversion"
 	"log"
 	"regexp"
 	"strconv"
 
-	"r2.is/gocompiler/src/cmd/compile/internal/base"
+	"github.com/bir3/gocompiler/src/cmd/compile/internal/base"
 )
 
 // A lang is a language version broken into major and minor numbers.

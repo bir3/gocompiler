@@ -19,12 +19,12 @@
 package goobj
 
 import (
-	"r2.is/gocompiler/src/cmd/internal/bio"
+	"github.com/bir3/gocompiler/src/cmd/internal/bio"
 	"crypto/sha1"
 	"encoding/binary"
 	"errors"
 	"fmt"
-	"r2.is/gocompiler/src/internal/unsafeheader"
+	"github.com/bir3/gocompiler/src/internal/unsafeheader"
 	"unsafe"
 )
 

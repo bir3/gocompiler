@@ -5,8 +5,8 @@
 package reflectlite
 
 import (
-	"r2.is/gocompiler/src/internal/goarch"
-	"r2.is/gocompiler/src/internal/unsafeheader"
+	"github.com/bir3/gocompiler/src/internal/goarch"
+	"github.com/bir3/gocompiler/src/internal/unsafeheader"
 	"runtime"
 	"unsafe"
 )

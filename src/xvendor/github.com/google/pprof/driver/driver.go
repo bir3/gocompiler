@@ -16,14 +16,14 @@
 package driver
 
 import (
-	       "r2.is/gocompiler/vfs/io"
+	       "github.com/bir3/gocompiler/vfs/io"
 	"net/http"
 	"regexp"
 	"time"
 
-	internaldriver "r2.is/gocompiler/src/xvendor/github.com/google/pprof/internal/driver"
-	"r2.is/gocompiler/src/xvendor/github.com/google/pprof/internal/plugin"
-	"r2.is/gocompiler/src/xvendor/github.com/google/pprof/profile"
+	internaldriver "github.com/bir3/gocompiler/src/xvendor/github.com/google/pprof/internal/driver"
+	"github.com/bir3/gocompiler/src/xvendor/github.com/google/pprof/internal/plugin"
+	"github.com/bir3/gocompiler/src/xvendor/github.com/google/pprof/profile"
 )
 
 // PProf acquires a profile, and symbolizes it using a profile

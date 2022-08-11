@@ -9,12 +9,12 @@ import (
 	"crypto/md5"
 	"encoding/binary"
 	"fmt"
-	"r2.is/gocompiler/src/go/constant"
+	"github.com/bir3/gocompiler/src/go/constant"
 	"strconv"
 	"strings"
 	"sync"
 
-	"r2.is/gocompiler/src/cmd/compile/internal/base"
+	"github.com/bir3/gocompiler/src/cmd/compile/internal/base"
 )
 
 // BuiltinPkg is a fake package that declares the universe block.

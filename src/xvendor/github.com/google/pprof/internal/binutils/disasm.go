@@ -16,13 +16,13 @@ package binutils
 
 import (
 	"bytes"
-	       "r2.is/gocompiler/vfs/io"
+	       "github.com/bir3/gocompiler/vfs/io"
 	"regexp"
 	"strconv"
 	"strings"
 
-	"r2.is/gocompiler/src/xvendor/github.com/google/pprof/internal/plugin"
-	"r2.is/gocompiler/src/xvendor/github.com/ianlancetaylor/demangle"
+	"github.com/bir3/gocompiler/src/xvendor/github.com/google/pprof/internal/plugin"
+	"github.com/bir3/gocompiler/src/xvendor/github.com/ianlancetaylor/demangle"
 )
 
 var (

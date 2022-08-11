@@ -8,16 +8,16 @@ import (
 	"context"
 	"fmt"
 	"io/fs"
-	       "r2.is/gocompiler/vfs/os"
+	       "github.com/bir3/gocompiler/vfs/os"
 	"path/filepath"
 	"strings"
 
-	"r2.is/gocompiler/src/cmd/gocmd/internal/cfg"
-	"r2.is/gocompiler/src/cmd/gocmd/internal/fsys"
-	"r2.is/gocompiler/src/cmd/gocmd/internal/imports"
-	"r2.is/gocompiler/src/cmd/gocmd/internal/search"
+	"github.com/bir3/gocompiler/src/cmd/gocmd/internal/cfg"
+	"github.com/bir3/gocompiler/src/cmd/gocmd/internal/fsys"
+	"github.com/bir3/gocompiler/src/cmd/gocmd/internal/imports"
+	"github.com/bir3/gocompiler/src/cmd/gocmd/internal/search"
 
-	"r2.is/gocompiler/src/xvendor/golang.org/x/mod/module"
+	"github.com/bir3/gocompiler/src/xvendor/golang.org/x/mod/module"
 )
 
 type stdFilter int8

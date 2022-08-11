@@ -185,13 +185,13 @@ import (
 	"encoding/binary"
 	"errors"
 	"fmt"
-	       "r2.is/gocompiler/vfs/io"
+	       "github.com/bir3/gocompiler/vfs/io"
 	"strconv"
 	"strings"
 	"unicode"
 	"unicode/utf8"
 
-	"r2.is/gocompiler/src/xvendor/golang.org/x/crypto/ed25519"
+	"github.com/bir3/gocompiler/src/xvendor/golang.org/x/crypto/ed25519"
 )
 
 // A Verifier verifies messages signed with a specific key.

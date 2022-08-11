@@ -11,13 +11,13 @@ import (
 	"bytes"
 	"errors"
 	"fmt"
-	"r2.is/gocompiler/src/internal/buildcfg"
-	exec "r2.is/gocompiler/src/internal/execabs"
+	"github.com/bir3/gocompiler/src/internal/buildcfg"
+	exec "github.com/bir3/gocompiler/src/internal/execabs"
 	"sort"
 	"strconv"
 	"strings"
 
-	"r2.is/gocompiler/src/cmd/internal/objabi"
+	"github.com/bir3/gocompiler/src/cmd/internal/objabi"
 )
 
 // InfoPrefix is the prefix for all the symbols containing DWARF info entries.

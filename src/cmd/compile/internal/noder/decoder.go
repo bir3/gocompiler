@@ -9,14 +9,14 @@ package noder
 import (
 	"encoding/binary"
 	"fmt"
-	"r2.is/gocompiler/src/go/constant"
-	"r2.is/gocompiler/src/go/token"
+	"github.com/bir3/gocompiler/src/go/constant"
+	"github.com/bir3/gocompiler/src/go/token"
 	"math/big"
-	       "r2.is/gocompiler/vfs/os"
+	       "github.com/bir3/gocompiler/vfs/os"
 	"runtime"
 	"strings"
 
-	"r2.is/gocompiler/src/cmd/compile/internal/base"
+	"github.com/bir3/gocompiler/src/cmd/compile/internal/base"
 )
 
 type pkgDecoder struct {

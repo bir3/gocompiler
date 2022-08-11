@@ -3,9 +3,9 @@ package driver
 import (
 	"encoding/json"
 	"fmt"
-	"r2.is/gocompiler/vfs/ioutil"
+	"github.com/bir3/gocompiler/vfs/ioutil"
 	"net/url"
-	       "r2.is/gocompiler/vfs/os"
+	       "github.com/bir3/gocompiler/vfs/os"
 	"path/filepath"
 )
 

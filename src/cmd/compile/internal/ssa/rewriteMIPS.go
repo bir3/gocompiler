@@ -3,7 +3,7 @@
 
 package ssa
 
-import "r2.is/gocompiler/src/cmd/compile/internal/types"
+import "github.com/bir3/gocompiler/src/cmd/compile/internal/types"
 
 func rewriteValueMIPS(v *Value) bool {
 	switch v.Op {

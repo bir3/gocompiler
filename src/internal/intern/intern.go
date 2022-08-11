@@ -11,7 +11,7 @@
 package intern
 
 import (
-	"r2.is/gocompiler/src/internal/godebug"
+	"github.com/bir3/gocompiler/src/internal/godebug"
 	"runtime"
 	"sync"
 	"unsafe"

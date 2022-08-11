@@ -16,12 +16,12 @@ package graph
 
 import (
 	"fmt"
-	       "r2.is/gocompiler/vfs/io"
+	       "github.com/bir3/gocompiler/vfs/io"
 	"math"
 	"path/filepath"
 	"strings"
 
-	"r2.is/gocompiler/src/xvendor/github.com/google/pprof/internal/measurement"
+	"github.com/bir3/gocompiler/src/xvendor/github.com/google/pprof/internal/measurement"
 )
 
 // DotAttributes contains details about the graph itself, giving

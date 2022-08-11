@@ -4,7 +4,7 @@
 
 package analysis
 
-import "r2.is/gocompiler/src/go/token"
+import "github.com/bir3/gocompiler/src/go/token"
 
 // A Diagnostic is a message associated with a source location or range.
 //

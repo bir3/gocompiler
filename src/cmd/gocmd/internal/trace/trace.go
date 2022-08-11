@@ -5,11 +5,11 @@
 package trace
 
 import (
-	"r2.is/gocompiler/src/cmd/internal/traceviewer"
+	"github.com/bir3/gocompiler/src/cmd/internal/traceviewer"
 	"context"
 	"encoding/json"
 	"errors"
-	       "r2.is/gocompiler/vfs/os"
+	       "github.com/bir3/gocompiler/vfs/os"
 	"strings"
 	"sync/atomic"
 	"time"

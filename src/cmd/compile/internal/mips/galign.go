@@ -5,10 +5,10 @@
 package mips
 
 import (
-	"r2.is/gocompiler/src/cmd/compile/internal/ssa"
-	"r2.is/gocompiler/src/cmd/compile/internal/ssagen"
-	"r2.is/gocompiler/src/cmd/internal/obj/mips"
-	"r2.is/gocompiler/src/internal/buildcfg"
+	"github.com/bir3/gocompiler/src/cmd/compile/internal/ssa"
+	"github.com/bir3/gocompiler/src/cmd/compile/internal/ssagen"
+	"github.com/bir3/gocompiler/src/cmd/internal/obj/mips"
+	"github.com/bir3/gocompiler/src/internal/buildcfg"
 )
 
 func Init(arch *ssagen.ArchInfo) {

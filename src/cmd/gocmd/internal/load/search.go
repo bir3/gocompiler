@@ -8,7 +8,7 @@ import (
 	"path/filepath"
 	"strings"
 
-	"r2.is/gocompiler/src/cmd/gocmd/internal/search"
+	"github.com/bir3/gocompiler/src/cmd/gocmd/internal/search"
 )
 
 // MatchPackage(pattern, cwd)(p) reports whether package p matches pattern in the working directory cwd.

@@ -5,9 +5,9 @@
 package types2
 
 import (
-	"r2.is/gocompiler/src/cmd/compile/internal/syntax"
+	"github.com/bir3/gocompiler/src/cmd/compile/internal/syntax"
 	"fmt"
-	"r2.is/gocompiler/src/go/constant"
+	"github.com/bir3/gocompiler/src/go/constant"
 )
 
 func (err *error_) recordAltDecl(obj Object) {

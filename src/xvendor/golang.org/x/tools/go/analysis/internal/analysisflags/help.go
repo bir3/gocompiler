@@ -8,11 +8,11 @@ import (
 	"flag"
 	"fmt"
 	"log"
-	       "r2.is/gocompiler/vfs/os"
+	       "github.com/bir3/gocompiler/vfs/os"
 	"sort"
 	"strings"
 
-	"r2.is/gocompiler/src/xvendor/golang.org/x/tools/go/analysis"
+	"github.com/bir3/gocompiler/src/xvendor/golang.org/x/tools/go/analysis"
 )
 
 const help = `PROGNAME is a tool for static analysis of Go programs.

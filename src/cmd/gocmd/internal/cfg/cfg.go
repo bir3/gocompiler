@@ -9,18 +9,18 @@ package cfg
 import (
 	"bytes"
 	"fmt"
-	"r2.is/gocompiler/src/go/build"
-	"r2.is/gocompiler/src/internal/buildcfg"
-	"r2.is/gocompiler/src/internal/cfg"
-	       "r2.is/gocompiler/vfs/io"
-	       "r2.is/gocompiler/vfs/os"
+	"github.com/bir3/gocompiler/src/go/build"
+	"github.com/bir3/gocompiler/src/internal/buildcfg"
+	"github.com/bir3/gocompiler/src/internal/cfg"
+	       "github.com/bir3/gocompiler/vfs/io"
+	       "github.com/bir3/gocompiler/vfs/os"
 	"path/filepath"
 	"runtime"
-"r2.is/gocompiler/vfs"
+"github.com/bir3/gocompiler/vfs"
 	"strings"
 	"sync"
 
-	"r2.is/gocompiler/src/cmd/gocmd/internal/fsys"
+	"github.com/bir3/gocompiler/src/cmd/gocmd/internal/fsys"
 )
 
 // These are general "build flags" used by build and other commands.

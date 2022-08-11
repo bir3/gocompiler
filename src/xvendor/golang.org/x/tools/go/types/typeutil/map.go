@@ -9,10 +9,10 @@ package typeutil // import "golang.org/x/tools/go/types/typeutil"
 import (
 	"bytes"
 	"fmt"
-	"r2.is/gocompiler/src/go/types"
+	"github.com/bir3/gocompiler/src/go/types"
 	"reflect"
 
-	"r2.is/gocompiler/src/xvendor/golang.org/x/tools/internal/typeparams"
+	"github.com/bir3/gocompiler/src/xvendor/golang.org/x/tools/internal/typeparams"
 )
 
 // Map is a hash-table-based mapping from types (types.Type) to

@@ -7,16 +7,16 @@
 package objfile
 
 import (
-	"r2.is/gocompiler/src/cmd/internal/archive"
-	"r2.is/gocompiler/src/cmd/internal/goobj"
-	"r2.is/gocompiler/src/cmd/internal/objabi"
-	"r2.is/gocompiler/src/cmd/internal/sys"
+	"github.com/bir3/gocompiler/src/cmd/internal/archive"
+	"github.com/bir3/gocompiler/src/cmd/internal/goobj"
+	"github.com/bir3/gocompiler/src/cmd/internal/objabi"
+	"github.com/bir3/gocompiler/src/cmd/internal/sys"
 	"debug/dwarf"
 	"debug/gosym"
 	"errors"
 	"fmt"
-	       "r2.is/gocompiler/vfs/io"
-	       "r2.is/gocompiler/vfs/os"
+	       "github.com/bir3/gocompiler/vfs/io"
+	       "github.com/bir3/gocompiler/vfs/os"
 )
 
 type goobjFile struct {

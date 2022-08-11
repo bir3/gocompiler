@@ -3,8 +3,8 @@ package driver
 import (
 	"strings"
 
-	"r2.is/gocompiler/src/xvendor/github.com/google/pprof/internal/measurement"
-	"r2.is/gocompiler/src/xvendor/github.com/google/pprof/profile"
+	"github.com/bir3/gocompiler/src/xvendor/github.com/google/pprof/internal/measurement"
+	"github.com/bir3/gocompiler/src/xvendor/github.com/google/pprof/profile"
 )
 
 // addLabelNodes adds pseudo stack frames "label:value" to each Sample with

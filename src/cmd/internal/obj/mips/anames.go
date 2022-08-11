@@ -2,7 +2,7 @@
 
 package mips
 
-import "r2.is/gocompiler/src/cmd/internal/obj"
+import "github.com/bir3/gocompiler/src/cmd/internal/obj"
 
 var Anames = []string{
 	obj.A_ARCHSPECIFIC: "ABSD",

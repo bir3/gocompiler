@@ -11,12 +11,12 @@ package main
 
 import (
 	"bytes"
-	"r2.is/gocompiler/src/cmd/compile/flag"
+	"github.com/bir3/gocompiler/src/cmd/compile/flag"
 	"fmt"
-	"r2.is/gocompiler/src/go/format"
-	"r2.is/gocompiler/vfs/ioutil"
+	"github.com/bir3/gocompiler/src/go/format"
+	"github.com/bir3/gocompiler/vfs/ioutil"
 	"log"
-	       "r2.is/gocompiler/vfs/os"
+	       "github.com/bir3/gocompiler/vfs/os"
 	"path"
 	"regexp"
 	"runtime"

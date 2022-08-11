@@ -4,7 +4,7 @@
 
 package modload
 
-import "r2.is/gocompiler/src/cmd/gocmd/internal/base"
+import "github.com/bir3/gocompiler/src/cmd/gocmd/internal/base"
 
 var HelpModules = &base.Command{
 	UsageLine: "modules",

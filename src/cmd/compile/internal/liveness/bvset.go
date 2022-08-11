@@ -4,7 +4,7 @@
 
 package liveness
 
-import "r2.is/gocompiler/src/cmd/compile/internal/bitvec"
+import "github.com/bir3/gocompiler/src/cmd/compile/internal/bitvec"
 
 // FNV-1 hash function constants.
 const (

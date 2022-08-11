@@ -30,7 +30,7 @@
 
 package arm64
 
-import "r2.is/gocompiler/src/cmd/internal/obj"
+import "github.com/bir3/gocompiler/src/cmd/internal/obj"
 
 const (
 	NSNAME = 8

@@ -14,7 +14,7 @@ package unix
 
 import (
 	"fmt"
-	       "r2.is/gocompiler/vfs/os"
+	       "github.com/bir3/gocompiler/vfs/os"
 	"runtime"
 	"sync"
 	"syscall"

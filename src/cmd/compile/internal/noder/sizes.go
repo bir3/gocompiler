@@ -7,8 +7,8 @@ package noder
 import (
 	"fmt"
 
-	"r2.is/gocompiler/src/cmd/compile/internal/types"
-	"r2.is/gocompiler/src/cmd/compile/internal/types2"
+	"github.com/bir3/gocompiler/src/cmd/compile/internal/types"
+	"github.com/bir3/gocompiler/src/cmd/compile/internal/types2"
 )
 
 // Code below based on go/types.StdSizes.

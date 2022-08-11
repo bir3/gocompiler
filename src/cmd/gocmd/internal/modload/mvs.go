@@ -7,13 +7,13 @@ package modload
 import (
 	"context"
 	"errors"
-	       "r2.is/gocompiler/vfs/os"
+	       "github.com/bir3/gocompiler/vfs/os"
 	"sort"
 
-	"r2.is/gocompiler/src/cmd/gocmd/internal/modfetch"
+	"github.com/bir3/gocompiler/src/cmd/gocmd/internal/modfetch"
 
-	"r2.is/gocompiler/src/xvendor/golang.org/x/mod/module"
-	"r2.is/gocompiler/src/xvendor/golang.org/x/mod/semver"
+	"github.com/bir3/gocompiler/src/xvendor/golang.org/x/mod/module"
+	"github.com/bir3/gocompiler/src/xvendor/golang.org/x/mod/semver"
 )
 
 // cmpVersion implements the comparison for versions in the module loader.

@@ -5,12 +5,12 @@
 package ld
 
 import (
-	"r2.is/gocompiler/src/cmd/internal/sys"
-	"r2.is/gocompiler/src/cmd/link/internal/loader"
+	"github.com/bir3/gocompiler/src/cmd/internal/sys"
+	"github.com/bir3/gocompiler/src/cmd/link/internal/loader"
 	"encoding/binary"
 	"errors"
 	"log"
-	       "r2.is/gocompiler/vfs/os"
+	       "github.com/bir3/gocompiler/vfs/os"
 )
 
 // If fallocate is not supported on this platform, return this error. The error

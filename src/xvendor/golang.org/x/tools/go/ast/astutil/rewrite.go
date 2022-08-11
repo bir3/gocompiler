@@ -6,11 +6,11 @@ package astutil
 
 import (
 	"fmt"
-	"r2.is/gocompiler/src/go/ast"
+	"github.com/bir3/gocompiler/src/go/ast"
 	"reflect"
 	"sort"
 
-	"r2.is/gocompiler/src/xvendor/golang.org/x/tools/internal/typeparams"
+	"github.com/bir3/gocompiler/src/xvendor/golang.org/x/tools/internal/typeparams"
 )
 
 // An ApplyFunc is invoked by Apply for each node n, even if n is nil,

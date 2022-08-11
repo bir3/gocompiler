@@ -9,20 +9,20 @@ import (
 	"bytes"
 	"errors"
 	"fmt"
-	       "r2.is/gocompiler/vfs/io"
+	       "github.com/bir3/gocompiler/vfs/io"
 	"io/fs"
-	       "r2.is/gocompiler/vfs/os"
+	       "github.com/bir3/gocompiler/vfs/os"
 	"path"
 	"sort"
 	"strings"
 	"time"
 
-	"r2.is/gocompiler/src/cmd/gocmd/internal/modfetch/codehost"
+	"github.com/bir3/gocompiler/src/cmd/gocmd/internal/modfetch/codehost"
 
-	"r2.is/gocompiler/src/xvendor/golang.org/x/mod/modfile"
-	"r2.is/gocompiler/src/xvendor/golang.org/x/mod/module"
-	"r2.is/gocompiler/src/xvendor/golang.org/x/mod/semver"
-	modzip "r2.is/gocompiler/src/xvendor/golang.org/x/mod/zip"
+	"github.com/bir3/gocompiler/src/xvendor/golang.org/x/mod/modfile"
+	"github.com/bir3/gocompiler/src/xvendor/golang.org/x/mod/module"
+	"github.com/bir3/gocompiler/src/xvendor/golang.org/x/mod/semver"
+	modzip "github.com/bir3/gocompiler/src/xvendor/golang.org/x/mod/zip"
 )
 
 // A codeRepo implements modfetch.Repo using an underlying codehost.Repo.

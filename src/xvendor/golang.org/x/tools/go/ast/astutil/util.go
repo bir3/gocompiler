@@ -4,7 +4,7 @@
 
 package astutil
 
-import "r2.is/gocompiler/src/go/ast"
+import "github.com/bir3/gocompiler/src/go/ast"
 
 // Unparen returns e with any enclosing parentheses stripped.
 func Unparen(e ast.Expr) ast.Expr {

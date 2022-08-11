@@ -5,9 +5,9 @@
 package ld
 
 import (
-	"r2.is/gocompiler/src/cmd/internal/objabi"
-	"r2.is/gocompiler/src/cmd/link/internal/loader"
-	"r2.is/gocompiler/src/cmd/link/internal/sym"
+	"github.com/bir3/gocompiler/src/cmd/internal/objabi"
+	"github.com/bir3/gocompiler/src/cmd/link/internal/loader"
+	"github.com/bir3/gocompiler/src/cmd/link/internal/sym"
 	"sort"
 )
 

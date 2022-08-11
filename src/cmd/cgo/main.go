@@ -12,24 +12,24 @@ package cgo
 
 import (
 	"crypto/md5"
-	"r2.is/gocompiler/src/cmd/cgo/flag"
+	"github.com/bir3/gocompiler/src/cmd/cgo/flag"
 	"fmt"
-	"r2.is/gocompiler/src/go/ast"
-	"r2.is/gocompiler/src/go/printer"
-	"r2.is/gocompiler/src/go/token"
-	"r2.is/gocompiler/src/internal/buildcfg"
-	       "r2.is/gocompiler/vfs/io"
-	"r2.is/gocompiler/vfs/ioutil"
-	       "r2.is/gocompiler/vfs/os"
+	"github.com/bir3/gocompiler/src/go/ast"
+	"github.com/bir3/gocompiler/src/go/printer"
+	"github.com/bir3/gocompiler/src/go/token"
+	"github.com/bir3/gocompiler/src/internal/buildcfg"
+	       "github.com/bir3/gocompiler/vfs/io"
+	"github.com/bir3/gocompiler/vfs/ioutil"
+	       "github.com/bir3/gocompiler/vfs/os"
 	"path/filepath"
 	"reflect"
 	"runtime"
 	"sort"
 	"strings"
 
-	"r2.is/gocompiler/src/cmd/internal/edit"
-	"r2.is/gocompiler/src/cmd/internal/objabi"
-	"r2.is/gocompiler/src/cmd/cgo/flag_objabi"
+	"github.com/bir3/gocompiler/src/cmd/internal/edit"
+	"github.com/bir3/gocompiler/src/cmd/internal/objabi"
+	"github.com/bir3/gocompiler/src/cmd/cgo/flag_objabi"
 )
 
 // A Package collects information about the package we're going to write.

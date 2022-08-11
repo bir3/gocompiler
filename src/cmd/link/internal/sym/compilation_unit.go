@@ -4,7 +4,7 @@
 
 package sym
 
-import "r2.is/gocompiler/src/cmd/internal/dwarf"
+import "github.com/bir3/gocompiler/src/cmd/internal/dwarf"
 
 // LoaderSym holds a loader.Sym value. We can't refer to this
 // type from the sym package since loader imports sym.

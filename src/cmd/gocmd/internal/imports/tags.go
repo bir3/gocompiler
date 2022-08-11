@@ -5,7 +5,7 @@
 package imports
 
 import (
-	"r2.is/gocompiler/src/cmd/gocmd/internal/cfg"
+	"github.com/bir3/gocompiler/src/cmd/gocmd/internal/cfg"
 	"sync"
 )
 

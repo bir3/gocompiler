@@ -6,13 +6,13 @@ package flag_objabi
 
 import (
 	"bytes"
-	flag "r2.is/gocompiler/src/cmd/link/flag"
+	flag "github.com/bir3/gocompiler/src/cmd/link/flag"
 	"fmt"
-	"r2.is/gocompiler/src/internal/buildcfg"
-	       "r2.is/gocompiler/vfs/io"
-	"r2.is/gocompiler/vfs/ioutil"
+	"github.com/bir3/gocompiler/src/internal/buildcfg"
+	       "github.com/bir3/gocompiler/vfs/io"
+	"github.com/bir3/gocompiler/vfs/ioutil"
 	"log"
-	       "r2.is/gocompiler/vfs/os"
+	       "github.com/bir3/gocompiler/vfs/os"
 	"reflect"
 	"sort"
 	"strconv"

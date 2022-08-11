@@ -5,8 +5,8 @@
 package amd64
 
 import (
-	"r2.is/gocompiler/src/cmd/compile/internal/ssagen"
-	"r2.is/gocompiler/src/cmd/internal/obj/x86"
+	"github.com/bir3/gocompiler/src/cmd/compile/internal/ssagen"
+	"github.com/bir3/gocompiler/src/cmd/internal/obj/x86"
 )
 
 var leaptr = x86.ALEAQ

@@ -21,18 +21,18 @@ import (
 	"bufio"
 	"fmt"
 	"html/template"
-	       "r2.is/gocompiler/vfs/io"
-	       "r2.is/gocompiler/vfs/os"
+	       "github.com/bir3/gocompiler/vfs/io"
+	       "github.com/bir3/gocompiler/vfs/os"
 	"path/filepath"
 	"regexp"
 	"sort"
 	"strconv"
 	"strings"
 
-	"r2.is/gocompiler/src/xvendor/github.com/google/pprof/internal/graph"
-	"r2.is/gocompiler/src/xvendor/github.com/google/pprof/internal/measurement"
-	"r2.is/gocompiler/src/xvendor/github.com/google/pprof/internal/plugin"
-	"r2.is/gocompiler/src/xvendor/github.com/google/pprof/profile"
+	"github.com/bir3/gocompiler/src/xvendor/github.com/google/pprof/internal/graph"
+	"github.com/bir3/gocompiler/src/xvendor/github.com/google/pprof/internal/measurement"
+	"github.com/bir3/gocompiler/src/xvendor/github.com/google/pprof/internal/plugin"
+	"github.com/bir3/gocompiler/src/xvendor/github.com/google/pprof/profile"
 )
 
 // printSource prints an annotated source listing, include all

@@ -7,7 +7,7 @@ package lex
 import (
 	"text/scanner"
 
-	"r2.is/gocompiler/src/cmd/internal/src"
+	"github.com/bir3/gocompiler/src/cmd/internal/src"
 )
 
 // A Slice reads from a slice of Tokens.

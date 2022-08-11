@@ -7,10 +7,10 @@ package codehost
 import (
 	"errors"
 	"fmt"
-	"r2.is/gocompiler/src/internal/lazyregexp"
-	       "r2.is/gocompiler/vfs/io"
+	"github.com/bir3/gocompiler/src/internal/lazyregexp"
+	       "github.com/bir3/gocompiler/vfs/io"
 	"io/fs"
-	       "r2.is/gocompiler/vfs/os"
+	       "github.com/bir3/gocompiler/vfs/os"
 	"path/filepath"
 	"sort"
 	"strconv"
@@ -18,9 +18,9 @@ import (
 	"sync"
 	"time"
 
-	"r2.is/gocompiler/src/cmd/gocmd/internal/lockedfile"
-	"r2.is/gocompiler/src/cmd/gocmd/internal/par"
-	"r2.is/gocompiler/src/cmd/gocmd/internal/str"
+	"github.com/bir3/gocompiler/src/cmd/gocmd/internal/lockedfile"
+	"github.com/bir3/gocompiler/src/cmd/gocmd/internal/par"
+	"github.com/bir3/gocompiler/src/cmd/gocmd/internal/str"
 )
 
 // A VCSError indicates an error using a version control system.

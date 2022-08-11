@@ -50,17 +50,17 @@ import (
 	"bytes"
 	"errors"
 	"fmt"
-	       "r2.is/gocompiler/vfs/io"
-	"r2.is/gocompiler/vfs/ioutil"
-	       "r2.is/gocompiler/vfs/os"
-	  "r2.is/gocompiler/vfs/exec"
+	       "github.com/bir3/gocompiler/vfs/io"
+	"github.com/bir3/gocompiler/vfs/ioutil"
+	       "github.com/bir3/gocompiler/vfs/os"
+	  "github.com/bir3/gocompiler/vfs/exec"
 	"path"
 	"path/filepath"
 	"strings"
 	"unicode"
 	"unicode/utf8"
 
-	"r2.is/gocompiler/src/xvendor/golang.org/x/mod/module"
+	"github.com/bir3/gocompiler/src/xvendor/golang.org/x/mod/module"
 )
 
 const (

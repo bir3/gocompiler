@@ -6,7 +6,7 @@
 
 package types
 
-import "r2.is/gocompiler/src/go/token"
+import "github.com/bir3/gocompiler/src/go/token"
 
 // The isX predicates below report whether t is an X.
 // If t is a type parameter the result is false; i.e.,

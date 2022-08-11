@@ -6,7 +6,7 @@
 package quoted
 
 import (
-	"r2.is/gocompiler/src/cmd/compile/flag"
+	"github.com/bir3/gocompiler/src/cmd/compile/flag"
 	"fmt"
 	"strings"
 	"unicode"

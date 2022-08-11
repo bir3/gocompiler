@@ -7,7 +7,7 @@
 
 package term
 
-import "r2.is/gocompiler/src/xvendor/golang.org/x/sys/unix"
+import "github.com/bir3/gocompiler/src/xvendor/golang.org/x/sys/unix"
 
 const ioctlReadTermios = unix.TCGETS
 const ioctlWriteTermios = unix.TCSETS

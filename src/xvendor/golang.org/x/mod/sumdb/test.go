@@ -9,9 +9,9 @@ import (
 	"fmt"
 	"sync"
 
-	"r2.is/gocompiler/src/xvendor/golang.org/x/mod/module"
-	"r2.is/gocompiler/src/xvendor/golang.org/x/mod/sumdb/note"
-	"r2.is/gocompiler/src/xvendor/golang.org/x/mod/sumdb/tlog"
+	"github.com/bir3/gocompiler/src/xvendor/golang.org/x/mod/module"
+	"github.com/bir3/gocompiler/src/xvendor/golang.org/x/mod/sumdb/note"
+	"github.com/bir3/gocompiler/src/xvendor/golang.org/x/mod/sumdb/tlog"
 )
 
 // NewTestServer constructs a new TestServer

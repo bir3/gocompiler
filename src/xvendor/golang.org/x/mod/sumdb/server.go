@@ -8,12 +8,12 @@ package sumdb
 import (
 	"context"
 	"net/http"
-	       "r2.is/gocompiler/vfs/os"
+	       "github.com/bir3/gocompiler/vfs/os"
 	"strings"
 
-	"r2.is/gocompiler/src/xvendor/golang.org/x/mod/internal/lazyregexp"
-	"r2.is/gocompiler/src/xvendor/golang.org/x/mod/module"
-	"r2.is/gocompiler/src/xvendor/golang.org/x/mod/sumdb/tlog"
+	"github.com/bir3/gocompiler/src/xvendor/golang.org/x/mod/internal/lazyregexp"
+	"github.com/bir3/gocompiler/src/xvendor/golang.org/x/mod/module"
+	"github.com/bir3/gocompiler/src/xvendor/golang.org/x/mod/sumdb/tlog"
 )
 
 // A ServerOps provides the external operations

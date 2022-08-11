@@ -10,15 +10,15 @@ package main
 import (
 	"bytes"
 	"fmt"
-	"r2.is/gocompiler/src/go/format"
-	"r2.is/gocompiler/src/go/types"
-	"r2.is/gocompiler/vfs/ioutil"
+	"github.com/bir3/gocompiler/src/go/format"
+	"github.com/bir3/gocompiler/src/go/types"
+	"github.com/bir3/gocompiler/vfs/ioutil"
 	"log"
 	"reflect"
 	"sort"
 	"strings"
 
-	"r2.is/gocompiler/src/xvendor/golang.org/x/tools/go/packages"
+	"github.com/bir3/gocompiler/src/xvendor/golang.org/x/tools/go/packages"
 )
 
 var irPkg *types.Package

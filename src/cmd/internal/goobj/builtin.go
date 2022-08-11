@@ -4,7 +4,7 @@
 
 package goobj
 
-import "r2.is/gocompiler/src/internal/buildcfg"
+import "github.com/bir3/gocompiler/src/internal/buildcfg"
 
 // Builtin (compiler-generated) function references appear
 // frequently. We assign special indices for them, so they

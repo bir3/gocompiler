@@ -5,15 +5,15 @@
 package lex
 
 import (
-	       "r2.is/gocompiler/vfs/io"
-	       "r2.is/gocompiler/vfs/os"
+	       "github.com/bir3/gocompiler/vfs/io"
+	       "github.com/bir3/gocompiler/vfs/os"
 	"strings"
 	"text/scanner"
 	"unicode"
 
-	"r2.is/gocompiler/src/cmd/asm/internal/flags"
-	"r2.is/gocompiler/src/cmd/internal/objabi"
-	"r2.is/gocompiler/src/cmd/internal/src"
+	"github.com/bir3/gocompiler/src/cmd/asm/internal/flags"
+	"github.com/bir3/gocompiler/src/cmd/internal/objabi"
+	"github.com/bir3/gocompiler/src/cmd/internal/src"
 )
 
 // A Tokenizer is a simple wrapping of text/scanner.Scanner, configured

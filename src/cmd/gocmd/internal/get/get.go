@@ -8,21 +8,21 @@ package get
 import (
 	"context"
 	"fmt"
-	       "r2.is/gocompiler/vfs/os"
+	       "github.com/bir3/gocompiler/vfs/os"
 	"path/filepath"
 	"runtime"
 	"strings"
 
-	"r2.is/gocompiler/src/cmd/gocmd/internal/base"
-	"r2.is/gocompiler/src/cmd/gocmd/internal/cfg"
-	"r2.is/gocompiler/src/cmd/gocmd/internal/load"
-	"r2.is/gocompiler/src/cmd/gocmd/internal/search"
-	"r2.is/gocompiler/src/cmd/gocmd/internal/str"
-	"r2.is/gocompiler/src/cmd/gocmd/internal/vcs"
-	"r2.is/gocompiler/src/cmd/gocmd/internal/web"
-	"r2.is/gocompiler/src/cmd/gocmd/internal/work"
+	"github.com/bir3/gocompiler/src/cmd/gocmd/internal/base"
+	"github.com/bir3/gocompiler/src/cmd/gocmd/internal/cfg"
+	"github.com/bir3/gocompiler/src/cmd/gocmd/internal/load"
+	"github.com/bir3/gocompiler/src/cmd/gocmd/internal/search"
+	"github.com/bir3/gocompiler/src/cmd/gocmd/internal/str"
+	"github.com/bir3/gocompiler/src/cmd/gocmd/internal/vcs"
+	"github.com/bir3/gocompiler/src/cmd/gocmd/internal/web"
+	"github.com/bir3/gocompiler/src/cmd/gocmd/internal/work"
 
-	"r2.is/gocompiler/src/xvendor/golang.org/x/mod/module"
+	"github.com/bir3/gocompiler/src/xvendor/golang.org/x/mod/module"
 )
 
 var CmdGet = &base.Command{

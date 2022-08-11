@@ -27,10 +27,10 @@ import (
 	cryptorand "crypto/rand"
 	"crypto/sha512"
 	"errors"
-	       "r2.is/gocompiler/vfs/io"
+	       "github.com/bir3/gocompiler/vfs/io"
 	"strconv"
 
-	"r2.is/gocompiler/src/xvendor/golang.org/x/crypto/ed25519/internal/edwards25519"
+	"github.com/bir3/gocompiler/src/xvendor/golang.org/x/crypto/ed25519/internal/edwards25519"
 )
 
 const (

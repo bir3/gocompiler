@@ -6,7 +6,7 @@
 
 package typeparams
 
-import "r2.is/gocompiler/src/go/types"
+import "github.com/bir3/gocompiler/src/go/types"
 
 // A term describes elementary type sets:
 //

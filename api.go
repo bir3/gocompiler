@@ -11,12 +11,12 @@ import (
 	"os"
 	"os/exec"
 
-        "r2.is/gocompiler/src/cmd/asm" //syncimport: "$pkg/src/$cmd/asm"
-        "r2.is/gocompiler/src/cmd/cgo" //syncimport: "$pkg/src/$cmd/cgo"
-        "r2.is/gocompiler/src/cmd/compile" //syncimport: "$pkg/src/$cmd/compile"
-        "r2.is/gocompiler/src/cmd/gocmd" //syncimport: "$pkg/src/$cmd/gocmd"
-        "r2.is/gocompiler/src/cmd/link" //syncimport: "$pkg/src/$cmd/link"
-        "r2.is/gocompiler/vfs" //syncimport: "$pkg/vfs"
+        "github.com/bir3/gocompiler/src/cmd/asm" //syncimport: "$pkg/src/$cmd/asm"
+        "github.com/bir3/gocompiler/src/cmd/cgo" //syncimport: "$pkg/src/$cmd/cgo"
+        "github.com/bir3/gocompiler/src/cmd/compile" //syncimport: "$pkg/src/$cmd/compile"
+        "github.com/bir3/gocompiler/src/cmd/gocmd" //syncimport: "$pkg/src/$cmd/gocmd"
+        "github.com/bir3/gocompiler/src/cmd/link" //syncimport: "$pkg/src/$cmd/link"
+        "github.com/bir3/gocompiler/vfs" //syncimport: "$pkg/vfs"
 )
 
 func DebugShowEmbed() {

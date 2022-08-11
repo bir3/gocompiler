@@ -6,13 +6,13 @@
 package importer
 
 import (
-	"r2.is/gocompiler/src/go/build"
-	"r2.is/gocompiler/src/go/internal/gccgoimporter"
-	"r2.is/gocompiler/src/go/internal/gcimporter"
-	"r2.is/gocompiler/src/go/internal/srcimporter"
-	"r2.is/gocompiler/src/go/token"
-	"r2.is/gocompiler/src/go/types"
-	       "r2.is/gocompiler/vfs/io"
+	"github.com/bir3/gocompiler/src/go/build"
+	"github.com/bir3/gocompiler/src/go/internal/gccgoimporter"
+	"github.com/bir3/gocompiler/src/go/internal/gcimporter"
+	"github.com/bir3/gocompiler/src/go/internal/srcimporter"
+	"github.com/bir3/gocompiler/src/go/token"
+	"github.com/bir3/gocompiler/src/go/types"
+	       "github.com/bir3/gocompiler/vfs/io"
 	"runtime"
 )
 

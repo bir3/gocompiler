@@ -6,7 +6,7 @@ package term
 
 import (
 	"bytes"
-	       "r2.is/gocompiler/vfs/io"
+	       "github.com/bir3/gocompiler/vfs/io"
 	"runtime"
 	"strconv"
 	"sync"

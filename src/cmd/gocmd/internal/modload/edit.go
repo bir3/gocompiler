@@ -5,13 +5,13 @@
 package modload
 
 import (
-	"r2.is/gocompiler/src/cmd/gocmd/internal/mvs"
+	"github.com/bir3/gocompiler/src/cmd/gocmd/internal/mvs"
 	"context"
 	"reflect"
 	"sort"
 
-	"r2.is/gocompiler/src/xvendor/golang.org/x/mod/module"
-	"r2.is/gocompiler/src/xvendor/golang.org/x/mod/semver"
+	"github.com/bir3/gocompiler/src/xvendor/golang.org/x/mod/module"
+	"github.com/bir3/gocompiler/src/xvendor/golang.org/x/mod/semver"
 )
 
 // editRequirements returns an edited version of rs such that:

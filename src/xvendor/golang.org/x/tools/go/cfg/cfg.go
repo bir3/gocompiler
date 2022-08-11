@@ -42,9 +42,9 @@ package cfg
 import (
 	"bytes"
 	"fmt"
-	"r2.is/gocompiler/src/go/ast"
-	"r2.is/gocompiler/src/go/format"
-	"r2.is/gocompiler/src/go/token"
+	"github.com/bir3/gocompiler/src/go/ast"
+	"github.com/bir3/gocompiler/src/go/format"
+	"github.com/bir3/gocompiler/src/go/token"
 )
 
 // A CFG represents the control-flow graph of a single function.

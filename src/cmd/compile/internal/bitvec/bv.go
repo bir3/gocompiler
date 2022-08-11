@@ -7,7 +7,7 @@ package bitvec
 import (
 	"math/bits"
 
-	"r2.is/gocompiler/src/cmd/compile/internal/base"
+	"github.com/bir3/gocompiler/src/cmd/compile/internal/base"
 )
 
 const (

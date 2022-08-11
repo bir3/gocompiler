@@ -6,9 +6,9 @@ package doc
 
 import (
 	"fmt"
-	"r2.is/gocompiler/src/go/ast"
-	"r2.is/gocompiler/src/go/token"
-	"r2.is/gocompiler/src/internal/lazyregexp"
+	"github.com/bir3/gocompiler/src/go/ast"
+	"github.com/bir3/gocompiler/src/go/token"
+	"github.com/bir3/gocompiler/src/internal/lazyregexp"
 	"sort"
 	"strconv"
 	"strings"

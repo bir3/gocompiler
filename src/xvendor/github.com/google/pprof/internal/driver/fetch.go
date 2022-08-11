@@ -17,12 +17,12 @@ package driver
 import (
 	"bytes"
 	"fmt"
-	       "r2.is/gocompiler/vfs/io"
-	"r2.is/gocompiler/vfs/ioutil"
+	       "github.com/bir3/gocompiler/vfs/io"
+	"github.com/bir3/gocompiler/vfs/ioutil"
 	"net/http"
 	"net/url"
-	       "r2.is/gocompiler/vfs/os"
-	  "r2.is/gocompiler/vfs/exec"
+	       "github.com/bir3/gocompiler/vfs/os"
+	  "github.com/bir3/gocompiler/vfs/exec"
 	"path/filepath"
 	"runtime"
 	"strconv"
@@ -30,9 +30,9 @@ import (
 	"sync"
 	"time"
 
-	"r2.is/gocompiler/src/xvendor/github.com/google/pprof/internal/measurement"
-	"r2.is/gocompiler/src/xvendor/github.com/google/pprof/internal/plugin"
-	"r2.is/gocompiler/src/xvendor/github.com/google/pprof/profile"
+	"github.com/bir3/gocompiler/src/xvendor/github.com/google/pprof/internal/measurement"
+	"github.com/bir3/gocompiler/src/xvendor/github.com/google/pprof/internal/plugin"
+	"github.com/bir3/gocompiler/src/xvendor/github.com/google/pprof/profile"
 )
 
 // fetchProfiles fetches and symbolizes the profiles specified by s.

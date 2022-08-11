@@ -103,8 +103,8 @@ import (
 	"unicode"
 	"unicode/utf8"
 
-	"r2.is/gocompiler/src/xvendor/golang.org/x/mod/semver"
-	errors "r2.is/gocompiler/src/xvendor/golang.org/x/xerrors"
+	"github.com/bir3/gocompiler/src/xvendor/golang.org/x/mod/semver"
+	errors "github.com/bir3/gocompiler/src/xvendor/golang.org/x/xerrors"
 )
 
 // A Version (for clients, a module.Version) is defined by a module path and version pair.

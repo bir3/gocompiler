@@ -5,14 +5,14 @@
 package pkginit
 
 import (
-	"r2.is/gocompiler/src/cmd/compile/internal/base"
-	"r2.is/gocompiler/src/cmd/compile/internal/ir"
-	"r2.is/gocompiler/src/cmd/compile/internal/objw"
-	"r2.is/gocompiler/src/cmd/compile/internal/staticinit"
-	"r2.is/gocompiler/src/cmd/compile/internal/typecheck"
-	"r2.is/gocompiler/src/cmd/compile/internal/types"
-	"r2.is/gocompiler/src/cmd/internal/obj"
-	"r2.is/gocompiler/src/cmd/internal/src"
+	"github.com/bir3/gocompiler/src/cmd/compile/internal/base"
+	"github.com/bir3/gocompiler/src/cmd/compile/internal/ir"
+	"github.com/bir3/gocompiler/src/cmd/compile/internal/objw"
+	"github.com/bir3/gocompiler/src/cmd/compile/internal/staticinit"
+	"github.com/bir3/gocompiler/src/cmd/compile/internal/typecheck"
+	"github.com/bir3/gocompiler/src/cmd/compile/internal/types"
+	"github.com/bir3/gocompiler/src/cmd/internal/obj"
+	"github.com/bir3/gocompiler/src/cmd/internal/src"
 )
 
 // MakeInit creates a synthetic init function to handle any

@@ -7,12 +7,12 @@ package analysis
 import (
 	"flag"
 	"fmt"
-	"r2.is/gocompiler/src/go/ast"
-	"r2.is/gocompiler/src/go/token"
-	"r2.is/gocompiler/src/go/types"
+	"github.com/bir3/gocompiler/src/go/ast"
+	"github.com/bir3/gocompiler/src/go/token"
+	"github.com/bir3/gocompiler/src/go/types"
 	"reflect"
 
-	"r2.is/gocompiler/src/xvendor/golang.org/x/tools/internal/analysisinternal"
+	"github.com/bir3/gocompiler/src/xvendor/golang.org/x/tools/internal/analysisinternal"
 )
 
 // An Analyzer describes an analysis function and its options.

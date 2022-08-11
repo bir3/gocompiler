@@ -20,11 +20,11 @@ import (
 	"crypto/tls"
 	"crypto/x509"
 	"fmt"
-	"r2.is/gocompiler/vfs/ioutil"
+	"github.com/bir3/gocompiler/vfs/ioutil"
 	"net/http"
 	"sync"
 
-	"r2.is/gocompiler/src/xvendor/github.com/google/pprof/internal/plugin"
+	"github.com/bir3/gocompiler/src/xvendor/github.com/google/pprof/internal/plugin"
 )
 
 type transport struct {

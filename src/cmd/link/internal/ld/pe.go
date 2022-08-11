@@ -8,14 +8,14 @@
 package ld
 
 import (
-	"r2.is/gocompiler/src/cmd/internal/objabi"
-	"r2.is/gocompiler/src/cmd/internal/sys"
-	"r2.is/gocompiler/src/cmd/link/internal/loader"
-	"r2.is/gocompiler/src/cmd/link/internal/sym"
+	"github.com/bir3/gocompiler/src/cmd/internal/objabi"
+	"github.com/bir3/gocompiler/src/cmd/internal/sys"
+	"github.com/bir3/gocompiler/src/cmd/link/internal/loader"
+	"github.com/bir3/gocompiler/src/cmd/link/internal/sym"
 	"debug/pe"
 	"encoding/binary"
 	"fmt"
-	"r2.is/gocompiler/src/internal/buildcfg"
+	"github.com/bir3/gocompiler/src/internal/buildcfg"
 	"sort"
 	"strconv"
 	"strings"

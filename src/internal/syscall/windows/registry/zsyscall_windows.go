@@ -3,7 +3,7 @@
 package registry
 
 import (
-	"r2.is/gocompiler/src/internal/syscall/windows/sysdll"
+	"github.com/bir3/gocompiler/src/internal/syscall/windows/sysdll"
 	"syscall"
 	"unsafe"
 )

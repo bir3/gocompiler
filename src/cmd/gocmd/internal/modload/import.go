@@ -8,23 +8,23 @@ import (
 	"context"
 	"errors"
 	"fmt"
-	"r2.is/gocompiler/src/go/build"
-	"r2.is/gocompiler/src/internal/goroot"
+	"github.com/bir3/gocompiler/src/go/build"
+	"github.com/bir3/gocompiler/src/internal/goroot"
 	"io/fs"
-	       "r2.is/gocompiler/vfs/os"
+	       "github.com/bir3/gocompiler/vfs/os"
 	pathpkg "path"
 	"path/filepath"
 	"sort"
 	"strings"
 
-	"r2.is/gocompiler/src/cmd/gocmd/internal/cfg"
-	"r2.is/gocompiler/src/cmd/gocmd/internal/fsys"
-	"r2.is/gocompiler/src/cmd/gocmd/internal/modfetch"
-	"r2.is/gocompiler/src/cmd/gocmd/internal/par"
-	"r2.is/gocompiler/src/cmd/gocmd/internal/search"
+	"github.com/bir3/gocompiler/src/cmd/gocmd/internal/cfg"
+	"github.com/bir3/gocompiler/src/cmd/gocmd/internal/fsys"
+	"github.com/bir3/gocompiler/src/cmd/gocmd/internal/modfetch"
+	"github.com/bir3/gocompiler/src/cmd/gocmd/internal/par"
+	"github.com/bir3/gocompiler/src/cmd/gocmd/internal/search"
 
-	"r2.is/gocompiler/src/xvendor/golang.org/x/mod/module"
-	"r2.is/gocompiler/src/xvendor/golang.org/x/mod/semver"
+	"github.com/bir3/gocompiler/src/xvendor/golang.org/x/mod/module"
+	"github.com/bir3/gocompiler/src/xvendor/golang.org/x/mod/semver"
 )
 
 type ImportMissingError struct {

@@ -14,19 +14,19 @@ import (
 	"debug/elf"
 	"encoding/json"
 	"fmt"
-	       "r2.is/gocompiler/vfs/os"
+	       "github.com/bir3/gocompiler/vfs/os"
 	"path/filepath"
 	"runtime"
 	"strings"
 	"sync"
 	"time"
 
-	"r2.is/gocompiler/src/cmd/gocmd/internal/base"
-	"r2.is/gocompiler/src/cmd/gocmd/internal/cache"
-	"r2.is/gocompiler/src/cmd/gocmd/internal/cfg"
-	"r2.is/gocompiler/src/cmd/gocmd/internal/load"
-	"r2.is/gocompiler/src/cmd/gocmd/internal/trace"
-	"r2.is/gocompiler/src/cmd/internal/buildid"
+	"github.com/bir3/gocompiler/src/cmd/gocmd/internal/base"
+	"github.com/bir3/gocompiler/src/cmd/gocmd/internal/cache"
+	"github.com/bir3/gocompiler/src/cmd/gocmd/internal/cfg"
+	"github.com/bir3/gocompiler/src/cmd/gocmd/internal/load"
+	"github.com/bir3/gocompiler/src/cmd/gocmd/internal/trace"
+	"github.com/bir3/gocompiler/src/cmd/internal/buildid"
 )
 
 // A Builder holds global state about a build.

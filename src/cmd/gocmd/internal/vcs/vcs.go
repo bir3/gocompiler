@@ -8,13 +8,13 @@ import (
 	"bytes"
 	"errors"
 	"fmt"
-	exec "r2.is/gocompiler/src/internal/execabs"
-	"r2.is/gocompiler/src/internal/lazyregexp"
-	"r2.is/gocompiler/src/internal/singleflight"
+	exec "github.com/bir3/gocompiler/src/internal/execabs"
+	"github.com/bir3/gocompiler/src/internal/lazyregexp"
+	"github.com/bir3/gocompiler/src/internal/singleflight"
 	"io/fs"
 	"log"
 	urlpkg "net/url"
-	       "r2.is/gocompiler/vfs/os"
+	       "github.com/bir3/gocompiler/vfs/os"
 	"path/filepath"
 	"regexp"
 	"strconv"
@@ -22,13 +22,13 @@ import (
 	"sync"
 	"time"
 
-	"r2.is/gocompiler/src/cmd/gocmd/internal/base"
-	"r2.is/gocompiler/src/cmd/gocmd/internal/cfg"
-	"r2.is/gocompiler/src/cmd/gocmd/internal/search"
-	"r2.is/gocompiler/src/cmd/gocmd/internal/str"
-	"r2.is/gocompiler/src/cmd/gocmd/internal/web"
+	"github.com/bir3/gocompiler/src/cmd/gocmd/internal/base"
+	"github.com/bir3/gocompiler/src/cmd/gocmd/internal/cfg"
+	"github.com/bir3/gocompiler/src/cmd/gocmd/internal/search"
+	"github.com/bir3/gocompiler/src/cmd/gocmd/internal/str"
+	"github.com/bir3/gocompiler/src/cmd/gocmd/internal/web"
 
-	"r2.is/gocompiler/src/xvendor/golang.org/x/mod/module"
+	"github.com/bir3/gocompiler/src/xvendor/golang.org/x/mod/module"
 )
 
 // A Cmd describes how to use a version control system

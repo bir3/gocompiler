@@ -19,17 +19,17 @@ package symbolizer
 
 import (
 	"fmt"
-	"r2.is/gocompiler/vfs/ioutil"
+	"github.com/bir3/gocompiler/vfs/ioutil"
 	"net/http"
 	"net/url"
 	"path/filepath"
 	"strings"
 
-	"r2.is/gocompiler/src/xvendor/github.com/google/pprof/internal/binutils"
-	"r2.is/gocompiler/src/xvendor/github.com/google/pprof/internal/plugin"
-	"r2.is/gocompiler/src/xvendor/github.com/google/pprof/internal/symbolz"
-	"r2.is/gocompiler/src/xvendor/github.com/google/pprof/profile"
-	"r2.is/gocompiler/src/xvendor/github.com/ianlancetaylor/demangle"
+	"github.com/bir3/gocompiler/src/xvendor/github.com/google/pprof/internal/binutils"
+	"github.com/bir3/gocompiler/src/xvendor/github.com/google/pprof/internal/plugin"
+	"github.com/bir3/gocompiler/src/xvendor/github.com/google/pprof/internal/symbolz"
+	"github.com/bir3/gocompiler/src/xvendor/github.com/google/pprof/profile"
+	"github.com/bir3/gocompiler/src/xvendor/github.com/ianlancetaylor/demangle"
 )
 
 // Symbolizer implements the plugin.Symbolize interface.

@@ -8,8 +8,8 @@ package gcimporter
 
 import (
 	"fmt"
-	"r2.is/gocompiler/src/go/token"
-	"r2.is/gocompiler/src/go/types"
+	"github.com/bir3/gocompiler/src/go/token"
+	"github.com/bir3/gocompiler/src/go/types"
 	"sync"
 )
 

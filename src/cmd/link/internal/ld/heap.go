@@ -4,7 +4,7 @@
 
 package ld
 
-import "r2.is/gocompiler/src/cmd/link/internal/loader"
+import "github.com/bir3/gocompiler/src/cmd/link/internal/loader"
 
 // Min-heap implementation, for the deadcode pass.
 // Specialized for loader.Sym elements.

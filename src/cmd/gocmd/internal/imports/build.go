@@ -22,7 +22,7 @@ import (
 	"bytes"
 	"errors"
 	"fmt"
-	"r2.is/gocompiler/src/go/build/constraint"
+	"github.com/bir3/gocompiler/src/go/build/constraint"
 	"strings"
 	"unicode"
 )

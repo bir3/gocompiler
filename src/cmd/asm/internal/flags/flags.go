@@ -6,10 +6,10 @@
 package flags
 
 import (
-	"r2.is/gocompiler/src/cmd/asm/flag_objabi"
-	"r2.is/gocompiler/src/cmd/asm/flag"
+	"github.com/bir3/gocompiler/src/cmd/asm/flag_objabi"
+	"github.com/bir3/gocompiler/src/cmd/asm/flag"
 	"fmt"
-	       "r2.is/gocompiler/vfs/os"
+	       "github.com/bir3/gocompiler/vfs/os"
 	"path/filepath"
 	"strings"
 )

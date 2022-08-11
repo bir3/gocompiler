@@ -7,7 +7,7 @@ package mvs
 import (
 	"fmt"
 
-	"r2.is/gocompiler/src/xvendor/golang.org/x/mod/module"
+	"github.com/bir3/gocompiler/src/xvendor/golang.org/x/mod/module"
 )
 
 // Graph implements an incremental version of the MVS algorithm, with the

@@ -5,7 +5,7 @@
 // Package godebug parses the GODEBUG environment variable.
 package godebug
 
-import        "r2.is/gocompiler/vfs/os"
+import        "github.com/bir3/gocompiler/vfs/os"
 
 // Get returns the value for the provided GODEBUG key.
 func Get(key string) string {

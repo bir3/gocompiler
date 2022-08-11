@@ -5,11 +5,11 @@
 package gc
 
 import (
-	       "r2.is/gocompiler/vfs/os"
+	       "github.com/bir3/gocompiler/vfs/os"
 	"runtime"
 	"runtime/pprof"
 
-	"r2.is/gocompiler/src/cmd/compile/internal/base"
+	"github.com/bir3/gocompiler/src/cmd/compile/internal/base"
 )
 
 var traceHandler func(string)

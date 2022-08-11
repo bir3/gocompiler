@@ -5,23 +5,23 @@
 package compile
 
 import (
-	"r2.is/gocompiler/src/cmd/compile/internal/amd64"
-	"r2.is/gocompiler/src/cmd/compile/internal/arm"
-	"r2.is/gocompiler/src/cmd/compile/internal/arm64"
-	"r2.is/gocompiler/src/cmd/compile/internal/base"
-	"r2.is/gocompiler/src/cmd/compile/internal/gc"
-	"r2.is/gocompiler/src/cmd/compile/internal/mips"
-	"r2.is/gocompiler/src/cmd/compile/internal/mips64"
-	"r2.is/gocompiler/src/cmd/compile/internal/ppc64"
-	"r2.is/gocompiler/src/cmd/compile/internal/riscv64"
-	"r2.is/gocompiler/src/cmd/compile/internal/s390x"
-	"r2.is/gocompiler/src/cmd/compile/internal/ssagen"
-	"r2.is/gocompiler/src/cmd/compile/internal/wasm"
-	"r2.is/gocompiler/src/cmd/compile/internal/x86"
+	"github.com/bir3/gocompiler/src/cmd/compile/internal/amd64"
+	"github.com/bir3/gocompiler/src/cmd/compile/internal/arm"
+	"github.com/bir3/gocompiler/src/cmd/compile/internal/arm64"
+	"github.com/bir3/gocompiler/src/cmd/compile/internal/base"
+	"github.com/bir3/gocompiler/src/cmd/compile/internal/gc"
+	"github.com/bir3/gocompiler/src/cmd/compile/internal/mips"
+	"github.com/bir3/gocompiler/src/cmd/compile/internal/mips64"
+	"github.com/bir3/gocompiler/src/cmd/compile/internal/ppc64"
+	"github.com/bir3/gocompiler/src/cmd/compile/internal/riscv64"
+	"github.com/bir3/gocompiler/src/cmd/compile/internal/s390x"
+	"github.com/bir3/gocompiler/src/cmd/compile/internal/ssagen"
+	"github.com/bir3/gocompiler/src/cmd/compile/internal/wasm"
+	"github.com/bir3/gocompiler/src/cmd/compile/internal/x86"
 	"fmt"
-	"r2.is/gocompiler/src/internal/buildcfg"
+	"github.com/bir3/gocompiler/src/internal/buildcfg"
 	"log"
-	       "r2.is/gocompiler/vfs/os"
+	       "github.com/bir3/gocompiler/vfs/os"
 )
 
 var archInits = map[string]func(*ssagen.ArchInfo){

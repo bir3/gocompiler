@@ -5,8 +5,8 @@
 package load
 
 import (
-	"r2.is/gocompiler/src/cmd/gocmd/internal/base"
-	"r2.is/gocompiler/src/cmd/internal/quoted"
+	"github.com/bir3/gocompiler/src/cmd/gocmd/internal/base"
+	"github.com/bir3/gocompiler/src/cmd/internal/quoted"
 	"fmt"
 	"strings"
 )

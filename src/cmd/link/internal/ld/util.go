@@ -5,10 +5,10 @@
 package ld
 
 import (
-	"r2.is/gocompiler/src/cmd/link/internal/loader"
+	"github.com/bir3/gocompiler/src/cmd/link/internal/loader"
 	"encoding/binary"
 	"fmt"
-	       "r2.is/gocompiler/vfs/os"
+	       "github.com/bir3/gocompiler/vfs/os"
 )
 
 var atExitFuncs []func()

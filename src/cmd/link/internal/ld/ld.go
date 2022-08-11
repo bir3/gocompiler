@@ -32,12 +32,12 @@
 package ld
 
 import (
-	"r2.is/gocompiler/src/cmd/internal/goobj"
-	"r2.is/gocompiler/src/cmd/link/internal/loader"
-	"r2.is/gocompiler/src/cmd/link/internal/sym"
-	"r2.is/gocompiler/vfs/ioutil"
+	"github.com/bir3/gocompiler/src/cmd/internal/goobj"
+	"github.com/bir3/gocompiler/src/cmd/link/internal/loader"
+	"github.com/bir3/gocompiler/src/cmd/link/internal/sym"
+	"github.com/bir3/gocompiler/vfs/ioutil"
 	"log"
-	       "r2.is/gocompiler/vfs/os"
+	       "github.com/bir3/gocompiler/vfs/os"
 	"path"
 	"path/filepath"
 	"strconv"

@@ -5,8 +5,8 @@
 package obj
 
 import (
-	"r2.is/gocompiler/src/cmd/internal/goobj"
-	"r2.is/gocompiler/src/cmd/internal/objabi"
+	"github.com/bir3/gocompiler/src/cmd/internal/goobj"
+	"github.com/bir3/gocompiler/src/cmd/internal/objabi"
 	"encoding/binary"
 	"fmt"
 	"log"

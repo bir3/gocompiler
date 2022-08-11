@@ -11,7 +11,7 @@ import (
 	"debug/plan9obj"
 	"errors"
 	"fmt"
-	       "r2.is/gocompiler/vfs/io"
+	       "github.com/bir3/gocompiler/vfs/io"
 	"sort"
 )
 

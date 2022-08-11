@@ -6,16 +6,16 @@ package lex
 
 import (
 	"fmt"
-	"r2.is/gocompiler/src/internal/buildcfg"
-	       "r2.is/gocompiler/vfs/os"
+	"github.com/bir3/gocompiler/src/internal/buildcfg"
+	       "github.com/bir3/gocompiler/vfs/os"
 	"path/filepath"
 	"strconv"
 	"strings"
 	"text/scanner"
 
-	"r2.is/gocompiler/src/cmd/asm/internal/flags"
-	"r2.is/gocompiler/src/cmd/internal/objabi"
-	"r2.is/gocompiler/src/cmd/internal/src"
+	"github.com/bir3/gocompiler/src/cmd/asm/internal/flags"
+	"github.com/bir3/gocompiler/src/cmd/internal/objabi"
+	"github.com/bir3/gocompiler/src/cmd/internal/src"
 )
 
 // Input is the main input: a stack of readers and some macro definitions.

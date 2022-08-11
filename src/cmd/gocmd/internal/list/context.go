@@ -5,7 +5,7 @@
 package list
 
 import (
-	"r2.is/gocompiler/src/go/build"
+	"github.com/bir3/gocompiler/src/go/build"
 )
 
 type Context struct {

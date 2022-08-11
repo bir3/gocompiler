@@ -4,7 +4,7 @@
 
 package ssa
 
-import "r2.is/gocompiler/src/cmd/internal/src"
+import "github.com/bir3/gocompiler/src/cmd/internal/src"
 
 // trim removes blocks with no code in them.
 // These blocks were inserted to remove critical edges.

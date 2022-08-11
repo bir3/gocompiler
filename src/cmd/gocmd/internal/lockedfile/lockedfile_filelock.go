@@ -8,9 +8,9 @@ package lockedfile
 
 import (
 	"io/fs"
-	       "r2.is/gocompiler/vfs/os"
+	       "github.com/bir3/gocompiler/vfs/os"
 
-	"r2.is/gocompiler/src/cmd/gocmd/internal/lockedfile/internal/filelock"
+	"github.com/bir3/gocompiler/src/cmd/gocmd/internal/lockedfile/internal/filelock"
 )
 
 func openFile(name string, flag int, perm fs.FileMode) (*os.File, error) {

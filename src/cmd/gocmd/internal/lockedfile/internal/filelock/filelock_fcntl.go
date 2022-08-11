@@ -17,7 +17,7 @@ package filelock
 
 import (
 	"errors"
-	       "r2.is/gocompiler/vfs/io"
+	       "github.com/bir3/gocompiler/vfs/io"
 	"io/fs"
 	"math/rand"
 	"sync"

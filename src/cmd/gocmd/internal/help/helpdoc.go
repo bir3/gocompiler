@@ -4,7 +4,7 @@
 
 package help
 
-import "r2.is/gocompiler/src/cmd/gocmd/internal/base"
+import "github.com/bir3/gocompiler/src/cmd/gocmd/internal/base"
 
 var HelpC = &base.Command{
 	UsageLine: "c",

@@ -8,9 +8,9 @@ package types2
 
 import (
 	"bytes"
-	"r2.is/gocompiler/src/cmd/compile/internal/syntax"
+	"github.com/bir3/gocompiler/src/cmd/compile/internal/syntax"
 	"fmt"
-	       "r2.is/gocompiler/vfs/io"
+	       "github.com/bir3/gocompiler/vfs/io"
 	"sort"
 	"strings"
 	"sync"

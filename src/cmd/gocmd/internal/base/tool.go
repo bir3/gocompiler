@@ -6,12 +6,12 @@ package base
 
 import (
 	"fmt"
-	"r2.is/gocompiler/src/go/build"
-	       "r2.is/gocompiler/vfs/os"
+	"github.com/bir3/gocompiler/src/go/build"
+	       "github.com/bir3/gocompiler/vfs/os"
 	"path/filepath"
 	"runtime"
 
-	"r2.is/gocompiler/src/cmd/gocmd/internal/cfg"
+	"github.com/bir3/gocompiler/src/cmd/gocmd/internal/cfg"
 )
 
 // Configuration for finding tool binaries.

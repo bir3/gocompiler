@@ -22,9 +22,9 @@ import (
 	"encoding/binary"
 	"errors"
 	"fmt"
-	       "r2.is/gocompiler/vfs/io"
-	       "r2.is/gocompiler/vfs/os"
-	  "r2.is/gocompiler/vfs/exec"
+	       "github.com/bir3/gocompiler/vfs/io"
+	       "github.com/bir3/gocompiler/vfs/os"
+	  "github.com/bir3/gocompiler/vfs/exec"
 	"path/filepath"
 	"regexp"
 	"runtime"
@@ -32,8 +32,8 @@ import (
 	"strings"
 	"sync"
 
-	"r2.is/gocompiler/src/xvendor/github.com/google/pprof/internal/elfexec"
-	"r2.is/gocompiler/src/xvendor/github.com/google/pprof/internal/plugin"
+	"github.com/bir3/gocompiler/src/xvendor/github.com/google/pprof/internal/elfexec"
+	"github.com/bir3/gocompiler/src/xvendor/github.com/google/pprof/internal/plugin"
 )
 
 // A Binutils implements plugin.ObjTool by invoking the GNU binutils.

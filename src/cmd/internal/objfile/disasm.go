@@ -7,24 +7,24 @@ package objfile
 import (
 	"bufio"
 	"bytes"
-	"r2.is/gocompiler/src/cmd/internal/src"
+	"github.com/bir3/gocompiler/src/cmd/internal/src"
 	"container/list"
 	"debug/gosym"
 	"encoding/binary"
 	"fmt"
-	       "r2.is/gocompiler/vfs/io"
-	"r2.is/gocompiler/vfs/ioutil"
-	       "r2.is/gocompiler/vfs/os"
+	       "github.com/bir3/gocompiler/vfs/io"
+	"github.com/bir3/gocompiler/vfs/ioutil"
+	       "github.com/bir3/gocompiler/vfs/os"
 	"path/filepath"
 	"regexp"
 	"sort"
 	"strings"
 	"text/tabwriter"
 
-	"r2.is/gocompiler/src/xvendor/golang.org/x/arch/arm/armasm"
-	"r2.is/gocompiler/src/xvendor/golang.org/x/arch/arm64/arm64asm"
-	"r2.is/gocompiler/src/xvendor/golang.org/x/arch/ppc64/ppc64asm"
-	"r2.is/gocompiler/src/xvendor/golang.org/x/arch/x86/x86asm"
+	"github.com/bir3/gocompiler/src/xvendor/golang.org/x/arch/arm/armasm"
+	"github.com/bir3/gocompiler/src/xvendor/golang.org/x/arch/arm64/arm64asm"
+	"github.com/bir3/gocompiler/src/xvendor/golang.org/x/arch/ppc64/ppc64asm"
+	"github.com/bir3/gocompiler/src/xvendor/golang.org/x/arch/x86/x86asm"
 )
 
 // Disasm is a disassembler for a given File.

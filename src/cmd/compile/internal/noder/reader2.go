@@ -7,10 +7,10 @@
 package noder
 
 import (
-	"r2.is/gocompiler/src/cmd/compile/internal/base"
-	"r2.is/gocompiler/src/cmd/compile/internal/syntax"
-	"r2.is/gocompiler/src/cmd/compile/internal/types2"
-	"r2.is/gocompiler/src/cmd/internal/src"
+	"github.com/bir3/gocompiler/src/cmd/compile/internal/base"
+	"github.com/bir3/gocompiler/src/cmd/compile/internal/syntax"
+	"github.com/bir3/gocompiler/src/cmd/compile/internal/types2"
+	"github.com/bir3/gocompiler/src/cmd/internal/src"
 )
 
 type pkgReader2 struct {

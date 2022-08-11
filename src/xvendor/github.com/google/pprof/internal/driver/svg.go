@@ -18,7 +18,7 @@ import (
 	"regexp"
 	"strings"
 
-	"r2.is/gocompiler/src/xvendor/github.com/google/pprof/third_party/svgpan"
+	"github.com/bir3/gocompiler/src/xvendor/github.com/google/pprof/third_party/svgpan"
 )
 
 var (

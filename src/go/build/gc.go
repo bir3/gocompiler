@@ -9,7 +9,7 @@ package build
 import (
 	"path/filepath"
 	"runtime"
-"r2.is/gocompiler/vfs"
+"github.com/bir3/gocompiler/vfs"
 )
 
 // getToolDir returns the default value of ToolDir.

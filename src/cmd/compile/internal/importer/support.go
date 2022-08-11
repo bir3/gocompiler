@@ -7,9 +7,9 @@
 package importer
 
 import (
-	"r2.is/gocompiler/src/cmd/compile/internal/types2"
+	"github.com/bir3/gocompiler/src/cmd/compile/internal/types2"
 	"fmt"
-	"r2.is/gocompiler/src/go/token"
+	"github.com/bir3/gocompiler/src/go/token"
 	"sync"
 )
 

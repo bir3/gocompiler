@@ -5,7 +5,7 @@
 package bytealg
 
 import (
-	"r2.is/gocompiler/src/internal/cpu"
+	"github.com/bir3/gocompiler/src/internal/cpu"
 	"unsafe"
 )
 

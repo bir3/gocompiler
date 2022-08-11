@@ -9,7 +9,7 @@ package robustio
 import (
 	"errors"
 	"math/rand"
-	       "r2.is/gocompiler/vfs/os"
+	       "github.com/bir3/gocompiler/vfs/os"
 	"syscall"
 	"time"
 )

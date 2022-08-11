@@ -6,19 +6,19 @@ package modfetch
 
 import (
 	"fmt"
-	       "r2.is/gocompiler/vfs/io"
+	       "github.com/bir3/gocompiler/vfs/io"
 	"io/fs"
-	       "r2.is/gocompiler/vfs/os"
+	       "github.com/bir3/gocompiler/vfs/os"
 	"strconv"
 	"time"
 
-	"r2.is/gocompiler/src/cmd/gocmd/internal/cfg"
-	"r2.is/gocompiler/src/cmd/gocmd/internal/modfetch/codehost"
-	"r2.is/gocompiler/src/cmd/gocmd/internal/par"
-	"r2.is/gocompiler/src/cmd/gocmd/internal/vcs"
-	web "r2.is/gocompiler/src/cmd/gocmd/internal/web"
+	"github.com/bir3/gocompiler/src/cmd/gocmd/internal/cfg"
+	"github.com/bir3/gocompiler/src/cmd/gocmd/internal/modfetch/codehost"
+	"github.com/bir3/gocompiler/src/cmd/gocmd/internal/par"
+	"github.com/bir3/gocompiler/src/cmd/gocmd/internal/vcs"
+	web "github.com/bir3/gocompiler/src/cmd/gocmd/internal/web"
 
-	"r2.is/gocompiler/src/xvendor/golang.org/x/mod/module"
+	"github.com/bir3/gocompiler/src/xvendor/golang.org/x/mod/module"
 )
 
 const traceRepo = false // trace all repo actions, for debugging

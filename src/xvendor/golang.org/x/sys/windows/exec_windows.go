@@ -10,7 +10,7 @@ import (
 	errorspkg "errors"
 	"unsafe"
 
-	"r2.is/gocompiler/src/xvendor/golang.org/x/sys/internal/unsafeheader"
+	"github.com/bir3/gocompiler/src/xvendor/golang.org/x/sys/internal/unsafeheader"
 )
 
 // EscapeArg rewrites command line argument s as prescribed

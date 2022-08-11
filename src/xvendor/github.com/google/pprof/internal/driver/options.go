@@ -17,14 +17,14 @@ package driver
 import (
 	"bufio"
 	"fmt"
-	       "r2.is/gocompiler/vfs/io"
-	       "r2.is/gocompiler/vfs/os"
+	       "github.com/bir3/gocompiler/vfs/io"
+	       "github.com/bir3/gocompiler/vfs/os"
 	"strings"
 
-	"r2.is/gocompiler/src/xvendor/github.com/google/pprof/internal/binutils"
-	"r2.is/gocompiler/src/xvendor/github.com/google/pprof/internal/plugin"
-	"r2.is/gocompiler/src/xvendor/github.com/google/pprof/internal/symbolizer"
-	"r2.is/gocompiler/src/xvendor/github.com/google/pprof/internal/transport"
+	"github.com/bir3/gocompiler/src/xvendor/github.com/google/pprof/internal/binutils"
+	"github.com/bir3/gocompiler/src/xvendor/github.com/google/pprof/internal/plugin"
+	"github.com/bir3/gocompiler/src/xvendor/github.com/google/pprof/internal/symbolizer"
+	"github.com/bir3/gocompiler/src/xvendor/github.com/google/pprof/internal/transport"
 )
 
 // setDefaults returns a new plugin.Options with zero fields sets to

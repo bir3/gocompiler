@@ -7,7 +7,7 @@
 package typeutil
 
 import (
-	"r2.is/gocompiler/src/go/types"
+	"github.com/bir3/gocompiler/src/go/types"
 	"sync"
 )
 

@@ -6,7 +6,7 @@ package poll
 
 import (
 	"errors"
-	       "r2.is/gocompiler/vfs/io"
+	       "github.com/bir3/gocompiler/vfs/io"
 	"sync"
 	"sync/atomic"
 	"time"

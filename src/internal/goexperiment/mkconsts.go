@@ -11,9 +11,9 @@ package main
 import (
 	"bytes"
 	"fmt"
-	"r2.is/gocompiler/src/internal/goexperiment"
+	"github.com/bir3/gocompiler/src/internal/goexperiment"
 	"log"
-	       "r2.is/gocompiler/vfs/os"
+	       "github.com/bir3/gocompiler/vfs/os"
 	"reflect"
 	"strings"
 )

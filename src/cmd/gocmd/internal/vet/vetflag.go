@@ -8,17 +8,17 @@ import (
 	"bytes"
 	"encoding/json"
 	"errors"
-	"r2.is/gocompiler/src/cmd/gocmd/flag"
+	"github.com/bir3/gocompiler/src/cmd/gocmd/flag"
 	"fmt"
-	exec "r2.is/gocompiler/src/internal/execabs"
+	exec "github.com/bir3/gocompiler/src/internal/execabs"
 	"log"
-	       "r2.is/gocompiler/vfs/os"
+	       "github.com/bir3/gocompiler/vfs/os"
 	"path/filepath"
 	"strings"
 
-	"r2.is/gocompiler/src/cmd/gocmd/internal/base"
-	"r2.is/gocompiler/src/cmd/gocmd/internal/cmdflag"
-	"r2.is/gocompiler/src/cmd/gocmd/internal/work"
+	"github.com/bir3/gocompiler/src/cmd/gocmd/internal/base"
+	"github.com/bir3/gocompiler/src/cmd/gocmd/internal/cmdflag"
+	"github.com/bir3/gocompiler/src/cmd/gocmd/internal/work"
 )
 
 // go vet flag processing

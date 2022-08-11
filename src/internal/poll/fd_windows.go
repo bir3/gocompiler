@@ -6,9 +6,9 @@ package poll
 
 import (
 	"errors"
-	"r2.is/gocompiler/src/internal/race"
-	"r2.is/gocompiler/src/internal/syscall/windows"
-	       "r2.is/gocompiler/vfs/io"
+	"github.com/bir3/gocompiler/src/internal/race"
+	"github.com/bir3/gocompiler/src/internal/syscall/windows"
+	       "github.com/bir3/gocompiler/vfs/io"
 	"sync"
 	"syscall"
 	"unicode/utf16"

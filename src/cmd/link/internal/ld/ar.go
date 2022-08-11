@@ -31,13 +31,13 @@
 package ld
 
 import (
-	"r2.is/gocompiler/src/cmd/internal/bio"
-	"r2.is/gocompiler/src/cmd/link/internal/sym"
+	"github.com/bir3/gocompiler/src/cmd/internal/bio"
+	"github.com/bir3/gocompiler/src/cmd/link/internal/sym"
 	"encoding/binary"
 	"fmt"
-	"r2.is/gocompiler/src/internal/buildcfg"
-	       "r2.is/gocompiler/vfs/io"
-	       "r2.is/gocompiler/vfs/os"
+	"github.com/bir3/gocompiler/src/internal/buildcfg"
+	       "github.com/bir3/gocompiler/vfs/io"
+	       "github.com/bir3/gocompiler/vfs/os"
 )
 
 const (

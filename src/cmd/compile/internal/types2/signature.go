@@ -4,7 +4,7 @@
 
 package types2
 
-import "r2.is/gocompiler/src/cmd/compile/internal/syntax"
+import "github.com/bir3/gocompiler/src/cmd/compile/internal/syntax"
 
 // ----------------------------------------------------------------------------
 // API

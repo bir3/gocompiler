@@ -7,9 +7,9 @@ package bio
 
 import (
 	"bufio"
-	       "r2.is/gocompiler/vfs/io"
+	       "github.com/bir3/gocompiler/vfs/io"
 	"log"
-	       "r2.is/gocompiler/vfs/os"
+	       "github.com/bir3/gocompiler/vfs/os"
 )
 
 // Reader implements a seekable buffered io.Reader.
