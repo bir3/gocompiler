@@ -20,7 +20,7 @@ import (
 	"log"
 	"os"
 
-    "github.com/bir3/gocompiler"
+	"github.com/bir3/gocompiler"
 )
 
 var goCodeStr string = `
@@ -42,14 +42,14 @@ func main() {
 		return
 	}
 
-    err := os.WriteFile("temp.go", []byte(goCodeStr), 0666)
+	err := os.WriteFile("temp.go", []byte(goCodeStr), 0666)
 	if err != nil {
 		log.Fatal(err)
 	}
 
 	result, err := gocompiler.Run("go", "run", "temp.go")
-    fmt.Fprintf(os.Stdout, result.Stdout)
-    fmt.Fprintf(os.Stderr, result.Stderr)
+	fmt.Fprintf(os.Stdout, result.Stdout)
+	fmt.Fprintf(os.Stderr, result.Stderr)
 	if err != nil {
 		log.Fatal(err)
 	}
