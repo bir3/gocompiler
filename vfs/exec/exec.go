@@ -108,6 +108,7 @@ func (c *Cmd) CombinedOutput() ([]byte, error) {
 	addExitAttr(c)
 	return buf, err
 }
+
 func (c *Cmd) Start() error {
 	copyAttr(c)
 	detectGoTool(c)
@@ -132,4 +133,13 @@ func (c *Cmd) StderrPipe() (io.ReadCloser, error) {
 
 func (c *Cmd) StdoutPipe() (io.ReadCloser, error) {
 	return c.osCmd.StdoutPipe() // go vet
+}
+
+//
+// optional code by go version must be at end of file
+// and in increasing go version order
+
+//gocompiler: go1.19
+func (c *Cmd) Environ() []string {
+	return c.osCmd.Environ()
 }

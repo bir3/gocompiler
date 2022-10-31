@@ -16,6 +16,7 @@ import (
 	"runtime"
 	"strings"
 
+	"github.com/bir3/gocompiler/src/cmd/internal/obj"
 
 	"github.com/bir3/gocompiler/src/cmd/compile/flag_objabi"
 	"github.com/bir3/gocompiler/src/cmd/internal/sys"
@@ -56,10 +57,9 @@ type CmdFlags struct {
 	C CountFlag    "help:\"disable printing of columns in error messages\""
 	D string       "help:\"set relative `path` for local imports\""
 	E CountFlag    "help:\"debug symbol export\""
-	G CountFlag    "help:\"accept generic code\""
 	I func(string) "help:\"add `directory` to import search path\""
 	K CountFlag    "help:\"debug missing line numbers\""
-	L CountFlag    "help:\"show full file names in error messages\""
+	L CountFlag    "help:\"also show actual source file names in error messages for positions affected by //line directives\""
 	N CountFlag    "help:\"disable optimizations\""
 	S CountFlag    "help:\"print assembly listing\""
 	// V is added by flag_objabi.AddVersionFlag
@@ -101,7 +101,6 @@ type CmdFlags struct {
 	GenDwarfInl        int          "help:\"generate DWARF inline info records\"" // 0=disabled, 1=funcs, 2=funcs+formals/locals
 	GoVersion          string       "help:\"required version of the runtime\""
 	ImportCfg          func(string) "help:\"read import configuration from `file`\""
-	ImportMap          func(string) "help:\"add `definition` of the form source=actual to import map\""
 	InstallSuffix      string       "help:\"set pkg directory `suffix`\""
 	JSON               string       "help:\"version,file for JSON compiler/optimizer detail output\""
 	Lang               string       "help:\"Go language version source code expects\""
@@ -131,7 +130,7 @@ type CmdFlags struct {
 			Files    map[string]string
 		}
 		ImportDirs   []string          // appended to by -I
-		ImportMap    map[string]string // set by -importmap OR -importcfg
+		ImportMap    map[string]string // set by -importcfg
 		PackageFile  map[string]string // set by -importcfg; nil means not in use
 		SpectreIndex bool              // set by -spectre=index or -spectre=all
 		// Whether we are adding any sort of code instrumentation, such as
@@ -142,7 +141,6 @@ type CmdFlags struct {
 
 // ParseFlags parses the command-line flags into Flag.
 func ParseFlags() {
-	Flag.G = 3
 	Flag.I = addImportDir
 
 	Flag.LowerC = 1
@@ -158,7 +156,6 @@ func ParseFlags() {
 	Flag.EmbedCfg = readEmbedCfg
 	Flag.GenDwarfInl = 2
 	Flag.ImportCfg = readImportCfg
-	Flag.ImportMap = addImportMap
 	Flag.LinkShared = &Ctxt.Flag_linkshared
 	Flag.Shared = &Ctxt.Flag_shared
 	Flag.WB = true
@@ -194,6 +191,7 @@ func ParseFlags() {
 	Ctxt.Flag_optimize = Flag.N == 0
 	Ctxt.Debugasm = int(Flag.S)
 	Ctxt.Flag_maymorestack = Debug.MayMoreStack
+	Ctxt.Flag_noRefName = Debug.NoRefName != 0
 
 	if flag.NArg() < 1 {
 		usage()
@@ -202,6 +200,10 @@ func ParseFlags() {
 	if Flag.GoVersion != "" && Flag.GoVersion != runtime.Version() {
 		fmt.Printf("compile: version %q does not match go tool version %q\n", runtime.Version(), Flag.GoVersion)
 		Exit(2)
+	}
+
+	if *Flag.LowerP == "" {
+		*Flag.LowerP = obj.UnlinkablePkg
 	}
 
 	if Flag.LowerO == "" {
@@ -383,21 +385,6 @@ func addImportDir(dir string) {
 	if dir != "" {
 		Flag.Cfg.ImportDirs = append(Flag.Cfg.ImportDirs, dir)
 	}
-}
-
-func addImportMap(s string) {
-	if Flag.Cfg.ImportMap == nil {
-		Flag.Cfg.ImportMap = make(map[string]string)
-	}
-	if strings.Count(s, "=") != 1 {
-		log.Fatal("-importmap argument must be of the form source=actual")
-	}
-	i := strings.Index(s, "=")
-	source, actual := s[:i], s[i+1:]
-	if source == "" || actual == "" {
-		log.Fatal("-importmap argument must be of the form source=actual; source and actual must be non-empty")
-	}
-	Flag.Cfg.ImportMap[source] = actual
 }
 
 func readImportCfg(file string) {

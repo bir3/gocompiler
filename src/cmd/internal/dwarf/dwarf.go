@@ -12,7 +12,7 @@ import (
 	"errors"
 	"fmt"
 	"github.com/bir3/gocompiler/src/internal/buildcfg"
-	exec "github.com/bir3/gocompiler/src/internal/execabs"
+	  "github.com/bir3/gocompiler/vfs/exec"
 	"sort"
 	"strconv"
 	"strings"

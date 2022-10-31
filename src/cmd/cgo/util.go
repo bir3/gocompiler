@@ -8,9 +8,9 @@ import (
 	"bytes"
 	"fmt"
 	"github.com/bir3/gocompiler/src/go/token"
-	exec "github.com/bir3/gocompiler/src/internal/execabs"
 	"github.com/bir3/gocompiler/vfs/ioutil"
 	       "github.com/bir3/gocompiler/vfs/os"
+	  "github.com/bir3/gocompiler/vfs/exec"
 )
 
 // run runs the command argv, feeding in stdin on standard input.

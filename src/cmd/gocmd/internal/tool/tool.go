@@ -2,14 +2,14 @@
 // Use of this source code is governed by a BSD-style
 // license that can be found in the LICENSE file.
 
-// Package tool implements the ``go tool'' command.
+// Package tool implements the “go tool” command.
 package tool
 
 import (
 	"context"
 	"fmt"
-	exec "github.com/bir3/gocompiler/src/internal/execabs"
 	       "github.com/bir3/gocompiler/vfs/os"
+	  "github.com/bir3/gocompiler/vfs/exec"
 	"os/signal"
 	"sort"
 	"strings"

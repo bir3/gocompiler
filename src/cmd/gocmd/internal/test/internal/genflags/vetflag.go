@@ -9,7 +9,7 @@ import (
 	"github.com/bir3/gocompiler/src/cmd/gocmd/internal/base"
 	"encoding/json"
 	"fmt"
-	exec "github.com/bir3/gocompiler/src/internal/execabs"
+	  "github.com/bir3/gocompiler/vfs/exec"
 	"regexp"
 	"sort"
 )

@@ -12,26 +12,29 @@ import (
 	"strings"
 )
 
-var GOROOT string
+const GOROOT = "/_/github.com/bir3/gocompiler/vfs/goroot"
+const gorootPrefixLen = len("/_/github.com/bir3/gocompiler/vfs/")
+
 var GorootSrc string
 var GorootTool string
 var SharedExe string
-
-var gorootPrefixLen = len("/gocompiler-vfs/")
+var SharedExeError error
 
 func init() {
 	// ; cmd/go/internal/cfg/cfg.go
 
-	GOROOT = "/gocompiler-vfs/goroot"
 	GorootSrc = filepath.Join(GOROOT, "src") + string(os.PathSeparator)
 	GorootTool = filepath.Join(GOROOT, "pkg", "tool") + string(os.PathSeparator)
 
-	SharedExe = os.Args[0]
-	if !filepath.IsAbs(SharedExe) {
+	if !filepath.IsAbs(os.Args[0]) {
 		wd, err := os.Getwd()
 		if err == nil {
-			SharedExe = filepath.Join(wd, SharedExe)
+			SharedExe = filepath.Join(wd, os.Args[0])
+		} else {
+			SharedExeError = fmt.Errorf("os.Getwd() failed : %w", err)
 		}
+	} else {
+		SharedExe = os.Args[0]
 	}
 	switch os.Getenv("GOCOMPILERLIB_LOG") {
 	case "1":

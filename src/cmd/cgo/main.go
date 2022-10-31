@@ -11,7 +11,6 @@
 package cgo
 
 import (
-	"crypto/md5"
 	"github.com/bir3/gocompiler/src/cmd/cgo/flag"
 	"fmt"
 	"github.com/bir3/gocompiler/src/go/ast"
@@ -28,6 +27,7 @@ import (
 	"strings"
 
 	"github.com/bir3/gocompiler/src/cmd/internal/edit"
+	"github.com/bir3/gocompiler/src/cmd/internal/notsha256"
 	"github.com/bir3/gocompiler/src/cmd/internal/objabi"
 	"github.com/bir3/gocompiler/src/cmd/cgo/flag_objabi"
 )
@@ -176,6 +176,7 @@ var ptrSizeMap = map[string]int64{
 	"amd64":    8,
 	"arm":      4,
 	"arm64":    8,
+	"loong64":  8,
 	"m68k":     4,
 	"mips":     4,
 	"mipsle":   4,
@@ -201,6 +202,7 @@ var intSizeMap = map[string]int64{
 	"amd64":    8,
 	"arm":      4,
 	"arm64":    8,
+	"loong64":  8,
 	"m68k":     4,
 	"mips":     4,
 	"mipsle":   4,
@@ -292,6 +294,10 @@ func Main() {
 		usage()
 	}
 
+	// Save original command line arguments for the godefs generated comment. Relative file
+	// paths in os.Args will be rewritten to absolute file paths in the loop below.
+	osArgs := make([]string, len(os.Args))
+	copy(osArgs, os.Args[:])
 	goFiles := args[i:]
 
 	for _, arg := range args[:i] {
@@ -326,8 +332,8 @@ func Main() {
 	// we use to coordinate between gcc and ourselves.
 	// We already put _cgo_ at the beginning, so the main
 	// concern is other cgo wrappers for the same functions.
-	// Use the beginning of the md5 of the input to disambiguate.
-	h := md5.New()
+	// Use the beginning of the notsha256 of the input to disambiguate.
+	h := notsha256.New()
 	io.WriteString(h, *importPath)
 	fs := make([]*File, len(goFiles))
 	for i, input := range goFiles {
@@ -391,7 +397,7 @@ func Main() {
 		p.PackagePath = f.Package
 		p.Record(f)
 		if *godefs {
-			os.Stdout.WriteString(p.godefs(f))
+			os.Stdout.WriteString(p.godefs(f, osArgs))
 		} else {
 			p.writeOutput(f, input)
 		}

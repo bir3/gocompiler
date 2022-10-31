@@ -22,9 +22,14 @@ type File struct {
 	vfsfile fs.File
 }
 
-// special case for gocompiler/cmdlib/cgolib/out.go
+// special case for src/cmd/cgo/out.go
 func (f File) Getosfile() *os.File {
 	return f.osfile
+}
+
+// special case for src/cmd/gocmd/internal/fsys/fsys.go
+func StderrFileObject() *File {
+	return &File{os.Stderr, nil}
 }
 
 type FileInfo = os.FileInfo
@@ -64,7 +69,8 @@ const ModePerm FileMode = os.ModePerm
 
 const DevNull = os.DevNull
 
-var PathSeparator = os.PathSeparator
+const PathSeparator = os.PathSeparator
+const PathListSeparator = os.PathListSeparator
 
 var ErrNotExist = os.ErrNotExist
 var ErrClosed = os.ErrClosed
@@ -109,7 +115,6 @@ func Chdir(dir string) error {
 		return os.Chdir(dir)
 	}
 }
-
 func Open(name string) (*File, error) {
 	return OpenFile(name, O_RDONLY, 0)
 }
@@ -261,7 +266,9 @@ func LookupEnv(key string) (string, bool) {
 func Getwd() (dir string, err error) {
 	return os.Getwd()
 }
-
+func Getpid() int {
+	return os.Getpid()
+}
 func Getuid() int {
 	return os.Getuid()
 }
@@ -335,7 +342,10 @@ func (f File) Readdirnames(n int) (names []string, err error) {
 	errIfVfsfile(f, "Readdirnames")
 	return f.osfile.Readdirnames(n)
 }
-
+func (f File) Chmod(mode FileMode) error {
+	errIfVfsfile(f, "Chmod")
+	return f.osfile.Chmod(mode)
+}
 func (f File) Fd() uintptr               { return f.osfile.Fd() }
 func (f File) Truncate(size int64) error { return f.osfile.Truncate(size) }
 func (f File) Write(b []byte) (n int, err error) {

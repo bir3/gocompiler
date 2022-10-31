@@ -10,6 +10,7 @@ import (
 	"github.com/bir3/gocompiler/src/cmd/compile/internal/arm64"
 	"github.com/bir3/gocompiler/src/cmd/compile/internal/base"
 	"github.com/bir3/gocompiler/src/cmd/compile/internal/gc"
+	"github.com/bir3/gocompiler/src/cmd/compile/internal/loong64"
 	"github.com/bir3/gocompiler/src/cmd/compile/internal/mips"
 	"github.com/bir3/gocompiler/src/cmd/compile/internal/mips64"
 	"github.com/bir3/gocompiler/src/cmd/compile/internal/ppc64"
@@ -29,6 +30,7 @@ var archInits = map[string]func(*ssagen.ArchInfo){
 	"amd64":    amd64.Init,
 	"arm":      arm.Init,
 	"arm64":    arm64.Init,
+	"loong64":  loong64.Init,
 	"mips":     mips.Init,
 	"mipsle":   mips.Init,
 	"mips64":   mips64.Init,

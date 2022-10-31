@@ -30,7 +30,7 @@ import (
 	"strconv"
 	"strings"
 
-	"golang.org/x/net/http/httpguts"
+	"xvendor/golang.org/x/net/http/httpguts"
 )
 
 var trailingPort = regexp.MustCompile(`:([0-9]+)$`)
@@ -90,10 +90,11 @@ func (h *Handler) stderr() io.Writer {
 
 // removeLeadingDuplicates remove leading duplicate in environments.
 // It's possible to override environment like following.
-//    cgi.Handler{
-//      ...
-//      Env: []string{"SCRIPT_FILENAME=foo.php"},
-//    }
+//
+//	cgi.Handler{
+//	  ...
+//	  Env: []string{"SCRIPT_FILENAME=foo.php"},
+//	}
 func removeLeadingDuplicates(env []string) (ret []string) {
 	for i, e := range env {
 		found := false

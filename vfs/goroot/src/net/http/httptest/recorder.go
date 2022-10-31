@@ -13,7 +13,7 @@ import (
 	"strconv"
 	"strings"
 
-	"golang.org/x/net/http/httpguts"
+	"xvendor/golang.org/x/net/http/httpguts"
 )
 
 // ResponseRecorder is an implementation of http.ResponseWriter that
@@ -207,18 +207,20 @@ func (rw *ResponseRecorder) Result() *http.Response {
 	if trailers, ok := rw.snapHeader["Trailer"]; ok {
 		res.Trailer = make(http.Header, len(trailers))
 		for _, k := range trailers {
-			k = http.CanonicalHeaderKey(k)
-			if !httpguts.ValidTrailerHeader(k) {
-				// Ignore since forbidden by RFC 7230, section 4.1.2.
-				continue
+			for _, k := range strings.Split(k, ",") {
+				k = http.CanonicalHeaderKey(textproto.TrimString(k))
+				if !httpguts.ValidTrailerHeader(k) {
+					// Ignore since forbidden by RFC 7230, section 4.1.2.
+					continue
+				}
+				vv, ok := rw.HeaderMap[k]
+				if !ok {
+					continue
+				}
+				vv2 := make([]string, len(vv))
+				copy(vv2, vv)
+				res.Trailer[k] = vv2
 			}
-			vv, ok := rw.HeaderMap[k]
-			if !ok {
-				continue
-			}
-			vv2 := make([]string, len(vv))
-			copy(vv2, vv)
-			res.Trailer[k] = vv2
 		}
 	}
 	for k, vv := range rw.HeaderMap {

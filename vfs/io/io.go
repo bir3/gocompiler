@@ -61,4 +61,6 @@ func ReadAll(r Reader) ([]byte, error) {
 
 var Discard Writer = io.Discard
 
+var LimitReader = io.LimitReader
+
 func NopCloser(r Reader) ReadCloser { return io.NopCloser(r) }

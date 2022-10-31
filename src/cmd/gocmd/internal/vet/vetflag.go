@@ -10,9 +10,9 @@ import (
 	"errors"
 	"github.com/bir3/gocompiler/src/cmd/gocmd/flag"
 	"fmt"
-	exec "github.com/bir3/gocompiler/src/internal/execabs"
 	"log"
 	       "github.com/bir3/gocompiler/vfs/os"
+	  "github.com/bir3/gocompiler/vfs/exec"
 	"path/filepath"
 	"strings"
 
@@ -35,7 +35,6 @@ import (
 // implementation. It is also used by tests.
 //
 // The default behavior (vetTool=="") runs 'go tool vet'.
-//
 var vetTool string // -vettool
 
 func init() {

@@ -7,8 +7,8 @@ package gccgoimporter
 import (
 	"bufio"
 	"github.com/bir3/gocompiler/src/go/types"
-	exec "github.com/bir3/gocompiler/src/internal/execabs"
 	       "github.com/bir3/gocompiler/vfs/os"
+	  "github.com/bir3/gocompiler/vfs/exec"
 	"path/filepath"
 	"strings"
 )

@@ -7,11 +7,17 @@
 package importer
 
 import (
+	"github.com/bir3/gocompiler/src/cmd/compile/internal/base"
 	"github.com/bir3/gocompiler/src/cmd/compile/internal/types2"
 	"fmt"
 	"github.com/bir3/gocompiler/src/go/token"
+	"github.com/bir3/gocompiler/src/internal/pkgbits"
 	"sync"
 )
+
+func assert(p bool) {
+	base.Assert(p)
+}
 
 func errorf(format string, args ...interface{}) {
 	panic(fmt.Sprintf(format, args...))
@@ -132,3 +138,15 @@ type anyType struct{}
 
 func (t anyType) Underlying() types2.Type { return t }
 func (t anyType) String() string          { return "any" }
+
+// See cmd/compile/internal/noder.derivedInfo.
+type derivedInfo struct {
+	idx    pkgbits.Index
+	needed bool
+}
+
+// See cmd/compile/internal/noder.typeInfo.
+type typeInfo struct {
+	idx     pkgbits.Index
+	derived bool
+}

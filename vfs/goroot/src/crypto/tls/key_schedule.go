@@ -12,9 +12,9 @@ import (
 	"io"
 	"math/big"
 
-	"golang.org/x/crypto/cryptobyte"
-	"golang.org/x/crypto/curve25519"
-	"golang.org/x/crypto/hkdf"
+	"xvendor/golang.org/x/crypto/cryptobyte"
+	"xvendor/golang.org/x/crypto/curve25519"
+	"xvendor/golang.org/x/crypto/hkdf"
 )
 
 // This file contains the functions necessary to compute the TLS 1.3 key

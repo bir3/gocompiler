@@ -10,9 +10,9 @@ import (
 	"bytes"
 	"errors"
 	"fmt"
-	exec "github.com/bir3/gocompiler/src/internal/execabs"
 	"github.com/bir3/gocompiler/vfs/ioutil"
 	       "github.com/bir3/gocompiler/vfs/os"
+	  "github.com/bir3/gocompiler/vfs/exec"
 	"strings"
 )
 

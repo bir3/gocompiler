@@ -10,6 +10,7 @@ import (
 	"github.com/bir3/gocompiler/src/cmd/link/internal/arm"
 	"github.com/bir3/gocompiler/src/cmd/link/internal/arm64"
 	"github.com/bir3/gocompiler/src/cmd/link/internal/ld"
+	"github.com/bir3/gocompiler/src/cmd/link/internal/loong64"
 	"github.com/bir3/gocompiler/src/cmd/link/internal/mips"
 	"github.com/bir3/gocompiler/src/cmd/link/internal/mips64"
 	"github.com/bir3/gocompiler/src/cmd/link/internal/ppc64"
@@ -53,6 +54,8 @@ func Main() {
 		arch, theArch = arm.Init()
 	case "arm64":
 		arch, theArch = arm64.Init()
+	case "loong64":
+		arch, theArch = loong64.Init()
 	case "mips", "mipsle":
 		arch, theArch = mips.Init()
 	case "mips64", "mips64le":

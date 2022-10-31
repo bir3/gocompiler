@@ -10,9 +10,9 @@ import (
 	"context"
 	"github.com/bir3/gocompiler/src/cmd/gocmd/flag"
 	"fmt"
-	exec "github.com/bir3/gocompiler/src/internal/execabs"
 	"log"
 	       "github.com/bir3/gocompiler/vfs/os"
+	  "github.com/bir3/gocompiler/vfs/exec"
 	"strings"
 	"sync"
 
