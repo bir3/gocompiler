@@ -44,7 +44,7 @@ func main() {
 		return
 	}
 
-	err := os.WriteFile("temp.go", []byte(goCodeStr), 0666)
+	err := os.WriteFile("temp.go", []byte(goCodeStr), 0644)
 	if err != nil {
 		log.Fatal(err)
 	}
