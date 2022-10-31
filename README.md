@@ -8,8 +8,9 @@ The Go compiler as a package
 # Example
 
 ```bash
-# the go compiler version should be the same as the one inside the library, e.g. 1.18.2 in this case
-go get github.com/bir3/gocompiler@v0.1.0-go.1.18.2
+# use at least go1.19 to compile the library
+# - v0.2.0 contains go1.19.2
+go get github.com/bir3/gocompiler@v0.2.0
 ```
 
 ```go
