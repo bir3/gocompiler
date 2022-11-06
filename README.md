@@ -9,8 +9,8 @@ The Go compiler as a package
 
 ```bash
 # use at least go1.19 to compile the library
-# - v0.2.0 contains go1.19.2
-go get github.com/bir3/gocompiler@v0.2.0
+# - v0.2.3 contains go1.19.3
+go get github.com/bir3/gocompiler@v0.2.3
 ```
 
 ```go

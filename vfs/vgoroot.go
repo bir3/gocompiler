@@ -26,15 +26,10 @@ func init() {
 	GorootSrc = filepath.Join(GOROOT, "src") + string(os.PathSeparator)
 	GorootTool = filepath.Join(GOROOT, "pkg", "tool") + string(os.PathSeparator)
 
-	if !filepath.IsAbs(os.Args[0]) {
-		wd, err := os.Getwd()
-		if err == nil {
-			SharedExe = filepath.Join(wd, os.Args[0])
-		} else {
-			SharedExeError = fmt.Errorf("os.Getwd() failed : %w", err)
-		}
-	} else {
-		SharedExe = os.Args[0]
+	var err error
+	SharedExe, err = exepath(os.Args[0])
+	if err != nil {
+		SharedExeError = err
 	}
 	switch os.Getenv("GOCOMPILERLIB_LOG") {
 	case "1":
@@ -86,14 +81,4 @@ func Chdir(dir string) error {
 		Log("vfs: vfsCwd set to " + vfsCwd + " exe=" + os.Args[0])
 	}
 	return nil
-}
-
-func zpath(path string) string {
-	if vfsCwd == "" {
-		return path // default
-	}
-	if strings.HasPrefix(path, "/") {
-		return path // absolute path
-	}
-	return filepath.Join(vfsCwd, path)
 }

@@ -99,7 +99,7 @@ func Wrap(f *os.File, err error) (*File, error) {
 	return wrap(f, err)
 }
 
-//----------------------------------
+// ----------------------------------
 func errIfVfsfile(f File, where string) {
 	if f.vfsfile != nil {
 		panic("vfsfile not supported here yet: " + where)
@@ -297,7 +297,7 @@ func UserCacheDir() (string, error) {
 	return os.UserCacheDir()
 }
 
-///-------------
+// /-------------
 func (f File) Read(b []byte) (n int, err error) {
 	if f.osfile != nil {
 		return f.osfile.Read(b)

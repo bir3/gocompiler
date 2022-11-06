@@ -37,7 +37,7 @@ type Cmd struct {
 	// info about exited process, available after a call to Wait or Run:
 	ProcessState *os.ProcessState
 
-	ctx context.Context // nil means none
+	//ctx context.Context // nil means none
 }
 
 func CommandContext(ctx context.Context, name string, arg ...string) *Cmd {
@@ -47,10 +47,6 @@ func CommandContext(ctx context.Context, name string, arg ...string) *Cmd {
 	osCmd := exec.CommandContext(ctx, name, arg...)
 	cmd := Cmd{osCmd: *osCmd}
 	return &cmd
-}
-
-func wrap(cmd *exec.Cmd) *Cmd {
-	return &Cmd{osCmd: *cmd}
 }
 
 func copyAttr(c *Cmd) {
@@ -139,7 +135,7 @@ func (c *Cmd) StdoutPipe() (io.ReadCloser, error) {
 // optional code by go version must be at end of file
 // and in increasing go version order
 
-//gocompiler: go1.19
+// gocompiler: go1.19
 func (c *Cmd) Environ() []string {
 	return c.osCmd.Environ()
 }
