@@ -728,9 +728,6 @@ type Certificate struct {
 // involves algorithms that are not currently implemented.
 var ErrUnsupportedAlgorithm = errors.New("x509: cannot verify signature: algorithm unimplemented")
 
-// debugAllowSHA1 allows SHA-1 signatures. See issue 41682.
-var debugAllowSHA1 = godebug.Get("x509sha1") == "1"
-
 // An InsecureAlgorithmError indicates that the SignatureAlgorithm used to
 // generate the signature is not secure, and the signature has been rejected.
 //
@@ -790,7 +787,7 @@ func (c *Certificate) CheckSignatureFrom(parent *Certificate) error {
 
 	// TODO(agl): don't ignore the path length constraint.
 
-	return checkSignature(c.SignatureAlgorithm, c.RawTBSCertificate, c.Signature, parent.PublicKey, debugAllowSHA1)
+	return checkSignature(c.SignatureAlgorithm, c.RawTBSCertificate, c.Signature, parent.PublicKey, false)
 }
 
 // CheckSignature verifies that signature is a valid signature over signed from
@@ -837,7 +834,8 @@ func checkSignature(algo SignatureAlgorithm, signed, signature []byte, publicKey
 	case crypto.MD5:
 		return InsecureAlgorithmError(algo)
 	case crypto.SHA1:
-		if !allowSHA1 {
+		// SHA-1 signatures are mostly disabled. See go.dev/issue/41682.
+		if !allowSHA1 && godebug.Get("x509sha1") != "1" {
 			return InsecureAlgorithmError(algo)
 		}
 		fallthrough
@@ -1818,18 +1816,13 @@ func parseCSRExtensions(rawAttributes []asn1.RawValue) ([]pkix.Extension, error)
 	}
 
 	var ret []pkix.Extension
-	seenExts := make(map[string]bool)
+	requestedExts := make(map[string]bool)
 	for _, rawAttr := range rawAttributes {
 		var attr pkcs10Attribute
 		if rest, err := asn1.Unmarshal(rawAttr.FullBytes, &attr); err != nil || len(rest) != 0 || len(attr.Values) == 0 {
 			// Ignore attributes that don't parse.
 			continue
 		}
-		oidStr := attr.Id.String()
-		if seenExts[oidStr] {
-			return nil, errors.New("x509: certificate request contains duplicate extensions")
-		}
-		seenExts[oidStr] = true
 
 		if !attr.Id.Equal(oidExtensionRequest) {
 			continue
@@ -1839,7 +1832,6 @@ func parseCSRExtensions(rawAttributes []asn1.RawValue) ([]pkix.Extension, error)
 		if _, err := asn1.Unmarshal(attr.Values[0].FullBytes, &extensions); err != nil {
 			return nil, err
 		}
-		requestedExts := make(map[string]bool)
 		for _, ext := range extensions {
 			oidStr := ext.Id.String()
 			if requestedExts[oidStr] {

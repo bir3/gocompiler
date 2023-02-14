@@ -8,9 +8,8 @@ The Go compiler as a package
 # Example
 
 ```bash
-# use at least go1.19 to compile the library
-# - v0.2.3 contains go1.19.3
-go get github.com/bir3/gocompiler@v0.2.3
+# - v0.2.196 contains go1.19.6
+go get github.com/bir3/gocompiler@v0.2.196
 ```
 
 ```go
@@ -62,10 +61,9 @@ func main() {
 
 # Limitations
 
-- match your Go compiler version with the package Go compiler version
 - avoid side effects in init() and global variable initializations
 
-Your executable will serve two purposes: 
+Reason: Your executable will serve two purposes: 
 - run your application
 - run the Go compiler toolchain via `gocompiler.RunToolchain()`
 
@@ -73,7 +71,7 @@ Side effects in init() and global variable initializations occur on every time t
 The embedded Go toolchain will repeatedly start the executable during compilation to compile Go source code.  
 This means that global side effects like opening a http port or connecting to a database is likely to cause problems.
 
-## limitation : creating a log file in a init() function
+## example bug due to side effects : creating a log file in a init() function
 
 The main function may write a few lines to the logfile, then when we compile code, the subprocesses
 that are also hosted in the main executable will also open and possibly write or truncate the logfile
@@ -85,8 +83,8 @@ creating confusion on why something as simple as writing to a logfile can fail t
 
 |                 | "github.com/bir3/gocompiler" | official go toolchain | 
 | --------------  | ---------------------------- | ------- |
-| Number of files | 1                            | 12006   |
-| Total size      | 64 MB                        | 462 MB  |
+| Number of files | 1                            | 12264   |
+| Total size      | 74 MB                        | 490 MB  |
 | go build -a     | 7.3 sec                      | 6.9 sec |
 
 Note that this package is only focused on compiling Go source code into an executable, while the official Go toolchain provides many more tools.

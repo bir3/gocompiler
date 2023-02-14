@@ -112,3 +112,7 @@ func RunWithEnv(env []string, args ...string) (Result, error) {
 func Run(args ...string) (Result, error) {
 	return RunWithEnv(os.Environ(), args...)
 }
+
+func GoVersion() string {
+	return "1.19.6"
+}

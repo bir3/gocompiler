@@ -27,7 +27,7 @@ func init() {
 	GorootTool = filepath.Join(GOROOT, "pkg", "tool") + string(os.PathSeparator)
 
 	var err error
-	SharedExe, err = exepath(os.Args[0])
+	SharedExe, err = os.Executable()
 	if err != nil {
 		SharedExeError = err
 	}

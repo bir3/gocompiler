@@ -111,7 +111,7 @@ var defaultGO_LDSO = func(goos string, goarch string) string {
 	panic("gocompiler: unknown platform " + goos + `/` + goarch)
 }(runtime.GOOS, runtime.GOARCH)
 
-const version = `go1.19.3`
+const version = `go1.19.6`
 const defaultGOOS = runtime.GOOS
 const defaultGOARCH = runtime.GOARCH
 
