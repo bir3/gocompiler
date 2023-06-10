@@ -9,10 +9,10 @@ import (
 	"bytes"
 	"context"
 	"fmt"
-	       "github.com/bir3/gocompiler/vfs/io"
+	"io"
 	urlpkg "net/url"
-	       "github.com/bir3/gocompiler/vfs/os"
-	  "github.com/bir3/gocompiler/vfs/exec"
+	"os"
+	"os/exec"
 	"path/filepath"
 	"regexp"
 	"runtime"
@@ -23,6 +23,7 @@ import (
 	"github.com/bir3/gocompiler/src/cmd/gocmd/internal/cfg"
 	"github.com/bir3/gocompiler/src/cmd/gocmd/internal/envcmd"
 	"github.com/bir3/gocompiler/src/cmd/gocmd/internal/web"
+	"github.com/bir3/gocompiler/src/cmd/gocmd/internal/work"
 )
 
 var CmdBug = &base.Command{
@@ -37,13 +38,16 @@ The report includes useful system information.
 
 func init() {
 	CmdBug.Flag.BoolVar(&cfg.BuildV, "v", false, "")
+	base.AddChdirFlag(&CmdBug.Flag)
 }
 
 func runBug(ctx context.Context, cmd *base.Command, args []string) {
 	if len(args) > 0 {
 		base.Fatalf("go: bug takes no arguments")
 	}
-	var buf bytes.Buffer
+	work.BuildInit()
+
+	var buf strings.Builder
 	buf.WriteString(bugHeader)
 	printGoVersion(&buf)
 	buf.WriteString("### Does this issue reproduce with the latest release?\n\n\n")
@@ -215,7 +219,7 @@ func printGlibcVersion(w io.Writer) {
 	fmt.Fprintf(w, "%s: %s\n", m[1], firstLine(out))
 
 	// print another line (the one containing version string) in case of musl libc
-	if idx := bytes.IndexByte(out, '\n'); bytes.Index(out, []byte("musl")) != -1 && idx > -1 {
+	if idx := bytes.IndexByte(out, '\n'); bytes.Contains(out, []byte("musl")) && idx > -1 {
 		fmt.Fprintf(w, "%s\n", firstLine(out[idx+1:]))
 	}
 }

@@ -9,18 +9,95 @@ import (
 	"fmt"
 	"io/fs"
 	"log"
+	"os"
+	"path"
 	"path/filepath"
 
 	"strings"
+
+	"github.com/bir3/gocompiler/src/cmd/gocmd/extract_stdlib"
 )
 
 //go:embed goroot
 var content embed.FS
 
 /*
-	this file should only contain general virtual filesystem things
-	; the logic merging the normal "io" fs and this in-memory fs should live elsewhere
+	"vfs2" = historical name, not virtual file system
 */
+
+var GOROOT = "/github.com/bir3/gocompiler/missing-init"
+
+const gorootPrefixLen = len("/_/github.com/bir3/gocompiler/vfs/")
+
+// var GorootSrc string
+var GorootTool string
+
+var SharedExe string // used by so we can run as "compile", "asm", etc.
+var SharedExeError error
+
+func init() {
+	// ; cmd/go/internal/cfg/cfg.go
+
+	/*
+		user-config-dir/gocompiler/src-xxxx/done
+
+		override with env GOCOMPILER_DIR/src-xxxx/done
+	*/
+	//var err error
+
+	d, err := configDir("gocompiler/stdlib-go1.20.5-232e") //syncvar:
+	if err != nil {
+		return // compiler will fail due to missing GOROOT
+	}
+	f, err := content.Open("goroot/stdlib-go1.20.5-232e.tar.zst") //syncvar:
+	if err != nil {
+		panic(fmt.Sprintf("gocompiler stdlib init failed - %s", err))
+	}
+	defer f.Close()
+	GOROOT = d
+
+	err = extract_stdlib.ExtractStdlib(f, d)
+	if err != nil {
+		fmt.Fprintf(os.Stderr, "ERROR: gocompiler: extract stdlib to %s failed with %v\n", d, err)
+		os.Exit(3)
+	}
+	//GorootSrc = filepath.Join(GOROOT, "src") + string(os.PathSeparator)
+	GorootTool = filepath.Join(GOROOT, "pkg", "tool") + string(os.PathSeparator)
+
+	SharedExe, err = os.Executable()
+	if err != nil {
+		SharedExeError = err
+	}
+	switch os.Getenv("GOCOMPILERLIB_LOG") {
+	case "1":
+		basename := os.Args[0]
+		basename = basename[strings.LastIndex(basename, `/`)+1:]
+		basename = basename[strings.LastIndex(basename, `\`)+1:]
+		basename = strings.TrimSuffix(basename, ".exe")
+
+		filename := fmt.Sprintf("/tmp/gocompilerlib-%s-%d", basename, os.Getpid())
+		LogFile, _ = os.OpenFile(filename, os.O_CREATE|os.O_APPEND|os.O_WRONLY, 0666) //Create("/tmp/r2log")
+
+	}
+}
+
+func configDir(folder string) (string, error) {
+	var err error
+	d := os.Getenv("GOCOMPILER_DIR")
+	if d == "" {
+		d, err = os.UserCacheDir()
+	}
+	d = path.Join(d, folder)
+	if err == nil {
+		err = os.MkdirAll(d, 0755)
+	}
+	if err != nil {
+		return "", fmt.Errorf("failed to create folder for stdlib - %w", err)
+	}
+	return d, nil
+}
+
+var LogFile *os.File
 
 func DebugShowEmbed() {
 	fs.WalkDir(content, "goroot", func(path string, d fs.DirEntry, err error) error {
@@ -30,78 +107,4 @@ func DebugShowEmbed() {
 		fmt.Println(path)
 		return nil
 	})
-}
-
-// most paths are expected to be clean, so favor that case
-func CleanPath(s string) string {
-	state := 0
-	for _, c := range s {
-		switch state {
-		case 0:
-			if c == '/' {
-				state = 1
-			}
-		case 1:
-			if c == '/' || c == '.' {
-				return filepath.Clean(s)
-			} else {
-				state = 0
-			}
-		}
-	}
-	return s
-}
-
-func Open(name string) (fs.File, error) {
-	// TODO: support cwd
-
-	if strings.HasPrefix(name, GOROOT) {
-		name = name[gorootPrefixLen:]
-	}
-	if e, err := content.Open(name); err == nil {
-		return e, nil
-	}
-	return nil, fmt.Errorf("s2: file %s not found", name)
-}
-
-func Stat(name string) (fs.FileInfo, error) {
-
-	if strings.HasPrefix(name, GorootTool) {
-		// pretend tool file exist
-		b := filepath.Base(name)
-		if b == "asm" || b == "compile" || b == "link" || b == "cgo" {
-			name = filepath.Join(GorootSrc, "flag/flag.go")
-		}
-	}
-	if strings.HasPrefix(name, GOROOT) {
-		name = name[gorootPrefixLen:]
-	}
-
-	if f, err := content.Open(name); err == nil {
-		fi, err := f.Stat()
-		f.Close()
-		if err == nil {
-			return fi, nil
-		} else {
-			return fi, err
-		}
-	} else {
-		return nil, err
-	}
-}
-
-func ReadDir(name string) ([]fs.DirEntry, error) {
-
-	if strings.HasPrefix(name, GOROOT) {
-		name = name[gorootPrefixLen:]
-	}
-
-	return content.ReadDir(name)
-}
-
-func ReadFile(filename string) ([]byte, error) {
-	if strings.HasPrefix(filename, GOROOT) {
-		filename = filename[gorootPrefixLen:]
-	}
-	return content.ReadFile(filename)
 }

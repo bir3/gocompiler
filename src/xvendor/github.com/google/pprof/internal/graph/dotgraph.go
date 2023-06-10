@@ -16,7 +16,7 @@ package graph
 
 import (
 	"fmt"
-	       "github.com/bir3/gocompiler/vfs/io"
+	"io"
 	"math"
 	"path/filepath"
 	"strings"

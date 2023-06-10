@@ -2,14 +2,14 @@
 // Use of this source code is governed by a BSD-style
 // license that can be found in the LICENSE file.
 
-//go:build unix && !solaris
+//go:build unix
 
 package mmap
 
 import (
 	"fmt"
 	"io/fs"
-	       "github.com/bir3/gocompiler/vfs/os"
+	"os"
 	"syscall"
 )
 

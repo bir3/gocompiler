@@ -3,7 +3,6 @@
 // license that can be found in the LICENSE file.
 
 //go:build ignore
-// +build ignore
 
 // Generate builtin.go from builtin/runtime.go.
 
@@ -17,16 +16,16 @@ import (
 	"github.com/bir3/gocompiler/src/go/format"
 	"github.com/bir3/gocompiler/src/go/parser"
 	"github.com/bir3/gocompiler/src/go/token"
-	       "github.com/bir3/gocompiler/vfs/io"
-	"github.com/bir3/gocompiler/vfs/ioutil"
+	"io"
 	"log"
-	       "github.com/bir3/gocompiler/vfs/os"
+	"os"
 	"path/filepath"
 	"strconv"
 	"strings"
 )
 
 var stdout = flag.Bool("stdout", false, "write to stdout instead of builtin.go")
+var nofmt = flag.Bool("nofmt", false, "skip formatting builtin.go")
 
 func main() {
 	flag.Parse()
@@ -41,16 +40,37 @@ func main() {
 	fmt.Fprintln(&b, `      "cmd/internal/src"`)
 	fmt.Fprintln(&b, `)`)
 
-	mkbuiltin(&b, "runtime")
+	fmt.Fprintln(&b, `
+// Not inlining this function removes a significant chunk of init code.
+//go:noinline
+func newSig(params, results []*types.Field) *types.Type {
+	return types.NewSignature(types.NoPkg, nil, nil, params, results)
+}
 
-	out, err := format.Source(b.Bytes())
-	if err != nil {
-		log.Fatal(err)
+func params(tlist ...*types.Type) []*types.Field {
+	flist := make([]*types.Field, len(tlist))
+	for i, typ := range tlist {
+		flist[i] = types.NewField(src.NoXPos, nil, typ)
+	}
+	return flist
+}
+`)
+
+	mkbuiltin(&b, "runtime")
+	mkbuiltin(&b, "coverage")
+
+	var err error
+	out := b.Bytes()
+	if !*nofmt {
+		out, err = format.Source(out)
+		if err != nil {
+			log.Fatal(err)
+		}
 	}
 	if *stdout {
 		_, err = os.Stdout.Write(out)
 	} else {
-		err = ioutil.WriteFile("builtin.go", out, 0666)
+		err = os.WriteFile("builtin.go", out, 0666)
 	}
 	if err != nil {
 		log.Fatal(err)
@@ -59,7 +79,7 @@ func main() {
 
 func mkbuiltin(w io.Writer, name string) {
 	fset := token.NewFileSet()
-	f, err := parser.ParseFile(fset, filepath.Join("builtin", name+".go"), nil, 0)
+	f, err := parser.ParseFile(fset, filepath.Join("_builtin", name+".go"), nil, 0)
 	if err != nil {
 		log.Fatal(err)
 	}
@@ -102,22 +122,6 @@ func mkbuiltin(w io.Writer, name string) {
 		}
 	}
 	fmt.Fprintln(w, "}")
-
-	fmt.Fprintln(w, `
-// Not inlining this function removes a significant chunk of init code.
-//
-//go:noinline
-func newSig(params, results []*types.Field) *types.Type {
-	return types.NewSignature(types.NoPkg, nil, nil, params, results)
-}
-
-func params(tlist ...*types.Type) []*types.Field {
-	flist := make([]*types.Field, len(tlist))
-	for i, typ := range tlist {
-		flist[i] = types.NewField(src.NoXPos, nil, typ)
-	}
-	return flist
-}`)
 
 	fmt.Fprintln(w)
 	fmt.Fprintf(w, "func %sTypes() []*types.Type {\n", name)

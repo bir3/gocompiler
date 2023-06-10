@@ -9,7 +9,7 @@ package lockedfile
 import (
 	"io/fs"
 	"math/rand"
-	       "github.com/bir3/gocompiler/vfs/os"
+	"os"
 	"strings"
 	"time"
 )

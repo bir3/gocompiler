@@ -28,7 +28,7 @@ import (
 	"context"
 	"errors"
 	"fmt"
-	       "github.com/bir3/gocompiler/vfs/os"
+	"os"
 	"path/filepath"
 	"runtime"
 	"sort"

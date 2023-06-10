@@ -8,7 +8,7 @@ import (
 	"debug/dwarf"
 	"errors"
 	"fmt"
-	       "github.com/bir3/gocompiler/vfs/os"
+	"os"
 )
 
 // Helper type for supporting queries on DIEs within a DWARF

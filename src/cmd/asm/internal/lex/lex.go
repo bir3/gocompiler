@@ -8,7 +8,7 @@ package lex
 import (
 	"fmt"
 	"log"
-	       "github.com/bir3/gocompiler/vfs/os"
+	"os"
 	"strings"
 	"text/scanner"
 

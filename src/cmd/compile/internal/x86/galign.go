@@ -10,7 +10,7 @@ import (
 	"github.com/bir3/gocompiler/src/cmd/internal/obj/x86"
 	"fmt"
 	"github.com/bir3/gocompiler/src/internal/buildcfg"
-	       "github.com/bir3/gocompiler/vfs/os"
+	"os"
 )
 
 func Init(arch *ssagen.ArchInfo) {

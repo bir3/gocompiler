@@ -5,7 +5,7 @@
 package base
 
 import (
-	       "github.com/bir3/gocompiler/vfs/os"
+	"os"
 	"os/signal"
 	"sync"
 )

@@ -10,7 +10,7 @@ import (
 	"debug/dwarf"
 	"fmt"
 	"github.com/bir3/gocompiler/src/internal/xcoff"
-	       "github.com/bir3/gocompiler/vfs/io"
+	"io"
 	"unicode"
 )
 

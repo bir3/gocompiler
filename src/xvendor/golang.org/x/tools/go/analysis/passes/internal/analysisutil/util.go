@@ -12,7 +12,7 @@ import (
 	"github.com/bir3/gocompiler/src/go/printer"
 	"github.com/bir3/gocompiler/src/go/token"
 	"github.com/bir3/gocompiler/src/go/types"
-	"github.com/bir3/gocompiler/vfs/ioutil"
+	"io/ioutil"
 )
 
 // Format returns a string representation of the expression.

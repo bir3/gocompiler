@@ -5,14 +5,12 @@
 package flag_objabi
 
 import (
-	"bytes"
 	flag "github.com/bir3/gocompiler/src/cmd/compile/flag"
 	"fmt"
 	"github.com/bir3/gocompiler/src/internal/buildcfg"
-	       "github.com/bir3/gocompiler/vfs/io"
-	"github.com/bir3/gocompiler/vfs/ioutil"
+	"io"
 	"log"
-	       "github.com/bir3/gocompiler/vfs/os"
+	"os"
 	"reflect"
 	"sort"
 	"strconv"
@@ -58,7 +56,7 @@ func expandArgs(in []string) (out []string) {
 				out = make([]string, 0, len(in)*2)
 				out = append(out, in[:i]...)
 			}
-			slurp, err := ioutil.ReadFile(s[1:])
+			slurp, err := os.ReadFile(s[1:])
 			if err != nil {
 				log.Fatal(err)
 			}
@@ -181,8 +179,7 @@ func DecodeArg(arg string) string {
 		return arg
 	}
 
-	// We can't use strings.Builder as this must work at bootstrap.
-	var b bytes.Buffer
+	var b strings.Builder
 	var wasBS bool
 	for _, r := range arg {
 		if wasBS {
@@ -208,16 +205,16 @@ func DecodeArg(arg string) string {
 }
 
 type debugField struct {
-	name string
-	help string
-	val  interface{} // *int or *string
+	name         string
+	help         string
+	concurrentOk bool        // true if this field/flag is compatible with concurrent compilation
+	val          interface{} // *int or *string
 }
 
 type DebugFlag struct {
-	tab map[string]debugField
-	any *bool
-
-	debugSSA DebugSSA
+	tab          map[string]debugField
+	concurrentOk *bool    // this is non-nil only for compiler's DebugFlags, but only compiler has concurrent:ok fields
+	debugSSA     DebugSSA // this is non-nil only for compiler's DebugFlags.
 }
 
 // A DebugSSA function is called to set a -d ssa/... option.
@@ -249,12 +246,12 @@ func NewDebugFlag(debug interface{}, debugSSA DebugSSA) *DebugFlag {
 	for i := 0; i < t.NumField(); i++ {
 		f := t.Field(i)
 		ptr := v.Field(i).Addr().Interface()
-		if f.Name == "Any" {
+		if f.Name == "ConcurrentOk" {
 			switch ptr := ptr.(type) {
 			default:
-				panic("debug.Any must have type bool")
+				panic("debug.ConcurrentOk must have type bool")
 			case *bool:
-				flag.any = ptr
+				flag.concurrentOk = ptr
 			}
 			continue
 		}
@@ -263,13 +260,15 @@ func NewDebugFlag(debug interface{}, debugSSA DebugSSA) *DebugFlag {
 		if help == "" {
 			panic(fmt.Sprintf("debug.%s is missing help text", f.Name))
 		}
+		concurrent := f.Tag.Get("concurrent")
+
 		switch ptr.(type) {
 		default:
 			panic(fmt.Sprintf("debug.%s has invalid type %v (must be int or string)", f.Name, f.Type))
 		case *int, *string:
 			// ok
 		}
-		flag.tab[name] = debugField{name, help, ptr}
+		flag.tab[name] = debugField{name, help, concurrent == "ok", ptr}
 	}
 
 	return flag
@@ -278,9 +277,6 @@ func NewDebugFlag(debug interface{}, debugSSA DebugSSA) *DebugFlag {
 func (f *DebugFlag) Set(debugstr string) error {
 	if debugstr == "" {
 		return nil
-	}
-	if f.any != nil {
-		*f.any = true
 	}
 	for _, name := range strings.Split(debugstr, ",") {
 		if name == "" {
@@ -337,6 +333,10 @@ func (f *DebugFlag) Set(debugstr string) error {
 			default:
 				panic("bad debugtab type")
 			}
+			// assembler DebugFlags don't have a ConcurrentOk field to reset, so check against that.
+			if !t.concurrentOk && f.concurrentOk != nil {
+				*f.concurrentOk = false
+			}
 		} else if f.debugSSA != nil && strings.HasPrefix(name, "ssa/") {
 			// expect form ssa/phase/flag
 			// e.g. -d=ssa/generic_cse/time
@@ -351,6 +351,11 @@ func (f *DebugFlag) Set(debugstr string) error {
 			if err != "" {
 				log.Fatalf(err)
 			}
+			// Setting this false for -d=ssa/... preserves old behavior
+			// of turning off concurrency for any debug flags.
+			// It's not known for sure if this is necessary, but it is safe.
+			*f.concurrentOk = false
+
 		} else {
 			return fmt.Errorf("unknown debug key %s\n", name)
 		}

@@ -6,7 +6,7 @@ package base
 
 import (
 	"fmt"
-	       "github.com/bir3/gocompiler/vfs/io"
+	"io"
 	"strings"
 	"time"
 )

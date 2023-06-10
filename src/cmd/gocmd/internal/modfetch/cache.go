@@ -9,10 +9,10 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
-	       "github.com/bir3/gocompiler/vfs/io"
+	"io"
 	"io/fs"
 	"math/rand"
-	       "github.com/bir3/gocompiler/vfs/os"
+	"os"
 	"path/filepath"
 	"strconv"
 	"strings"
@@ -710,8 +710,7 @@ func rewriteVersionList(dir string) (err error) {
 		// involved in module graph construction, many *.zip files
 		// will never be requested.
 		name := info.Name()
-		if strings.HasSuffix(name, ".mod") {
-			v := strings.TrimSuffix(name, ".mod")
+		if v, found := strings.CutSuffix(name, ".mod"); found {
 			if v != "" && module.CanonicalVersion(v) == v {
 				list = append(list, v)
 			}

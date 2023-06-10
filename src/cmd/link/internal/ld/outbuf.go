@@ -10,7 +10,7 @@ import (
 	"encoding/binary"
 	"errors"
 	"log"
-	       "github.com/bir3/gocompiler/vfs/os"
+	"os"
 )
 
 // If fallocate is not supported on this platform, return this error. The error

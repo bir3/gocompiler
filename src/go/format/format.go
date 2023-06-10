@@ -21,7 +21,7 @@ import (
 	"github.com/bir3/gocompiler/src/go/parser"
 	"github.com/bir3/gocompiler/src/go/printer"
 	"github.com/bir3/gocompiler/src/go/token"
-	       "github.com/bir3/gocompiler/vfs/io"
+	"io"
 )
 
 // Keep these in sync with cmd/gofmt/gofmt.go.

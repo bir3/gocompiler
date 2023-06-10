@@ -5,6 +5,7 @@
 package ssa
 
 import (
+	"github.com/bir3/gocompiler/src/cmd/compile/internal/ir"
 	"github.com/bir3/gocompiler/src/cmd/internal/obj/s390x"
 	"math"
 	"math/bits"
@@ -311,6 +312,10 @@ func checkFunc(f *Func) {
 				}
 				if !v.Args[1].Type.IsInteger() {
 					f.Fatalf("bad arg 1 type to %s: want integer, have %s", v.Op, v.Args[1].LongString())
+				}
+			case OpVarDef:
+				if !v.Aux.(*ir.Name).Type().HasPointers() {
+					f.Fatalf("vardef must have pointer type %s", v.Aux.(*ir.Name).Type().String())
 				}
 
 			}

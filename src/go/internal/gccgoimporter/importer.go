@@ -11,8 +11,8 @@ import (
 	"fmt"
 	"github.com/bir3/gocompiler/src/go/types"
 	"github.com/bir3/gocompiler/src/internal/xcoff"
-	       "github.com/bir3/gocompiler/vfs/io"
-	       "github.com/bir3/gocompiler/vfs/os"
+	"io"
+	"os"
 	"path/filepath"
 	"strings"
 )

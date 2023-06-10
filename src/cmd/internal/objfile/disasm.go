@@ -7,19 +7,19 @@ package objfile
 import (
 	"bufio"
 	"bytes"
-	"github.com/bir3/gocompiler/src/cmd/internal/src"
 	"container/list"
 	"debug/gosym"
 	"encoding/binary"
 	"fmt"
-	       "github.com/bir3/gocompiler/vfs/io"
-	"github.com/bir3/gocompiler/vfs/ioutil"
-	       "github.com/bir3/gocompiler/vfs/os"
+	"io"
+	"os"
 	"path/filepath"
 	"regexp"
 	"sort"
 	"strings"
 	"text/tabwriter"
+
+	"github.com/bir3/gocompiler/src/cmd/internal/src"
 
 	"github.com/bir3/gocompiler/src/xvendor/golang.org/x/arch/arm/armasm"
 	"github.com/bir3/gocompiler/src/xvendor/golang.org/x/arch/arm64/arm64asm"
@@ -157,7 +157,7 @@ func (fc *FileCache) Line(filename string, line int) ([]byte, error) {
 	}
 
 	if e == nil {
-		content, err := ioutil.ReadFile(filename)
+		content, err := os.ReadFile(filename)
 		if err != nil {
 			return nil, err
 		}

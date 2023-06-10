@@ -6,7 +6,9 @@
 
 package types2
 
-import "github.com/bir3/gocompiler/src/cmd/compile/internal/syntax"
+import (
+	"github.com/bir3/gocompiler/src/cmd/compile/internal/syntax"
+)
 
 type substMap map[*TypeParam]Type
 
@@ -262,7 +264,7 @@ func (subst *subster) typ(typ Type) Type {
 		return subst.smap.lookup(t)
 
 	default:
-		unimplemented()
+		unreachable()
 	}
 
 	return typ

@@ -2,13 +2,13 @@
 // Use of this source code is governed by a BSD-style
 // license that can be found in the LICENSE file.
 
-//go:build plan9 || solaris
+//go:build (js && wasm) || plan9
 
 package mmap
 
 import (
-	       "github.com/bir3/gocompiler/vfs/io"
-	       "github.com/bir3/gocompiler/vfs/os"
+	"io"
+	"os"
 )
 
 // mmapFile on other systems doesn't mmap the file. It just reads everything.

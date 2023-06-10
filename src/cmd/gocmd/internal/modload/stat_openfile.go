@@ -14,7 +14,7 @@ package modload
 
 import (
 	"io/fs"
-	       "github.com/bir3/gocompiler/vfs/os"
+	"os"
 )
 
 // hasWritePerm reports whether the current user has permission to write to the

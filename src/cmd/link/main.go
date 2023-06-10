@@ -20,7 +20,7 @@ import (
 	"github.com/bir3/gocompiler/src/cmd/link/internal/x86"
 	"fmt"
 	"github.com/bir3/gocompiler/src/internal/buildcfg"
-	       "github.com/bir3/gocompiler/vfs/os"
+	"os"
 )
 
 // The bulk of the linker implementation lives in cmd/link/internal/ld.

@@ -8,7 +8,7 @@ import (
 	"bytes"
 	"encoding/binary"
 	"fmt"
-	       "github.com/bir3/gocompiler/vfs/io"
+	"io"
 	"math"
 	"strings"
 )

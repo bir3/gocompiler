@@ -7,8 +7,8 @@
 package lazytemplate
 
 import (
-	       "github.com/bir3/gocompiler/vfs/io"
-	       "github.com/bir3/gocompiler/vfs/os"
+	"io"
+	"os"
 	"strings"
 	"sync"
 	"text/template"

@@ -7,7 +7,7 @@ package noder
 import (
 	"errors"
 	"fmt"
-	       "github.com/bir3/gocompiler/vfs/os"
+	"os"
 	"path/filepath"
 	"runtime"
 	"strconv"

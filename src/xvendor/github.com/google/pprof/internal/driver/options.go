@@ -17,8 +17,8 @@ package driver
 import (
 	"bufio"
 	"fmt"
-	       "github.com/bir3/gocompiler/vfs/io"
-	       "github.com/bir3/gocompiler/vfs/os"
+	"io"
+	"os"
 	"strings"
 
 	"github.com/bir3/gocompiler/src/xvendor/github.com/google/pprof/internal/binutils"

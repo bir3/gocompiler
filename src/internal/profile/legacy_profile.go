@@ -11,7 +11,7 @@ import (
 	"bufio"
 	"bytes"
 	"fmt"
-	       "github.com/bir3/gocompiler/vfs/io"
+	"io"
 	"math"
 	"regexp"
 	"strconv"
@@ -190,14 +190,6 @@ func (p *Profile) remapMappingIDs() {
 		if len(p.Mapping) > 1 && m.Limit == p.Mapping[1].Start {
 			p.Mapping = p.Mapping[1:]
 		}
-	}
-
-	// Subtract the offset from the start of the main mapping if it
-	// ends up at a recognizable start address.
-	const expectedStart = 0x400000
-	if m := p.Mapping[0]; m.Start-m.Offset == expectedStart {
-		m.Start = expectedStart
-		m.Offset = 0
 	}
 
 	for _, l := range p.Location {
@@ -730,7 +722,7 @@ func parseCppContention(r *bytes.Buffer) (*Profile, error) {
 	var l string
 	var err error
 	// Parse text of the form "attribute = value" before the samples.
-	const delimiter = "="
+	const delimiter = '='
 	for {
 		l, err = r.ReadString('\n')
 		if err != nil {
@@ -754,10 +746,13 @@ func parseCppContention(r *bytes.Buffer) (*Profile, error) {
 			break
 		}
 
-		key, val, ok := strings.Cut(l, delimiter)
-		if !ok {
+		index := strings.IndexByte(l, delimiter)
+		if index < 0 {
 			break
 		}
+		key := l[:index]
+		val := l[index+1:]
+
 		key, val = strings.TrimSpace(key), strings.TrimSpace(val)
 		var err error
 		switch key {
@@ -1031,7 +1026,7 @@ func (p *Profile) ParseMemoryMap(rd io.Reader) error {
 
 	var attrs []string
 	var r *strings.Replacer
-	const delimiter = "="
+	const delimiter = '='
 	for {
 		l, err := b.ReadString('\n')
 		if err != nil {
@@ -1054,7 +1049,10 @@ func (p *Profile) ParseMemoryMap(rd io.Reader) error {
 			if err == errUnrecognized {
 				// Recognize assignments of the form: attr=value, and replace
 				// $attr with value on subsequent mappings.
-				if attr, value, ok := strings.Cut(l, delimiter); ok {
+				idx := strings.IndexByte(l, delimiter)
+				if idx >= 0 {
+					attr := l[:idx]
+					value := l[idx+1:]
 					attrs = append(attrs, "$"+strings.TrimSpace(attr), strings.TrimSpace(value))
 					r = strings.NewReplacer(attrs...)
 				}

@@ -10,8 +10,8 @@ import (
 	"debug/macho"
 	"encoding/binary"
 	"fmt"
-	       "github.com/bir3/gocompiler/vfs/io"
-	       "github.com/bir3/gocompiler/vfs/os"
+	"io"
+	"os"
 	"reflect"
 	"unsafe"
 )

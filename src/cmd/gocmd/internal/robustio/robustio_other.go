@@ -7,7 +7,7 @@
 package robustio
 
 import (
-	       "github.com/bir3/gocompiler/vfs/os"
+	"os"
 )
 
 func rename(oldpath, newpath string) error {

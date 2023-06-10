@@ -20,7 +20,7 @@ package profile
 import (
 	"bytes"
 	"fmt"
-	       "github.com/bir3/gocompiler/vfs/io"
+	"io"
 	"path/filepath"
 	"regexp"
 	"strconv"

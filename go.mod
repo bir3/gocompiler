@@ -1,4 +1,4 @@
 module github.com/bir3/gocompiler
 
-go 1.19
+go 1.20
 

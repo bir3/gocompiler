@@ -11,8 +11,8 @@ import (
 	"github.com/bir3/gocompiler/src/cmd/gocmd/flag"
 	"fmt"
 	"log"
-	       "github.com/bir3/gocompiler/vfs/os"
-	  "github.com/bir3/gocompiler/vfs/exec"
+	"os"
+	"os/exec"
 	"strings"
 	"sync"
 

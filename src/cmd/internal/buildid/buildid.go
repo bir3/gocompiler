@@ -9,9 +9,9 @@ import (
 	"debug/elf"
 	"fmt"
 	"github.com/bir3/gocompiler/src/internal/xcoff"
-	       "github.com/bir3/gocompiler/vfs/io"
+	"io"
 	"io/fs"
-	       "github.com/bir3/gocompiler/vfs/os"
+	"os"
 	"strconv"
 	"strings"
 )

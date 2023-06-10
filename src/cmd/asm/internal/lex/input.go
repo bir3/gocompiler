@@ -7,7 +7,7 @@ package lex
 import (
 	"fmt"
 	"github.com/bir3/gocompiler/src/internal/buildcfg"
-	       "github.com/bir3/gocompiler/vfs/os"
+	"os"
 	"path/filepath"
 	"strconv"
 	"strings"

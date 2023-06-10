@@ -11,9 +11,9 @@ import (
 	"errors"
 	"github.com/bir3/gocompiler/src/go/ast"
 	"github.com/bir3/gocompiler/src/go/token"
-	       "github.com/bir3/gocompiler/vfs/io"
+	"io"
 	"io/fs"
-	       "github.com/bir3/gocompiler/vfs/os"
+	"os"
 	"path/filepath"
 	"strings"
 )
@@ -214,7 +214,7 @@ func ParseExprFrom(fset *token.FileSet, filename string, src any, mode Mode) (ex
 
 	// parse expr
 	p.init(fset, filename, text, mode)
-	expr = p.parseRhsOrType()
+	expr = p.parseRhs()
 
 	// If a semicolon was inserted, consume it;
 	// report an error if there's more tokens.

@@ -8,7 +8,7 @@ import (
 	"github.com/bir3/gocompiler/src/cmd/link/internal/loader"
 	"encoding/binary"
 	"fmt"
-	       "github.com/bir3/gocompiler/vfs/os"
+	"os"
 )
 
 var atExitFuncs []func()

@@ -6,7 +6,7 @@
 
 package testenv
 
-import        "github.com/bir3/gocompiler/vfs/os"
+import "os"
 
 // Sigquit is the signal to send to kill a hanging subprocess.
 // On Unix we send SIGQUIT, but on non-Unix we only have os.Kill.

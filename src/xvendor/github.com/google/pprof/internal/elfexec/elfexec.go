@@ -20,7 +20,7 @@ import (
 	"debug/elf"
 	"encoding/binary"
 	"fmt"
-	       "github.com/bir3/gocompiler/vfs/io"
+	"io"
 )
 
 const (

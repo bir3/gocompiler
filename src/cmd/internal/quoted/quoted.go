@@ -6,7 +6,7 @@
 package quoted
 
 import (
-	"github.com/bir3/gocompiler/src/cmd/compile/flag"
+	"github.com/bir3/gocompiler/src/cmd/asm/flag"
 	"fmt"
 	"strings"
 	"unicode"
@@ -83,16 +83,16 @@ func Join(args []string) (string, error) {
 		}
 		switch {
 		case !sawSpace && !sawSingleQuote && !sawDoubleQuote:
-			buf = append(buf, []byte(arg)...)
+			buf = append(buf, arg...)
 
 		case !sawSingleQuote:
 			buf = append(buf, '\'')
-			buf = append(buf, []byte(arg)...)
+			buf = append(buf, arg...)
 			buf = append(buf, '\'')
 
 		case !sawDoubleQuote:
 			buf = append(buf, '"')
-			buf = append(buf, []byte(arg)...)
+			buf = append(buf, arg...)
 			buf = append(buf, '"')
 
 		default:

@@ -19,7 +19,7 @@ package symbolz
 import (
 	"bytes"
 	"fmt"
-	       "github.com/bir3/gocompiler/vfs/io"
+	"io"
 	"net/url"
 	"path"
 	"regexp"

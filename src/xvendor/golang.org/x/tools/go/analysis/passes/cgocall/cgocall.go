@@ -14,7 +14,7 @@ import (
 	"github.com/bir3/gocompiler/src/go/token"
 	"github.com/bir3/gocompiler/src/go/types"
 	"log"
-	       "github.com/bir3/gocompiler/vfs/os"
+	"os"
 	"strconv"
 
 	"github.com/bir3/gocompiler/src/xvendor/golang.org/x/tools/go/analysis"

@@ -16,7 +16,7 @@ package driver
 
 import (
 	"fmt"
-	       "github.com/bir3/gocompiler/vfs/os"
+	"os"
 	"path/filepath"
 	"sync"
 )

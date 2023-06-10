@@ -10,10 +10,10 @@ import (
 	"bytes"
 	"crypto/sha256"
 	"fmt"
-	       "github.com/bir3/gocompiler/vfs/io"
+	"io"
 	"io/fs"
-	       "github.com/bir3/gocompiler/vfs/os"
-	  "github.com/bir3/gocompiler/vfs/exec"
+	"os"
+	"os/exec"
 	"path/filepath"
 	"strings"
 	"sync"
@@ -199,6 +199,19 @@ func (noCommitsError) Error() string {
 }
 func (noCommitsError) Is(err error) bool {
 	return err == fs.ErrNotExist
+}
+
+// ErrUnsupported indicates that a requested operation cannot be performed,
+// because it is unsupported. This error indicates that there is no alternative
+// way to perform the operation.
+//
+// TODO(#41198): Remove this declaration and use errors.ErrUnsupported instead.
+var ErrUnsupported = unsupportedOperationError{}
+
+type unsupportedOperationError struct{}
+
+func (unsupportedOperationError) Error() string {
+	return "unsupported operation"
 }
 
 // AllHex reports whether the revision rev is entirely lower-case hexadecimal digits.

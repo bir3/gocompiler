@@ -10,7 +10,7 @@ import (
 	"errors"
 	"fmt"
 	"io/fs"
-	       "github.com/bir3/gocompiler/vfs/os"
+	"os"
 	"runtime"
 
 	"github.com/bir3/gocompiler/src/cmd/gocmd/internal/base"
@@ -38,6 +38,7 @@ See https://golang.org/ref/mod#go-mod-verify for more about 'go mod verify'.
 }
 
 func init() {
+	base.AddChdirFlag(&cmdVerify.Flag)
 	base.AddModCommonFlags(&cmdVerify.Flag)
 }
 

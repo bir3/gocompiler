@@ -8,7 +8,7 @@ package lockedfile
 
 import (
 	"io/fs"
-	       "github.com/bir3/gocompiler/vfs/os"
+	"os"
 
 	"github.com/bir3/gocompiler/src/cmd/gocmd/internal/lockedfile/internal/filelock"
 )

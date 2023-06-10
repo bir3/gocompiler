@@ -9,8 +9,8 @@ package obscuretestdata
 
 import (
 	"encoding/base64"
-	       "github.com/bir3/gocompiler/vfs/io"
-	       "github.com/bir3/gocompiler/vfs/os"
+	"io"
+	"os"
 )
 
 // Rot13 returns the rot13 encoding or decoding of its input.

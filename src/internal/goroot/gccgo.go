@@ -7,7 +7,7 @@
 package goroot
 
 import (
-	       "github.com/bir3/gocompiler/vfs/os"
+	"os"
 	"path/filepath"
 )
 

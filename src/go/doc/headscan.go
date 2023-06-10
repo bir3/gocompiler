@@ -16,14 +16,13 @@ By default, the $GOROOT/src directory is scanned.
 package main
 
 import (
-	"bytes"
 	"flag"
 	"fmt"
 	"github.com/bir3/gocompiler/src/go/doc"
 	"github.com/bir3/gocompiler/src/go/parser"
 	"github.com/bir3/gocompiler/src/go/token"
 	"io/fs"
-	       "github.com/bir3/gocompiler/vfs/os"
+	"os"
 	"path/filepath"
 	"regexp"
 	"github.com/bir3/gocompiler/vfs"
@@ -46,7 +45,7 @@ func isGoFile(fi fs.FileInfo) bool {
 }
 
 func appendHeadings(list []string, comment string) []string {
-	var buf bytes.Buffer
+	var buf strings.Builder
 	doc.ToHTML(&buf, comment, nil)
 	for s := buf.String(); s != ""; {
 		loc := html_h.FindStringIndex(s)

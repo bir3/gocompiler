@@ -5,8 +5,9 @@
 package lex
 
 import (
-	       "github.com/bir3/gocompiler/vfs/io"
-	       "github.com/bir3/gocompiler/vfs/os"
+	"github.com/bir3/gocompiler/src/go/build/constraint"
+	"io"
+	"os"
 	"strings"
 	"text/scanner"
 	"unicode"
@@ -109,8 +110,7 @@ func (t *Tokenizer) Next() ScanToken {
 		}
 		text := s.TokenText()
 		t.line += strings.Count(text, "\n")
-		// TODO: Use constraint.IsGoBuild once #44505 fixed.
-		if strings.HasPrefix(text, "//go:build") {
+		if constraint.IsGoBuild(text) {
 			t.tok = BuildComment
 			break
 		}

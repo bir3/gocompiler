@@ -7,7 +7,6 @@
 package ld
 
 import (
-	"bytes"
 	"github.com/bir3/gocompiler/src/cmd/internal/bio"
 	"github.com/bir3/gocompiler/src/cmd/internal/obj"
 	"github.com/bir3/gocompiler/src/cmd/internal/objabi"
@@ -17,8 +16,8 @@ import (
 	"debug/elf"
 	"encoding/json"
 	"fmt"
-	       "github.com/bir3/gocompiler/vfs/io"
-	       "github.com/bir3/gocompiler/vfs/os"
+	"io"
+	"os"
 	"sort"
 	"strconv"
 	"strings"
@@ -383,9 +382,9 @@ func Adddynsym(ldr *loader.Loader, target *Target, syms *ArchSyms, s loader.Sym)
 }
 
 func fieldtrack(arch *sys.Arch, l *loader.Loader) {
-	var buf bytes.Buffer
+	var buf strings.Builder
 	for i := loader.Sym(1); i < loader.Sym(l.NSym()); i++ {
-		if name := l.SymName(i); strings.HasPrefix(name, "go.track.") {
+		if name := l.SymName(i); strings.HasPrefix(name, "go:track.") {
 			if l.AttrReachable(i) {
 				l.SetAttrSpecial(i, true)
 				l.SetAttrNotInSymbolTable(i, true)

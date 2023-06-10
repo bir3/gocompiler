@@ -8,7 +8,7 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
-	       "github.com/bir3/gocompiler/vfs/io"
+	"io"
 	"io/fs"
 	"net/url"
 	"path"

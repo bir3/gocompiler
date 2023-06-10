@@ -6,7 +6,7 @@ package arm64asm
 
 import (
 	"fmt"
-	       "github.com/bir3/gocompiler/vfs/io"
+	"io"
 	"sort"
 	"strings"
 )

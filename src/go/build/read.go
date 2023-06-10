@@ -12,7 +12,7 @@ import (
 	"github.com/bir3/gocompiler/src/go/ast"
 	"github.com/bir3/gocompiler/src/go/parser"
 	"github.com/bir3/gocompiler/src/go/token"
-	       "github.com/bir3/gocompiler/vfs/io"
+	"io"
 	"strconv"
 	"strings"
 	"unicode"

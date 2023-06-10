@@ -15,6 +15,7 @@ import (
 	"github.com/bir3/gocompiler/src/cmd/gocmd/internal/modload"
 	"github.com/bir3/gocompiler/src/cmd/gocmd/internal/search"
 	"github.com/bir3/gocompiler/src/cmd/gocmd/internal/str"
+	"github.com/bir3/gocompiler/src/cmd/internal/pkgpattern"
 
 	"github.com/bir3/gocompiler/src/xvendor/golang.org/x/mod/module"
 )
@@ -137,13 +138,9 @@ func errSet(err error) pathSet { return pathSet{err: err} }
 // newQuery returns a new query parsed from the raw argument,
 // which must be either path or path@version.
 func newQuery(raw string) (*query, error) {
-	pattern := raw
-	rawVers := ""
-	if i := strings.Index(raw, "@"); i >= 0 {
-		pattern, rawVers = raw[:i], raw[i+1:]
-		if strings.Contains(rawVers, "@") || rawVers == "" {
-			return nil, fmt.Errorf("invalid module version syntax %q", raw)
-		}
+	pattern, rawVers, found := strings.Cut(raw, "@")
+	if found && (strings.Contains(rawVers, "@") || rawVers == "") {
+		return nil, fmt.Errorf("invalid module version syntax %q", raw)
 	}
 
 	// If no version suffix is specified, assume @upgrade.
@@ -165,8 +162,8 @@ func newQuery(raw string) (*query, error) {
 		version:        version,
 	}
 	if strings.Contains(q.pattern, "...") {
-		q.matchWildcard = search.MatchPattern(q.pattern)
-		q.canMatchWildcardInModule = search.TreeCanMatchPattern(q.pattern)
+		q.matchWildcard = pkgpattern.MatchPattern(q.pattern)
+		q.canMatchWildcardInModule = pkgpattern.TreeCanMatchPattern(q.pattern)
 	}
 	if err := q.validate(); err != nil {
 		return q, err

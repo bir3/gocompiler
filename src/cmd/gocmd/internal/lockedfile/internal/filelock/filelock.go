@@ -10,7 +10,7 @@ package filelock
 import (
 	"errors"
 	"io/fs"
-	       "github.com/bir3/gocompiler/vfs/os"
+	"os"
 )
 
 // A File provides the minimal set of methods required to lock an open file.

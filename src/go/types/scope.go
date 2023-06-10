@@ -7,10 +7,9 @@
 package types
 
 import (
-	"bytes"
 	"fmt"
 	"github.com/bir3/gocompiler/src/go/token"
-	       "github.com/bir3/gocompiler/vfs/io"
+	"io"
 	"sort"
 	"strings"
 	"sync"
@@ -233,7 +232,7 @@ func (s *Scope) WriteTo(w io.Writer, n int, recurse bool) {
 
 // String returns a string representation of the scope, for debugging.
 func (s *Scope) String() string {
-	var buf bytes.Buffer
+	var buf strings.Builder
 	s.WriteTo(&buf, 0, false)
 	return buf.String()
 }

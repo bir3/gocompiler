@@ -8,7 +8,7 @@ package sumdb
 import (
 	"context"
 	"net/http"
-	       "github.com/bir3/gocompiler/vfs/os"
+	"os"
 	"strings"
 
 	"github.com/bir3/gocompiler/src/xvendor/golang.org/x/mod/internal/lazyregexp"

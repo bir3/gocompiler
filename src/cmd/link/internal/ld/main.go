@@ -41,7 +41,7 @@ import (
 	"github.com/bir3/gocompiler/src/cmd/link/flag"
 	"github.com/bir3/gocompiler/src/internal/buildcfg"
 	"log"
-	       "github.com/bir3/gocompiler/vfs/os"
+	"os"
 	"runtime"
 	"runtime/pprof"
 	"strings"
@@ -80,6 +80,8 @@ var (
 	flagExtld      quoted.Flag
 	flagExtldflags quoted.Flag
 	flagExtar      = flag.String("extar", "", "archive program for buildmode=c-archive")
+
+	flagCaptureHostObjs = flag.String("capturehostobjs", "", "capture host object files loaded during internal linking to specified dir")
 
 	flagA             = flag.Bool("a", false, "no-op (deprecated)")
 	FlagC             = flag.Bool("c", false, "dump call graph")

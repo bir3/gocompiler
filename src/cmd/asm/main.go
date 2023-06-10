@@ -10,7 +10,7 @@ import (
 	"fmt"
 	"github.com/bir3/gocompiler/src/internal/buildcfg"
 	"log"
-	       "github.com/bir3/gocompiler/vfs/os"
+	"os"
 
 	"github.com/bir3/gocompiler/src/cmd/asm/internal/arch"
 	"github.com/bir3/gocompiler/src/cmd/asm/internal/asm"

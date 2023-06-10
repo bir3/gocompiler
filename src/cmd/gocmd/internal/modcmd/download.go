@@ -7,7 +7,7 @@ package modcmd
 import (
 	"context"
 	"encoding/json"
-	       "github.com/bir3/gocompiler/vfs/os"
+	"os"
 	"runtime"
 
 	"github.com/bir3/gocompiler/src/cmd/gocmd/internal/base"
@@ -84,6 +84,7 @@ func init() {
 
 	// TODO(jayconrod): https://golang.org/issue/35849 Apply -x to other 'go mod' commands.
 	cmdDownload.Flag.BoolVar(&cfg.BuildX, "x", false, "")
+	base.AddChdirFlag(&cmdDownload.Flag)
 	base.AddModCommonFlags(&cmdDownload.Flag)
 }
 

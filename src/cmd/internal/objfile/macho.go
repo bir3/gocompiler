@@ -10,7 +10,7 @@ import (
 	"debug/dwarf"
 	"debug/macho"
 	"fmt"
-	       "github.com/bir3/gocompiler/vfs/io"
+	"io"
 	"sort"
 )
 

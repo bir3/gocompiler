@@ -8,7 +8,7 @@ import (
 	"errors"
 	"fmt"
 	"github.com/bir3/gocompiler/src/go/types"
-	       "github.com/bir3/gocompiler/vfs/os"
+	"os"
 	"strings"
 )
 

@@ -8,8 +8,8 @@
 package ld
 
 import (
-	       "github.com/bir3/gocompiler/vfs/os"
-	  "github.com/bir3/gocompiler/vfs/exec"
+	"os"
+	"os/exec"
 	"path/filepath"
 	"syscall"
 )

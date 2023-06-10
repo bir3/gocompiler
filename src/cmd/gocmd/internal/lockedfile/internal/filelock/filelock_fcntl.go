@@ -17,7 +17,7 @@ package filelock
 
 import (
 	"errors"
-	       "github.com/bir3/gocompiler/vfs/io"
+	"io"
 	"io/fs"
 	"math/rand"
 	"sync"
@@ -38,8 +38,6 @@ type inodeLock struct {
 	owner File
 	queue []<-chan File
 }
-
-type token struct{}
 
 var (
 	mu     sync.Mutex

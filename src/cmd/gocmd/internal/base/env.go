@@ -7,7 +7,7 @@ package base
 import (
 	"github.com/bir3/gocompiler/src/cmd/gocmd/internal/cfg"
 	"fmt"
-	       "github.com/bir3/gocompiler/vfs/os"
+	"os"
 	"path/filepath"
 	"runtime"
 )

@@ -9,7 +9,7 @@ package gcimporter
 import (
 	"bufio"
 	"fmt"
-	       "github.com/bir3/gocompiler/vfs/io"
+	"io"
 	"strconv"
 	"strings"
 )

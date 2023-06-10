@@ -13,7 +13,7 @@ import (
 	"fmt"
 	"github.com/bir3/gocompiler/src/internal/buildcfg"
 	"log"
-	       "github.com/bir3/gocompiler/vfs/os"
+	"os"
 	"path/filepath"
 	"github.com/bir3/gocompiler/vfs"
 	"strings"

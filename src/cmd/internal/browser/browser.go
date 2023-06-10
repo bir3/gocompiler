@@ -6,8 +6,8 @@
 package browser
 
 import (
-	       "github.com/bir3/gocompiler/vfs/os"
-	  "github.com/bir3/gocompiler/vfs/exec"
+	"os"
+	"os/exec"
 	"runtime"
 	"time"
 )

@@ -6,7 +6,7 @@ package lockedfile
 
 import (
 	"fmt"
-	       "github.com/bir3/gocompiler/vfs/os"
+	"os"
 	"sync"
 )
 

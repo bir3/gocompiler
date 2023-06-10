@@ -10,7 +10,7 @@
 package mmap
 
 import (
-	       "github.com/bir3/gocompiler/vfs/os"
+	"os"
 )
 
 // Data is mmap'ed read-only data from a file.

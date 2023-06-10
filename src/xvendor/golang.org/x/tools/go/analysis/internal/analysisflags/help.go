@@ -8,7 +8,7 @@ import (
 	"flag"
 	"fmt"
 	"log"
-	       "github.com/bir3/gocompiler/vfs/os"
+	"os"
 	"sort"
 	"strings"
 

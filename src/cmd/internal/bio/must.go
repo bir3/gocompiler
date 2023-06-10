@@ -5,7 +5,7 @@
 package bio
 
 import (
-	       "github.com/bir3/gocompiler/vfs/io"
+	"io"
 	"log"
 )
 

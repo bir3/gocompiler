@@ -6,7 +6,7 @@ package mmap
 
 import (
 	"fmt"
-	       "github.com/bir3/gocompiler/vfs/os"
+	"os"
 	"syscall"
 	"unsafe"
 

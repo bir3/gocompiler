@@ -15,8 +15,8 @@ import (
 	"debug/gosym"
 	"errors"
 	"fmt"
-	       "github.com/bir3/gocompiler/vfs/io"
-	       "github.com/bir3/gocompiler/vfs/os"
+	"io"
+	"os"
 )
 
 type goobjFile struct {

@@ -22,7 +22,7 @@ import (
 	"fmt"
 	"github.com/bir3/gocompiler/src/internal/buildcfg"
 	"log"
-	       "github.com/bir3/gocompiler/vfs/os"
+	"os"
 )
 
 var archInits = map[string]func(*ssagen.ArchInfo){

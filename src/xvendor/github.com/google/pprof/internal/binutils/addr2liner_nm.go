@@ -17,8 +17,8 @@ package binutils
 import (
 	"bufio"
 	"bytes"
-	       "github.com/bir3/gocompiler/vfs/io"
-	  "github.com/bir3/gocompiler/vfs/exec"
+	"io"
+	"os/exec"
 	"strconv"
 	"strings"
 

@@ -7,7 +7,7 @@
 package lazyregexp
 
 import (
-	       "github.com/bir3/gocompiler/vfs/os"
+	"os"
 	"regexp"
 	"strings"
 	"sync"

@@ -14,9 +14,9 @@ import (
 	"bytes"
 	"github.com/bir3/gocompiler/src/cmd/gocmd/flag"
 	"fmt"
-	       "github.com/bir3/gocompiler/vfs/io"
+	"io"
 	"log"
-	       "github.com/bir3/gocompiler/vfs/os"
+	"os"
 	"strings"
 	"time"
 

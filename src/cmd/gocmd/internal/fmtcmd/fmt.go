@@ -9,7 +9,7 @@ import (
 	"context"
 	"errors"
 	"fmt"
-	       "github.com/bir3/gocompiler/vfs/os"
+	"os"
 	"path/filepath"
 
 	"github.com/bir3/gocompiler/src/cmd/gocmd/internal/base"
@@ -21,6 +21,7 @@ import (
 
 func init() {
 	base.AddBuildFlagsNX(&CmdFmt.Flag)
+	base.AddChdirFlag(&CmdFmt.Flag)
 	base.AddModFlag(&CmdFmt.Flag)
 	base.AddModCommonFlags(&CmdFmt.Flag)
 }
@@ -97,10 +98,7 @@ func runFmt(ctx context.Context, cmd *base.Command, args []string) {
 }
 
 func gofmtPath() string {
-	gofmt := "gofmt"
-	if base.ToolIsWindows {
-		gofmt += base.ToolWindowsExtension
-	}
+	gofmt := "gofmt" + cfg.ToolExeSuffix()
 
 	gofmtPath := filepath.Join(cfg.GOBIN, gofmt)
 	if _, err := os.Stat(gofmtPath); err == nil {

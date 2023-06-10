@@ -6,7 +6,7 @@ package fuzz
 
 import (
 	"math/bits"
-	       "github.com/bir3/gocompiler/vfs/os"
+	"os"
 	"strconv"
 	"strings"
 	"sync/atomic"

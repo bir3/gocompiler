@@ -11,7 +11,7 @@ import (
 	"bytes"
 	"compress/gzip"
 	"fmt"
-	       "github.com/bir3/gocompiler/vfs/io"
+	"io"
 	"regexp"
 	"strings"
 	"time"

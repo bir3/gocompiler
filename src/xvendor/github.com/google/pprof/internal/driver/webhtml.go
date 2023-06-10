@@ -18,7 +18,7 @@ import (
 	"embed"
 	"fmt"
 	"html/template"
-	       "github.com/bir3/gocompiler/vfs/os"
+	"os"
 
 	"github.com/bir3/gocompiler/src/xvendor/github.com/google/pprof/third_party/d3flamegraph"
 )
@@ -65,4 +65,7 @@ func addTemplates(templates *template.Template) {
 	def("sourcelisting", loadFile("html/source.html"))
 	def("plaintext", loadFile("html/plaintext.html"))
 	def("flamegraph", loadFile("html/flamegraph.html"))
+	def("stacks", loadFile("html/stacks.html"))
+	def("stacks_css", loadCSS("html/stacks.css"))
+	def("stacks_js", loadJS("html/stacks.js"))
 }

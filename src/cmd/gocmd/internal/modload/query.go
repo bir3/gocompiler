@@ -10,7 +10,7 @@ import (
 	"errors"
 	"fmt"
 	"io/fs"
-	       "github.com/bir3/gocompiler/vfs/os"
+	"os"
 	pathpkg "path"
 	"sort"
 	"strings"
@@ -25,6 +25,7 @@ import (
 	"github.com/bir3/gocompiler/src/cmd/gocmd/internal/search"
 	"github.com/bir3/gocompiler/src/cmd/gocmd/internal/str"
 	"github.com/bir3/gocompiler/src/cmd/gocmd/internal/trace"
+	"github.com/bir3/gocompiler/src/cmd/internal/pkgpattern"
 
 	"github.com/bir3/gocompiler/src/xvendor/golang.org/x/mod/module"
 	"github.com/bir3/gocompiler/src/xvendor/golang.org/x/mod/semver"
@@ -624,7 +625,7 @@ func QueryPattern(ctx context.Context, pattern, query string, current func(strin
 	}
 
 	var match func(mod module.Version, roots []string, isLocal bool) *search.Match
-	matchPattern := search.MatchPattern(pattern)
+	matchPattern := pkgpattern.MatchPattern(pattern)
 
 	if i := strings.Index(pattern, "..."); i >= 0 {
 		base = pathpkg.Dir(pattern[:i+3])
@@ -728,8 +729,7 @@ func QueryPattern(ctx context.Context, pattern, query string, current func(strin
 				return r, err
 			}
 			r.Mod.Version = r.Rev.Version
-			needSum := true
-			root, isLocal, err := fetch(ctx, r.Mod, needSum)
+			root, isLocal, err := fetch(ctx, r.Mod)
 			if err != nil {
 				return r, err
 			}
@@ -1008,17 +1008,6 @@ func (e *PackageNotInModuleError) ImportPath() string {
 	return ""
 }
 
-// moduleHasRootPackage returns whether module m contains a package m.Path.
-func moduleHasRootPackage(ctx context.Context, m module.Version) (bool, error) {
-	needSum := false
-	root, isLocal, err := fetch(ctx, m, needSum)
-	if err != nil {
-		return false, err
-	}
-	_, ok, err := dirInModule(m.Path, m.Path, root, isLocal)
-	return ok, err
-}
-
 // versionHasGoMod returns whether a version has a go.mod file.
 //
 // versionHasGoMod fetches the go.mod file (possibly a fake) and true if it
@@ -1127,7 +1116,7 @@ func (rr *replacementRepo) Versions(prefix string) (*modfetch.Versions, error) {
 	for _, mm := range MainModules.Versions() {
 		if index := MainModules.Index(mm); index != nil && len(index.replace) > 0 {
 			path := rr.ModulePath()
-			for m, _ := range index.replace {
+			for m := range index.replace {
 				if m.Path == path && strings.HasPrefix(m.Version, prefix) && m.Version != "" && !module.IsPseudoVersion(m.Version) {
 					versions = append(versions, m.Version)
 				}

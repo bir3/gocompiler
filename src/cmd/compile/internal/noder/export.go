@@ -7,7 +7,7 @@ package noder
 import (
 	"bytes"
 	"fmt"
-	       "github.com/bir3/gocompiler/vfs/io"
+	"io"
 
 	"github.com/bir3/gocompiler/src/cmd/compile/internal/base"
 	"github.com/bir3/gocompiler/src/cmd/compile/internal/typecheck"

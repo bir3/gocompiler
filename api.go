@@ -18,6 +18,20 @@ import (
         "github.com/bir3/gocompiler/src/cmd/gocmd" //syncimport: "$pkg/src/$cmd/gocmd"
         "github.com/bir3/gocompiler/src/cmd/gofmt" //syncimport: "$pkg/src/$cmd/gofmt"
         "github.com/bir3/gocompiler/src/cmd/link" //syncimport: "$pkg/src/$cmd/link"
+
+	/*
+        "github.com/bir3/gocompiler/src/cmd/addr2line" //syncimport: "$pkg/src/$cmd/addr2line"
+        "github.com/bir3/gocompiler/src/cmd/buildid" //syncimport: "$pkg/src/$cmd/buildid"
+        "github.com/bir3/gocompiler/src/cmd/covdata" //syncimport: "$pkg/src/$cmd/covdata"
+        "github.com/bir3/gocompiler/src/cmd/dist" //syncimport: "$pkg/src/$cmd/dist"
+        "github.com/bir3/gocompiler/src/cmd/doc" //syncimport: "$pkg/src/$cmd/doc"
+        "github.com/bir3/gocompiler/src/cmd/fix" //syncimport: "$pkg/src/$cmd/fix"
+        "github.com/bir3/gocompiler/src/cmd/nm" //syncimport: "$pkg/src/$cmd/nm"
+        "github.com/bir3/gocompiler/src/cmd/objdump" //syncimport: "$pkg/src/$cmd/objdump"
+        "github.com/bir3/gocompiler/src/cmd/pack" //syncimport: "$pkg/src/$cmd/pack"
+        "github.com/bir3/gocompiler/src/cmd/test2json" //syncimport: "$pkg/src/$cmd/test2json"
+        "github.com/bir3/gocompiler/src/cmd/trace" //syncimport: "$pkg/src/$cmd/trace"
+	*/
         "github.com/bir3/gocompiler/vfs" //syncimport: "$pkg/vfs"
 )
 
@@ -29,8 +43,33 @@ func IsRunToolchainRequest() bool {
 	return os.Getenv("GOCOMPILER_TOOL") != ""
 }
 
+// adding extra executables : 44 MB -> 51 MB
 func RunToolchain() {
 	switch os.Getenv("GOCOMPILER_TOOL") {
+	/*
+		case "addr2line":
+			addr2line.Main()
+		case "buildid":
+			buildid.Main()
+		case "covdata":
+			covdata.Main()
+		case "dist":
+			dist.Main()
+		case "doc":
+			doc.Main()
+		case "fix":
+			fix.Main()
+		case "nm":
+			nm.Main()
+		case "objdump":
+			objdump.Main()
+		case "pack":
+			pack.Main()
+		case "test2json":
+			test2json.Main()
+		case "trace":
+			trace.Main()
+	*/
 	case "go":
 		gocmd.Main()
 	case "compile":
@@ -114,5 +153,5 @@ func Run(args ...string) (Result, error) {
 }
 
 func GoVersion() string {
-	return "1.19.6"
+	return "go1.20.5"
 }

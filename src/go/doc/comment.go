@@ -6,7 +6,7 @@ package doc
 
 import (
 	"github.com/bir3/gocompiler/src/go/doc/comment"
-	       "github.com/bir3/gocompiler/vfs/io"
+	"io"
 )
 
 // ToHTML converts comment text to formatted HTML.

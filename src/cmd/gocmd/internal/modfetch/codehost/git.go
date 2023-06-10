@@ -10,11 +10,11 @@ import (
 	"encoding/base64"
 	"errors"
 	"fmt"
-	       "github.com/bir3/gocompiler/vfs/io"
+	"io"
 	"io/fs"
 	"net/url"
-	       "github.com/bir3/gocompiler/vfs/os"
-	  "github.com/bir3/gocompiler/vfs/exec"
+	"os"
+	"os/exec"
 	"path/filepath"
 	"sort"
 	"strconv"
@@ -262,8 +262,8 @@ func (r *gitRepo) loadRefs() (map[string]string, error) {
 			}
 		}
 		for ref, hash := range refs {
-			if strings.HasSuffix(ref, "^{}") { // record unwrapped annotated tag as value of tag
-				refs[strings.TrimSuffix(ref, "^{}")] = hash
+			if k, found := strings.CutSuffix(ref, "^{}"); found { // record unwrapped annotated tag as value of tag
+				refs[k] = hash
 				delete(refs, ref)
 			}
 		}
@@ -486,9 +486,9 @@ func (r *gitRepo) stat(rev string) (info *RevInfo, err error) {
 	// Either way, try a local stat before falling back to network I/O.
 	if !didStatLocal {
 		if info, err := r.statLocal(rev, hash); err == nil {
-			if strings.HasPrefix(ref, "refs/tags/") {
+			if after, found := strings.CutPrefix(ref, "refs/tags/"); found {
 				// Make sure tag exists, so it will be in localTags next time the go command is run.
-				Run(r.dir, "git", "tag", strings.TrimPrefix(ref, "refs/tags/"), hash)
+				Run(r.dir, "git", "tag", after, hash)
 			}
 			return info, nil
 		}

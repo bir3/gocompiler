@@ -8,7 +8,7 @@ package syntax
 
 import (
 	"fmt"
-	       "github.com/bir3/gocompiler/vfs/io"
+	"io"
 	"reflect"
 	"unicode"
 	"unicode/utf8"

@@ -24,7 +24,7 @@ package gcprog
 
 import (
 	"fmt"
-	       "github.com/bir3/gocompiler/vfs/io"
+	"io"
 )
 
 const progMaxLiteral = 127 // maximum n for literal n bit code

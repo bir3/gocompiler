@@ -16,7 +16,7 @@ package binutils
 
 import (
 	"bytes"
-	       "github.com/bir3/gocompiler/vfs/io"
+	"io"
 	"regexp"
 	"strconv"
 	"strings"

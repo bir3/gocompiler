@@ -7,7 +7,7 @@ package modload
 import (
 	"context"
 	"errors"
-	       "github.com/bir3/gocompiler/vfs/os"
+	"os"
 	"sort"
 
 	"github.com/bir3/gocompiler/src/cmd/gocmd/internal/modfetch"

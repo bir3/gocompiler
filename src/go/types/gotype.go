@@ -90,8 +90,8 @@ import (
 	"github.com/bir3/gocompiler/src/go/scanner"
 	"github.com/bir3/gocompiler/src/go/token"
 	"github.com/bir3/gocompiler/src/go/types"
-	       "github.com/bir3/gocompiler/vfs/io"
-	       "github.com/bir3/gocompiler/vfs/os"
+	"io"
+	"os"
 	"path/filepath"
 	"sync"
 	"time"
@@ -180,7 +180,7 @@ func report(err error) {
 	errorCount++
 }
 
-// parse may be called concurrently
+// parse may be called concurrently.
 func parse(filename string, src any) (*ast.File, error) {
 	if *verbose {
 		fmt.Println(filename)

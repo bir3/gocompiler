@@ -9,8 +9,8 @@ package ast
 import (
 	"fmt"
 	"github.com/bir3/gocompiler/src/go/token"
-	       "github.com/bir3/gocompiler/vfs/io"
-	       "github.com/bir3/gocompiler/vfs/os"
+	"io"
+	"os"
 	"reflect"
 )
 

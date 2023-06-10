@@ -15,7 +15,7 @@ import (
 	"context"
 	"fmt"
 	"github.com/bir3/gocompiler/src/go/build"
-	       "github.com/bir3/gocompiler/vfs/os"
+	"os"
 )
 
 var CmdFix = &base.Command{

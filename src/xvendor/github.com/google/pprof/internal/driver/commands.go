@@ -17,9 +17,9 @@ package driver
 import (
 	"bytes"
 	"fmt"
-	       "github.com/bir3/gocompiler/vfs/io"
-	       "github.com/bir3/gocompiler/vfs/os"
-	  "github.com/bir3/gocompiler/vfs/exec"
+	"io"
+	"os"
+	"os/exec"
 	"runtime"
 	"sort"
 	"strings"

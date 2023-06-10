@@ -7,7 +7,7 @@
 package base
 
 import (
-	       "github.com/bir3/gocompiler/vfs/os"
+	"os"
 )
 
 var signalsToIgnore = []os.Signal{os.Interrupt}

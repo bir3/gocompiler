@@ -7,7 +7,7 @@
 package osinfo
 
 import (
-	       "github.com/bir3/gocompiler/vfs/os"
+	"os"
 )
 
 // Version returns the OS version name/number.

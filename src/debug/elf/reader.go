@@ -5,8 +5,8 @@
 package elf
 
 import (
-	       "github.com/bir3/gocompiler/vfs/io"
-	       "github.com/bir3/gocompiler/vfs/os"
+	"io"
+	"os"
 )
 
 // errorReader returns error from all operations.

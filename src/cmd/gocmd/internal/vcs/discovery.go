@@ -7,7 +7,7 @@ package vcs
 import (
 	"encoding/xml"
 	"fmt"
-	       "github.com/bir3/gocompiler/vfs/io"
+	"io"
 	"strings"
 )
 

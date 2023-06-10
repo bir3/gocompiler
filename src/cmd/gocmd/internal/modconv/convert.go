@@ -6,7 +6,7 @@ package modconv
 
 import (
 	"fmt"
-	       "github.com/bir3/gocompiler/vfs/os"
+	"os"
 	"runtime"
 	"sort"
 	"strings"

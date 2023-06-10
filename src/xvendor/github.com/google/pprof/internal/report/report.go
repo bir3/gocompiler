@@ -18,7 +18,7 @@ package report
 
 import (
 	"fmt"
-	       "github.com/bir3/gocompiler/vfs/io"
+	"io"
 	"path/filepath"
 	"regexp"
 	"sort"

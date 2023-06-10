@@ -6,7 +6,7 @@ package objabi
 
 import (
 	"github.com/bir3/gocompiler/src/internal/buildcfg"
-	       "github.com/bir3/gocompiler/vfs/os"
+	"os"
 	"path/filepath"
 	"strings"
 )

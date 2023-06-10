@@ -13,7 +13,7 @@ package codesign
 import (
 	"debug/macho"
 	"encoding/binary"
-	       "github.com/bir3/gocompiler/vfs/io"
+	"io"
 
 	"github.com/bir3/gocompiler/src/cmd/internal/notsha256"
 )

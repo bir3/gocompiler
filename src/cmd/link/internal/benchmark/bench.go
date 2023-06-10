@@ -11,8 +11,8 @@ package benchmark
 
 import (
 	"fmt"
-	       "github.com/bir3/gocompiler/vfs/io"
-	       "github.com/bir3/gocompiler/vfs/os"
+	"io"
+	"os"
 	"runtime"
 	"runtime/pprof"
 	"time"

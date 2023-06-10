@@ -10,7 +10,7 @@ import (
 	"crypto/sha256"
 	"debug/macho"
 	"fmt"
-	       "github.com/bir3/gocompiler/vfs/io"
+	"io"
 )
 
 // FindAndHash reads all of r and returns the offsets of occurrences of id.

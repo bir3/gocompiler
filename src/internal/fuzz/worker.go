@@ -11,10 +11,9 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
-	       "github.com/bir3/gocompiler/vfs/io"
-	"github.com/bir3/gocompiler/vfs/ioutil"
-	       "github.com/bir3/gocompiler/vfs/os"
-	  "github.com/bir3/gocompiler/vfs/exec"
+	"io"
+	"os"
+	"os/exec"
 	"reflect"
 	"runtime"
 	"sync"
@@ -793,7 +792,7 @@ func (ws *workerServer) fuzz(ctx context.Context, args fuzzArgs) (resp fuzzRespo
 
 func (ws *workerServer) minimize(ctx context.Context, args minimizeArgs) (resp minimizeResponse) {
 	start := time.Now()
-	defer func() { resp.Duration = time.Now().Sub(start) }()
+	defer func() { resp.Duration = time.Since(start) }()
 	mem := <-ws.memMu
 	defer func() { ws.memMu <- mem }()
 	vals, err := unmarshalCorpusFile(mem.valueCopy())
@@ -958,7 +957,7 @@ func (wc *workerClient) Close() error {
 
 	// Drain fuzzOut and close it. When the server exits, the kernel will close
 	// its end of fuzzOut, and we'll get EOF.
-	if _, err := io.Copy(ioutil.Discard, wc.fuzzOut); err != nil {
+	if _, err := io.Copy(io.Discard, wc.fuzzOut); err != nil {
 		wc.fuzzOut.Close()
 		return err
 	}

@@ -9,6 +9,7 @@ import (
 	"fmt"
 	"github.com/bir3/gocompiler/src/go/token"
 	"sort"
+	"strings"
 )
 
 type byPos []*CommentGroup
@@ -311,7 +312,7 @@ func (cmap CommentMap) String() string {
 	}
 	sort.Sort(byInterval(nodes))
 
-	var buf bytes.Buffer
+	var buf strings.Builder
 	fmt.Fprintln(&buf, "CommentMap {")
 	for _, node := range nodes {
 		comment := cmap[node]
