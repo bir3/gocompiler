@@ -8,8 +8,8 @@ The Go compiler as a package
 # Example
 
 ```bash
-# - v0.2.196 contains go1.19.6
-go get github.com/bir3/gocompiler@v0.2.196
+# go1.20.5
+go get github.com/bir3/gocompiler@v0.3.205
 ```
 
 ```go
