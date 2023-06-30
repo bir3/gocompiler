@@ -17,6 +17,7 @@ import (
 	"strings"
 
 	"github.com/bir3/gocompiler/src/cmd/gocmd/internal/base"
+	"github.com/bir3/gocompiler/src/cmd/gocmd/internal/gover"
 )
 
 var CmdVersion = &base.Command{
@@ -73,7 +74,11 @@ func runVersion(ctx context.Context, cmd *base.Command, args []string) {
 			base.SetExitStatus(2)
 			return
 		}
-		fmt.Printf("go version %s %s/%s\n", runtime.Version(), runtime.GOOS, runtime.GOARCH)
+		v := runtime.Version()
+		if gover.TestVersion != "" {
+			v = gover.TestVersion + " (TESTGO_VERSION)"
+		}
+		fmt.Printf("go version %s %s/%s\n", v, runtime.GOOS, runtime.GOARCH)
 		return
 	}
 

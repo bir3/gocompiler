@@ -10,7 +10,7 @@ import (
 	"syscall"
 	"unsafe"
 
-	"github.com/bir3/gocompiler/src/internal/syscall/windows"
+	"github.com/bir3/gocompiler/src/xvendor/golang.org/x/sys/windows"
 )
 
 func mmapFile(f *os.File) (Data, error) {

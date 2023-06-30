@@ -3,14 +3,14 @@
 
 The Go compiler as a package
 
+```bash
+# go1.21rc2
+go get github.com/bir3/gocompiler@v0.4.210-rc.2
+```
 
 
 # Example
 
-```bash
-# go1.20.5
-go get github.com/bir3/gocompiler@v0.3.205
-```
 
 ```go
 package main
@@ -58,6 +58,11 @@ func main() {
 }
 ```
 
+# Standard library
+
+The standard library is embedded and is extracted on first run
+to standard config location, e.g. `$HOME/config/gocompiler` or `$HOME/Library/Caches/gocompiler`
+
 
 # Limitations
 
@@ -71,18 +76,14 @@ Side effects in init() and global variable initializations occur every time the 
 The embedded Go toolchain will repeatedly start the executable during compilation to compile Go source code.  
 This means that global side effects like opening a http port, writing to a file or connecting to a database is likely to cause problems.
 
-## example bug due to side effects : creating a log file in a init() function
-
-The main function may write a few lines to the logfile, then when we compile code, the subprocesses
-that are also hosted in the main executable will also open and possibly write or truncate the logfile
-creating confusion on why something as simple as writing to a logfile can fail to work !
 
 # gocompiler as a package vs. the official Go toolchain
 
 |                      | "github.com/bir3/gocompiler"  | official go toolchain |                           |
 | -------------------  | ----------------------------- | --------------------- | ------------------------- |
-| Size on disk         | 44 MB (standalone executable) | 262 MB                |                           |
-| Performance, compile | 12.9 sec                      | 12.4 sec              | macbook M1, `go build -a` |
+| Download size        | 26 MB (gzip of executable)    | 62 MB (gzip tarfile)  |                           |
+| Size on disk         | 91 MB                         | 237 MB                |                           |
+| Compile speed        | 12.9 sec                      | 12.4 sec              | macbook M1, `go build -a` |
 
 Note that this package is only focused on compiling Go source code into an executable, while the official Go toolchain provides many more tools.
 

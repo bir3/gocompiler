@@ -5,8 +5,7 @@ package wasm
 import "github.com/bir3/gocompiler/src/cmd/internal/obj"
 
 var Anames = []string{
-	obj.A_ARCHSPECIFIC: "CallImport",
-	"Get",
+	obj.A_ARCHSPECIFIC: "Get",
 	"Set",
 	"Tee",
 	"Not",

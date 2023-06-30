@@ -10,7 +10,6 @@ import (
 	"fmt"
 	"os"
 	"os/exec"
-	"strings"
 
         "github.com/bir3/gocompiler/src/cmd/asm" //syncimport: "$pkg/src/$cmd/asm"
         "github.com/bir3/gocompiler/src/cmd/cgo" //syncimport: "$pkg/src/$cmd/cgo"
@@ -103,25 +102,14 @@ func Command(env []string, args ...string) (*exec.Cmd, error) {
 	if len(args) < 2 {
 		return nil, errors.New("too few arguments")
 	}
-	if !(args[0] == "go" || args[0] == "gofmt") {
-		return nil, errors.New("only 'go' or 'gofmt' supported as first argument")
-	}
+
 	cmd := exec.Command(vfs.SharedExe, args[1:]...)
 
 	cmd.Env = make([]string, len(env), len(env)+10)
 	copy(cmd.Env, env)
 
-	// disable cgo for now, does not work yet
-	var cgoVar bool = false
-	cmd.Env = append(cmd.Env, "GOCOMPILER_TOOL=go")
-	for _, s := range cmd.Env {
-		if strings.HasPrefix(s, "CGO_ENABLED=") {
-			cgoVar = true
-		}
-	}
-	if !cgoVar {
-		cmd.Env = append(cmd.Env, "CGO_ENABLED=0")
-	}
+	cmd.Env = append(cmd.Env, fmt.Sprintf("GOCOMPILER_TOOL=%s", args[0]))
+
 	return cmd, nil
 }
 
@@ -153,5 +141,5 @@ func Run(args ...string) (Result, error) {
 }
 
 func GoVersion() string {
-	return "go1.20.5"
+	return "go1.21rc2"
 }

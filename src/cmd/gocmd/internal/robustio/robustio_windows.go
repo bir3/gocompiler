@@ -6,7 +6,7 @@ package robustio
 
 import (
 	"errors"
-	"github.com/bir3/gocompiler/src/internal/syscall/windows"
+	"github.com/bir3/gocompiler/src/xvendor/golang.org/x/sys/windows"
 	"syscall"
 )
 

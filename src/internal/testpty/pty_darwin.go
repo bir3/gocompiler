@@ -5,7 +5,7 @@
 package testpty
 
 import (
-	"github.com/bir3/gocompiler/src/internal/syscall/unix"
+	"github.com/bir3/gocompiler/src/xvendor/golang.org/x/sys/unix"
 	"os"
 	"syscall"
 )
