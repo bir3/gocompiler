@@ -61,7 +61,6 @@ and test commands:
 		Change to dir before running the command.
 		Any files named on the command line are interpreted after
 		changing directories.
-		If used, this flag must be the first one in the command line.
 	-a
 		force rebuilding of packages that are already up-to-date.
 	-n
@@ -85,17 +84,8 @@ and test commands:
 		Supported only on linux/amd64 or linux/arm64 and only with GCC 7 and higher
 		or Clang/LLVM 9 and higher.
 	-cover
-		enable code coverage instrumentation.
-	-covermode set,count,atomic
-		set the mode for coverage analysis.
-		The default is "set" unless -race is enabled,
-		in which case it is "atomic".
-		The values:
-		set: bool: does this statement run?
-		count: int: how many times does this statement run?
-		atomic: int: count, but correct in multithreaded tests;
-			significantly more expensive.
-		Sets -cover.
+		enable code coverage instrumentation (requires
+		that GOEXPERIMENT=coverageredesign be set).
 	-coverpkg pattern1,pattern2,pattern3
 		For a build that targets package 'main' (e.g. building a Go
 		executable), apply coverage analysis to each package matching
@@ -109,6 +99,7 @@ and test commands:
 		do not delete it when exiting.
 	-x
 		print the commands.
+
 	-asmflags '[pattern=]arg list'
 		arguments to pass on each go tool asm invocation.
 	-buildmode mode
@@ -168,11 +159,9 @@ and test commands:
 		run through go run and go test respectively.
 	-pgo file
 		specify the file path of a profile for profile-guided optimization (PGO).
-		When the special name "auto" is specified, for each main package in the
-		build, the go command selects a file named "default.pgo" in the package's
-		directory if that file exists, and applies it to the (transitive)
-		dependencies of the main package (other packages are not affected).
-		Special name "off" turns off PGO. The default is "auto".
+		Special name "auto" lets the go command select a file named
+		"default.pgo" in the main package's directory if that file exists.
+		Special name "off" turns off PGO.
 	-pkgdir dir
 		install and load all packages from dir instead of the usual locations.
 		For example, when building with a non-standard configuration,
@@ -327,7 +316,7 @@ func AddBuildFlags(cmd *base.Command, mask BuildFlagMask) {
 	cmd.Flag.StringVar(&cfg.BuildContext.InstallSuffix, "installsuffix", "", "")
 	cmd.Flag.Var(&load.BuildLdflags, "ldflags", "")
 	cmd.Flag.BoolVar(&cfg.BuildLinkshared, "linkshared", false, "")
-	cmd.Flag.StringVar(&cfg.BuildPGO, "pgo", "auto", "")
+	cmd.Flag.StringVar(&cfg.BuildPGO, "pgo", "", "")
 	cmd.Flag.StringVar(&cfg.BuildPkgdir, "pkgdir", "", "")
 	cmd.Flag.BoolVar(&cfg.BuildRace, "race", false, "")
 	cmd.Flag.BoolVar(&cfg.BuildMSan, "msan", false, "")
@@ -341,7 +330,6 @@ func AddBuildFlags(cmd *base.Command, mask BuildFlagMask) {
 	// Undocumented, unstable debugging flags.
 	cmd.Flag.StringVar(&cfg.DebugActiongraph, "debug-actiongraph", "", "")
 	cmd.Flag.StringVar(&cfg.DebugTrace, "debug-trace", "", "")
-	cmd.Flag.StringVar(&cfg.DebugRuntimeTrace, "debug-runtime-trace", "", "")
 }
 
 // AddCoverFlags adds coverage-related flags to "cmd". If the
@@ -454,13 +442,15 @@ func oneMainPkg(pkgs []*load.Package) []*load.Package {
 
 var pkgsFilter = func(pkgs []*load.Package) []*load.Package { return pkgs }
 
+var RuntimeVersion = runtime.Version()
+
 func runBuild(ctx context.Context, cmd *base.Command, args []string) {
 	modload.InitWorkfile()
 	BuildInit()
 	b := NewBuilder("")
 	defer func() {
 		if err := b.Close(); err != nil {
-			base.Fatal(err)
+			base.Fatalf("go: %v", err)
 		}
 	}()
 
@@ -610,8 +600,7 @@ Starting in Go 1.20, the standard library is built and cached but not installed.
 Setting GODEBUG=installgoroot=all restores the use of
 $GOROOT/pkg/$GOOS_$GOARCH.
 
-For more about build flags, see 'go help build'.
-
+For more about the build flags, see 'go help build'.
 For more about specifying packages, see 'go help packages'.
 
 See also: go build, go get, go clean.
@@ -780,7 +769,7 @@ func InstallPackages(ctx context.Context, patterns []string, pkgs []*load.Packag
 	b := NewBuilder("")
 	defer func() {
 		if err := b.Close(); err != nil {
-			base.Fatal(err)
+			base.Fatalf("go: %v", err)
 		}
 	}()
 
@@ -868,7 +857,7 @@ func installOutsideModule(ctx context.Context, args []string) {
 	pkgOpts := load.PackageOpts{MainOnly: true}
 	pkgs, err := load.PackagesAndErrorsOutsideModule(ctx, pkgOpts, args)
 	if err != nil {
-		base.Fatal(err)
+		base.Fatalf("go: %v", err)
 	}
 	load.CheckPackageErrors(pkgs)
 	patterns := make([]string, len(args))

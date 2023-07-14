@@ -8,7 +8,6 @@ import (
 	"math"
 
 	"github.com/bir3/gocompiler/src/cmd/compile/internal/base"
-	"github.com/bir3/gocompiler/src/cmd/compile/internal/ir"
 	"github.com/bir3/gocompiler/src/cmd/compile/internal/logopt"
 	"github.com/bir3/gocompiler/src/cmd/compile/internal/ssa"
 	"github.com/bir3/gocompiler/src/cmd/compile/internal/ssagen"
@@ -27,7 +26,7 @@ func ssaMarkMoves(s *ssagen.State, b *ssa.Block) {
 		v := b.Values[i]
 		if flive && v.Op == ssa.OpS390XMOVDconst {
 			// The "mark" is any non-nil Aux value.
-			v.Aux = ssa.AuxMark
+			v.Aux = v
 		}
 		if v.Type.IsFlags() {
 			flive = false
@@ -184,7 +183,7 @@ func ssaGenValue(s *ssagen.State, v *ssa.Value) {
 		i := v.Aux.(s390x.RotateParams)
 		p := s.Prog(v.Op.Asm())
 		p.From = obj.Addr{Type: obj.TYPE_CONST, Offset: int64(i.Start)}
-		p.AddRestSourceArgs([]obj.Addr{
+		p.SetRestArgs([]obj.Addr{
 			{Type: obj.TYPE_CONST, Offset: int64(i.End)},
 			{Type: obj.TYPE_CONST, Offset: int64(i.Amount)},
 			{Type: obj.TYPE_REG, Reg: r2},
@@ -196,7 +195,7 @@ func ssaGenValue(s *ssagen.State, v *ssa.Value) {
 		i := v.Aux.(s390x.RotateParams)
 		p := s.Prog(v.Op.Asm())
 		p.From = obj.Addr{Type: obj.TYPE_CONST, Offset: int64(i.Start)}
-		p.AddRestSourceArgs([]obj.Addr{
+		p.SetRestArgs([]obj.Addr{
 			{Type: obj.TYPE_CONST, Offset: int64(i.End)},
 			{Type: obj.TYPE_CONST, Offset: int64(i.Amount)},
 			{Type: obj.TYPE_REG, Reg: r2},
@@ -567,8 +566,7 @@ func ssaGenValue(s *ssagen.State, v *ssa.Value) {
 		p := s.Prog(obj.ACALL)
 		p.To.Type = obj.TYPE_MEM
 		p.To.Name = obj.NAME_EXTERN
-		// AuxInt encodes how many buffer entries we need.
-		p.To.Sym = ir.Syms.GCWriteBarrier[v.AuxInt-1]
+		p.To.Sym = v.Aux.(*obj.LSym)
 	case ssa.OpS390XLoweredPanicBoundsA, ssa.OpS390XLoweredPanicBoundsB, ssa.OpS390XLoweredPanicBoundsC:
 		p := s.Prog(obj.ACALL)
 		p.To.Type = obj.TYPE_MEM
@@ -627,7 +625,7 @@ func ssaGenValue(s *ssagen.State, v *ssa.Value) {
 		p := s.Prog(s390x.AMVC)
 		p.From.Type = obj.TYPE_CONST
 		p.From.Offset = vo.Val64()
-		p.AddRestSource(obj.Addr{
+		p.SetFrom3(obj.Addr{
 			Type:   obj.TYPE_MEM,
 			Reg:    v.Args[1].Reg(),
 			Offset: vo.Off64(),
@@ -664,7 +662,7 @@ func ssaGenValue(s *ssagen.State, v *ssa.Value) {
 		mvc := s.Prog(s390x.AMVC)
 		mvc.From.Type = obj.TYPE_CONST
 		mvc.From.Offset = 256
-		mvc.AddRestSource(obj.Addr{Type: obj.TYPE_MEM, Reg: v.Args[1].Reg()})
+		mvc.SetFrom3(obj.Addr{Type: obj.TYPE_MEM, Reg: v.Args[1].Reg()})
 		mvc.To.Type = obj.TYPE_MEM
 		mvc.To.Reg = v.Args[0].Reg()
 
@@ -691,7 +689,7 @@ func ssaGenValue(s *ssagen.State, v *ssa.Value) {
 			mvc := s.Prog(s390x.AMVC)
 			mvc.From.Type = obj.TYPE_CONST
 			mvc.From.Offset = v.AuxInt
-			mvc.AddRestSource(obj.Addr{Type: obj.TYPE_MEM, Reg: v.Args[1].Reg()})
+			mvc.SetFrom3(obj.Addr{Type: obj.TYPE_MEM, Reg: v.Args[1].Reg()})
 			mvc.To.Type = obj.TYPE_MEM
 			mvc.To.Reg = v.Args[0].Reg()
 		}
@@ -902,7 +900,7 @@ func ssaGenBlock(s *ssagen.State, b, next *ssa.Block) {
 		p.From.Type = obj.TYPE_CONST
 		p.From.Offset = int64(s390x.NotEqual & s390x.NotUnordered) // unordered is not possible
 		p.Reg = s390x.REG_R3
-		p.AddRestSourceConst(0)
+		p.SetFrom3Const(0)
 		if b.Succs[0].Block() != next {
 			s.Br(s390x.ABR, b.Succs[0].Block())
 		}
@@ -939,17 +937,17 @@ func ssaGenBlock(s *ssagen.State, b, next *ssa.Block) {
 		p.From.Type = obj.TYPE_CONST
 		p.From.Offset = int64(mask & s390x.NotUnordered) // unordered is not possible
 		p.Reg = b.Controls[0].Reg()
-		p.AddRestSourceReg(b.Controls[1].Reg())
+		p.SetFrom3Reg(b.Controls[1].Reg())
 	case ssa.BlockS390XCGIJ, ssa.BlockS390XCIJ:
 		p.From.Type = obj.TYPE_CONST
 		p.From.Offset = int64(mask & s390x.NotUnordered) // unordered is not possible
 		p.Reg = b.Controls[0].Reg()
-		p.AddRestSourceConst(int64(int8(b.AuxInt)))
+		p.SetFrom3Const(int64(int8(b.AuxInt)))
 	case ssa.BlockS390XCLGIJ, ssa.BlockS390XCLIJ:
 		p.From.Type = obj.TYPE_CONST
 		p.From.Offset = int64(mask & s390x.NotUnordered) // unordered is not possible
 		p.Reg = b.Controls[0].Reg()
-		p.AddRestSourceConst(int64(uint8(b.AuxInt)))
+		p.SetFrom3Const(int64(uint8(b.AuxInt)))
 	default:
 		b.Fatalf("branch not implemented: %s", b.LongString())
 	}

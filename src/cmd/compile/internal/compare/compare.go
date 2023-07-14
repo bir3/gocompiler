@@ -166,10 +166,7 @@ func calculateCostForType(t *types.Type) int64 {
 // It works by building a list of boolean conditions to satisfy.
 // Conditions must be evaluated in the returned order and
 // properly short-circuited by the caller.
-// The first return value is the flattened list of conditions,
-// the second value is a boolean indicating whether any of the
-// comparisons could panic.
-func EqStruct(t *types.Type, np, nq ir.Node) ([]ir.Node, bool) {
+func EqStruct(t *types.Type, np, nq ir.Node) []ir.Node {
 	// The conditions are a list-of-lists. Conditions are reorderable
 	// within each inner list. The outer lists must be evaluated in order.
 	var conds [][]ir.Node
@@ -190,11 +187,9 @@ func EqStruct(t *types.Type, np, nq ir.Node) ([]ir.Node, bool) {
 			continue
 		}
 
-		typeCanPanic := EqCanPanic(f.Type)
-
 		// Compare non-memory fields with field equality.
 		if !IsRegularMemory(f.Type) {
-			if typeCanPanic {
+			if EqCanPanic(f.Type) {
 				// Enforce ordering by starting a new set of reorderable conditions.
 				conds = append(conds, []ir.Node{})
 			}
@@ -208,7 +203,7 @@ func EqStruct(t *types.Type, np, nq ir.Node) ([]ir.Node, bool) {
 			default:
 				and(ir.NewBinaryExpr(base.Pos, ir.OEQ, p, q))
 			}
-			if typeCanPanic {
+			if EqCanPanic(f.Type) {
 				// Also enforce ordering after something that can panic.
 				conds = append(conds, []ir.Node{})
 			}
@@ -243,7 +238,7 @@ func EqStruct(t *types.Type, np, nq ir.Node) ([]ir.Node, bool) {
 		})
 		flatConds = append(flatConds, c...)
 	}
-	return flatConds, len(conds) > 1
+	return flatConds
 }
 
 // EqString returns the nodes
@@ -264,40 +259,9 @@ func EqString(s, t ir.Node) (eqlen *ir.BinaryExpr, eqmem *ir.CallExpr) {
 	slen := typecheck.Conv(ir.NewUnaryExpr(base.Pos, ir.OLEN, s), types.Types[types.TUINTPTR])
 	tlen := typecheck.Conv(ir.NewUnaryExpr(base.Pos, ir.OLEN, t), types.Types[types.TUINTPTR])
 
-	// Pick the 3rd arg to memequal. Both slen and tlen are fine to use, because we short
-	// circuit the memequal call if they aren't the same. But if one is a constant some
-	// memequal optimizations are easier to apply.
-	probablyConstant := func(n ir.Node) bool {
-		if n.Op() == ir.OCONVNOP {
-			n = n.(*ir.ConvExpr).X
-		}
-		if n.Op() == ir.OLITERAL {
-			return true
-		}
-		if n.Op() != ir.ONAME {
-			return false
-		}
-		name := n.(*ir.Name)
-		if name.Class != ir.PAUTO {
-			return false
-		}
-		if def := name.Defn; def == nil {
-			// n starts out as the empty string
-			return true
-		} else if def.Op() == ir.OAS && (def.(*ir.AssignStmt).Y == nil || def.(*ir.AssignStmt).Y.Op() == ir.OLITERAL) {
-			// n starts out as a constant string
-			return true
-		}
-		return false
-	}
-	cmplen := slen
-	if probablyConstant(t) && !probablyConstant(s) {
-		cmplen = tlen
-	}
-
 	fn := typecheck.LookupRuntime("memequal")
 	fn = typecheck.SubstArgTypes(fn, types.Types[types.TUINT8], types.Types[types.TUINT8])
-	call := typecheck.Call(base.Pos, fn, []ir.Node{sptr, tptr, ir.Copy(cmplen)}, false).(*ir.CallExpr)
+	call := typecheck.Call(base.Pos, fn, []ir.Node{sptr, tptr, ir.Copy(slen)}, false).(*ir.CallExpr)
 
 	cmp := ir.NewBinaryExpr(base.Pos, ir.OEQ, slen, tlen)
 	cmp = typecheck.Expr(cmp).(*ir.BinaryExpr)
@@ -357,7 +321,7 @@ func eqfield(p ir.Node, q ir.Node, op ir.Op, field *types.Sym) ir.Node {
 
 // eqmem returns the node
 //
-//	memequal(&p.field, &q.field, size)
+//	memequal(&p.field, &q.field, size])
 func eqmem(p ir.Node, q ir.Node, field *types.Sym, size int64) ir.Node {
 	nx := typecheck.Expr(typecheck.NodAddr(ir.NewSelectorExpr(base.Pos, ir.OXDOT, p, field)))
 	ny := typecheck.Expr(typecheck.NodAddr(ir.NewSelectorExpr(base.Pos, ir.OXDOT, q, field)))
@@ -367,7 +331,7 @@ func eqmem(p ir.Node, q ir.Node, field *types.Sym, size int64) ir.Node {
 	call.Args.Append(nx)
 	call.Args.Append(ny)
 	if needsize {
-		call.Args.Append(ir.NewInt(base.Pos, size))
+		call.Args.Append(ir.NewInt(size))
 	}
 
 	return call

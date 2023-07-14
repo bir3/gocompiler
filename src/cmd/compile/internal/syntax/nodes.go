@@ -34,11 +34,10 @@ func (*node) aNode()     {}
 
 // package PkgName; DeclList[0], DeclList[1], ...
 type File struct {
-	Pragma    Pragma
-	PkgName   *Name
-	DeclList  []Decl
-	EOF       Pos
-	GoVersion string
+	Pragma   Pragma
+	PkgName  *Name
+	DeclList []Decl
+	EOF      Pos
 	node
 }
 

@@ -45,11 +45,11 @@ func init() {
 	*/
 	//var err error
 
-	d, err := configDir("gocompiler/stdlib-go1.21rc2-77dd") //syncvar:
+	d, err := configDir("gocompiler/stdlib-go1.20.6-83b5") //syncvar:
 	if err != nil {
 		return // compiler will fail due to missing GOROOT
 	}
-	f, err := content.Open("goroot/stdlib-go1.21rc2-77dd.tar.zst") //syncvar:
+	f, err := content.Open("goroot/stdlib-go1.20.6-83b5.tar.zst") //syncvar:
 	if err != nil {
 		panic(fmt.Sprintf("gocompiler stdlib init failed - %s", err))
 	}

@@ -208,3 +208,7 @@ func setlkw(fd uintptr, lt lockType) error {
 		}
 	}
 }
+
+func isNotSupported(err error) bool {
+	return err == syscall.ENOSYS || err == syscall.ENOTSUP || err == syscall.EOPNOTSUPP || err == ErrNotSupported
+}

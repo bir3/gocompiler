@@ -6,6 +6,7 @@ package vcweb
 
 import (
 	"fmt"
+	"io/ioutil"
 	"log"
 	"net/http"
 	"net/http/cgi"
@@ -38,7 +39,7 @@ func (h *fossilHandler) Handler(dir string, env []string, logger *log.Logger) (h
 
 	cgiPath := db + ".cgi"
 	cgiScript := fmt.Sprintf("#!%s\nrepository: %s\n", h.fossilPath, db)
-	if err := os.WriteFile(cgiPath, []byte(cgiScript), 0755); err != nil {
+	if err := ioutil.WriteFile(cgiPath, []byte(cgiScript), 0755); err != nil {
 		return nil, err
 	}
 

@@ -8,7 +8,6 @@ package cfg
 
 import (
 	"bytes"
-	"context"
 	"fmt"
 	"github.com/bir3/gocompiler/src/go/build"
 	"github.com/bir3/gocompiler/src/internal/buildcfg"
@@ -83,6 +82,7 @@ var (
 	BuildO                 string                  // -o flag
 	BuildP                 = runtime.GOMAXPROCS(0) // -p flag
 	BuildPGO               string                  // -pgo flag
+	BuildPGOFile           string                  // profile selected by -pgo flag, an absolute path (if not empty)
 	BuildPkgdir            string                  // -pkgdir flag
 	BuildRace              bool                    // -race flag
 	BuildToolexec          []string                // -toolexec flag
@@ -99,9 +99,8 @@ var (
 
 	CmdName string // "build", "install", "list", "mod tidy", etc.
 
-	DebugActiongraph  string // -debug-actiongraph flag (undocumented, unstable)
-	DebugTrace        string // -debug-trace flag
-	DebugRuntimeTrace string // -debug-runtime-trace flag (undocumented, unstable)
+	DebugActiongraph string // -debug-actiongraph flag (undocumented, unstable)
+	DebugTrace       string // -debug-trace flag
 
 	// GoPathError is set when GOPATH is not set. it contains an
 	// explanation why GOPATH is unset.
@@ -143,7 +142,6 @@ func defaultContext() build.Context {
 		// (1) environment, (2) go/env file, (3) runtime constants,
 		// while go/build.Default.GOOS/GOARCH are derived from the preference list
 		// (1) environment, (2) runtime constants.
-		//
 		// We know ctxt.GOOS/GOARCH == runtime.GOOS/GOARCH;
 		// no matter how that happened, go/build.Default will make the
 		// same decision (either the environment variables are set explicitly
@@ -182,7 +180,7 @@ func defaultContext() build.Context {
 }
 
 func init() {
-	SetGOROOT(Getenv("GOROOT"), false)
+	SetGOROOT(findGOROOT(), false)
 	BuildToolchainCompiler = func() string { return "missing-compiler" }
 	BuildToolchainLinker = func() string { return "missing-linker" }
 }
@@ -306,22 +304,7 @@ func EnvFile() (string, error) {
 
 func initEnvCache() {
 	envCache.m = make(map[string]string)
-	if file, _ := EnvFile(); file != "" {
-		readEnvFile(file, "user")
-	}
-	goroot := findGOROOT(envCache.m["GOROOT"])
-	if goroot != "" {
-		readEnvFile(filepath.Join(goroot, "go.env"), "GOROOT")
-	}
-
-	// Save the goroot for func init calling SetGOROOT,
-	// and also overwrite anything that might have been in go.env.
-	// It makes no sense for GOROOT/go.env to specify
-	// a different GOROOT.
-	envCache.m["GOROOT"] = goroot
-}
-
-func readEnvFile(file string, source string) {
+	file, _ := EnvFile()
 	if file == "" {
 		return
 	}
@@ -343,21 +326,13 @@ func readEnvFile(file string, source string) {
 		i = bytes.IndexByte(line, '=')
 		if i < 0 || line[0] < 'A' || 'Z' < line[0] {
 			// Line is missing = (or empty) or a comment or not a valid env name. Ignore.
-			// This should not happen in the user file, since the file should be maintained almost
+			// (This should not happen, since the file should be maintained almost
 			// exclusively by "go env -w", but better to silently ignore than to make
 			// the go command unusable just because somehow the env file has
-			// gotten corrupted.
-			// In the GOROOT/go.env file, we expect comments.
+			// gotten corrupted.)
 			continue
 		}
 		key, val := line[:i], line[i+1:]
-
-		if source == "GOROOT" {
-			// In the GOROOT/go.env file, do not overwrite fields loaded from the user's go/env file.
-			if _, ok := envCache.m[string(key)]; ok {
-				continue
-			}
-		}
 		envCache.m[string(key)] = string(val)
 	}
 }
@@ -388,26 +363,17 @@ func Getenv(key string) string {
 
 // CanGetenv reports whether key is a valid go/env configuration key.
 func CanGetenv(key string) bool {
-	envCache.once.Do(initEnvCache)
-	if _, ok := envCache.m[key]; ok {
-		// Assume anything in the user file or go.env file is valid.
-		return true
-	}
 	return strings.Contains(cfg.KnownEnv, "\t"+key+"\n")
 }
 
 var (
-	GOROOT string
-
-	// Either empty or produced by filepath.Join(GOROOT, …).
-	GOROOTbin string
-	GOROOTpkg string
-	GOROOTsrc string
-
+	GOROOT       string
+	GOROOTbin    string
+	GOROOTpkg    string
+	GOROOTsrc    string
 	GOROOT_FINAL string
-
-	GOBIN      = Getenv("GOBIN")
-	GOMODCACHE = envOr("GOMODCACHE", gopathDir("pkg/mod"))
+	GOBIN        = Getenv("GOBIN")
+	GOMODCACHE   = envOr("GOMODCACHE", gopathDir("pkg/mod"))
 
 	// Used in envcmd.MkEnv and build ID computations.
 	GOARM    = envOr("GOARM", fmt.Sprint(buildcfg.GOARM))
@@ -418,8 +384,8 @@ var (
 	GOPPC64  = envOr("GOPPC64", fmt.Sprintf("%s%d", "power", buildcfg.GOPPC64))
 	GOWASM   = envOr("GOWASM", fmt.Sprint(buildcfg.GOWASM))
 
-	GOPROXY    = envOr("GOPROXY", "")
-	GOSUMDB    = envOr("GOSUMDB", "")
+	GOPROXY    = envOr("GOPROXY", "https://proxy.golang.org,direct")
+	GOSUMDB    = envOr("GOSUMDB", "sum.golang.org")
 	GOPRIVATE  = Getenv("GOPRIVATE")
 	GONOPROXY  = envOr("GONOPROXY", GOPRIVATE)
 	GONOSUMDB  = envOr("GONOSUMDB", GOPRIVATE)
@@ -472,17 +438,8 @@ func envOr(key, def string) string {
 // with from vfs.GOROOT.
 //
 // There is a copy of this code in x/tools/cmd/godoc/goroot.go.
-func findGOROOT(env string) string {
-	if env == "" {
-		// Not using Getenv because findGOROOT is called
-		// to find the GOROOT/go.env file. initEnvCache
-		// has passed in the setting from the user go/env file.
-		env = os.Getenv("GOROOT")
-	}
-	if env != "" {
-		return filepath.Clean(env)
-	}
-	return vfs.GOROOT
+func findGOROOT() string {
+        return vfs.GOROOT
 }
 
 func findGOROOT_FINAL(goroot string) string {
@@ -547,24 +504,4 @@ func gopath(ctxt build.Context) string {
 	}
 	GoPathError = fmt.Sprintf("%s is not set", env)
 	return ""
-}
-
-// WithBuildXWriter returns a Context in which BuildX output is written
-// to given io.Writer.
-func WithBuildXWriter(ctx context.Context, xLog io.Writer) context.Context {
-	return context.WithValue(ctx, buildXContextKey{}, xLog)
-}
-
-type buildXContextKey struct{}
-
-// BuildXWriter returns nil if BuildX is false, or
-// the writer to which BuildX output should be written otherwise.
-func BuildXWriter(ctx context.Context) (io.Writer, bool) {
-	if !BuildX {
-		return nil, false
-	}
-	if v := ctx.Value(buildXContextKey{}); v != nil {
-		return v.(io.Writer), true
-	}
-	return os.Stderr, true
 }

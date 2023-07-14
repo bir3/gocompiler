@@ -6,7 +6,6 @@
 package par
 
 import (
-	"errors"
 	"math/rand"
 	"sync"
 	"sync/atomic"
@@ -14,25 +13,25 @@ import (
 
 // Work manages a set of work items to be executed in parallel, at most once each.
 // The items in the set must all be valid map keys.
-type Work[T comparable] struct {
-	f       func(T) // function to run for each item
-	running int     // total number of runners
+type Work struct {
+	f       func(any) // function to run for each item
+	running int       // total number of runners
 
 	mu      sync.Mutex
-	added   map[T]bool // items added to set
-	todo    []T        // items yet to be run
-	wait    sync.Cond  // wait when todo is empty
-	waiting int        // number of runners waiting for todo
+	added   map[any]bool // items added to set
+	todo    []any        // items yet to be run
+	wait    sync.Cond    // wait when todo is empty
+	waiting int          // number of runners waiting for todo
 }
 
-func (w *Work[T]) init() {
+func (w *Work) init() {
 	if w.added == nil {
-		w.added = make(map[T]bool)
+		w.added = make(map[any]bool)
 	}
 }
 
 // Add adds item to the work set, if it hasn't already been added.
-func (w *Work[T]) Add(item T) {
+func (w *Work) Add(item any) {
 	w.mu.Lock()
 	w.init()
 	if !w.added[item] {
@@ -52,7 +51,7 @@ func (w *Work[T]) Add(item T) {
 // before calling Do (or else Do returns immediately),
 // but it is allowed for f(item) to add new items to the set.
 // Do should only be used once on a given Work.
-func (w *Work[T]) Do(n int, f func(item T)) {
+func (w *Work) Do(n int, f func(item any)) {
 	if n < 1 {
 		panic("par.Work.Do: n < 1")
 	}
@@ -73,7 +72,7 @@ func (w *Work[T]) Do(n int, f func(item T)) {
 // runner executes work in w until both nothing is left to do
 // and all the runners are waiting for work.
 // (Then all the runners return.)
-func (w *Work[T]) runner() {
+func (w *Work) runner() {
 	for {
 		// Wait for something to do.
 		w.mu.Lock()
@@ -103,57 +102,26 @@ func (w *Work[T]) runner() {
 	}
 }
 
-// ErrCache is like Cache except that it also stores
-// an error value alongside the cached value V.
-type ErrCache[K comparable, V any] struct {
-	Cache[K, errValue[V]]
-}
-
-type errValue[V any] struct {
-	v   V
-	err error
-}
-
-func (c *ErrCache[K, V]) Do(key K, f func() (V, error)) (V, error) {
-	v := c.Cache.Do(key, func() errValue[V] {
-		v, err := f()
-		return errValue[V]{v, err}
-	})
-	return v.v, v.err
-}
-
-var ErrCacheEntryNotFound = errors.New("cache entry not found")
-
-// Get returns the cached result associated with key.
-// It returns ErrCacheEntryNotFound if there is no such result.
-func (c *ErrCache[K, V]) Get(key K) (V, error) {
-	v, ok := c.Cache.Get(key)
-	if !ok {
-		v.err = ErrCacheEntryNotFound
-	}
-	return v.v, v.err
-}
-
 // Cache runs an action once per key and caches the result.
-type Cache[K comparable, V any] struct {
+type Cache struct {
 	m sync.Map
 }
 
-type cacheEntry[V any] struct {
+type cacheEntry struct {
 	done   atomic.Bool
 	mu     sync.Mutex
-	result V
+	result any
 }
 
 // Do calls the function f if and only if Do is being called for the first time with this key.
 // No call to Do with a given key returns until the one call to f returns.
 // Do returns the value returned by the one call to f.
-func (c *Cache[K, V]) Do(key K, f func() V) V {
+func (c *Cache) Do(key any, f func() any) any {
 	entryIface, ok := c.m.Load(key)
 	if !ok {
-		entryIface, _ = c.m.LoadOrStore(key, new(cacheEntry[V]))
+		entryIface, _ = c.m.LoadOrStore(key, new(cacheEntry))
 	}
-	e := entryIface.(*cacheEntry[V])
+	e := entryIface.(*cacheEntry)
 	if !e.done.Load() {
 		e.mu.Lock()
 		if !e.done.Load() {
@@ -165,20 +133,19 @@ func (c *Cache[K, V]) Do(key K, f func() V) V {
 	return e.result
 }
 
-// Get returns the cached result associated with key
-// and reports whether there is such a result.
-//
+// Get returns the cached result associated with key.
+// It returns nil if there is no such result.
 // If the result for key is being computed, Get does not wait for the computation to finish.
-func (c *Cache[K, V]) Get(key K) (V, bool) {
+func (c *Cache) Get(key any) any {
 	entryIface, ok := c.m.Load(key)
 	if !ok {
-		return *new(V), false
+		return nil
 	}
-	e := entryIface.(*cacheEntry[V])
+	e := entryIface.(*cacheEntry)
 	if !e.done.Load() {
-		return *new(V), false
+		return nil
 	}
-	return e.result, true
+	return e.result
 }
 
 // Clear removes all entries in the cache.
@@ -188,7 +155,7 @@ func (c *Cache[K, V]) Get(key K) (V, bool) {
 //
 // TODO(jayconrod): Delete this after the package cache clearing functions
 // in internal/load have been removed.
-func (c *Cache[K, V]) Clear() {
+func (c *Cache) Clear() {
 	c.m.Range(func(key, value any) bool {
 		c.m.Delete(key)
 		return true
@@ -202,7 +169,7 @@ func (c *Cache[K, V]) Clear() {
 //
 // TODO(jayconrod): Delete this after the package cache clearing functions
 // in internal/load have been removed.
-func (c *Cache[K, V]) Delete(key K) {
+func (c *Cache) Delete(key any) {
 	c.m.Delete(key)
 }
 
@@ -213,9 +180,9 @@ func (c *Cache[K, V]) Delete(key K) {
 //
 // TODO(jayconrod): Delete this after the package cache clearing functions
 // in internal/load have been removed.
-func (c *Cache[K, V]) DeleteIf(pred func(key K) bool) {
+func (c *Cache) DeleteIf(pred func(key any) bool) {
 	c.m.Range(func(key, _ any) bool {
-		if key := key.(K); pred(key) {
+		if pred(key) {
 			c.Delete(key)
 		}
 		return true

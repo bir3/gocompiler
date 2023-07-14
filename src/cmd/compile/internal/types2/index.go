@@ -42,7 +42,7 @@ func (check *Checker) indexExpr(x *operand, e *syntax.IndexExpr) (isFuncInst boo
 	}
 
 	// x should not be generic at this point, but be safe and check
-	check.nonGeneric(nil, x)
+	check.nonGeneric(x)
 	if x.mode == invalid {
 		return false
 	}
@@ -92,7 +92,7 @@ func (check *Checker) indexExpr(x *operand, e *syntax.IndexExpr) (isFuncInst boo
 			return false
 		}
 		var key operand
-		check.expr(nil, &key, index)
+		check.expr(&key, index)
 		check.assignment(&key, typ.key, "map index")
 		// ok to continue even if indexing failed - map element type is known
 		x.mode = mapindex
@@ -166,7 +166,7 @@ func (check *Checker) indexExpr(x *operand, e *syntax.IndexExpr) (isFuncInst boo
 					return false
 				}
 				var k operand
-				check.expr(nil, &k, index)
+				check.expr(&k, index)
 				check.assignment(&k, key, "map index")
 				// ok to continue even if indexing failed - map element type is known
 				x.mode = mapindex
@@ -206,7 +206,7 @@ func (check *Checker) indexExpr(x *operand, e *syntax.IndexExpr) (isFuncInst boo
 }
 
 func (check *Checker) sliceExpr(x *operand, e *syntax.SliceExpr) {
-	check.expr(nil, x, e.X)
+	check.expr(x, e.X)
 	if x.mode == invalid {
 		check.use(e.Index[:]...)
 		return
@@ -353,7 +353,7 @@ func (check *Checker) index(index syntax.Expr, max int64) (typ Type, val int64) 
 	val = -1
 
 	var x operand
-	check.expr(nil, &x, index)
+	check.expr(&x, index)
 	if !check.isValidIndex(&x, InvalidIndex, "index", false) {
 		return
 	}
@@ -415,7 +415,7 @@ func (check *Checker) isValidIndex(x *operand, code Code, what string, allowNega
 	return true
 }
 
-// indexedElts checks the elements (elts) of an array or slice composite literal
+// indexElts checks the elements (elts) of an array or slice composite literal
 // against the literal's element type (typ), and the element indices against
 // the literal length if known (length >= 0). It returns the length of the
 // literal (maximum index value + 1).

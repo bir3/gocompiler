@@ -19,7 +19,6 @@ import (
 	"encoding/binary"
 	"errors"
 	"fmt"
-	"github.com/bir3/gocompiler/src/internal/saferio"
 	"github.com/bir3/gocompiler/src/internal/xcoff"
 	"io"
 	"io/fs"
@@ -126,12 +125,6 @@ func readRawBuildInfo(r io.ReaderAt) (vers, mod string, err error) {
 			return "", "", errUnrecognizedFormat
 		}
 		x = &machoExe{f}
-	case bytes.HasPrefix(ident, []byte("\xCA\xFE\xBA\xBE")) || bytes.HasPrefix(ident, []byte("\xCA\xFE\xBA\xBF")):
-		f, err := macho.NewFatFile(r)
-		if err != nil || len(f.Arches) == 0 {
-			return "", "", errUnrecognizedFormat
-		}
-		x = &machoExe{f.Arches[0].File}
 	case bytes.HasPrefix(ident, []byte{0x01, 0xDF}) || bytes.HasPrefix(ident, []byte{0x01, 0xF7}):
 		f, err := xcoff.NewFile(r)
 		if err != nil {
@@ -267,7 +260,12 @@ func (x *elfExe) ReadData(addr, size uint64) ([]byte, error) {
 			if n > size {
 				n = size
 			}
-			return saferio.ReadDataAt(prog, n, int64(addr-prog.Vaddr))
+			data := make([]byte, n)
+			_, err := prog.ReadAt(data, int64(addr-prog.Vaddr))
+			if err != nil {
+				return nil, err
+			}
+			return data, nil
 		}
 	}
 	return nil, errUnrecognizedFormat
@@ -310,7 +308,12 @@ func (x *peExe) ReadData(addr, size uint64) ([]byte, error) {
 			if n > size {
 				n = size
 			}
-			return saferio.ReadDataAt(sect, n, int64(addr-uint64(sect.VirtualAddress)))
+			data := make([]byte, n)
+			_, err := sect.ReadAt(data, int64(addr-uint64(sect.VirtualAddress)))
+			if err != nil {
+				return nil, errUnrecognizedFormat
+			}
+			return data, nil
 		}
 	}
 	return nil, errUnrecognizedFormat
@@ -357,7 +360,12 @@ func (x *machoExe) ReadData(addr, size uint64) ([]byte, error) {
 			if n > size {
 				n = size
 			}
-			return saferio.ReadDataAt(seg, n, int64(addr-seg.Addr))
+			data := make([]byte, n)
+			_, err := seg.ReadAt(data, int64(addr-seg.Addr))
+			if err != nil {
+				return nil, err
+			}
+			return data, nil
 		}
 	}
 	return nil, errUnrecognizedFormat
@@ -393,7 +401,12 @@ func (x *xcoffExe) ReadData(addr, size uint64) ([]byte, error) {
 			if n > size {
 				n = size
 			}
-			return saferio.ReadDataAt(sect, n, int64(addr-sect.VirtualAddress))
+			data := make([]byte, n)
+			_, err := sect.ReadAt(data, int64(addr-sect.VirtualAddress))
+			if err != nil {
+				return nil, err
+			}
+			return data, nil
 		}
 	}
 	return nil, errors.New("address not mapped")
@@ -425,8 +438,14 @@ func (x *plan9objExe) ReadData(addr, size uint64) ([]byte, error) {
 			if n > size {
 				n = size
 			}
-			return saferio.ReadDataAt(sect, n, int64(addr-uint64(sect.Offset)))
+			data := make([]byte, n)
+			_, err := sect.ReadAt(data, int64(addr-uint64(sect.Offset)))
+			if err != nil {
+				return nil, err
+			}
+			return data, nil
 		}
 	}
 	return nil, errors.New("address not mapped")
+
 }

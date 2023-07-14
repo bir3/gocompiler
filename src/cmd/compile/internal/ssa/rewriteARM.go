@@ -1,4 +1,5 @@
-// Code generated from _gen/ARM.rules using 'go generate'; DO NOT EDIT.
+// Code generated from _gen/ARM.rules; DO NOT EDIT.
+// generated with: cd _gen; go run .
 
 package ssa
 
@@ -1315,8 +1316,7 @@ func rewriteValueARM_OpARMADD(v *Value) bool {
 	v_1 := v.Args[1]
 	v_0 := v.Args[0]
 	b := v.Block
-	// match: (ADD x (MOVWconst <t> [c]))
-	// cond: !t.IsPtr()
+	// match: (ADD x (MOVWconst [c]))
 	// result: (ADDconst [c] x)
 	for {
 		for _i0 := 0; _i0 <= 1; _i0, v_0, v_1 = _i0+1, v_1, v_0 {
@@ -1324,11 +1324,7 @@ func rewriteValueARM_OpARMADD(v *Value) bool {
 			if v_1.Op != OpARMMOVWconst {
 				continue
 			}
-			t := v_1.Type
 			c := auxIntToInt32(v_1.AuxInt)
-			if !(!t.IsPtr()) {
-				continue
-			}
 			v.reset(OpARMADDconst)
 			v.AuxInt = int32ToAuxInt(c)
 			v.AddArg(x)
@@ -13952,13 +13948,13 @@ func rewriteValueARM_OpLoad(v *Value) bool {
 		return true
 	}
 	// match: (Load <t> ptr mem)
-	// cond: (is8BitInt(t) && t.IsSigned())
+	// cond: (is8BitInt(t) && isSigned(t))
 	// result: (MOVBload ptr mem)
 	for {
 		t := v.Type
 		ptr := v_0
 		mem := v_1
-		if !(is8BitInt(t) && t.IsSigned()) {
+		if !(is8BitInt(t) && isSigned(t)) {
 			break
 		}
 		v.reset(OpARMMOVBload)
@@ -13966,13 +13962,13 @@ func rewriteValueARM_OpLoad(v *Value) bool {
 		return true
 	}
 	// match: (Load <t> ptr mem)
-	// cond: (is8BitInt(t) && !t.IsSigned())
+	// cond: (is8BitInt(t) && !isSigned(t))
 	// result: (MOVBUload ptr mem)
 	for {
 		t := v.Type
 		ptr := v_0
 		mem := v_1
-		if !(is8BitInt(t) && !t.IsSigned()) {
+		if !(is8BitInt(t) && !isSigned(t)) {
 			break
 		}
 		v.reset(OpARMMOVBUload)
@@ -13980,13 +13976,13 @@ func rewriteValueARM_OpLoad(v *Value) bool {
 		return true
 	}
 	// match: (Load <t> ptr mem)
-	// cond: (is16BitInt(t) && t.IsSigned())
+	// cond: (is16BitInt(t) && isSigned(t))
 	// result: (MOVHload ptr mem)
 	for {
 		t := v.Type
 		ptr := v_0
 		mem := v_1
-		if !(is16BitInt(t) && t.IsSigned()) {
+		if !(is16BitInt(t) && isSigned(t)) {
 			break
 		}
 		v.reset(OpARMMOVHload)
@@ -13994,13 +13990,13 @@ func rewriteValueARM_OpLoad(v *Value) bool {
 		return true
 	}
 	// match: (Load <t> ptr mem)
-	// cond: (is16BitInt(t) && !t.IsSigned())
+	// cond: (is16BitInt(t) && !isSigned(t))
 	// result: (MOVHUload ptr mem)
 	for {
 		t := v.Type
 		ptr := v_0
 		mem := v_1
-		if !(is16BitInt(t) && !t.IsSigned()) {
+		if !(is16BitInt(t) && !isSigned(t)) {
 			break
 		}
 		v.reset(OpARMMOVHUload)
@@ -14052,44 +14048,17 @@ func rewriteValueARM_OpLoad(v *Value) bool {
 	return false
 }
 func rewriteValueARM_OpLocalAddr(v *Value) bool {
-	v_1 := v.Args[1]
 	v_0 := v.Args[0]
-	b := v.Block
-	typ := &b.Func.Config.Types
-	// match: (LocalAddr <t> {sym} base mem)
-	// cond: t.Elem().HasPointers()
-	// result: (MOVWaddr {sym} (SPanchored base mem))
-	for {
-		t := v.Type
-		sym := auxToSym(v.Aux)
-		base := v_0
-		mem := v_1
-		if !(t.Elem().HasPointers()) {
-			break
-		}
-		v.reset(OpARMMOVWaddr)
-		v.Aux = symToAux(sym)
-		v0 := b.NewValue0(v.Pos, OpSPanchored, typ.Uintptr)
-		v0.AddArg2(base, mem)
-		v.AddArg(v0)
-		return true
-	}
-	// match: (LocalAddr <t> {sym} base _)
-	// cond: !t.Elem().HasPointers()
+	// match: (LocalAddr {sym} base _)
 	// result: (MOVWaddr {sym} base)
 	for {
-		t := v.Type
 		sym := auxToSym(v.Aux)
 		base := v_0
-		if !(!t.Elem().HasPointers()) {
-			break
-		}
 		v.reset(OpARMMOVWaddr)
 		v.Aux = symToAux(sym)
 		v.AddArg(base)
 		return true
 	}
-	return false
 }
 func rewriteValueARM_OpLsh16x16(v *Value) bool {
 	v_1 := v.Args[1]
@@ -15912,14 +15881,14 @@ func rewriteValueARM_OpStore(v *Value) bool {
 		return true
 	}
 	// match: (Store {t} ptr val mem)
-	// cond: t.Size() == 4 && !t.IsFloat()
+	// cond: t.Size() == 4 && !is32BitFloat(val.Type)
 	// result: (MOVWstore ptr val mem)
 	for {
 		t := auxToType(v.Aux)
 		ptr := v_0
 		val := v_1
 		mem := v_2
-		if !(t.Size() == 4 && !t.IsFloat()) {
+		if !(t.Size() == 4 && !is32BitFloat(val.Type)) {
 			break
 		}
 		v.reset(OpARMMOVWstore)
@@ -15927,14 +15896,14 @@ func rewriteValueARM_OpStore(v *Value) bool {
 		return true
 	}
 	// match: (Store {t} ptr val mem)
-	// cond: t.Size() == 4 && t.IsFloat()
+	// cond: t.Size() == 4 && is32BitFloat(val.Type)
 	// result: (MOVFstore ptr val mem)
 	for {
 		t := auxToType(v.Aux)
 		ptr := v_0
 		val := v_1
 		mem := v_2
-		if !(t.Size() == 4 && t.IsFloat()) {
+		if !(t.Size() == 4 && is32BitFloat(val.Type)) {
 			break
 		}
 		v.reset(OpARMMOVFstore)
@@ -15942,14 +15911,14 @@ func rewriteValueARM_OpStore(v *Value) bool {
 		return true
 	}
 	// match: (Store {t} ptr val mem)
-	// cond: t.Size() == 8 && t.IsFloat()
+	// cond: t.Size() == 8 && is64BitFloat(val.Type)
 	// result: (MOVDstore ptr val mem)
 	for {
 		t := auxToType(v.Aux)
 		ptr := v_0
 		val := v_1
 		mem := v_2
-		if !(t.Size() == 8 && t.IsFloat()) {
+		if !(t.Size() == 8 && is64BitFloat(val.Type)) {
 			break
 		}
 		v.reset(OpARMMOVDstore)

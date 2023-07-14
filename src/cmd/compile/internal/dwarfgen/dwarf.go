@@ -23,7 +23,7 @@ import (
 	"github.com/bir3/gocompiler/src/cmd/internal/src"
 )
 
-func Info(fnsym *obj.LSym, infosym *obj.LSym, curfn interface{}) (scopes []dwarf.Scope, inlcalls dwarf.InlCalls, startPos src.XPos) {
+func Info(fnsym *obj.LSym, infosym *obj.LSym, curfn interface{}) ([]dwarf.Scope, dwarf.InlCalls) {
 	fn := curfn.(*ir.Func)
 
 	if fn.Nname != nil {
@@ -124,11 +124,12 @@ func Info(fnsym *obj.LSym, infosym *obj.LSym, curfn interface{}) (scopes []dwarf
 		varScopes = append(varScopes, findScope(fn.Marks, pos))
 	}
 
-	scopes = assembleScopes(fnsym, fn, dwarfVars, varScopes)
+	scopes := assembleScopes(fnsym, fn, dwarfVars, varScopes)
+	var inlcalls dwarf.InlCalls
 	if base.Flag.GenDwarfInl > 0 {
 		inlcalls = assembleInlines(fnsym, dwarfVars)
 	}
-	return scopes, inlcalls, fn.Pos()
+	return scopes, inlcalls
 }
 
 func declPos(decl *ir.Name) src.XPos {

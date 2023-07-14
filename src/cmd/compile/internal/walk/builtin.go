@@ -83,7 +83,7 @@ func walkAppend(n *ir.CallExpr, init *ir.Nodes, dst ir.Node) ir.Node {
 	l = append(l, ir.NewAssignStmt(base.Pos, s, nsrc))
 
 	// num = number of things to append
-	num := ir.NewInt(base.Pos, int64(argc))
+	num := ir.NewInt(int64(argc))
 
 	// newLen := s.len + num
 	newLen := typecheck.Temp(types.Types[types.TINT])
@@ -119,7 +119,7 @@ func walkAppend(n *ir.CallExpr, init *ir.Nodes, dst ir.Node) ir.Node {
 	ls = n.Args[1:]
 	for i, n := range ls {
 		// s[s.len-argc+i] = arg
-		ix := ir.NewIndexExpr(base.Pos, s, ir.NewBinaryExpr(base.Pos, ir.OSUB, newLen, ir.NewInt(base.Pos, int64(argc-i))))
+		ix := ir.NewIndexExpr(base.Pos, s, ir.NewBinaryExpr(base.Pos, ir.OSUB, newLen, ir.NewInt(int64(argc-i))))
 		ix.SetBounded(true)
 		l = append(l, ir.NewAssignStmt(base.Pos, ix, n))
 	}
@@ -128,18 +128,6 @@ func walkAppend(n *ir.CallExpr, init *ir.Nodes, dst ir.Node) ir.Node {
 	walkStmtList(l)
 	init.Append(l...)
 	return s
-}
-
-// walkClear walks an OCLEAR node.
-func walkClear(n *ir.UnaryExpr) ir.Node {
-	typ := n.X.Type()
-	switch {
-	case typ.IsSlice():
-		return arrayClear(n.X.Pos(), n.X, nil)
-	case typ.IsMap():
-		return mapClear(n.X, reflectdata.TypePtrAt(n.X.Pos(), n.X.Type()))
-	}
-	panic("unreachable")
 }
 
 // walkClose walks an OCLOSE node.
@@ -184,7 +172,7 @@ func walkCopy(n *ir.BinaryExpr, init *ir.Nodes, runtimecall bool) ir.Node {
 		fn := typecheck.LookupRuntime("slicecopy")
 		fn = typecheck.SubstArgTypes(fn, ptrL.Type().Elem(), ptrR.Type().Elem())
 
-		return mkcall1(fn, n.Type(), init, ptrL, lenL, ptrR, lenR, ir.NewInt(base.Pos, n.X.Type().Elem().Size()))
+		return mkcall1(fn, n.Type(), init, ptrL, lenL, ptrR, lenR, ir.NewInt(n.X.Type().Elem().Size()))
 	}
 
 	n.X = walkExpr(n.X, init)
@@ -220,7 +208,7 @@ func walkCopy(n *ir.BinaryExpr, init *ir.Nodes, runtimecall bool) ir.Node {
 	nwid := ir.Node(typecheck.Temp(types.Types[types.TUINTPTR]))
 	setwid := ir.NewAssignStmt(base.Pos, nwid, typecheck.Conv(nlen, types.Types[types.TUINTPTR]))
 	ne.Body.Append(setwid)
-	nwid = ir.NewBinaryExpr(base.Pos, ir.OMUL, nwid, ir.NewInt(base.Pos, nl.Type().Elem().Size()))
+	nwid = ir.NewBinaryExpr(base.Pos, ir.OMUL, nwid, ir.NewInt(nl.Type().Elem().Size()))
 	call := mkcall1(fn, nil, init, nto, nfrm, nwid)
 	ne.Body.Append(call)
 
@@ -249,10 +237,6 @@ func walkLenCap(n *ir.UnaryExpr, init *ir.Nodes) ir.Node {
 	if isRuneCount(n) {
 		// Replace len([]rune(string)) with runtime.countrunes(string).
 		return mkcall("countrunes", n.Type(), init, typecheck.Conv(n.X.(*ir.ConvExpr).X, types.Types[types.TSTRING]))
-	}
-	if isByteCount(n) {
-		_, len := backingArrayPtrLen(cheapExpr(n.X.(*ir.ConvExpr).X, init))
-		return len
 	}
 
 	n.X = walkExpr(n.X, init)
@@ -324,7 +308,7 @@ func walkMakeMap(n *ir.MakeExpr, init *ir.Nodes) ir.Node {
 			//     h.buckets = b
 			// }
 
-			nif := ir.NewIfStmt(base.Pos, ir.NewBinaryExpr(base.Pos, ir.OLE, hint, ir.NewInt(base.Pos, reflectdata.BUCKETSIZE)), nil, nil)
+			nif := ir.NewIfStmt(base.Pos, ir.NewBinaryExpr(base.Pos, ir.OLE, hint, ir.NewInt(reflectdata.BUCKETSIZE)), nil, nil)
 			nif.Likely = true
 
 			// var bv bmap
@@ -420,8 +404,8 @@ func walkMakeSlice(n *ir.MakeExpr, init *ir.Nodes) ir.Node {
 		//     if len < 0 { panicmakeslicelen() }
 		//     panicmakeslicecap()
 		// }
-		nif := ir.NewIfStmt(base.Pos, ir.NewBinaryExpr(base.Pos, ir.OGT, typecheck.Conv(l, types.Types[types.TUINT64]), ir.NewInt(base.Pos, i)), nil, nil)
-		niflen := ir.NewIfStmt(base.Pos, ir.NewBinaryExpr(base.Pos, ir.OLT, l, ir.NewInt(base.Pos, 0)), nil, nil)
+		nif := ir.NewIfStmt(base.Pos, ir.NewBinaryExpr(base.Pos, ir.OGT, typecheck.Conv(l, types.Types[types.TUINT64]), ir.NewInt(i)), nil, nil)
+		niflen := ir.NewIfStmt(base.Pos, ir.NewBinaryExpr(base.Pos, ir.OLT, l, ir.NewInt(0)), nil, nil)
 		niflen.Body = []ir.Node{mkcall("panicmakeslicelen", nil, init)}
 		nif.Body.Append(niflen, mkcall("panicmakeslicecap", nil, init))
 		init.Append(typecheck.Stmt(nif))
@@ -482,11 +466,11 @@ func walkMakeSliceCopy(n *ir.MakeExpr, init *ir.Nodes) ir.Node {
 		// We do not check for overflow of len(to)*elem.Width here
 		// since len(from) is an existing checked slice capacity
 		// with same elem.Width for the from slice.
-		size := ir.NewBinaryExpr(base.Pos, ir.OMUL, typecheck.Conv(length, types.Types[types.TUINTPTR]), typecheck.Conv(ir.NewInt(base.Pos, t.Elem().Size()), types.Types[types.TUINTPTR]))
+		size := ir.NewBinaryExpr(base.Pos, ir.OMUL, typecheck.Conv(length, types.Types[types.TUINTPTR]), typecheck.Conv(ir.NewInt(t.Elem().Size()), types.Types[types.TUINTPTR]))
 
 		// instantiate mallocgc(size uintptr, typ *byte, needszero bool) unsafe.Pointer
 		fn := typecheck.LookupRuntime("mallocgc")
-		ptr := mkcall1(fn, types.Types[types.TUNSAFEPTR], init, size, typecheck.NodNil(), ir.NewBool(base.Pos, false))
+		ptr := mkcall1(fn, types.Types[types.TUNSAFEPTR], init, size, typecheck.NodNil(), ir.NewBool(false))
 		ptr.MarkNonNil()
 		sh := ir.NewSliceHeaderExpr(base.Pos, t, ptr, length, length)
 
@@ -529,12 +513,6 @@ func walkNew(n *ir.UnaryExpr, init *ir.Nodes) ir.Node {
 	return n
 }
 
-func walkMinMax(n *ir.CallExpr, init *ir.Nodes) ir.Node {
-	init.Append(ir.TakeInit(n)...)
-	walkExprList(n.Args, init)
-	return n
-}
-
 // generate code for print.
 func walkPrint(nn *ir.CallExpr, init *ir.Nodes) ir.Node {
 	// Hoist all the argument evaluation up before the lock.
@@ -546,11 +524,11 @@ func walkPrint(nn *ir.CallExpr, init *ir.Nodes) ir.Node {
 		t := make([]ir.Node, 0, len(s)*2)
 		for i, n := range s {
 			if i != 0 {
-				t = append(t, ir.NewString(base.Pos, " "))
+				t = append(t, ir.NewString(" "))
 			}
 			t = append(t, n)
 		}
-		t = append(t, ir.NewString(base.Pos, "\n"))
+		t = append(t, ir.NewString("\n"))
 		nn.Args = t
 	}
 
@@ -564,7 +542,7 @@ func walkPrint(nn *ir.CallExpr, init *ir.Nodes) ir.Node {
 			i++
 		}
 		if len(strs) > 0 {
-			t = append(t, ir.NewString(base.Pos, strings.Join(strs, "")))
+			t = append(t, ir.NewString(strings.Join(strs, "")))
 		}
 		if i < len(s) {
 			t = append(t, s[i])
@@ -674,7 +652,7 @@ func walkPrint(nn *ir.CallExpr, init *ir.Nodes) ir.Node {
 	return walkStmt(typecheck.Stmt(r))
 }
 
-// walkRecoverFP walks an ORECOVERFP node.
+// walkRecover walks an ORECOVERFP node.
 func walkRecoverFP(nn *ir.CallExpr, init *ir.Nodes) ir.Node {
 	return mkcall("gorecover", nn.Type(), init, walkExpr(nn.Args[0], init))
 }
@@ -723,7 +701,7 @@ func walkUnsafeSlice(n *ir.BinaryExpr, init *ir.Nodes) ir.Node {
 
 		// if len < 0 { panicunsafeslicelen() }
 		nif := ir.NewIfStmt(base.Pos, nil, nil, nil)
-		nif.Cond = ir.NewBinaryExpr(base.Pos, ir.OLT, typecheck.Conv(len, lenType), ir.NewInt(base.Pos, 0))
+		nif.Cond = ir.NewBinaryExpr(base.Pos, ir.OLT, typecheck.Conv(len, lenType), ir.NewInt(0))
 		nif.Body.Append(mkcall("panicunsafeslicelen", nil, &nif.Body))
 		appendWalkStmt(init, nif)
 
@@ -733,7 +711,7 @@ func walkUnsafeSlice(n *ir.BinaryExpr, init *ir.Nodes) ir.Node {
 			// }
 			nifPtr := ir.NewIfStmt(base.Pos, nil, nil, nil)
 			isNil := ir.NewBinaryExpr(base.Pos, ir.OEQ, unsafePtr, typecheck.NodNil())
-			gtZero := ir.NewBinaryExpr(base.Pos, ir.OGT, typecheck.Conv(len, lenType), ir.NewInt(base.Pos, 0))
+			gtZero := ir.NewBinaryExpr(base.Pos, ir.OGT, typecheck.Conv(len, lenType), ir.NewInt(0))
 			nifPtr.Cond =
 				ir.NewLogicalExpr(base.Pos, ir.OANDAND, isNil, gtZero)
 			nifPtr.Body.Append(mkcall("panicunsafeslicenilptr", nil, &nifPtr.Body))
@@ -750,7 +728,7 @@ func walkUnsafeSlice(n *ir.BinaryExpr, init *ir.Nodes) ir.Node {
 		mem := typecheck.Temp(types.Types[types.TUINTPTR])
 		overflow := typecheck.Temp(types.Types[types.TBOOL])
 		fn := typecheck.LookupRuntime("mulUintptr")
-		call := mkcall1(fn, fn.Type().Results(), init, ir.NewInt(base.Pos, sliceType.Elem().Size()), typecheck.Conv(typecheck.Conv(len, lenType), types.Types[types.TUINTPTR]))
+		call := mkcall1(fn, fn.Type().Results(), init, ir.NewInt(sliceType.Elem().Size()), typecheck.Conv(typecheck.Conv(len, lenType), types.Types[types.TUINTPTR]))
 		appendWalkStmt(init, ir.NewAssignListStmt(base.Pos, ir.OAS2, []ir.Node{mem, overflow}, []ir.Node{call}))
 
 		// if overflow || mem > -uintptr(ptr) {
@@ -809,7 +787,7 @@ func walkUnsafeString(n *ir.BinaryExpr, init *ir.Nodes) ir.Node {
 
 		// if len < 0 { panicunsafestringlen() }
 		nif := ir.NewIfStmt(base.Pos, nil, nil, nil)
-		nif.Cond = ir.NewBinaryExpr(base.Pos, ir.OLT, typecheck.Conv(len, lenType), ir.NewInt(base.Pos, 0))
+		nif.Cond = ir.NewBinaryExpr(base.Pos, ir.OLT, typecheck.Conv(len, lenType), ir.NewInt(0))
 		nif.Body.Append(mkcall("panicunsafestringlen", nil, &nif.Body))
 		appendWalkStmt(init, nif)
 
@@ -865,10 +843,4 @@ func writebarrierfn(name string, l *types.Type, r *types.Type) ir.Node {
 // These are optimized into a call to runtime.countrunes.
 func isRuneCount(n ir.Node) bool {
 	return base.Flag.N == 0 && !base.Flag.Cfg.Instrumenting && n.Op() == ir.OLEN && n.(*ir.UnaryExpr).X.Op() == ir.OSTR2RUNES
-}
-
-// isByteCount reports whether n is of the form len(string([]byte)).
-func isByteCount(n ir.Node) bool {
-	return base.Flag.N == 0 && !base.Flag.Cfg.Instrumenting && n.Op() == ir.OLEN &&
-		(n.(*ir.UnaryExpr).X.Op() == ir.OBYTES2STR || n.(*ir.UnaryExpr).X.Op() == ir.OBYTES2STRTMP)
 }

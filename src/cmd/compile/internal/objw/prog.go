@@ -34,8 +34,8 @@ import (
 	"github.com/bir3/gocompiler/src/cmd/compile/internal/base"
 	"github.com/bir3/gocompiler/src/cmd/compile/internal/ir"
 	"github.com/bir3/gocompiler/src/cmd/internal/obj"
+	"github.com/bir3/gocompiler/src/cmd/internal/objabi"
 	"github.com/bir3/gocompiler/src/cmd/internal/src"
-	"github.com/bir3/gocompiler/src/internal/abi"
 )
 
 var sharedProgArray = new([10000]obj.Prog) // *T instead of T to work around issue 19839
@@ -144,18 +144,18 @@ func (pp *Progs) Prog(as obj.As) *obj.Prog {
 		idx := pp.NextLive.StackMapIndex
 		pp.PrevLive.StackMapIndex = idx
 		p := pp.Prog(obj.APCDATA)
-		p.From.SetConst(abi.PCDATA_StackMapIndex)
+		p.From.SetConst(objabi.PCDATA_StackMapIndex)
 		p.To.SetConst(int64(idx))
 	}
 	if pp.NextLive.IsUnsafePoint != pp.PrevLive.IsUnsafePoint {
 		// Emit unsafe-point marker.
 		pp.PrevLive.IsUnsafePoint = pp.NextLive.IsUnsafePoint
 		p := pp.Prog(obj.APCDATA)
-		p.From.SetConst(abi.PCDATA_UnsafePoint)
+		p.From.SetConst(objabi.PCDATA_UnsafePoint)
 		if pp.NextLive.IsUnsafePoint {
-			p.To.SetConst(abi.UnsafePointUnsafe)
+			p.To.SetConst(objabi.PCDATA_UnsafePointUnsafe)
 		} else {
-			p.To.SetConst(abi.UnsafePointSafe)
+			p.To.SetConst(objabi.PCDATA_UnsafePointSafe)
 		}
 	}
 

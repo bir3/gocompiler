@@ -55,3 +55,12 @@ func unlock(f File) error {
 	}
 	return nil
 }
+
+func isNotSupported(err error) bool {
+	switch err {
+	case windows.ERROR_NOT_SUPPORTED, windows.ERROR_CALL_NOT_IMPLEMENTED, ErrNotSupported:
+		return true
+	default:
+		return false
+	}
+}

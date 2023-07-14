@@ -16,7 +16,6 @@ import (
 	"os"
 	"path/filepath"
 	"github.com/bir3/gocompiler/vfs"
-	"strconv"
 	"strings"
 )
 
@@ -182,7 +181,7 @@ func GOGOARCH() (name, value string) {
 	case "amd64":
 		return "GOAMD64", fmt.Sprintf("v%d", GOAMD64)
 	case "arm":
-		return "GOARM", strconv.Itoa(GOARM)
+		return "GOARM", fmt.Sprintf("%d", GOARM)
 	case "mips", "mipsle":
 		return "GOMIPS", GOMIPS
 	case "mips64", "mips64le":

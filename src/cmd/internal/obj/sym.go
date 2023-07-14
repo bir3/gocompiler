@@ -85,7 +85,7 @@ func (ctxt *Link) LookupABI(name string, abi ABI) *LSym {
 	return ctxt.LookupABIInit(name, abi, nil)
 }
 
-// LookupABIInit looks up a symbol with the given ABI.
+// LookupABI looks up a symbol with the given ABI.
 // If it does not exist, it creates it and
 // passes it to init for one-time initialization.
 func (ctxt *Link) LookupABIInit(name string, abi ABI, init func(s *LSym)) *LSym {
@@ -189,15 +189,11 @@ func (ctxt *Link) GCLocalsSym(data []byte) *LSym {
 // in which case all the symbols are non-package (for now).
 func (ctxt *Link) NumberSyms() {
 	if ctxt.Headtype == objabi.Haix {
-		// Data must be in a reliable order for reproducible builds.
-		// The original entries are in a reliable order, but the TOC symbols
-		// that are added in Progedit are added by different goroutines
-		// that can be scheduled independently. We need to reorder those
-		// symbols reliably. Sort by name but use a stable sort, so that
-		// any original entries with the same name (all DWARFVAR symbols
-		// have empty names but different relocation sets) are not shuffled.
-		// TODO: Find a better place and optimize to only sort TOC symbols.
-		sort.SliceStable(ctxt.Data, func(i, j int) bool {
+		// Data must be sorted to keep a constant order in TOC symbols.
+		// As they are created during Progedit, two symbols can be switched between
+		// two different compilations. Therefore, BuildID will be different.
+		// TODO: find a better place and optimize to only sort TOC symbols
+		sort.Slice(ctxt.Data, func(i, j int) bool {
 			return ctxt.Data[i].Name < ctxt.Data[j].Name
 		})
 	}
@@ -371,8 +367,6 @@ func (ctxt *Link) traverseSyms(flag traverseFlag, fn func(*LSym)) {
 						fn(aux)
 					}
 					ctxt.traverseFuncAux(flag, s, f, files)
-				} else if v := s.VarInfo(); v != nil {
-					fnNoNil(v.dwarfInfoSym)
 				}
 			}
 			if flag&traversePcdata != 0 && s.Type == objabi.STEXT {
@@ -422,16 +416,16 @@ func (ctxt *Link) traverseFuncAux(flag traverseFlag, fsym *LSym, fn func(parent 
 		}
 	}
 
-	auxsyms := []*LSym{fninfo.dwarfRangesSym, fninfo.dwarfLocSym, fninfo.dwarfDebugLinesSym, fninfo.dwarfInfoSym, fninfo.WasmImportSym, fninfo.sehUnwindInfoSym}
-	for _, s := range auxsyms {
-		if s == nil || s.Size == 0 {
+	dwsyms := []*LSym{fninfo.dwarfRangesSym, fninfo.dwarfLocSym, fninfo.dwarfDebugLinesSym, fninfo.dwarfInfoSym}
+	for _, dws := range dwsyms {
+		if dws == nil || dws.Size == 0 {
 			continue
 		}
-		fn(fsym, s)
+		fn(fsym, dws)
 		if flag&traverseRefs != 0 {
-			for _, r := range s.R {
+			for _, r := range dws.R {
 				if r.Sym != nil {
-					fn(s, r.Sym)
+					fn(dws, r.Sym)
 				}
 			}
 		}
@@ -449,11 +443,10 @@ func (ctxt *Link) traverseAuxSyms(flag traverseFlag, fn func(parent *LSym, aux *
 					fn(s, s.Gotype)
 				}
 			}
-			if s.Type == objabi.STEXT {
-				ctxt.traverseFuncAux(flag, s, fn, files)
-			} else if v := s.VarInfo(); v != nil && v.dwarfInfoSym != nil {
-				fn(s, v.dwarfInfoSym)
+			if s.Type != objabi.STEXT {
+				continue
 			}
+			ctxt.traverseFuncAux(flag, s, fn, files)
 		}
 	}
 }

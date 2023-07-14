@@ -9,7 +9,6 @@ import (
 
 	"github.com/bir3/gocompiler/src/cmd/compile/internal/base"
 	"github.com/bir3/gocompiler/src/cmd/internal/src"
-	"github.com/bir3/gocompiler/src/internal/types/errors"
 )
 
 var PtrSize int
@@ -85,7 +84,7 @@ func expandiface(t *Type) {
 		case !explicit && Identical(m.Type, prev.Type):
 			return
 		default:
-			base.ErrorfAt(m.Pos, errors.DuplicateDecl, "duplicate method %s", m.Sym.Name)
+			base.ErrorfAt(m.Pos, "duplicate method %s", m.Sym.Name)
 		}
 		methods = append(methods, m)
 	}
@@ -124,6 +123,10 @@ func expandiface(t *Type) {
 			continue
 		}
 
+		if m.Type.IsUnion() {
+			continue
+		}
+
 		// In 1.18, embedded types can be anything. In Go 1.17, we disallow
 		// embedding anything other than interfaces. This requirement was caught
 		// by types2 already, so allow non-interface here.
@@ -148,7 +151,7 @@ func expandiface(t *Type) {
 	sort.Sort(MethodsByName(methods))
 
 	if int64(len(methods)) >= MaxWidth/int64(PtrSize) {
-		base.ErrorfAt(typePos(t), 0, "interface too large")
+		base.ErrorfAt(typePos(t), "interface too large")
 	}
 	for i, m := range methods {
 		m.Offset = int64(i) * int64(PtrSize)
@@ -213,7 +216,7 @@ func calcStructOffset(errtype *Type, t *Type, o int64, flag int) int64 {
 			maxwidth = 1<<31 - 1
 		}
 		if o >= maxwidth {
-			base.ErrorfAt(typePos(errtype), 0, "type %L too large", errtype)
+			base.ErrorfAt(typePos(errtype), "type %L too large", errtype)
 			o = 8 // small but nonzero
 		}
 	}
@@ -340,6 +343,12 @@ func CalcSize(t *Type) {
 		t.align = uint8(PtrSize)
 		expandiface(t)
 
+	case TUNION:
+		// Always part of an interface for now, so size/align don't matter.
+		// Pretend a union is represented like an interface.
+		w = 2 * int64(PtrSize)
+		t.align = uint8(PtrSize)
+
 	case TCHAN: // implemented as pointer
 		w = int64(PtrSize)
 
@@ -436,6 +445,11 @@ func CalcSize(t *Type) {
 			base.Warn("bad type %v %d\n", t1, w)
 		}
 		t.align = 1
+
+	case TTYPEPARAM:
+		// TODO(danscales) - remove when we eliminate the need
+		// to do CalcSize in noder2 (which shouldn't be needed in the noder)
+		w = int64(PtrSize)
 	}
 
 	if PtrSize == 4 && w != int64(int32(w)) {

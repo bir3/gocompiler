@@ -18,7 +18,8 @@ const (
  *	wasm
  */
 const (
-	AGet = obj.ABaseWasm + obj.A_ARCHSPECIFIC + iota
+	ACallImport = obj.ABaseWasm + obj.A_ARCHSPECIFIC + iota
+	AGet
 	ASet
 	ATee
 	ANot // alias for I32Eqz

@@ -21,6 +21,5 @@ const IsNetbsd = 0
 const IsOpenbsd = 0
 const IsPlan9 = 1
 const IsSolaris = 0
-const IsWasip1 = 0
 const IsWindows = 0
 const IsZos = 0

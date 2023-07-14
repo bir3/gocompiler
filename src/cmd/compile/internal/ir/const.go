@@ -11,19 +11,18 @@ import (
 
 	"github.com/bir3/gocompiler/src/cmd/compile/internal/base"
 	"github.com/bir3/gocompiler/src/cmd/compile/internal/types"
-	"github.com/bir3/gocompiler/src/cmd/internal/src"
 )
 
-func NewBool(pos src.XPos, b bool) Node {
-	return NewBasicLit(pos, constant.MakeBool(b))
+func NewBool(b bool) Node {
+	return NewLiteral(constant.MakeBool(b))
 }
 
-func NewInt(pos src.XPos, v int64) Node {
-	return NewBasicLit(pos, constant.MakeInt64(v))
+func NewInt(v int64) Node {
+	return NewLiteral(constant.MakeInt64(v))
 }
 
-func NewString(pos src.XPos, s string) Node {
-	return NewBasicLit(pos, constant.MakeString(s))
+func NewString(s string) Node {
+	return NewLiteral(constant.MakeString(s))
 }
 
 const (

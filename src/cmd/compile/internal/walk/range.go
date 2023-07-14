@@ -13,7 +13,6 @@ import (
 	"github.com/bir3/gocompiler/src/cmd/compile/internal/ssagen"
 	"github.com/bir3/gocompiler/src/cmd/compile/internal/typecheck"
 	"github.com/bir3/gocompiler/src/cmd/compile/internal/types"
-	"github.com/bir3/gocompiler/src/cmd/internal/src"
 	"github.com/bir3/gocompiler/src/cmd/internal/sys"
 )
 
@@ -38,12 +37,11 @@ func cheapComputableIndex(width int64) bool {
 // Node n may also be modified in place, and may also be
 // the returned node.
 func walkRange(nrange *ir.RangeStmt) ir.Node {
-	base.Assert(!nrange.DistinctVars) // Should all be rewritten before escape analysis
 	if isMapClear(nrange) {
-		return mapRangeClear(nrange)
+		return mapClear(nrange)
 	}
 
-	nfor := ir.NewForStmt(nrange.Pos(), nil, nil, nil, nil, nrange.DistinctVars)
+	nfor := ir.NewForStmt(nrange.Pos(), nil, nil, nil, nil)
 	nfor.SetInit(nrange.Init())
 	nfor.Label = nrange.Label
 
@@ -79,7 +77,7 @@ func walkRange(nrange *ir.RangeStmt) ir.Node {
 		base.Fatalf("walkRange")
 
 	case types.TARRAY, types.TSLICE, types.TPTR: // TPTR is pointer-to-array
-		if nn := arrayRangeClear(nrange, v1, v2, a); nn != nil {
+		if nn := arrayClear(nrange, v1, v2, a); nn != nil {
 			base.Pos = lno
 			return nn
 		}
@@ -103,7 +101,7 @@ func walkRange(nrange *ir.RangeStmt) ir.Node {
 		init = append(init, ir.NewAssignStmt(base.Pos, hn, ir.NewUnaryExpr(base.Pos, ir.OLEN, ha)))
 
 		nfor.Cond = ir.NewBinaryExpr(base.Pos, ir.OLT, hv1, hn)
-		nfor.Post = ir.NewAssignStmt(base.Pos, hv1, ir.NewBinaryExpr(base.Pos, ir.OADD, hv1, ir.NewInt(base.Pos, 1)))
+		nfor.Post = ir.NewAssignStmt(base.Pos, hv1, ir.NewBinaryExpr(base.Pos, ir.OADD, hv1, ir.NewInt(1)))
 
 		// for range ha { body }
 		if v1 == nil {
@@ -199,7 +197,7 @@ func walkRange(nrange *ir.RangeStmt) ir.Node {
 		hu := typecheck.Temp(types.Types[types.TUINTPTR])
 		init = append(init, ir.NewAssignStmt(base.Pos, hu, huVal))
 
-		// Convert hu to hp at the top of the loop (after the condition has been checked).
+		// Convert hu to hp at the top of the loop (afer the condition has been checked).
 		hpVal := ir.NewConvExpr(base.Pos, ir.OCONVNOP, types.Types[types.TUNSAFEPTR], hu)
 		hpVal.SetCheckPtr(true) // disable checkptr on this conversion
 		hpVal = ir.NewConvExpr(base.Pos, ir.OCONVNOP, elem.PtrTo(), hpVal)
@@ -216,7 +214,7 @@ func walkRange(nrange *ir.RangeStmt) ir.Node {
 		// This reads from hp and writes to hu.
 		huVal = ir.NewConvExpr(base.Pos, ir.OCONVNOP, types.Types[types.TUNSAFEPTR], hp)
 		huVal = ir.NewConvExpr(base.Pos, ir.OCONVNOP, types.Types[types.TUINTPTR], huVal)
-		as := ir.NewAssignStmt(base.Pos, hu, ir.NewBinaryExpr(base.Pos, ir.OADD, huVal, ir.NewInt(base.Pos, elem.Size())))
+		as := ir.NewAssignStmt(base.Pos, hu, ir.NewBinaryExpr(base.Pos, ir.OADD, huVal, ir.NewInt(elem.Size())))
 		nfor.Post = ir.NewBlockStmt(base.Pos, []ir.Node{nfor.Post, as})
 
 	case types.TMAP:
@@ -262,7 +260,7 @@ func walkRange(nrange *ir.RangeStmt) ir.Node {
 		}
 		hb := typecheck.Temp(types.Types[types.TBOOL])
 
-		nfor.Cond = ir.NewBinaryExpr(base.Pos, ir.ONE, hb, ir.NewBool(base.Pos, false))
+		nfor.Cond = ir.NewBinaryExpr(base.Pos, ir.ONE, hb, ir.NewBool(false))
 		lhs := []ir.Node{hv1, hb}
 		rhs := []ir.Node{ir.NewUnaryExpr(base.Pos, ir.ORECV, ha)}
 		a := ir.NewAssignListStmt(base.Pos, ir.OAS2RECV, lhs, rhs)
@@ -319,10 +317,10 @@ func walkRange(nrange *ir.RangeStmt) ir.Node {
 
 		// if hv2 < utf8.RuneSelf
 		nif := ir.NewIfStmt(base.Pos, nil, nil, nil)
-		nif.Cond = ir.NewBinaryExpr(base.Pos, ir.OLT, hv2, ir.NewInt(base.Pos, utf8.RuneSelf))
+		nif.Cond = ir.NewBinaryExpr(base.Pos, ir.OLT, hv2, ir.NewInt(utf8.RuneSelf))
 
 		// hv1++
-		nif.Body = []ir.Node{ir.NewAssignStmt(base.Pos, hv1, ir.NewBinaryExpr(base.Pos, ir.OADD, hv1, ir.NewInt(base.Pos, 1)))}
+		nif.Body = []ir.Node{ir.NewAssignStmt(base.Pos, hv1, ir.NewBinaryExpr(base.Pos, ir.OADD, hv1, ir.NewInt(1)))}
 
 		// } else {
 		// hv2, hv1 = decoderune(ha, hv1)
@@ -440,23 +438,18 @@ func isMapClear(n *ir.RangeStmt) bool {
 	return true
 }
 
-// mapRangeClear constructs a call to runtime.mapclear for the map range idiom.
-func mapRangeClear(nrange *ir.RangeStmt) ir.Node {
+// mapClear constructs a call to runtime.mapclear for the map m.
+func mapClear(nrange *ir.RangeStmt) ir.Node {
 	m := nrange.X
 	origPos := ir.SetPos(m)
 	defer func() { base.Pos = origPos }()
 
-	return mapClear(m, reflectdata.RangeMapRType(base.Pos, nrange))
-}
-
-// mapClear constructs a call to runtime.mapclear for the map m.
-func mapClear(m, rtyp ir.Node) ir.Node {
 	t := m.Type()
 
 	// instantiate mapclear(typ *type, hmap map[any]any)
 	fn := typecheck.LookupRuntime("mapclear")
 	fn = typecheck.SubstArgTypes(fn, t.Key(), t.Elem())
-	n := mkcallstmt1(fn, rtyp, m)
+	n := mkcallstmt1(fn, reflectdata.RangeMapRType(base.Pos, nrange), m)
 	return walkStmt(typecheck.Stmt(n))
 }
 
@@ -471,7 +464,7 @@ func mapClear(m, rtyp ir.Node) ir.Node {
 // in which the evaluation of a is side-effect-free.
 //
 // Parameters are as in walkRange: "for v1, v2 = range a".
-func arrayRangeClear(loop *ir.RangeStmt, v1, v2, a ir.Node) ir.Node {
+func arrayClear(loop *ir.RangeStmt, v1, v2, a ir.Node) ir.Node {
 	if base.Flag.N != 0 || base.Flag.Cfg.Instrumenting {
 		return nil
 	}
@@ -504,17 +497,8 @@ func arrayRangeClear(loop *ir.RangeStmt, v1, v2, a ir.Node) ir.Node {
 		return nil
 	}
 
-	if !ir.IsZero(stmt.Y) {
-		return nil
-	}
-
-	return arrayClear(stmt.Pos(), a, loop)
-}
-
-// arrayClear constructs a call to runtime.memclr for fast zeroing of slices and arrays.
-func arrayClear(wbPos src.XPos, a ir.Node, nrange *ir.RangeStmt) ir.Node {
-	elemsize := typecheck.RangeExprType(a.Type()).Elem().Size()
-	if elemsize <= 0 {
+	elemsize := typecheck.RangeExprType(loop.X.Type()).Elem().Size()
+	if elemsize <= 0 || !ir.IsZero(stmt.Y) {
 		return nil
 	}
 
@@ -526,25 +510,25 @@ func arrayClear(wbPos src.XPos, a ir.Node, nrange *ir.RangeStmt) ir.Node {
 	// 	i = len(a) - 1
 	// }
 	n := ir.NewIfStmt(base.Pos, nil, nil, nil)
-	n.Cond = ir.NewBinaryExpr(base.Pos, ir.ONE, ir.NewUnaryExpr(base.Pos, ir.OLEN, a), ir.NewInt(base.Pos, 0))
+	n.Cond = ir.NewBinaryExpr(base.Pos, ir.ONE, ir.NewUnaryExpr(base.Pos, ir.OLEN, a), ir.NewInt(0))
 
 	// hp = &a[0]
 	hp := typecheck.Temp(types.Types[types.TUNSAFEPTR])
 
-	ix := ir.NewIndexExpr(base.Pos, a, ir.NewInt(base.Pos, 0))
+	ix := ir.NewIndexExpr(base.Pos, a, ir.NewInt(0))
 	ix.SetBounded(true)
 	addr := typecheck.ConvNop(typecheck.NodAddr(ix), types.Types[types.TUNSAFEPTR])
 	n.Body.Append(ir.NewAssignStmt(base.Pos, hp, addr))
 
 	// hn = len(a) * sizeof(elem(a))
 	hn := typecheck.Temp(types.Types[types.TUINTPTR])
-	mul := typecheck.Conv(ir.NewBinaryExpr(base.Pos, ir.OMUL, ir.NewUnaryExpr(base.Pos, ir.OLEN, a), ir.NewInt(base.Pos, elemsize)), types.Types[types.TUINTPTR])
+	mul := typecheck.Conv(ir.NewBinaryExpr(base.Pos, ir.OMUL, ir.NewUnaryExpr(base.Pos, ir.OLEN, a), ir.NewInt(elemsize)), types.Types[types.TUINTPTR])
 	n.Body.Append(ir.NewAssignStmt(base.Pos, hn, mul))
 
 	var fn ir.Node
 	if a.Type().Elem().HasPointers() {
 		// memclrHasPointers(hp, hn)
-		ir.CurFunc.SetWBPos(wbPos)
+		ir.CurFunc.SetWBPos(stmt.Pos())
 		fn = mkcallstmt("memclrHasPointers", hp, hn)
 	} else {
 		// memclrNoHeapPointers(hp, hn)
@@ -553,11 +537,10 @@ func arrayClear(wbPos src.XPos, a ir.Node, nrange *ir.RangeStmt) ir.Node {
 
 	n.Body.Append(fn)
 
-	// For array range clear, also set "i = len(a) - 1"
-	if nrange != nil {
-		idx := ir.NewAssignStmt(base.Pos, nrange.Key, ir.NewBinaryExpr(base.Pos, ir.OSUB, ir.NewUnaryExpr(base.Pos, ir.OLEN, a), ir.NewInt(base.Pos, 1)))
-		n.Body.Append(idx)
-	}
+	// i = len(a) - 1
+	v1 = ir.NewAssignStmt(base.Pos, v1, ir.NewBinaryExpr(base.Pos, ir.OSUB, ir.NewUnaryExpr(base.Pos, ir.OLEN, a), ir.NewInt(1)))
+
+	n.Body.Append(v1)
 
 	n.Cond = typecheck.Expr(n.Cond)
 	n.Cond = typecheck.DefaultLit(n.Cond, nil)
@@ -572,7 +555,7 @@ func addptr(p ir.Node, n int64) ir.Node {
 	p = ir.NewConvExpr(base.Pos, ir.OCONVNOP, nil, p)
 	p.SetType(types.Types[types.TUINTPTR])
 
-	p = ir.NewBinaryExpr(base.Pos, ir.OADD, p, ir.NewInt(base.Pos, n))
+	p = ir.NewBinaryExpr(base.Pos, ir.OADD, p, ir.NewInt(n))
 
 	p = ir.NewConvExpr(base.Pos, ir.OCONVNOP, nil, p)
 	p.SetType(t)

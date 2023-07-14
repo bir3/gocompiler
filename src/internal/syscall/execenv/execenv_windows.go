@@ -9,6 +9,7 @@ package execenv
 import (
 	"github.com/bir3/gocompiler/src/xvendor/golang.org/x/sys/windows"
 	"syscall"
+	"unicode/utf16"
 	"unsafe"
 )
 
@@ -24,24 +25,30 @@ func Default(sys *syscall.SysProcAttr) (env []string, err error) {
 	if sys == nil || sys.Token == 0 {
 		return syscall.Environ(), nil
 	}
-	var blockp *uint16
-	err = windows.CreateEnvironmentBlock(&blockp, sys.Token, false)
+	var block *uint16
+	err = windows.CreateEnvironmentBlock(&block, sys.Token, false)
 	if err != nil {
 		return nil, err
 	}
-	defer windows.DestroyEnvironmentBlock(blockp)
+	defer windows.DestroyEnvironmentBlock(block)
+	blockp := uintptr(unsafe.Pointer(block))
+	for {
 
-	const size = unsafe.Sizeof(*blockp)
-	for *blockp != 0 { // environment block ends with empty string
 		// find NUL terminator
-		end := unsafe.Add(unsafe.Pointer(blockp), size)
+		end := unsafe.Pointer(blockp)
 		for *(*uint16)(end) != 0 {
-			end = unsafe.Add(end, size)
+			end = unsafe.Pointer(uintptr(end) + 2)
 		}
 
-		entry := unsafe.Slice(blockp, (uintptr(end)-uintptr(unsafe.Pointer(blockp)))/2)
-		env = append(env, syscall.UTF16ToString(entry))
-		blockp = (*uint16)(unsafe.Add(end, size))
+		n := (uintptr(end) - uintptr(unsafe.Pointer(blockp))) / 2
+		if n == 0 {
+			// environment block ends with empty string
+			break
+		}
+
+		entry := (*[(1 << 30) - 1]uint16)(unsafe.Pointer(blockp))[:n:n]
+		env = append(env, string(utf16.Decode(entry)))
+		blockp += 2 * (uintptr(len(entry)) + 1)
 	}
 	return
 }

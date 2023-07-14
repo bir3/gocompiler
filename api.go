@@ -141,5 +141,5 @@ func Run(args ...string) (Result, error) {
 }
 
 func GoVersion() string {
-	return "go1.21rc2"
+	return "go1.20.6"
 }

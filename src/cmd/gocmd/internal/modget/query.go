@@ -12,7 +12,6 @@ import (
 	"sync"
 
 	"github.com/bir3/gocompiler/src/cmd/gocmd/internal/base"
-	"github.com/bir3/gocompiler/src/cmd/gocmd/internal/gover"
 	"github.com/bir3/gocompiler/src/cmd/gocmd/internal/modload"
 	"github.com/bir3/gocompiler/src/cmd/gocmd/internal/search"
 	"github.com/bir3/gocompiler/src/cmd/gocmd/internal/str"
@@ -98,7 +97,7 @@ type query struct {
 	resolved []module.Version
 
 	// matchesPackages is true if the resolved modules provide at least one
-	// package matching q.pattern.
+	// package mathcing q.pattern.
 	matchesPackages bool
 }
 
@@ -230,7 +229,7 @@ func (q *query) isWildcard() bool {
 
 // matchesPath reports whether the given path matches q.pattern.
 func (q *query) matchesPath(path string) bool {
-	if q.matchWildcard != nil && !gover.IsToolchain(path) {
+	if q.matchWildcard != nil {
 		return q.matchWildcard(path)
 	}
 	return path == q.pattern
@@ -242,7 +241,7 @@ func (q *query) canMatchInModule(mPath string) bool {
 	if q.canMatchWildcardInModule != nil {
 		return q.canMatchWildcardInModule(mPath)
 	}
-	return str.HasPathPrefix(q.pattern, mPath) && !gover.IsToolchain(mPath)
+	return str.HasPathPrefix(q.pattern, mPath)
 }
 
 // pathOnce invokes f to generate the pathSet for the given path,

@@ -15,7 +15,6 @@ import (
 	"github.com/bir3/gocompiler/src/cmd/internal/sys"
 	"encoding/binary"
 	"fmt"
-	"github.com/bir3/gocompiler/src/internal/abi"
 	"io"
 	"log"
 	"os"
@@ -345,9 +344,6 @@ func (w *writer) Sym(s *LSym) {
 	if strings.HasPrefix(s.Name, w.ctxt.Pkgpath) && strings.HasPrefix(s.Name[len(w.ctxt.Pkgpath):], ".") && strings.HasPrefix(s.Name[len(w.ctxt.Pkgpath)+1:], objabi.GlobalDictPrefix) {
 		flag2 |= goobj.SymFlagDict
 	}
-	if s.IsPkgInit() {
-		flag2 |= goobj.SymFlagPkgInit
-	}
 	name := s.Name
 	if strings.HasPrefix(name, "gofile..") {
 		name = filepath.ToSlash(name)
@@ -357,7 +353,7 @@ func (w *writer) Sym(s *LSym) {
 		align = uint32(fn.Align)
 	}
 	if s.ContentAddressable() && s.Size != 0 {
-		// We generally assume data symbols are naturally aligned
+		// We generally assume data symbols are natually aligned
 		// (e.g. integer constants), except for strings and a few
 		// compiler-emitted funcdata. If we dedup a string symbol and
 		// a non-string symbol with the same content, we should keep
@@ -425,7 +421,7 @@ func (w *writer) Hash(s *LSym) {
 // contentHashSection only distinguishes between sets of sections for which this matters.
 // Allowing flexibility increases the effectiveness of content-addressibility.
 // But in some cases, such as doing addressing based on a base symbol,
-// we need to ensure that a symbol is always in a particular section.
+// we need to ensure that a symbol is always in a prticular section.
 // Some of these conditions are duplicated in cmd/link/internal/ld.(*Link).symtab.
 // TODO: instead of duplicating them, have the compiler decide where symbols go.
 func contentHashSection(s *LSym) byte {
@@ -603,22 +599,10 @@ func (w *writer) Aux(s *LSym) {
 		if fn.Pcln.Pcinline != nil && fn.Pcln.Pcinline.Size != 0 {
 			w.aux1(goobj.AuxPcinline, fn.Pcln.Pcinline)
 		}
-		if fn.sehUnwindInfoSym != nil && fn.sehUnwindInfoSym.Size != 0 {
-			w.aux1(goobj.AuxSehUnwindInfo, fn.sehUnwindInfoSym)
-		}
 		for _, pcSym := range fn.Pcln.Pcdata {
 			w.aux1(goobj.AuxPcdata, pcSym)
 		}
-		if fn.WasmImportSym != nil {
-			if fn.WasmImportSym.Size == 0 {
-				panic("wasmimport aux sym must have non-zero size")
-			}
-			w.aux1(goobj.AuxWasmImport, fn.WasmImportSym)
-		}
-	} else if v := s.VarInfo(); v != nil {
-		if v.dwarfInfoSym != nil && v.dwarfInfoSym.Size != 0 {
-			w.aux1(goobj.AuxDwarfInfo, v.dwarfInfoSym)
-		}
+
 	}
 }
 
@@ -715,20 +699,7 @@ func nAuxSym(s *LSym) int {
 		if fn.Pcln.Pcinline != nil && fn.Pcln.Pcinline.Size != 0 {
 			n++
 		}
-		if fn.sehUnwindInfoSym != nil && fn.sehUnwindInfoSym.Size != 0 {
-			n++
-		}
 		n += len(fn.Pcln.Pcdata)
-		if fn.WasmImport != nil {
-			if fn.WasmImportSym == nil || fn.WasmImportSym.Size == 0 {
-				panic("wasmimport aux sym must exist and have non-zero size")
-			}
-			n++
-		}
-	} else if v := s.VarInfo(); v != nil {
-		if v.dwarfInfoSym != nil && v.dwarfInfoSym.Size != 0 {
-			n++
-		}
 	}
 	return n
 }
@@ -785,8 +756,8 @@ func genFuncInfoSyms(ctxt *Link) {
 		fn.FuncInfoSym = isym
 		b.Reset()
 
-		auxsyms := []*LSym{fn.dwarfRangesSym, fn.dwarfLocSym, fn.dwarfDebugLinesSym, fn.dwarfInfoSym, fn.WasmImportSym, fn.sehUnwindInfoSym}
-		for _, s := range auxsyms {
+		dwsyms := []*LSym{fn.dwarfRangesSym, fn.dwarfLocSym, fn.dwarfDebugLinesSym, fn.dwarfInfoSym}
+		for _, s := range dwsyms {
 			if s == nil || s.Size == 0 {
 				continue
 			}
@@ -803,14 +774,11 @@ func genFuncInfoSyms(ctxt *Link) {
 func writeAuxSymDebug(ctxt *Link, par *LSym, aux *LSym) {
 	// Most aux symbols (ex: funcdata) are not interesting--
 	// pick out just the DWARF ones for now.
-	switch aux.Type {
-	case objabi.SDWARFLOC,
-		objabi.SDWARFFCN,
-		objabi.SDWARFABSFCN,
-		objabi.SDWARFLINES,
-		objabi.SDWARFRANGE,
-		objabi.SDWARFVAR:
-	default:
+	if aux.Type != objabi.SDWARFLOC &&
+		aux.Type != objabi.SDWARFFCN &&
+		aux.Type != objabi.SDWARFABSFCN &&
+		aux.Type != objabi.SDWARFLINES &&
+		aux.Type != objabi.SDWARFRANGE {
 		return
 	}
 	ctxt.writeSymDebugNamed(aux, "aux for "+par.Name)
@@ -853,10 +821,10 @@ func (ctxt *Link) writeSymDebugNamed(s *LSym, name string) {
 	if s.NoSplit() {
 		fmt.Fprintf(ctxt.Bso, "nosplit ")
 	}
-	if s.Func() != nil && s.Func().FuncFlag&abi.FuncFlagTopFrame != 0 {
+	if s.Func() != nil && s.Func().FuncFlag&objabi.FuncFlag_TOPFRAME != 0 {
 		fmt.Fprintf(ctxt.Bso, "topframe ")
 	}
-	if s.Func() != nil && s.Func().FuncFlag&abi.FuncFlagAsm != 0 {
+	if s.Func() != nil && s.Func().FuncFlag&objabi.FuncFlag_ASM != 0 {
 		fmt.Fprintf(ctxt.Bso, "asm ")
 	}
 	fmt.Fprintf(ctxt.Bso, "size=%d", s.Size)

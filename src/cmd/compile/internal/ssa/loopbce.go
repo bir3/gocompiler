@@ -6,8 +6,8 @@ package ssa
 
 import (
 	"github.com/bir3/gocompiler/src/cmd/compile/internal/base"
-	"github.com/bir3/gocompiler/src/cmd/compile/internal/types"
 	"fmt"
+	"math"
 )
 
 type indVarFlags uint8
@@ -44,9 +44,9 @@ func parseIndVar(ind *Value) (min, inc, nxt *Value) {
 		return
 	}
 
-	if n := ind.Args[0]; (n.Op == OpAdd64 || n.Op == OpAdd32 || n.Op == OpAdd16 || n.Op == OpAdd8) && (n.Args[0] == ind || n.Args[1] == ind) {
+	if n := ind.Args[0]; n.Op == OpAdd64 && (n.Args[0] == ind || n.Args[1] == ind) {
 		min, nxt = ind.Args[1], n
-	} else if n := ind.Args[1]; (n.Op == OpAdd64 || n.Op == OpAdd32 || n.Op == OpAdd16 || n.Op == OpAdd8) && (n.Args[0] == ind || n.Args[1] == ind) {
+	} else if n := ind.Args[1]; n.Op == OpAdd64 && (n.Args[0] == ind || n.Args[1] == ind) {
 		min, nxt = ind.Args[0], n
 	} else {
 		// Not a recognized induction variable.
@@ -80,6 +80,8 @@ func parseIndVar(ind *Value) (min, inc, nxt *Value) {
 //		goto loop
 //
 //	 exit_loop:
+//
+// TODO: handle 32 bit operations
 func findIndVar(f *Func) []indVar {
 	var iv []indVar
 	sdom := f.Sdom()
@@ -93,15 +95,16 @@ func findIndVar(f *Func) []indVar {
 		var init *Value  // starting value
 		var limit *Value // ending value
 
-		// Check that the control if it either ind </<= limit or limit </<= ind.
+		// Check thet the control if it either ind </<= limit or limit </<= ind.
+		// TODO: Handle 32-bit comparisons.
 		// TODO: Handle unsigned comparisons?
 		c := b.Controls[0]
 		inclusive := false
 		switch c.Op {
-		case OpLeq64, OpLeq32, OpLeq16, OpLeq8:
+		case OpLeq64:
 			inclusive = true
 			fallthrough
-		case OpLess64, OpLess32, OpLess16, OpLess8:
+		case OpLess64:
 			ind, limit = c.Args[0], c.Args[1]
 		default:
 			continue
@@ -117,18 +120,18 @@ func findIndVar(f *Func) []indVar {
 			//     for i := len(n)-1; i >= 0; i--
 			init, inc, nxt = parseIndVar(limit)
 			if init == nil {
-				// No recognized induction variable on either operand
+				// No recognied induction variable on either operand
 				continue
 			}
 
 			// Ok, the arguments were reversed. Swap them, and remember that we're
-			// looking at an ind >/>= loop (so the induction must be decrementing).
+			// looking at a ind >/>= loop (so the induction must be decrementing).
 			ind, limit = limit, ind
 			less = false
 		}
 
 		// Expect the increment to be a nonzero constant.
-		if !inc.isGenericIntConst() {
+		if inc.Op != OpConst64 {
 			continue
 		}
 		step := inc.AuxInt
@@ -181,16 +184,16 @@ func findIndVar(f *Func) []indVar {
 		// This function returns true if the increment will never overflow/underflow.
 		ok := func() bool {
 			if step > 0 {
-				if limit.isGenericIntConst() {
+				if limit.Op == OpConst64 {
 					// Figure out the actual largest value.
 					v := limit.AuxInt
 					if !inclusive {
-						if v == minSignedValue(limit.Type) {
+						if v == math.MinInt64 {
 							return false // < minint is never satisfiable.
 						}
 						v--
 					}
-					if init.isGenericIntConst() {
+					if init.Op == OpConst64 {
 						// Use stride to compute a better lower limit.
 						if init.AuxInt > v {
 							return false
@@ -202,7 +205,7 @@ func findIndVar(f *Func) []indVar {
 					}
 					if inclusive && v != limit.AuxInt || !inclusive && v+1 != limit.AuxInt {
 						// We know a better limit than the programmer did. Use our limit instead.
-						limit = f.constVal(limit.Op, limit.Type, v, true)
+						limit = f.ConstInt64(f.Config.Types.Int64, v)
 						inclusive = true
 					}
 					return true
@@ -224,18 +227,18 @@ func findIndVar(f *Func) []indVar {
 					return step <= k
 				}
 				// ind < knn - k cannot overflow if step is at most k+1
-				return step <= k+1 && k != maxSignedValue(limit.Type)
+				return step <= k+1 && k != math.MaxInt64
 			} else { // step < 0
 				if limit.Op == OpConst64 {
 					// Figure out the actual smallest value.
 					v := limit.AuxInt
 					if !inclusive {
-						if v == maxSignedValue(limit.Type) {
+						if v == math.MaxInt64 {
 							return false // > maxint is never satisfiable.
 						}
 						v++
 					}
-					if init.isGenericIntConst() {
+					if init.Op == OpConst64 {
 						// Use stride to compute a better lower limit.
 						if init.AuxInt < v {
 							return false
@@ -247,7 +250,7 @@ func findIndVar(f *Func) []indVar {
 					}
 					if inclusive && v != limit.AuxInt || !inclusive && v-1 != limit.AuxInt {
 						// We know a better limit than the programmer did. Use our limit instead.
-						limit = f.constVal(limit.Op, limit.Type, v, true)
+						limit = f.ConstInt64(f.Config.Types.Int64, v)
 						inclusive = true
 					}
 					return true
@@ -358,14 +361,14 @@ func findKNN(v *Value) (*Value, int64) {
 	var x, y *Value
 	x = v
 	switch v.Op {
-	case OpSub64, OpSub32, OpSub16, OpSub8:
+	case OpSub64:
 		x = v.Args[0]
 		y = v.Args[1]
 
-	case OpAdd64, OpAdd32, OpAdd16, OpAdd8:
+	case OpAdd64:
 		x = v.Args[0]
 		y = v.Args[1]
-		if x.isGenericIntConst() {
+		if x.Op == OpConst64 {
 			x, y = y, x
 		}
 	}
@@ -377,10 +380,10 @@ func findKNN(v *Value) (*Value, int64) {
 	if y == nil {
 		return x, 0
 	}
-	if !y.isGenericIntConst() {
+	if y.Op != OpConst64 {
 		return nil, 0
 	}
-	if v.Op == OpAdd64 || v.Op == OpAdd32 || v.Op == OpAdd16 || v.Op == OpAdd8 {
+	if v.Op == OpAdd64 {
 		return x, -y.AuxInt
 	}
 	return x, y.AuxInt
@@ -415,12 +418,4 @@ func printIndVar(b *Block, i, min, max *Value, inc int64, flags indVarFlags) {
 		extra = fmt.Sprintf(" (%s)", i)
 	}
 	b.Func.Warnl(b.Pos, "Induction variable: limits %v%v,%v%v, increment %d%s", mb1, mlim1, mlim2, mb2, inc, extra)
-}
-
-func minSignedValue(t *types.Type) int64 {
-	return -1 << (t.Size()*8 - 1)
-}
-
-func maxSignedValue(t *types.Type) int64 {
-	return 1<<((t.Size()*8)-1) - 1
 }

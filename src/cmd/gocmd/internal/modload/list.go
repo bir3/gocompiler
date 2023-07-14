@@ -17,7 +17,6 @@ import (
 
 	"github.com/bir3/gocompiler/src/cmd/gocmd/internal/base"
 	"github.com/bir3/gocompiler/src/cmd/gocmd/internal/cfg"
-	"github.com/bir3/gocompiler/src/cmd/gocmd/internal/gover"
 	"github.com/bir3/gocompiler/src/cmd/gocmd/internal/modfetch/codehost"
 	"github.com/bir3/gocompiler/src/cmd/gocmd/internal/modinfo"
 	"github.com/bir3/gocompiler/src/cmd/gocmd/internal/search"
@@ -111,7 +110,7 @@ func ListModules(ctx context.Context, args []string, mode ListMode, reuseFile st
 	if err == nil {
 		requirements = rs
 		if !ExplicitWriteGoMod {
-			err = commitRequirements(ctx, WriteOpts{})
+			err = commitRequirements(ctx)
 		}
 	}
 	return mods, err
@@ -121,9 +120,6 @@ func listModules(ctx context.Context, rs *Requirements, args []string, mode List
 	if len(args) == 0 {
 		var ms []*modinfo.ModulePublic
 		for _, m := range MainModules.Versions() {
-			if gover.IsToolchain(m.Path) {
-				continue
-			}
 			ms = append(ms, moduleInfo(ctx, rs, m, mode, reuse))
 		}
 		return rs, ms, nil
@@ -187,7 +183,7 @@ func listModules(ctx context.Context, rs *Requirements, args []string, mode List
 			}
 
 			allowed := CheckAllowed
-			if IsRevisionQuery(path, vers) || mode&ListRetracted != 0 {
+			if IsRevisionQuery(vers) || mode&ListRetracted != 0 {
 				// Allow excluded and retracted versions if the user asked for a
 				// specific revision or used 'go list -retracted'.
 				allowed = nil
@@ -223,10 +219,9 @@ func listModules(ctx context.Context, rs *Requirements, args []string, mode List
 		// Module path or pattern.
 		var match func(string) bool
 		if arg == "all" {
-			match = func(p string) bool { return !gover.IsToolchain(p) }
+			match = func(string) bool { return true }
 		} else if strings.Contains(arg, "...") {
-			mp := pkgpattern.MatchPattern(arg)
-			match = func(p string) bool { return mp(p) && !gover.IsToolchain(p) }
+			match = pkgpattern.MatchPattern(arg)
 		} else {
 			var v string
 			if mg == nil {

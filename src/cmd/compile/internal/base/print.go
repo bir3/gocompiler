@@ -7,7 +7,6 @@ package base
 import (
 	"fmt"
 	"github.com/bir3/gocompiler/src/internal/buildcfg"
-	"github.com/bir3/gocompiler/src/internal/types/errors"
 	"os"
 	"runtime/debug"
 	"sort"
@@ -18,9 +17,8 @@ import (
 
 // An errorMsg is a queued error message, waiting to be printed.
 type errorMsg struct {
-	pos  src.XPos
-	msg  string
-	code errors.Code
+	pos src.XPos
+	msg string
 }
 
 // Pos is the current source position being processed,
@@ -44,7 +42,7 @@ func SyntaxErrors() int {
 }
 
 // addErrorMsg adds a new errorMsg (which may be a warning) to errorMsgs.
-func addErrorMsg(pos src.XPos, code errors.Code, format string, args ...interface{}) {
+func addErrorMsg(pos src.XPos, format string, args ...interface{}) {
 	msg := fmt.Sprintf(format, args...)
 	// Only add the position if know the position.
 	// See issue golang.org/issue/11361.
@@ -52,9 +50,8 @@ func addErrorMsg(pos src.XPos, code errors.Code, format string, args ...interfac
 		msg = fmt.Sprintf("%v: %s", FmtPos(pos), msg)
 	}
 	errorMsgs = append(errorMsgs, errorMsg{
-		pos:  pos,
-		msg:  msg + "\n",
-		code: code,
+		pos: pos,
+		msg: msg + "\n",
 	})
 }
 
@@ -85,7 +82,7 @@ func FlushErrors() {
 	sort.Stable(byPos(errorMsgs))
 	for i, err := range errorMsgs {
 		if i == 0 || err.msg != errorMsgs[i-1].msg {
-			fmt.Print(err.msg)
+			fmt.Printf("%s", err.msg)
 		}
 	}
 	errorMsgs = errorMsgs[:0]
@@ -108,11 +105,11 @@ func sameline(a, b src.XPos) bool {
 
 // Errorf reports a formatted error at the current line.
 func Errorf(format string, args ...interface{}) {
-	ErrorfAt(Pos, 0, format, args...)
+	ErrorfAt(Pos, format, args...)
 }
 
 // ErrorfAt reports a formatted error message at pos.
-func ErrorfAt(pos src.XPos, code errors.Code, format string, args ...interface{}) {
+func ErrorfAt(pos src.XPos, format string, args ...interface{}) {
 	msg := fmt.Sprintf(format, args...)
 
 	if strings.HasPrefix(msg, "syntax error") {
@@ -135,7 +132,7 @@ func ErrorfAt(pos src.XPos, code errors.Code, format string, args ...interface{}
 		lasterror.msg = msg
 	}
 
-	addErrorMsg(pos, code, "%s", msg)
+	addErrorMsg(pos, "%s", msg)
 	numErrors++
 
 	hcrash()
@@ -177,7 +174,7 @@ func Warn(format string, args ...interface{}) {
 // so this should be used only when the user has opted in
 // to additional output by setting a particular flag.
 func WarnfAt(pos src.XPos, format string, args ...interface{}) {
-	addErrorMsg(pos, 0, format, args...)
+	addErrorMsg(pos, format, args...)
 	if Flag.LowerM != 0 {
 		FlushErrors()
 	}

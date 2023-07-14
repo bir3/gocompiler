@@ -20,8 +20,8 @@ func IsStandardPackage(goroot, compiler, path string) bool {
 	switch compiler {
 	case "gc":
 		dir := filepath.Join(goroot, "src", path)
-		info, err := os.Stat(dir)
-		return err == nil && info.IsDir()
+		_, err := os.Stat(dir)
+		return err == nil
 	case "gccgo":
 		return gccgoSearch.isStandard(path)
 	default:

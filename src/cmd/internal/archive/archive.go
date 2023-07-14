@@ -189,7 +189,7 @@ func (r *objReader) readByte() byte {
 	return b
 }
 
-// readFull reads exactly len(b) bytes from the input file.
+// read reads exactly len(b) bytes from the input file.
 // If an error occurs, read returns the error but also
 // records it, so it is safe for callers to ignore the result
 // as long as delaying the report is not a problem.
@@ -368,10 +368,7 @@ func (r *objReader) parseArchive(verbose bool) error {
 			if bytes.Equal(p, goobjHeader) {
 				typ = EntryGoObj
 				o = &GoObj{}
-				err := r.parseObject(o, size)
-				if err != nil {
-					return err
-				}
+				r.parseObject(o, size)
 			} else {
 				typ = EntryNativeObj
 				r.skip(size)

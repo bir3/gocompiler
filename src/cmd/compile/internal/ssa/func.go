@@ -64,6 +64,12 @@ type Func struct {
 	// AuxCall describing parameters and results for this function.
 	OwnAux *AuxCall
 
+	// WBLoads is a list of Blocks that branch on the write
+	// barrier flag. Safe-points are disabled from the OpLoad that
+	// reads the write-barrier flag until the control flow rejoins
+	// below the two successors of this block.
+	WBLoads []*Block
+
 	freeValues *Value // free Values linked by argstorage[0].  All other fields except ID are 0/nil.
 	freeBlocks *Block // free Blocks linked by succstorage[0].b.  All other fields except ID are 0/nil.
 
@@ -773,7 +779,8 @@ func (f *Func) DebugHashMatch() bool {
 	if !base.HasDebugHash() {
 		return true
 	}
-	return base.DebugHashMatchPkgFunc(f.fe.MyImportPath(), f.Name)
+	name := f.fe.MyImportPath() + "." + f.Name
+	return base.DebugHashMatch(name)
 }
 
 func (f *Func) spSb() (sp, sb *Value) {
@@ -807,5 +814,6 @@ func (f *Func) useFMA(v *Value) bool {
 	if base.FmaHash == nil {
 		return true
 	}
-	return base.FmaHash.MatchPos(v.Pos, nil)
+	ctxt := v.Block.Func.Config.Ctxt()
+	return base.FmaHash.DebugHashMatchPos(ctxt, v.Pos)
 }

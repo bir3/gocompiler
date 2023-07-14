@@ -35,9 +35,6 @@ func Exit(code int) {
 func Exitf(format string, a ...interface{}) {
 	fmt.Fprintf(os.Stderr, os.Args[0]+": "+format+"\n", a...)
 	nerrors++
-	if *flagH {
-		panic("error")
-	}
 	Exit(2)
 }
 

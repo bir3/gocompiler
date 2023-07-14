@@ -19,12 +19,10 @@ import (
 
 	"github.com/bir3/gocompiler/src/cmd/gocmd/internal/cfg"
 	"github.com/bir3/gocompiler/src/cmd/gocmd/internal/fsys"
-	"github.com/bir3/gocompiler/src/cmd/gocmd/internal/gover"
 	"github.com/bir3/gocompiler/src/cmd/gocmd/internal/imports"
 	"github.com/bir3/gocompiler/src/cmd/gocmd/internal/modindex"
 	"github.com/bir3/gocompiler/src/cmd/gocmd/internal/par"
 	"github.com/bir3/gocompiler/src/cmd/gocmd/internal/search"
-	"github.com/bir3/gocompiler/src/cmd/gocmd/internal/str"
 	"github.com/bir3/gocompiler/src/cmd/gocmd/internal/trace"
 	"github.com/bir3/gocompiler/src/cmd/internal/pkgpattern"
 
@@ -79,11 +77,8 @@ func matchPackages(ctx context.Context, m *search.Match, tags map[string]bool, f
 		_, span := trace.StartSpan(ctx, "walkPkgs "+root)
 		defer span.Done()
 
-		// If the root itself is a symlink to a directory,
-		// we want to follow it (see https://go.dev/issue/50807).
-		// Add a trailing separator to force that to happen.
-		root = str.WithFilePathSeparator(filepath.Clean(root))
-		err := fsys.Walk(root, func(pkgDir string, fi fs.FileInfo, err error) error {
+		root = filepath.Clean(root)
+		err := fsys.Walk(root, func(path string, fi fs.FileInfo, err error) error {
 			if err != nil {
 				m.AddError(err)
 				return nil
@@ -93,27 +88,30 @@ func matchPackages(ctx context.Context, m *search.Match, tags map[string]bool, f
 			elem := ""
 
 			// Don't use GOROOT/src but do walk down into it.
-			if pkgDir == root {
+			if path == root {
 				if importPathRoot == "" {
 					return nil
 				}
 			} else {
 				// Avoid .foo, _foo, and testdata subdirectory trees.
-				_, elem = filepath.Split(pkgDir)
+				_, elem = filepath.Split(path)
 				if strings.HasPrefix(elem, ".") || strings.HasPrefix(elem, "_") || elem == "testdata" {
 					want = false
 				}
 			}
 
-			name := path.Join(importPathRoot, filepath.ToSlash(pkgDir[len(root):]))
+			name := importPathRoot + filepath.ToSlash(path[len(root):])
+			if importPathRoot == "" {
+				name = name[1:] // cut leading slash
+			}
 			if !treeCanMatch(name) {
 				want = false
 			}
 
 			if !fi.IsDir() {
 				if fi.Mode()&fs.ModeSymlink != 0 && want && strings.Contains(m.Pattern(), "...") {
-					if target, err := fsys.Stat(pkgDir); err == nil && target.IsDir() {
-						fmt.Fprintf(os.Stderr, "warning: ignoring symlink %s\n", pkgDir)
+					if target, err := fsys.Stat(path); err == nil && target.IsDir() {
+						fmt.Fprintf(os.Stderr, "warning: ignoring symlink %s\n", path)
 					}
 				}
 				return nil
@@ -123,8 +121,8 @@ func matchPackages(ctx context.Context, m *search.Match, tags map[string]bool, f
 				return filepath.SkipDir
 			}
 			// Stop at module boundaries.
-			if (prune&pruneGoMod != 0) && pkgDir != root {
-				if fi, err := os.Stat(filepath.Join(pkgDir, "go.mod")); err == nil && !fi.IsDir() {
+			if (prune&pruneGoMod != 0) && path != root {
+				if fi, err := os.Stat(filepath.Join(path, "go.mod")); err == nil && !fi.IsDir() {
 					return filepath.SkipDir
 				}
 			}
@@ -133,7 +131,7 @@ func matchPackages(ctx context.Context, m *search.Match, tags map[string]bool, f
 				have[name] = true
 				if isMatch(name) {
 					q.Add(func() {
-						if _, _, err := scanDir(root, pkgDir, tags); err != imports.ErrNoGo {
+						if _, _, err := scanDir(root, path, tags); err != imports.ErrNoGo {
 							addPkg(name)
 						}
 					})
@@ -173,7 +171,7 @@ func matchPackages(ctx context.Context, m *search.Match, tags map[string]bool, f
 	}
 
 	for _, mod := range modules {
-		if gover.IsToolchain(mod.Path) || !treeCanMatch(mod.Path) {
+		if !treeCanMatch(mod.Path) {
 			continue
 		}
 

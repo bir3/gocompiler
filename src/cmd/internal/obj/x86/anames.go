@@ -745,7 +745,6 @@ var Anames = []string{
 	"RDGSBASEL",
 	"RDGSBASEQ",
 	"RDMSR",
-	"RDPID",
 	"RDPKRU",
 	"RDPMC",
 	"RDRANDL",

@@ -7,11 +7,11 @@ package modindex
 import (
 	"github.com/bir3/gocompiler/src/cmd/gocmd/internal/base"
 	"github.com/bir3/gocompiler/src/cmd/gocmd/internal/fsys"
+	"github.com/bir3/gocompiler/src/cmd/gocmd/internal/par"
 	"github.com/bir3/gocompiler/src/cmd/gocmd/internal/str"
 	"encoding/json"
 	"errors"
 	"fmt"
-	"github.com/bir3/gocompiler/src/go/build"
 	"github.com/bir3/gocompiler/src/go/doc"
 	"github.com/bir3/gocompiler/src/go/scanner"
 	"github.com/bir3/gocompiler/src/go/token"
@@ -23,12 +23,12 @@ import (
 // moduleWalkErr returns filepath.SkipDir if the directory isn't relevant
 // when indexing a module or generating a filehash, ErrNotIndexed,
 // if the module shouldn't be indexed, and nil otherwise.
-func moduleWalkErr(root string, path string, info fs.FileInfo, err error) error {
+func moduleWalkErr(modroot string, path string, info fs.FileInfo, err error) error {
 	if err != nil {
 		return ErrNotIndexed
 	}
 	// stop at module boundaries
-	if info.IsDir() && path != root {
+	if info.IsDir() && path != modroot {
 		if fi, err := fsys.Stat(filepath.Join(path, "go.mod")); err == nil && !fi.IsDir() {
 			return filepath.SkipDir
 		}
@@ -52,23 +52,18 @@ func moduleWalkErr(root string, path string, info fs.FileInfo, err error) error 
 func indexModule(modroot string) ([]byte, error) {
 	fsys.Trace("indexModule", modroot)
 	var packages []*rawPackage
-
-	// If the root itself is a symlink to a directory,
-	// we want to follow it (see https://go.dev/issue/50807).
-	// Add a trailing separator to force that to happen.
-	root := str.WithFilePathSeparator(modroot)
-	err := fsys.Walk(root, func(path string, info fs.FileInfo, err error) error {
-		if err := moduleWalkErr(root, path, info, err); err != nil {
+	err := fsys.Walk(modroot, func(path string, info fs.FileInfo, err error) error {
+		if err := moduleWalkErr(modroot, path, info, err); err != nil {
 			return err
 		}
 
 		if !info.IsDir() {
 			return nil
 		}
-		if !strings.HasPrefix(path, root) {
+		if !str.HasFilePathPrefix(path, modroot) {
 			panic(fmt.Errorf("path %v in walk doesn't have modroot %v as prefix", path, modroot))
 		}
-		rel := path[len(root):]
+		rel := str.TrimFilePathPrefix(path, modroot)
 		packages = append(packages, importRaw(modroot, rel))
 		return nil
 	})
@@ -160,7 +155,6 @@ type rawFile struct {
 	plusBuildConstraints []string
 	imports              []rawImport
 	embeds               []embed
-	directives           []build.Directive
 }
 
 type rawImport struct {
@@ -172,6 +166,8 @@ type embed struct {
 	pattern  string
 	position token.Position
 }
+
+var pkgcache par.Cache // for packages not in modcache
 
 // importRaw fills the rawPackage from the package files in srcDir.
 // dir is the package's path relative to the modroot.
@@ -185,7 +181,7 @@ func importRaw(modroot, reldir string) *rawPackage {
 	// We still haven't checked
 	// that p.dir directory exists. This is the right time to do that check.
 	// We can't do it earlier, because we want to gather partial information for the
-	// non-nil *build.Package returned when an error occurs.
+	// non-nil *Package returned when an error occurs.
 	// We need to do this before we return early on FindOnly flag.
 	if !isDir(absdir) {
 		// package was not found
@@ -233,7 +229,6 @@ func importRaw(modroot, reldir string) *rawPackage {
 			goBuildConstraint:    info.goBuildConstraint,
 			plusBuildConstraints: info.plusBuildConstraints,
 			binaryOnly:           info.binaryOnly,
-			directives:           info.directives,
 		}
 		if info.parsed != nil {
 			rf.pkgName = info.parsed.Name.Name

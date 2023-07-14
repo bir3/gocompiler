@@ -163,15 +163,6 @@ func NewBranchStmt(pos src.XPos, op Op, label *types.Sym) *BranchStmt {
 	return n
 }
 
-func (n *BranchStmt) SetOp(op Op) {
-	switch op {
-	default:
-		panic(n.no("SetOp " + op.String()))
-	case OBREAK, OCONTINUE, OFALL, OGOTO:
-		n.op = op
-	}
-}
-
 func (n *BranchStmt) Sym() *types.Sym { return n.Label }
 
 // A CaseClause is a case statement in a switch or select: case List: Body.
@@ -216,14 +207,14 @@ func NewCommStmt(pos src.XPos, comm Node, body []Node) *CommClause {
 // A ForStmt is a non-range for loop: for Init; Cond; Post { Body }
 type ForStmt struct {
 	miniStmt
-	Label        *types.Sym
-	Cond         Node
-	Post         Node
-	Body         Nodes
-	DistinctVars bool
+	Label    *types.Sym
+	Cond     Node
+	Post     Node
+	Body     Nodes
+	HasBreak bool
 }
 
-func NewForStmt(pos src.XPos, init Node, cond, post Node, body []Node, distinctVars bool) *ForStmt {
+func NewForStmt(pos src.XPos, init Node, cond, post Node, body []Node) *ForStmt {
 	n := &ForStmt{Cond: cond, Post: post}
 	n.pos = pos
 	n.op = OFOR
@@ -231,7 +222,6 @@ func NewForStmt(pos src.XPos, init Node, cond, post Node, body []Node, distinctV
 		n.init = []Node{init}
 	}
 	n.Body = body
-	n.DistinctVars = distinctVars
 	return n
 }
 
@@ -342,15 +332,15 @@ func (n *LabelStmt) Sym() *types.Sym { return n.Label }
 // A RangeStmt is a range loop: for Key, Value = range X { Body }
 type RangeStmt struct {
 	miniStmt
-	Label        *types.Sym
-	Def          bool
-	X            Node
-	RType        Node `mknode:"-"` // see reflectdata/helpers.go
-	Key          Node
-	Value        Node
-	Body         Nodes
-	DistinctVars bool
-	Prealloc     *Name
+	Label    *types.Sym
+	Def      bool
+	X        Node
+	RType    Node `mknode:"-"` // see reflectdata/helpers.go
+	Key      Node
+	Value    Node
+	Body     Nodes
+	HasBreak bool
+	Prealloc *Name
 
 	// When desugaring the RangeStmt during walk, the assignments to Key
 	// and Value may require OCONVIFACE operations. If so, these fields
@@ -361,12 +351,11 @@ type RangeStmt struct {
 	ValueSrcRType Node `mknode:"-"`
 }
 
-func NewRangeStmt(pos src.XPos, key, value, x Node, body []Node, distinctVars bool) *RangeStmt {
+func NewRangeStmt(pos src.XPos, key, value, x Node, body []Node) *RangeStmt {
 	n := &RangeStmt{X: x, Key: key, Value: value}
 	n.pos = pos
 	n.op = ORANGE
 	n.Body = body
-	n.DistinctVars = distinctVars
 	return n
 }
 
@@ -389,8 +378,9 @@ func NewReturnStmt(pos src.XPos, results []Node) *ReturnStmt {
 // A SelectStmt is a block: { Cases }.
 type SelectStmt struct {
 	miniStmt
-	Label *types.Sym
-	Cases []*CommClause
+	Label    *types.Sym
+	Cases    []*CommClause
+	HasBreak bool
 
 	// TODO(rsc): Instead of recording here, replace with a block?
 	Compiled Nodes // compiled form, after walkSelect
@@ -420,9 +410,10 @@ func NewSendStmt(pos src.XPos, ch, value Node) *SendStmt {
 // A SwitchStmt is a switch statement: switch Init; Tag { Cases }.
 type SwitchStmt struct {
 	miniStmt
-	Tag   Node
-	Cases []*CaseClause
-	Label *types.Sym
+	Tag      Node
+	Cases    []*CaseClause
+	Label    *types.Sym
+	HasBreak bool
 
 	// TODO(rsc): Instead of recording here, replace with a block?
 	Compiled Nodes // compiled form, after walkSwitch

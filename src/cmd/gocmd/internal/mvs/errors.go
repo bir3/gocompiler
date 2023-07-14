@@ -101,5 +101,3 @@ func (e *BuildListError) Error() string {
 	}
 	return b.String()
 }
-
-func (e *BuildListError) Unwrap() error { return e.Err }

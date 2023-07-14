@@ -127,7 +127,7 @@ func (check *Checker) interfaceType(ityp *Interface, iface *syntax.InterfaceType
 
 	for _, f := range iface.MethodList {
 		if f.Name == nil {
-			addEmbedded(atPos(f.Type), parseUnion(check, f.Type))
+			addEmbedded(posFor(f.Type), parseUnion(check, f.Type))
 			continue
 		}
 		// f.Name != nil

@@ -20,7 +20,6 @@ import (
 	"compress/zlib"
 	"debug/dwarf"
 	"encoding/binary"
-	"errors"
 	"fmt"
 	"io"
 	"os"
@@ -166,7 +165,7 @@ func NewFile(r io.ReaderAt) (*File, error) {
 		}
 		r2 := r
 		if sh.PointerToRawData == 0 { // .bss must have all 0s
-			r2 = &nobitsSectionReader{}
+			r2 = zeroReaderAt{}
 		}
 		s.sr = io.NewSectionReader(r2, int64(s.SectionHeader.Offset), int64(s.SectionHeader.Size))
 		s.ReaderAt = s.sr
@@ -183,10 +182,15 @@ func NewFile(r io.ReaderAt) (*File, error) {
 	return f, nil
 }
 
-type nobitsSectionReader struct{}
+// zeroReaderAt is ReaderAt that reads 0s.
+type zeroReaderAt struct{}
 
-func (*nobitsSectionReader) ReadAt(p []byte, off int64) (n int, err error) {
-	return 0, errors.New("unexpected read from section with uninitialized data")
+// ReadAt writes len(p) 0s into p.
+func (w zeroReaderAt) ReadAt(p []byte, off int64) (n int, err error) {
+	for i := range p {
+		p[i] = 0
+	}
+	return len(p), nil
 }
 
 // getString extracts a string from symbol string table.
@@ -359,9 +363,6 @@ func (f *File) ImportedSymbols() ([]string, error) {
 	var ds *Section
 	ds = nil
 	for _, s := range f.Sections {
-		if s.Offset == 0 {
-			continue
-		}
 		// We are using distance between s.VirtualAddress and idd.VirtualAddress
 		// to avoid potential overflow of uint32 caused by addition of s.VirtualSize
 		// to s.VirtualAddress.
@@ -463,7 +464,7 @@ func (e *FormatError) Error() string {
 	return "unknown error"
 }
 
-// readOptionalHeader accepts an io.ReadSeeker pointing to optional header in the PE file
+// readOptionalHeader accepts a io.ReadSeeker pointing to optional header in the PE file
 // and its size as seen in the file header.
 // It parses the given size of bytes and returns optional header. It infers whether the
 // bytes being parsed refer to 32 bit or 64 bit version of optional header.
@@ -611,7 +612,7 @@ func readOptionalHeader(r io.ReadSeeker, sz uint16) (any, error) {
 	}
 }
 
-// readDataDirectories accepts an io.ReadSeeker pointing to data directories in the PE file,
+// readDataDirectories accepts a io.ReadSeeker pointing to data directories in the PE file,
 // its size and number of data directories as seen in optional header.
 // It parses the given size of bytes and returns given number of data directories.
 func readDataDirectories(r io.ReadSeeker, sz uint16, n uint32) ([]DataDirectory, error) {

@@ -18,6 +18,8 @@ Flags:
 	-B note
 		Add an ELF_NT_GNU_BUILD_ID note when using ELF.
 		The value should start with 0x and be an even number of hex digits.
+	-D address
+		Set data segment address.
 	-E entry
 		Set entry symbol name.
 	-H type
@@ -32,7 +34,7 @@ Flags:
 	-R quantum
 		Set address rounding quantum.
 	-T address
-		Set the start address of text symbols.
+		Set text segment address.
 	-V
 		Print linker version and exit.
 	-X importpath.name=value

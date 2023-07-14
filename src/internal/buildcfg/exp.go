@@ -70,6 +70,7 @@ func ParseGOEXPERIMENT(goos, goarch, goexp string) (*ExperimentFlags, error) {
 	baseline := goexperiment.Flags{
 		RegabiWrappers:   regabiSupported,
 		RegabiArgs:       regabiSupported,
+		Unified:          true,
 		CoverageRedesign: true,
 	}
 

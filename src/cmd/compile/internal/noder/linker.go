@@ -5,7 +5,6 @@
 package noder
 
 import (
-	"github.com/bir3/gocompiler/src/internal/buildcfg"
 	"github.com/bir3/gocompiler/src/internal/pkgbits"
 	"io"
 
@@ -269,16 +268,6 @@ func (l *linker) relocFuncExt(w *pkgbits.Encoder, name *ir.Name) {
 
 	l.pragmaFlag(w, name.Func.Pragma)
 	l.linkname(w, name)
-
-	if buildcfg.GOARCH == "wasm" {
-		if name.Func.WasmImport != nil {
-			w.String(name.Func.WasmImport.Module)
-			w.String(name.Func.WasmImport.Name)
-		} else {
-			w.String("")
-			w.String("")
-		}
-	}
 
 	// Relocated extension data.
 	w.Bool(true)

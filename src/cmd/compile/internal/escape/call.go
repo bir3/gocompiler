@@ -57,7 +57,8 @@ func (e *escape) callCommon(ks []hole, call ir.Node, init *ir.Nodes, wrapper *ir
 
 	case ir.OCALLFUNC, ir.OCALLMETH, ir.OCALLINTER:
 		call := call.(*ir.CallExpr)
-		typecheck.AssertFixedCall(call)
+		typecheck.FixVariadicCall(call)
+		typecheck.FixMethodCall(call)
 
 		// Pick out the function callee, if statically known.
 		//
@@ -115,7 +116,7 @@ func (e *escape) callCommon(ks []hole, call ir.Node, init *ir.Nodes, wrapper *ir
 		args := call.Args
 		if recv := fntype.Recv(); recv != nil {
 			if recvp == nil {
-				// Function call using method expression. Receiver argument is
+				// Function call using method expression. Recevier argument is
 				// at the front of the regular arguments list.
 				recvp = &args[0]
 				args = args[1:]
@@ -186,7 +187,7 @@ func (e *escape) callCommon(ks []hole, call ir.Node, init *ir.Nodes, wrapper *ir
 		argument(e.discardHole(), &call.X)
 		argument(e.discardHole(), &call.Y)
 
-	case ir.ODELETE, ir.OMAX, ir.OMIN, ir.OPRINT, ir.OPRINTN, ir.ORECOVER:
+	case ir.ODELETE, ir.OPRINT, ir.OPRINTN, ir.ORECOVER:
 		call := call.(*ir.CallExpr)
 		fixRecoverCall(call)
 		for i := range call.Args {
@@ -194,7 +195,7 @@ func (e *escape) callCommon(ks []hole, call ir.Node, init *ir.Nodes, wrapper *ir
 		}
 		argumentRType(&call.RType)
 
-	case ir.OLEN, ir.OCAP, ir.OREAL, ir.OIMAG, ir.OCLOSE, ir.OCLEAR:
+	case ir.OLEN, ir.OCAP, ir.OREAL, ir.OIMAG, ir.OCLOSE:
 		call := call.(*ir.UnaryExpr)
 		argument(e.discardHole(), &call.X)
 
@@ -259,7 +260,7 @@ func (e *escape) goDeferStmt(n *ir.GoDeferStmt) {
 	// Create a new no-argument function that we'll hand off to defer.
 	fn := ir.NewClosureFunc(n.Pos(), true)
 	fn.SetWrapper(true)
-	fn.Nname.SetType(types.NewSignature(nil, nil, nil))
+	fn.Nname.SetType(types.NewSignature(types.LocalPkg, nil, nil, nil, nil))
 	fn.Body = []ir.Node{call}
 	if call, ok := call.(*ir.CallExpr); ok && call.Op() == ir.OCALLFUNC {
 		// If the callee is a named function, link to the original callee.

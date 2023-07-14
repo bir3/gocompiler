@@ -9,14 +9,13 @@ package modcmd
 import (
 	"github.com/bir3/gocompiler/src/cmd/gocmd/internal/base"
 	"github.com/bir3/gocompiler/src/cmd/gocmd/internal/cfg"
-	"github.com/bir3/gocompiler/src/cmd/gocmd/internal/gover"
 	"github.com/bir3/gocompiler/src/cmd/gocmd/internal/imports"
 	"github.com/bir3/gocompiler/src/cmd/gocmd/internal/modload"
-	"github.com/bir3/gocompiler/src/cmd/gocmd/internal/toolchain"
 	"context"
 	"fmt"
 
 	"github.com/bir3/gocompiler/src/xvendor/golang.org/x/mod/modfile"
+	"github.com/bir3/gocompiler/src/xvendor/golang.org/x/mod/semver"
 )
 
 var cmdTidy = &base.Command{
@@ -85,11 +84,11 @@ func (f *goVersionFlag) Get() any       { return f.v }
 
 func (f *goVersionFlag) Set(s string) error {
 	if s != "" {
-		latest := gover.Local()
+		latest := modload.LatestGoVersion()
 		if !modfile.GoVersionRE.MatchString(s) {
 			return fmt.Errorf("expecting a Go version like %q", latest)
 		}
-		if gover.Compare(s, latest) > 0 {
+		if semver.Compare("v"+s, "v"+latest) > 0 {
 			return fmt.Errorf("maximum supported Go version is %s", latest)
 		}
 	}
@@ -116,16 +115,8 @@ func runTidy(ctx context.Context, cmd *base.Command, args []string) {
 	modload.ForceUseModules = true
 	modload.RootMode = modload.NeedRoot
 
-	goVersion := tidyGo.String()
-	if goVersion != "" && gover.Compare(gover.Local(), goVersion) < 0 {
-		toolchain.SwitchOrFatal(ctx, &gover.TooNewError{
-			What:      "-go flag",
-			GoVersion: goVersion,
-		})
-	}
-
 	modload.LoadPackages(ctx, modload.PackageOpts{
-		TidyGoVersion:            tidyGo.String(),
+		GoVersion:                tidyGo.String(),
 		Tags:                     imports.AnyTags(),
 		Tidy:                     true,
 		TidyCompatibleVersion:    tidyCompat.String(),
@@ -134,6 +125,5 @@ func runTidy(ctx context.Context, cmd *base.Command, args []string) {
 		LoadTests:                true,
 		AllowErrors:              tidyE,
 		SilenceMissingStdImports: true,
-		Switcher:                 new(toolchain.Switcher),
 	}, "all")
 }

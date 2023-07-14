@@ -16,14 +16,12 @@ import (
 	"github.com/bir3/gocompiler/src/cmd/compile/internal/inline"
 	"github.com/bir3/gocompiler/src/cmd/compile/internal/ir"
 	"github.com/bir3/gocompiler/src/cmd/compile/internal/logopt"
-	"github.com/bir3/gocompiler/src/cmd/compile/internal/loopvar"
 	"github.com/bir3/gocompiler/src/cmd/compile/internal/noder"
 	"github.com/bir3/gocompiler/src/cmd/compile/internal/pgo"
 	"github.com/bir3/gocompiler/src/cmd/compile/internal/pkginit"
 	"github.com/bir3/gocompiler/src/cmd/compile/internal/reflectdata"
 	"github.com/bir3/gocompiler/src/cmd/compile/internal/ssa"
 	"github.com/bir3/gocompiler/src/cmd/compile/internal/ssagen"
-	"github.com/bir3/gocompiler/src/cmd/compile/internal/staticinit"
 	"github.com/bir3/gocompiler/src/cmd/compile/internal/typecheck"
 	"github.com/bir3/gocompiler/src/cmd/compile/internal/types"
 	"github.com/bir3/gocompiler/src/cmd/internal/dwarf"
@@ -252,28 +250,17 @@ func Main(archInit func(*ssagen.ArchInfo)) {
 	}
 	typecheck.IncrementalAddrtaken = true
 
-	// Read profile file and build profile-graph and weighted-call-graph.
-	base.Timer.Start("fe", "pgo-load-profile")
-	var profile *pgo.Profile
-	if base.Flag.PgoProfile != "" {
-		var err error
-		profile, err = pgo.New(base.Flag.PgoProfile)
-		if err != nil {
-			log.Fatalf("%s: PGO error: %v", base.Flag.PgoProfile, err)
-		}
+	if base.Debug.TypecheckInl != 0 {
+		// Typecheck imported function bodies if Debug.l > 1,
+		// otherwise lazily when used or re-exported.
+		typecheck.AllImportedBodies()
 	}
 
-	base.Timer.Start("fe", "pgo-devirtualization")
-	if profile != nil && base.Debug.PGODevirtualize > 0 {
-		// TODO(prattmic): No need to use bottom-up visit order. This
-		// is mirroring the PGO IRGraph visit order, which also need
-		// not be bottom-up.
-		ir.VisitFuncsBottomUp(typecheck.Target.Decls, func(list []*ir.Func, recursive bool) {
-			for _, fn := range list {
-				devirtualize.ProfileGuided(fn, profile)
-			}
-		})
-		ir.CurFunc = nil
+	// Read profile file and build profile-graph and weighted-call-graph.
+	base.Timer.Start("fe", "pgoprofile")
+	var profile *pgo.Profile
+	if base.Flag.PgoProfile != "" {
+		profile = pgo.New(base.Flag.PgoProfile)
 	}
 
 	// Inlining
@@ -283,12 +270,10 @@ func Main(archInit func(*ssagen.ArchInfo)) {
 	}
 	noder.MakeWrappers(typecheck.Target) // must happen after inlining
 
-	// Devirtualize and get variable capture right in for loops
-	var transformed []loopvar.VarAndLoop
+	// Devirtualize.
 	for _, n := range typecheck.Target.Decls {
 		if n.Op() == ir.ODCLFUNC {
-			devirtualize.Static(n.(*ir.Func))
-			transformed = append(transformed, loopvar.ForCapture(n.(*ir.Func))...)
+			devirtualize.Func(n.(*ir.Func))
 		}
 	}
 	ir.CurFunc = nil
@@ -313,7 +298,10 @@ func Main(archInit func(*ssagen.ArchInfo)) {
 	base.Timer.Start("fe", "escapes")
 	escape.Funcs(typecheck.Target.Decls)
 
-	loopvar.LogTransformations(transformed)
+	// TODO(mdempsky): This is a hack. We need a proper, global work
+	// queue for scheduling function compilation so components don't
+	// need to adjust their behavior depending on when they're called.
+	reflectdata.AfterGlobalEscapeAnalysis = true
 
 	// Collect information for go:nowritebarrierrec
 	// checking. This must happen before transforming closures during Walk
@@ -346,11 +334,6 @@ func Main(archInit func(*ssagen.ArchInfo)) {
 	if base.Flag.CompilingRuntime {
 		// Write barriers are now known. Check the call graph.
 		ssagen.NoWriteBarrierRecCheck()
-	}
-
-	// Add keep relocations for global maps.
-	if base.Debug.WrapGlobalMapCtl != 1 {
-		staticinit.AddKeepRelocations()
 	}
 
 	// Finalize DWARF inline routine DIEs, then explicitly turn off

@@ -6,5 +6,3 @@ package unix
 
 const AT_REMOVEDIR = 0x80
 const AT_SYMLINK_NOFOLLOW = 0x0020
-
-const UTIME_OMIT = -0x2

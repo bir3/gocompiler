@@ -18,7 +18,6 @@ import (
 	"os/exec"
 	"path/filepath"
 	"regexp"
-	"slices"
 	"strconv"
 	"strings"
 
@@ -467,7 +466,7 @@ func (g *Generator) setShorthand(words []string) {
 	if g.commands[command] != nil {
 		g.errorf("command %q multiply defined", command)
 	}
-	g.commands[command] = slices.Clip(words[2:])
+	g.commands[command] = words[2:len(words):len(words)] // force later append to make copy
 }
 
 // exec runs the command specified by the argument. The first word is

@@ -6,7 +6,6 @@ package liveness
 
 import (
 	"fmt"
-	"github.com/bir3/gocompiler/src/internal/abi"
 
 	"github.com/bir3/gocompiler/src/cmd/compile/internal/base"
 	"github.com/bir3/gocompiler/src/cmd/compile/internal/bitvec"
@@ -14,6 +13,7 @@ import (
 	"github.com/bir3/gocompiler/src/cmd/compile/internal/objw"
 	"github.com/bir3/gocompiler/src/cmd/compile/internal/ssa"
 	"github.com/bir3/gocompiler/src/cmd/internal/obj"
+	"github.com/bir3/gocompiler/src/cmd/internal/objabi"
 )
 
 // Argument liveness tracking.
@@ -221,7 +221,7 @@ func ArgLiveness(fn *ir.Func, f *ssa.Func, pp *objw.Progs) (blockIdx, valueIdx m
 	//lv.print()
 
 	p := pp.Prog(obj.AFUNCDATA)
-	p.From.SetConst(abi.FUNCDATA_ArgLiveInfo)
+	p.From.SetConst(objabi.FUNCDATA_ArgLiveInfo)
 	p.To.Type = obj.TYPE_MEM
 	p.To.Name = obj.NAME_EXTERN
 	p.To.Sym = lsym

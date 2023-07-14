@@ -123,10 +123,6 @@ const (
 	SDWARFRANGE
 	SDWARFLOC
 	SDWARFLINES
-
-	// SEH symbol types
-	SSEHUNWINDINFO
-	SSEHSECT
 )
 
 // AbiSymKindToSymKind maps values read from object files (which are
@@ -152,7 +148,6 @@ var AbiSymKindToSymKind = [...]SymKind{
 	objabi.SLIBFUZZER_8BIT_COUNTER: SLIBFUZZER_8BIT_COUNTER,
 	objabi.SCOVERAGE_COUNTER:       SCOVERAGE_COUNTER,
 	objabi.SCOVERAGE_AUXVAR:        SCOVERAGE_AUXVAR,
-	objabi.SSEHUNWINDINFO:          SSEHUNWINDINFO,
 }
 
 // ReadOnly are the symbol kinds that form read-only sections. In some

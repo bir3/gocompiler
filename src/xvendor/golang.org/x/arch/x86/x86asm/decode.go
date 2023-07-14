@@ -1550,7 +1550,7 @@ var addr16 = [8]Mem{
 	{Base: BX},
 }
 
-// baseRegForBits returns the base register for a given register size in bits.
+// baseReg returns the base register for a given register size in bits.
 func baseRegForBits(bits int) Reg {
 	switch bits {
 	case 8:

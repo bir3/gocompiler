@@ -12,7 +12,7 @@ import (
 	"unsafe"
 )
 
-var getrandomUnsupported atomic.Bool
+var getrandomUnsupported int32 // atomic
 
 // GetRandomFlag is a flag supported by the getrandom system call.
 type GetRandomFlag uintptr
@@ -22,7 +22,7 @@ func GetRandom(p []byte, flags GetRandomFlag) (n int, err error) {
 	if len(p) == 0 {
 		return 0, nil
 	}
-	if getrandomUnsupported.Load() {
+	if atomic.LoadInt32(&getrandomUnsupported) != 0 {
 		return 0, syscall.ENOSYS
 	}
 	r1, _, errno := syscall.Syscall(getrandomTrap,
@@ -31,7 +31,7 @@ func GetRandom(p []byte, flags GetRandomFlag) (n int, err error) {
 		uintptr(flags))
 	if errno != 0 {
 		if errno == syscall.ENOSYS {
-			getrandomUnsupported.Store(true)
+			atomic.StoreInt32(&getrandomUnsupported, 1)
 		}
 		return 0, errno
 	}

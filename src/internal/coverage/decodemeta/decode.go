@@ -14,7 +14,6 @@ import (
 	"github.com/bir3/gocompiler/src/internal/coverage"
 	"github.com/bir3/gocompiler/src/internal/coverage/slicereader"
 	"github.com/bir3/gocompiler/src/internal/coverage/stringtab"
-	"io"
 	"os"
 )
 
@@ -56,9 +55,7 @@ func (d *CoverageMetaDataDecoder) readHeader() error {
 func (d *CoverageMetaDataDecoder) readStringTable() error {
 	// Seek to the correct location to read the string table.
 	stringTableLocation := int64(coverage.CovMetaHeaderSize + 4*d.hdr.NumFuncs)
-	if _, err := d.r.Seek(stringTableLocation, io.SeekStart); err != nil {
-		return err
-	}
+	d.r.SeekTo(stringTableLocation)
 
 	// Read the table itself.
 	d.strtab = stringtab.NewReader(d.r)
@@ -91,9 +88,7 @@ func (d *CoverageMetaDataDecoder) ReadFunc(fidx uint32, f *coverage.FuncDesc) er
 
 	// Seek to the correct location to read the function offset and read it.
 	funcOffsetLocation := int64(coverage.CovMetaHeaderSize + 4*fidx)
-	if _, err := d.r.Seek(funcOffsetLocation, io.SeekStart); err != nil {
-		return err
-	}
+	d.r.SeekTo(funcOffsetLocation)
 	foff := d.r.ReadUint32()
 
 	// Check assumptions
@@ -102,10 +97,7 @@ func (d *CoverageMetaDataDecoder) ReadFunc(fidx uint32, f *coverage.FuncDesc) er
 	}
 
 	// Seek to the correct location to read the function.
-	floc := int64(foff)
-	if _, err := d.r.Seek(floc, io.SeekStart); err != nil {
-		return err
-	}
+	d.r.SeekTo(int64(foff))
 
 	// Preamble containing number of units, file, and function.
 	numUnits := uint32(d.r.ReadULEB128())

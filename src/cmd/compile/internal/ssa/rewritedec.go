@@ -1,4 +1,5 @@
-// Code generated from _gen/dec.rules using 'go generate'; DO NOT EDIT.
+// Code generated from _gen/dec.rules; DO NOT EDIT.
+// generated with: cd _gen; go run .
 
 package ssa
 

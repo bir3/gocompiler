@@ -15,7 +15,6 @@ import (
 	"github.com/bir3/gocompiler/src/cmd/compile/internal/liveness"
 	"github.com/bir3/gocompiler/src/cmd/compile/internal/objw"
 	"github.com/bir3/gocompiler/src/cmd/compile/internal/ssagen"
-	"github.com/bir3/gocompiler/src/cmd/compile/internal/staticinit"
 	"github.com/bir3/gocompiler/src/cmd/compile/internal/typecheck"
 	"github.com/bir3/gocompiler/src/cmd/compile/internal/types"
 	"github.com/bir3/gocompiler/src/cmd/compile/internal/walk"
@@ -41,10 +40,6 @@ func enqueueFunc(fn *ir.Func) {
 
 	if clo := fn.OClosure; clo != nil && !ir.IsTrivialClosure(clo) {
 		return // we'll get this as part of its enclosing function
-	}
-
-	if ssagen.CreateWasmImportWrapper(fn) {
-		return
 	}
 
 	if len(fn.Body) == 0 {
@@ -88,14 +83,6 @@ func prepareFunc(fn *ir.Func) {
 	// Do this before walk, as walk needs the LSym to set attributes/relocations
 	// (e.g. in MarkTypeUsedInInterface).
 	ir.InitLSym(fn, true)
-
-	// If this function is a compiler-generated outlined global map
-	// initializer function, register its LSym for later processing.
-	if staticinit.MapInitToVar != nil {
-		if _, ok := staticinit.MapInitToVar[fn]; ok {
-			ssagen.RegisterMapInitLsym(fn.Linksym())
-		}
-	}
 
 	// Calculate parameter offsets.
 	types.CalcSize(fn.Type())

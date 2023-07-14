@@ -83,8 +83,7 @@ const (
 	// direct references. (This is used for types reachable by reflection.)
 	R_USETYPE
 	// R_USEIFACE marks a type is converted to an interface in the function this
-	// relocation is applied to. The target is a type descriptor or an itab
-	// (in the latter case it refers to the concrete type contained in the itab).
+	// relocation is applied to. The target is a type descriptor.
 	// This is a marker relocation (0-sized), for the linker's reachabililty
 	// analysis.
 	R_USEIFACE
@@ -230,7 +229,7 @@ const (
 	R_ADDRPOWER_GOT
 
 	// R_ADDRPOWER_GOT_PCREL34 is identical to R_ADDRPOWER_GOT, but uses a PC relative
-	// sequence to generate a GOT symbol addresses.
+	// sequence to generate a GOT symbol addresss.
 	R_ADDRPOWER_GOT_PCREL34
 
 	// R_ADDRPOWER_PCREL relocates two D-form instructions like R_ADDRPOWER, but
@@ -311,11 +310,6 @@ const (
 	// instruction, by encoding the address into the instruction.
 	R_CALLLOONG64
 
-	// R_LOONG64_TLS_IE_PCREL_HI and R_LOONG64_TLS_IE_LO relocates a pcalau12i, ld.d
-	// pair to compute the address of the GOT slot of the tls symbol.
-	R_LOONG64_TLS_IE_PCREL_HI
-	R_LOONG64_TLS_IE_LO
-
 	// R_JMPLOONG64 resolves to non-PC-relative target address of a JMP instruction,
 	// by encoding the address into the instruction.
 	R_JMPLOONG64
@@ -338,16 +332,6 @@ const (
 	// of a symbol. This isn't a real relocation, it can be placed in anywhere
 	// in a symbol and target any symbols.
 	R_XCOFFREF
-
-	// R_PEIMAGEOFF resolves to a 32-bit offset from the start address of where
-	// the executable file is mapped in memory.
-	R_PEIMAGEOFF
-
-	// R_INITORDER specifies an ordering edge between two inittask records.
-	// (From one p..inittask record to another one.)
-	// This relocation does not apply any changes to the actual data, it is
-	// just used in the linker to order the inittask records appropriately.
-	R_INITORDER
 
 	// R_WEAK marks the relocation as a weak reference.
 	// A weak relocation does not make the symbol it refers to reachable,

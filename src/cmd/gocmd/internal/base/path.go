@@ -15,22 +15,14 @@ import (
 var cwd string
 var cwdOnce sync.Once
 
-// UncachedCwd returns the current working directory.
-// Most callers should use Cwd, which caches the result for future use.
-// UncachedCwd is appropriate to call early in program startup before flag parsing,
-// because the -C flag may change the current directory.
-func UncachedCwd() string {
-	wd, err := os.Getwd()
-	if err != nil {
-		Fatalf("cannot determine current directory: %v", err)
-	}
-	return wd
-}
-
 // Cwd returns the current working directory at the time of the first call.
 func Cwd() string {
 	cwdOnce.Do(func() {
-		cwd = UncachedCwd()
+		var err error
+		cwd, err = os.Getwd()
+		if err != nil {
+			Fatalf("cannot determine current directory: %v", err)
+		}
 	})
 	return cwd
 }

@@ -14,6 +14,4 @@ const (
 	AT_FDCWD            = -0x64
 	AT_REMOVEDIR        = 0x200
 	AT_SYMLINK_NOFOLLOW = 0x100
-
-	UTIME_OMIT = 0x3ffffffe
 )

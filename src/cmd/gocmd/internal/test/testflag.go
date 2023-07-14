@@ -50,7 +50,6 @@ func init() {
 	cf.StringVar(&testCPUProfile, "cpuprofile", "", "")
 	cf.Bool("failfast", false, "")
 	cf.StringVar(&testFuzz, "fuzz", "", "")
-	cf.Bool("fullpath", false, "")
 	cf.StringVar(&testList, "list", "", "")
 	cf.StringVar(&testMemProfile, "memprofile", "", "")
 	cf.String("memprofilerate", "", "")
@@ -68,10 +67,8 @@ func init() {
 	cf.Var(&testV, "v", "")
 	cf.Var(&testShuffle, "shuffle", "")
 
-	for name, ok := range passFlagToTest {
-		if ok {
-			cf.Var(cf.Lookup(name).Value, "test."+name, "")
-		}
+	for name := range passFlagToTest {
+		cf.Var(cf.Lookup(name).Value, "test."+name, "")
 	}
 }
 

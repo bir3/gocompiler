@@ -4,8 +4,8 @@
 The Go compiler as a package
 
 ```bash
-# go1.21rc2
-go get github.com/bir3/gocompiler@v0.4.210-rc.2
+# go1.20.6
+go get github.com/bir3/gocompiler@v0.4.206
 ```
 
 

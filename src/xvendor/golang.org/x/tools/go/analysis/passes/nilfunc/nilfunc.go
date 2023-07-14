@@ -7,25 +7,23 @@
 package nilfunc
 
 import (
-	_ "embed"
 	"github.com/bir3/gocompiler/src/go/ast"
 	"github.com/bir3/gocompiler/src/go/token"
 	"github.com/bir3/gocompiler/src/go/types"
 
 	"github.com/bir3/gocompiler/src/xvendor/golang.org/x/tools/go/analysis"
 	"github.com/bir3/gocompiler/src/xvendor/golang.org/x/tools/go/analysis/passes/inspect"
-	"github.com/bir3/gocompiler/src/xvendor/golang.org/x/tools/go/analysis/passes/internal/analysisutil"
 	"github.com/bir3/gocompiler/src/xvendor/golang.org/x/tools/go/ast/inspector"
 	"github.com/bir3/gocompiler/src/xvendor/golang.org/x/tools/internal/typeparams"
 )
 
-//go:embed doc.go
-var doc string
+const Doc = `check for useless comparisons between functions and nil
+
+A useless comparison is one like f == nil as opposed to f() == nil.`
 
 var Analyzer = &analysis.Analyzer{
 	Name:     "nilfunc",
-	Doc:      analysisutil.MustExtractDoc(doc, "nilfunc"),
-	URL:      "https://pkg.go.dev/golang.org/x/tools/go/analysis/passes/nilfunc",
+	Doc:      Doc,
 	Requires: []*analysis.Analyzer{inspect.Analyzer},
 	Run:      run,
 }

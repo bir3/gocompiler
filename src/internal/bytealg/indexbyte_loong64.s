@@ -13,7 +13,6 @@ TEXT ·IndexByte(SB),NOSPLIT,$0-40
 	ADDV	R4, R5		// end
 	ADDV	$-1, R4
 
-	PCALIGN	$16
 loop:
 	ADDV	$1, R4
 	BEQ	R4, R5, notfound
@@ -37,7 +36,6 @@ TEXT ·IndexByteString(SB),NOSPLIT,$0-32
 	ADDV	R4, R5		// end
 	ADDV	$-1, R4
 
-	PCALIGN	$16
 loop:
 	ADDV	$1, R4
 	BEQ	R4, R5, notfound

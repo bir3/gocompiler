@@ -6,8 +6,9 @@ package obj
 
 import (
 	"bytes"
+	"github.com/bir3/gocompiler/src/cmd/internal/objabi"
+	"github.com/bir3/gocompiler/src/cmd/internal/src"
 	"fmt"
-	"github.com/bir3/gocompiler/src/internal/abi"
 	"github.com/bir3/gocompiler/src/internal/buildcfg"
 	"io"
 	"strings"
@@ -45,6 +46,10 @@ func (p *Prog) InnermostFilename() string {
 		return "<unknown file name>"
 	}
 	return pos.Filename()
+}
+
+func (p *Prog) AllPos(result []src.Pos) []src.Pos {
+	return p.Ctxt.AllPos(p.Pos, result)
 }
 
 var armCondCode = []string{
@@ -197,7 +202,6 @@ func (p *Prog) WriteInstructionString(w io.Writer) {
 	if p.To.Type != TYPE_NONE {
 		io.WriteString(w, sep)
 		WriteDconv(w, p, &p.To)
-		sep = ", "
 	}
 	if p.RegTo2 != REG_NONE {
 		fmt.Fprintf(w, "%s%v", sep, Rconv(int(p.RegTo2)))
@@ -308,7 +312,7 @@ func writeDconv(w io.Writer, p *Prog, a *Addr, abiDetail bool) {
 		}
 
 	case TYPE_TEXTSIZE:
-		if a.Val.(int32) == abi.ArgsSizeUnknown {
+		if a.Val.(int32) == objabi.ArgsSizeUnknown {
 			fmt.Fprintf(w, "$%d", a.Offset)
 		} else {
 			fmt.Fprintf(w, "$%d-%d", a.Offset, a.Val.(int32))

@@ -15,7 +15,6 @@ import (
 	"crypto/tls"
 	"errors"
 	"fmt"
-	"io"
 	"mime"
 	"net"
 	"net/http"
@@ -25,7 +24,6 @@ import (
 	"time"
 
 	"github.com/bir3/gocompiler/src/cmd/gocmd/internal/auth"
-	"github.com/bir3/gocompiler/src/cmd/gocmd/internal/base"
 	"github.com/bir3/gocompiler/src/cmd/gocmd/internal/cfg"
 	"github.com/bir3/gocompiler/src/cmd/internal/browser"
 )
@@ -46,7 +44,7 @@ var impatientInsecureHTTPClient = &http.Client{
 
 var securityPreservingDefaultClient = securityPreservingHTTPClient(http.DefaultClient)
 
-// securityPreservingHTTPClient returns a client that is like the original
+// securityPreservingDefaultClient returns a client that is like the original
 // but rejects redirects to plain-HTTP URLs if the original URL was secure.
 func securityPreservingHTTPClient(original *http.Client) *http.Client {
 	c := new(http.Client)
@@ -116,7 +114,7 @@ func interceptURL(u *urlpkg.URL) (*Interceptor, bool) {
 		return nil, false
 	}
 	for i, t := range testInterceptors {
-		if u.Host == t.FromHost && (u.Scheme == "" || u.Scheme == t.Scheme) {
+		if u.Host == t.FromHost && (t.Scheme == "" || u.Scheme == t.Scheme) {
 			return &testInterceptors[i], true
 		}
 	}
@@ -195,11 +193,6 @@ func get(security SecurityMode, url *urlpkg.URL) (*Response, error) {
 			req.URL.Host = t.ToHost
 		}
 
-		release, err := base.AcquireNet()
-		if err != nil {
-			return nil, nil, err
-		}
-
 		var res *http.Response
 		if security == Insecure && url.Scheme == "https" { // fail earlier
 			res, err = impatientInsecureHTTPClient.Do(req)
@@ -211,17 +204,6 @@ func get(security SecurityMode, url *urlpkg.URL) (*Response, error) {
 				res, err = securityPreservingDefaultClient.Do(req)
 			}
 		}
-
-		if res == nil || res.Body == nil {
-			release()
-		} else {
-			body := res.Body
-			res.Body = hookCloser{
-				ReadCloser: body,
-				afterClose: release,
-			}
-		}
-
 		return url, res, err
 	}
 
@@ -375,15 +357,4 @@ func isLocalHost(u *urlpkg.URL) bool {
 		return true
 	}
 	return false
-}
-
-type hookCloser struct {
-	io.ReadCloser
-	afterClose func()
-}
-
-func (c hookCloser) Close() error {
-	err := c.ReadCloser.Close()
-	c.afterClose()
-	return err
 }

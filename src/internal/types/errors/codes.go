@@ -4,8 +4,6 @@
 
 package errors
 
-//go:generate stringer -type Code codes.go
-
 type Code int
 
 // This file defines the error codes that can be produced during type-checking.
@@ -1330,10 +1328,10 @@ const (
 	NotAGenericType
 
 	// WrongTypeArgCount occurs when a type or function is instantiated with an
-	// incorrect number of type arguments, including when a generic type or
+	// incorrent number of type arguments, including when a generic type or
 	// function is used without instantiation.
 	//
-	// Errors involving failed type inference are assigned other error codes.
+	// Errors inolving failed type inference are assigned other error codes.
 	//
 	// Example:
 	//  type T[p any] int
@@ -1434,44 +1432,11 @@ const (
 	_ // not used anymore
 
 	// InvalidClear occurs when clear is called with an argument
-	// that is not of map or slice type.
+	// that is not of map, slice, or pointer-to-array type.
 	//
 	// Example:
 	//  func _(x int) {
 	//  	clear(x)
 	//  }
 	InvalidClear
-
-	// TypeTooLarge occurs if unsafe.Sizeof or unsafe.Offsetof is
-	// called with an expression whose type is too large.
-	//
-	// Example:
-	//  import "unsafe"
-	//
-	//  type E [1 << 31 - 1]int
-	//  var a [1 << 31]E
-	//  var _ = unsafe.Sizeof(a)
-	//
-	// Example:
-	//  import "unsafe"
-	//
-	//  type E [1 << 31 - 1]int
-	//  var s struct {
-	//  	_ [1 << 31]E
-	//  	x int
-	//  }
-	// var _ = unsafe.Offsetof(s.x)
-	TypeTooLarge
-
-	// InvalidMinMaxOperand occurs if min or max is called
-	// with an operand that cannot be ordered because it
-	// does not support the < operator.
-	//
-	// Example:
-	//  const _ = min(true)
-	//
-	// Example:
-	//  var s, t []byte
-	//  var _ = max(s, t)
-	InvalidMinMaxOperand
 )

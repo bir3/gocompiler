@@ -22,7 +22,7 @@ import (
 	"github.com/bir3/gocompiler/src/xvendor/golang.org/x/tools/go/analysis/passes/internal/analysisutil"
 )
 
-const Doc = "check // +build directives"
+const Doc = "check that +build tags are well-formed and correctly located"
 
 var Analyzer = &analysis.Analyzer{
 	Name: "buildtag",

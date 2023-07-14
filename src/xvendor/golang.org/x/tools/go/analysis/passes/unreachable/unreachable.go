@@ -2,29 +2,30 @@
 // Use of this source code is governed by a BSD-style
 // license that can be found in the LICENSE file.
 
+// Package unreachable defines an Analyzer that checks for unreachable code.
 package unreachable
 
 // TODO(adonovan): use the new cfg package, which is more precise.
 
 import (
-	_ "embed"
 	"github.com/bir3/gocompiler/src/go/ast"
 	"github.com/bir3/gocompiler/src/go/token"
 	"log"
 
 	"github.com/bir3/gocompiler/src/xvendor/golang.org/x/tools/go/analysis"
 	"github.com/bir3/gocompiler/src/xvendor/golang.org/x/tools/go/analysis/passes/inspect"
-	"github.com/bir3/gocompiler/src/xvendor/golang.org/x/tools/go/analysis/passes/internal/analysisutil"
 	"github.com/bir3/gocompiler/src/xvendor/golang.org/x/tools/go/ast/inspector"
 )
 
-//go:embed doc.go
-var doc string
+const Doc = `check for unreachable code
+
+The unreachable analyzer finds statements that execution can never reach
+because they are preceded by an return statement, a call to panic, an
+infinite loop, or similar constructs.`
 
 var Analyzer = &analysis.Analyzer{
 	Name:             "unreachable",
-	Doc:              analysisutil.MustExtractDoc(doc, "unreachable"),
-	URL:              "https://pkg.go.dev/golang.org/x/tools/go/analysis/passes/unreachable",
+	Doc:              Doc,
 	Requires:         []*analysis.Analyzer{inspect.Analyzer},
 	RunDespiteErrors: true,
 	Run:              run,

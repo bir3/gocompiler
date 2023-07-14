@@ -16,7 +16,6 @@ import (
 
 	"github.com/bir3/gocompiler/src/cmd/gocmd/internal/base"
 	"github.com/bir3/gocompiler/src/cmd/gocmd/internal/cfg"
-	"github.com/bir3/gocompiler/src/cmd/gocmd/internal/gover"
 	"github.com/bir3/gocompiler/src/cmd/gocmd/internal/modfetch"
 	"github.com/bir3/gocompiler/src/cmd/gocmd/internal/modfetch/codehost"
 	"github.com/bir3/gocompiler/src/cmd/gocmd/internal/modindex"
@@ -24,6 +23,7 @@ import (
 	"github.com/bir3/gocompiler/src/cmd/gocmd/internal/search"
 
 	"github.com/bir3/gocompiler/src/xvendor/golang.org/x/mod/module"
+	"github.com/bir3/gocompiler/src/xvendor/golang.org/x/mod/semver"
 )
 
 var (
@@ -105,7 +105,7 @@ func ModuleInfo(ctx context.Context, path string) *modinfo.ModulePublic {
 	if !ok {
 		mg, err := rs.Graph(ctx)
 		if err != nil {
-			base.Fatal(err)
+			base.Fatalf("go: %v", err)
 		}
 		v = mg.Selected(path)
 	}
@@ -152,7 +152,7 @@ func addUpdate(ctx context.Context, m *modinfo.ModulePublic) {
 		return
 	}
 
-	if gover.ModCompare(m.Path, info.Version, m.Version) > 0 {
+	if semver.Compare(info.Version, m.Version) > 0 {
 		m.Update = &modinfo.ModulePublic{
 			Path:    m.Path,
 			Version: info.Version,
@@ -309,10 +309,6 @@ func moduleInfo(ctx context.Context, rs *Requirements, m module.Version, mode Li
 
 	// completeFromModCache fills in the extra fields in m using the module cache.
 	completeFromModCache := func(m *modinfo.ModulePublic) {
-		if gover.IsToolchain(m.Path) {
-			return
-		}
-
 		if old := reuse[module.Version{Path: m.Path, Version: m.Version}]; old != nil {
 			if err := checkReuse(ctx, m.Path, old.Origin); err == nil {
 				*m = *old
@@ -347,7 +343,7 @@ func moduleInfo(ctx context.Context, rs *Requirements, m module.Version, mode Li
 
 		if m.Version != "" {
 			if checksumOk("/go.mod") {
-				gomod, err := modfetch.CachePath(ctx, mod, "mod")
+				gomod, err := modfetch.CachePath(mod, "mod")
 				if err == nil {
 					if info, err := os.Stat(gomod); err == nil && info.Mode().IsRegular() {
 						m.GoMod = gomod
@@ -355,7 +351,7 @@ func moduleInfo(ctx context.Context, rs *Requirements, m module.Version, mode Li
 				}
 			}
 			if checksumOk("") {
-				dir, err := modfetch.DownloadDir(ctx, mod)
+				dir, err := modfetch.DownloadDir(mod)
 				if err == nil {
 					m.Dir = dir
 				}
@@ -421,7 +417,7 @@ func moduleInfo(ctx context.Context, rs *Requirements, m module.Version, mode Li
 // If the package was loaded, its containing module and true are returned.
 // Otherwise, module.Version{} and false are returned.
 func findModule(ld *loader, path string) (module.Version, bool) {
-	if pkg, ok := ld.pkgCache.Get(path); ok {
+	if pkg, ok := ld.pkgCache.Get(path).(*loadPkg); ok {
 		return pkg.mod, pkg.mod != module.Version{}
 	}
 	return module.Version{}, false

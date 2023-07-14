@@ -148,6 +148,8 @@ func (h *Heading) DefaultID() string {
 
 type commentPrinter struct {
 	*Printer
+	headingPrefix string
+	needDoc       map[string]bool
 }
 
 // Comment returns the standard Go formatting of the Doc,

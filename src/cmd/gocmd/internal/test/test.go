@@ -16,7 +16,6 @@ import (
 	"os/exec"
 	"path/filepath"
 	"regexp"
-	"slices"
 	"strconv"
 	"strings"
 	"sync"
@@ -76,8 +75,8 @@ As part of building a test binary, go test runs go vet on the package
 and its test source files to identify significant problems. If go vet
 finds any problems, go test reports those and does not run the test
 binary. Only a high-confidence subset of the default go vet checks are
-used. That subset is: atomic, bool, buildtags, directive, errorsas,
-ifaceassert, nilfunc, printf, and stringintconv. You can see
+used. That subset is: 'atomic', 'bool', 'buildtags', 'errorsas',
+'ifaceassert', 'nilfunc', 'printf', and 'stringintconv'. You can see
 the documentation for these and other vet tests via "go doc cmd/vet".
 To disable the running of go vet, use the -vet=off flag. To run all
 checks, use the -vet=all flag.
@@ -145,9 +144,9 @@ In addition to the build flags, the flags handled by 'go test' itself are:
 	    the package list (if present) must appear before this flag.
 
 	-c
-	    Compile the test binary to pkg.test in the current directory but do not run it
+	    Compile the test binary to pkg.test but do not run it
 	    (where pkg is the last element of the package's import path).
-	    The file name or target directory can be changed with the -o flag.
+	    The file name can be changed with the -o flag.
 
 	-exec xprog
 	    Run the test binary using xprog. The behavior is the same as
@@ -160,8 +159,6 @@ In addition to the build flags, the flags handled by 'go test' itself are:
 	-o file
 	    Compile the test binary to the named file.
 	    The test still runs (unless -c or -i is specified).
-	    If file ends in a slash or names an existing directory,
-	    the test is written to pkg.test in that directory.
 
 The test binary also accepts flags that control execution of the test; these
 flags are also accessible by 'go test'. See 'go help testflag' for details.
@@ -245,9 +242,6 @@ control the execution of any test:
 
 	-failfast
 	    Do not start new tests after the first test failure.
-
-	-fullpath
-	    Show full file names in the error messages.
 
 	-fuzz regexp
 	    Run the fuzz test matching the regular expression. When specified,
@@ -589,12 +583,9 @@ var (
 	testHelp bool // -help option passed to test via -args
 
 	testKillTimeout = 100 * 365 * 24 * time.Hour // backup alarm; defaults to about a century if no timeout is set
-	testWaitDelay   time.Duration                // how long to wait for output to close after a test binary exits; zero means unlimited
 	testCacheExpire time.Time                    // ignore cached test results before this time
 
 	testBlockProfile, testCPUProfile, testMemProfile, testMutexProfile, testTrace string // profiling flag that limits test to one package
-
-	testODir = false
 )
 
 // testProfile returns the name of an arbitrary single-package profiling flag
@@ -650,7 +641,6 @@ var defaultVetFlags = []string{
 	// "-cgocall",
 	// "-composites",
 	// "-copylocks",
-	"-directive",
 	"-errorsas",
 	// "-httpresponse",
 	"-ifaceassert",
@@ -702,6 +692,12 @@ func runTest(ctx context.Context, cmd *base.Command, args []string) {
 		base.Fatalf("no packages to test")
 	}
 
+	if testC && len(pkgs) != 1 {
+		base.Fatalf("cannot use -c flag with multiple packages")
+	}
+	if testO != "" && len(pkgs) != 1 {
+		base.Fatalf("cannot use -o flag with multiple packages")
+	}
 	if testFuzz != "" {
 		if !platform.FuzzSupported(cfg.Goos, cfg.Goarch) {
 			base.Fatalf("-fuzz flag is not supported on %s/%s", cfg.Goos, cfg.Goarch)
@@ -751,42 +747,6 @@ func runTest(ctx context.Context, cmd *base.Command, args []string) {
 	if testProfile() != "" && len(pkgs) != 1 {
 		base.Fatalf("cannot use %s flag with multiple packages", testProfile())
 	}
-
-	if testO != "" {
-		if strings.HasSuffix(testO, "/") || strings.HasSuffix(testO, string(os.PathSeparator)) {
-			testODir = true
-		} else if fi, err := os.Stat(testO); err == nil && fi.IsDir() {
-			testODir = true
-		}
-	}
-
-	if len(pkgs) > 1 && (testC || testO != "") && !base.IsNull(testO) {
-		if testO != "" && !testODir {
-			base.Fatalf("with multiple packages, -o must refer to a directory or %s", os.DevNull)
-		}
-
-		pkgsForBinary := map[string][]*load.Package{}
-
-		for _, p := range pkgs {
-			testBinary := testBinaryName(p)
-			pkgsForBinary[testBinary] = append(pkgsForBinary[testBinary], p)
-		}
-
-		for testBinary, pkgs := range pkgsForBinary {
-			if len(pkgs) > 1 {
-				var buf strings.Builder
-				for _, pkg := range pkgs {
-					buf.WriteString(pkg.ImportPath)
-					buf.WriteString("\n")
-				}
-
-				base.Errorf("cannot write test binary %s for multiple packages:\n%s", testBinary, buf.String())
-			}
-		}
-
-		base.ExitIfErrors()
-	}
-
 	initCoverProfile()
 	defer closeCoverProfile()
 
@@ -797,35 +757,7 @@ func runTest(ctx context.Context, cmd *base.Command, args []string) {
 	// Don't set this if fuzzing, since it should be able to run
 	// indefinitely.
 	if testTimeout > 0 && testFuzz == "" {
-		// The WaitDelay for the test process depends on both the OS I/O and
-		// scheduling overhead and the amount of I/O generated by the test just
-		// before it exits. We set the minimum at 5 seconds to account for the OS
-		// overhead, and scale it up from there proportional to the overall test
-		// timeout on the assumption that the time to write and read a goroutine
-		// dump from a timed-out test process scales roughly with the overall
-		// running time of the test.
-		//
-		// This is probably too generous when the timeout is very long, but it seems
-		// better to hard-code a scale factor than to hard-code a constant delay.
-		if wd := testTimeout / 10; wd < 5*time.Second {
-			testWaitDelay = 5 * time.Second
-		} else {
-			testWaitDelay = wd
-		}
-
-		// We expect the test binary to terminate itself (and dump stacks) after
-		// exactly testTimeout. We give it up to one WaitDelay or one minute,
-		// whichever is longer, to finish dumping stacks before we send it an
-		// external signal: if the process has a lot of goroutines, dumping stacks
-		// after the timeout can take a while.
-		//
-		// After the signal is delivered, the test process may have up to one
-		// additional WaitDelay to finish writing its output streams.
-		if testWaitDelay < 1*time.Minute {
-			testKillTimeout = testTimeout + 1*time.Minute
-		} else {
-			testKillTimeout = testTimeout + testWaitDelay
-		}
+		testKillTimeout = testTimeout + 1*time.Minute
 	}
 
 	// Read testcache expiration time, if present.
@@ -842,7 +774,7 @@ func runTest(ctx context.Context, cmd *base.Command, args []string) {
 	b := work.NewBuilder("")
 	defer func() {
 		if err := b.Close(); err != nil {
-			base.Fatal(err)
+			base.Fatalf("go: %v", err)
 		}
 	}()
 
@@ -1016,7 +948,17 @@ func builderTest(b *work.Builder, ctx context.Context, pkgOpts load.PackageOpts,
 		buildTest.Deps = append(buildTest.Deps, buildP)
 	}
 
-	testBinary := testBinaryName(p)
+	// Use last element of import path, not package name.
+	// They differ when package name is "main".
+	// But if the import path is "command-line-arguments",
+	// like it is during 'go run', use the package name.
+	var elem string
+	if p.ImportPath == "command-line-arguments" {
+		elem = p.Name
+	} else {
+		elem = p.DefaultExecName()
+	}
+	testBinary := elem + ".test"
 
 	testDir := b.NewObjdir()
 	if err := b.Mkdir(testDir); err != nil {
@@ -1076,25 +1018,14 @@ func builderTest(b *work.Builder, ctx context.Context, pkgOpts load.PackageOpts,
 		// -c or profiling flag: create action to copy binary to ./test.out.
 		target := filepath.Join(base.Cwd(), testBinary+cfg.ExeSuffix)
 		isNull := false
-
 		if testO != "" {
 			target = testO
-
-			if testODir {
-				if filepath.IsAbs(target) {
-					target = filepath.Join(target, testBinary+cfg.ExeSuffix)
-				} else {
-					target = filepath.Join(base.Cwd(), target, testBinary+cfg.ExeSuffix)
-				}
-			} else {
-				if base.IsNull(target) {
-					isNull = true
-				} else if !filepath.IsAbs(target) {
-					target = filepath.Join(base.Cwd(), target)
-				}
+			if base.IsNull(target) {
+				isNull = true
+			} else if !filepath.IsAbs(target) {
+				target = filepath.Join(base.Cwd(), target)
 			}
 		}
-
 		if isNull {
 			runAction = buildAction
 		} else {
@@ -1357,15 +1288,10 @@ func (r *runTestActor) Act(b *work.Builder, ctx context.Context, a *work.Action)
 		}
 	}
 
-	// Normally, the test will terminate itself when the timeout expires,
-	// but add a last-ditch deadline to detect and stop wedged binaries.
-	ctx, cancel := context.WithTimeout(ctx, testKillTimeout)
-	defer cancel()
-
-	cmd := exec.CommandContext(ctx, args[0], args[1:]...)
+	cmd := exec.Command(args[0], args[1:]...)
 	cmd.Dir = a.Package.Dir
 
-	env := slices.Clip(cfg.OrigEnv)
+	env := cfg.OrigEnv[:len(cfg.OrigEnv):len(cfg.OrigEnv)]
 	env = base.AppendPATH(env)
 	env = base.AppendPWD(env, cmd.Dir)
 	cmd.Env = env
@@ -1395,32 +1321,42 @@ func (r *runTestActor) Act(b *work.Builder, ctx context.Context, a *work.Action)
 		cmd.Env = env
 	}
 
-	var (
-		cancelKilled   = false
-		cancelSignaled = false
-	)
-	cmd.Cancel = func() error {
-		if base.SignalTrace == nil {
-			err := cmd.Process.Kill()
-			if err == nil {
-				cancelKilled = true
-			}
-			return err
-		}
-
-		// Send a quit signal in the hope that the program will print
-		// a stack trace and exit.
-		err := cmd.Process.Signal(base.SignalTrace)
-		if err == nil {
-			cancelSignaled = true
-		}
-		return err
-	}
-	cmd.WaitDelay = testWaitDelay
-
 	base.StartSigHandlers()
 	t0 := time.Now()
-	err = cmd.Run()
+	err = cmd.Start()
+
+	// This is a last-ditch deadline to detect and
+	// stop wedged test binaries, to keep the builders
+	// running.
+	if err == nil {
+		tick := time.NewTimer(testKillTimeout)
+		done := make(chan error)
+		go func() {
+			done <- cmd.Wait()
+		}()
+	Outer:
+		select {
+		case err = <-done:
+			// ok
+		case <-tick.C:
+			if base.SignalTrace != nil {
+				// Send a quit signal in the hope that the program will print
+				// a stack trace and exit. Give it five seconds before resorting
+				// to Kill.
+				cmd.Process.Signal(base.SignalTrace)
+				select {
+				case err = <-done:
+					fmt.Fprintf(cmd.Stdout, "*** Test killed with %v: ran too long (%v).\n", base.SignalTrace, testKillTimeout)
+					break Outer
+				case <-time.After(5 * time.Second):
+				}
+			}
+			cmd.Process.Kill()
+			err = <-done
+			fmt.Fprintf(cmd.Stdout, "*** Test killed: ran too long (%v).\n", testKillTimeout)
+		}
+		tick.Stop()
+	}
 	out := buf.Bytes()
 	a.TestOutput = &buf
 	t := fmt.Sprintf("%.3fs", time.Since(t0).Seconds())
@@ -1450,15 +1386,7 @@ func (r *runTestActor) Act(b *work.Builder, ctx context.Context, a *work.Action)
 		r.c.saveOutput(a)
 	} else {
 		base.SetExitStatus(1)
-		if cancelSignaled {
-			fmt.Fprintf(cmd.Stdout, "*** Test killed with %v: ran too long (%v).\n", base.SignalTrace, testKillTimeout)
-		} else if cancelKilled {
-			fmt.Fprintf(cmd.Stdout, "*** Test killed: ran too long (%v).\n", testKillTimeout)
-		} else if errors.Is(err, exec.ErrWaitDelay) {
-			fmt.Fprintf(cmd.Stdout, "*** Test I/O incomplete %v after exiting.\n", cmd.WaitDelay)
-		}
-		var ee *exec.ExitError
-		if len(out) == 0 || !errors.As(err, &ee) || !ee.Exited() {
+		if len(out) == 0 {
 			// If there was no test output, print the exit status so that the reason
 			// for failure is clear.
 			fmt.Fprintf(cmd.Stdout, "%s\n", err)
@@ -1551,6 +1479,14 @@ func (c *runCache) tryCacheWithID(b *work.Builder, a *work.Action, id string) bo
 		}
 	}
 
+	if cache.Default() == nil {
+		if cache.DebugTest {
+			fmt.Fprintf(os.Stderr, "testcache: GOCACHE=off\n")
+		}
+		c.disableCache = true
+		return false
+	}
+
 	// The test cache result fetch is a two-level lookup.
 	//
 	// First, we use the content hash of the test binary
@@ -1590,7 +1526,7 @@ func (c *runCache) tryCacheWithID(b *work.Builder, a *work.Action, id string) bo
 
 	// Load list of referenced environment variables and files
 	// from last run of testID, and compute hash of that content.
-	data, entry, err := cache.GetBytes(cache.Default(), testID)
+	data, entry, err := cache.Default().GetBytes(testID)
 	if !bytes.HasPrefix(data, testlogMagic) || data[len(data)-1] != '\n' {
 		if cache.DebugTest {
 			if err != nil {
@@ -1611,7 +1547,7 @@ func (c *runCache) tryCacheWithID(b *work.Builder, a *work.Action, id string) bo
 
 	// Parse cached result in preparation for changing run time to "(cached)".
 	// If we can't parse the cached result, don't use it.
-	data, entry, err = cache.GetBytes(cache.Default(), testAndInputKey(testID, testInputsID))
+	data, entry, err = cache.Default().GetBytes(testAndInputKey(testID, testInputsID))
 	if len(data) == 0 || data[len(data)-1] != '\n' {
 		if cache.DebugTest {
 			if err != nil {
@@ -1823,15 +1759,15 @@ func (c *runCache) saveOutput(a *work.Action) {
 		if cache.DebugTest {
 			fmt.Fprintf(os.Stderr, "testcache: %s: save test ID %x => input ID %x => %x\n", a.Package.ImportPath, c.id1, testInputsID, testAndInputKey(c.id1, testInputsID))
 		}
-		cache.PutNoVerify(cache.Default(), c.id1, bytes.NewReader(testlog))
-		cache.PutNoVerify(cache.Default(), testAndInputKey(c.id1, testInputsID), bytes.NewReader(a.TestOutput.Bytes()))
+		cache.Default().PutNoVerify(c.id1, bytes.NewReader(testlog))
+		cache.Default().PutNoVerify(testAndInputKey(c.id1, testInputsID), bytes.NewReader(a.TestOutput.Bytes()))
 	}
 	if c.id2 != (cache.ActionID{}) {
 		if cache.DebugTest {
 			fmt.Fprintf(os.Stderr, "testcache: %s: save test ID %x => input ID %x => %x\n", a.Package.ImportPath, c.id2, testInputsID, testAndInputKey(c.id2, testInputsID))
 		}
-		cache.PutNoVerify(cache.Default(), c.id2, bytes.NewReader(testlog))
-		cache.PutNoVerify(cache.Default(), testAndInputKey(c.id2, testInputsID), bytes.NewReader(a.TestOutput.Bytes()))
+		cache.Default().PutNoVerify(c.id2, bytes.NewReader(testlog))
+		cache.Default().PutNoVerify(testAndInputKey(c.id2, testInputsID), bytes.NewReader(a.TestOutput.Bytes()))
 	}
 }
 
@@ -1900,20 +1836,4 @@ func printExitStatus(b *work.Builder, ctx context.Context, a *work.Action) error
 		}
 	}
 	return nil
-}
-
-// testBinaryName can be used to create name for test binary executable.
-// Use last element of import path, not package name.
-// They differ when package name is "main".
-// But if the import path is "command-line-arguments",
-// like it is during 'go run', use the package name.
-func testBinaryName(p *load.Package) string {
-	var elem string
-	if p.ImportPath == "command-line-arguments" {
-		elem = p.Name
-	} else {
-		elem = p.DefaultExecName()
-	}
-
-	return elem + ".test"
 }

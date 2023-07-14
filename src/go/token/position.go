@@ -7,7 +7,6 @@ package token
 import (
 	"fmt"
 	"sort"
-	"strconv"
 	"sync"
 	"sync/atomic"
 )
@@ -42,7 +41,7 @@ func (pos Position) String() string {
 		if s != "" {
 			s += ":"
 		}
-		s += strconv.Itoa(pos.Line)
+		s += fmt.Sprintf("%d", pos.Line)
 		if pos.Column != 0 {
 			s += fmt.Sprintf(":%d", pos.Column)
 		}
@@ -158,15 +157,6 @@ func (f *File) MergeLine(line int) {
 	// are 0-based and line numbers are 1-based.
 	copy(f.lines[line:], f.lines[line+1:])
 	f.lines = f.lines[:len(f.lines)-1]
-}
-
-// Lines returns the effective line offset table of the form described by SetLines.
-// Callers must not mutate the result.
-func (f *File) Lines() []int {
-	f.mutex.Lock()
-	lines := f.lines
-	f.mutex.Unlock()
-	return lines
 }
 
 // SetLines sets the line offsets for a file and reports whether it succeeded.
@@ -402,6 +392,7 @@ func (s *FileSet) Base() int {
 	b := s.base
 	s.mutex.RUnlock()
 	return b
+
 }
 
 // AddFile adds a new file with a given filename, base offset, and file size

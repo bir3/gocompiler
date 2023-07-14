@@ -10,20 +10,20 @@ import (
 	"os"
 	"sort"
 
-	"github.com/bir3/gocompiler/src/cmd/gocmd/internal/gover"
 	"github.com/bir3/gocompiler/src/cmd/gocmd/internal/modfetch"
 	"github.com/bir3/gocompiler/src/cmd/gocmd/internal/modfetch/codehost"
 
 	"github.com/bir3/gocompiler/src/xvendor/golang.org/x/mod/module"
+	"github.com/bir3/gocompiler/src/xvendor/golang.org/x/mod/semver"
 )
 
 // cmpVersion implements the comparison for versions in the module loader.
 //
-// It is consistent with gover.ModCompare except that as a special case,
+// It is consistent with semver.Compare except that as a special case,
 // the version "" is considered higher than all other versions.
 // The main module (also known as the target) has no version and must be chosen
 // over other versions of the same module in the module dependency graph.
-func cmpVersion(p string, v1, v2 string) int {
+func cmpVersion(v1, v2 string) int {
 	if v2 == "" {
 		if v1 == "" {
 			return 0
@@ -33,7 +33,7 @@ func cmpVersion(p string, v1, v2 string) int {
 	if v1 == "" {
 		return 1
 	}
-	return gover.ModCompare(p, v1, v2)
+	return semver.Compare(v1, v2)
 }
 
 // mvsReqs implements mvs.Reqs for module semantic versions,
@@ -60,14 +60,14 @@ func (r *mvsReqs) Required(mod module.Version) ([]module.Version, error) {
 	return summary.require, nil
 }
 
-// Max returns the maximum of v1 and v2 according to gover.ModCompare.
+// Max returns the maximum of v1 and v2 according to semver.Compare.
 //
 // As a special case, the version "" is considered higher than all other
 // versions. The main module (also known as the target) has no version and must
 // be chosen over other versions of the same module in the module dependency
 // graph.
-func (*mvsReqs) Max(p, v1, v2 string) string {
-	if cmpVersion(p, v1, v2) < 0 {
+func (*mvsReqs) Max(v1, v2 string) string {
+	if cmpVersion(v1, v2) < 0 {
 		return v2
 	}
 	return v1
@@ -83,11 +83,11 @@ func versions(ctx context.Context, path string, allowed AllowedFunc) (versions [
 	// Note: modfetch.Lookup and repo.Versions are cached,
 	// so there's no need for us to add extra caching here.
 	err = modfetch.TryProxies(func(proxy string) error {
-		repo, err := lookupRepo(ctx, proxy, path)
+		repo, err := lookupRepo(proxy, path)
 		if err != nil {
 			return err
 		}
-		allVersions, err := repo.Versions(ctx, "")
+		allVersions, err := repo.Versions("")
 		if err != nil {
 			return err
 		}
@@ -111,19 +111,21 @@ func versions(ctx context.Context, path string, allowed AllowedFunc) (versions [
 //
 // Since the version of a main module is not found in the version list,
 // it has no previous version.
-func previousVersion(ctx context.Context, m module.Version) (module.Version, error) {
+func previousVersion(m module.Version) (module.Version, error) {
+	// TODO(golang.org/issue/38714): thread tracing context through MVS.
+
 	if m.Version == "" && MainModules.Contains(m.Path) {
 		return module.Version{Path: m.Path, Version: "none"}, nil
 	}
 
-	list, _, err := versions(ctx, m.Path, CheckAllowed)
+	list, _, err := versions(context.TODO(), m.Path, CheckAllowed)
 	if err != nil {
 		if errors.Is(err, os.ErrNotExist) {
 			return module.Version{Path: m.Path, Version: "none"}, nil
 		}
 		return module.Version{}, err
 	}
-	i := sort.Search(len(list), func(i int) bool { return gover.ModCompare(m.Path, list[i], m.Version) >= 0 })
+	i := sort.Search(len(list), func(i int) bool { return semver.Compare(list[i], m.Version) >= 0 })
 	if i > 0 {
 		return module.Version{Path: m.Path, Version: list[i-1]}, nil
 	}
@@ -131,6 +133,5 @@ func previousVersion(ctx context.Context, m module.Version) (module.Version, err
 }
 
 func (*mvsReqs) Previous(m module.Version) (module.Version, error) {
-	// TODO(golang.org/issue/38714): thread tracing context through MVS.
-	return previousVersion(context.TODO(), m)
+	return previousVersion(m)
 }

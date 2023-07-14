@@ -2,12 +2,11 @@
 // Use of this source code is governed by a BSD-style
 // license that can be found in the LICENSE file.
 
-//go:generate go test cmd/go -v -run=TestDocsUpToDate -fixdocs
+//go:generate ./mkalldocs.sh
 
 package gocmd
 
 import (
-	"github.com/bir3/gocompiler/src/cmd/gocmd/internal/toolchain"
 	"github.com/bir3/gocompiler/src/cmd/gocmd/internal/workcmd"
 	"context"
 	"github.com/bir3/gocompiler/src/cmd/gocmd/flag"
@@ -17,8 +16,6 @@ import (
 	"os"
 	"path/filepath"
 	"github.com/bir3/gocompiler/vfs"
-	rtrace "runtime/trace"
-	"slices"
 	"strings"
 
 	"github.com/bir3/gocompiler/src/cmd/gocmd/internal/base"
@@ -89,15 +86,11 @@ func init() {
 	}
 }
 
-var _ = go11tag
-
 func Main() {
-	log.SetFlags(0)
-	handleChdirFlag()
-	toolchain.Select()
-
+	_ = go11tag
 	flag.Usage = base.Usage
 	flag.Parse()
+	log.SetFlags(0)
 
 	args := flag.Args()
 	if len(args) < 1 {
@@ -158,61 +151,43 @@ func Main() {
 		os.Exit(2)
 	}
 
-	cmd, used := lookupCmd(args)
-	cfg.CmdName = strings.Join(args[:used], " ")
-	if len(cmd.Commands) > 0 {
-		if used >= len(args) {
-			help.PrintUsage(os.Stderr, cmd)
-			base.SetExitStatus(2)
+BigCmdLoop:
+	for bigCmd := base.Go; ; {
+		for _, cmd := range bigCmd.Commands {
+			if cmd.Name() != args[0] {
+				continue
+			}
+			if len(cmd.Commands) > 0 {
+				bigCmd = cmd
+				args = args[1:]
+				if len(args) == 0 {
+					help.PrintUsage(os.Stderr, bigCmd)
+					base.SetExitStatus(2)
+					base.Exit()
+				}
+				if args[0] == "help" {
+					// Accept 'go mod help' and 'go mod help foo' for 'go help mod' and 'go help mod foo'.
+					help.Help(os.Stdout, append(strings.Split(cfg.CmdName, " "), args[1:]...))
+					return
+				}
+				cfg.CmdName += " " + args[0]
+				continue BigCmdLoop
+			}
+			if !cmd.Runnable() {
+				continue
+			}
+			invoke(cmd, args)
 			base.Exit()
-		}
-		if args[used] == "help" {
-			// Accept 'go mod help' and 'go mod help foo' for 'go help mod' and 'go help mod foo'.
-			help.Help(os.Stdout, append(slices.Clip(args[:used]), args[used+1:]...))
-			base.Exit()
+			return
 		}
 		helpArg := ""
-		if used > 0 {
-			helpArg += " " + strings.Join(args[:used], " ")
+		if i := strings.LastIndex(cfg.CmdName, " "); i >= 0 {
+			helpArg = " " + cfg.CmdName[:i]
 		}
 		fmt.Fprintf(os.Stderr, "go %s: unknown command\nRun 'go help%s' for usage.\n", cfg.CmdName, helpArg)
 		base.SetExitStatus(2)
 		base.Exit()
 	}
-	invoke(cmd, args[used-1:])
-	base.Exit()
-}
-
-// lookupCmd interprets the initial elements of args
-// to find a command to run (cmd.Runnable() == true)
-// or else a command group that ran out of arguments
-// or had an unknown subcommand (len(cmd.Commands) > 0).
-// It returns that command and the number of elements of args
-// that it took to arrive at that command.
-func lookupCmd(args []string) (cmd *base.Command, used int) {
-	cmd = base.Go
-	for used < len(args) {
-		c := cmd.Lookup(args[used])
-		if c == nil {
-			break
-		}
-		if c.Runnable() {
-			cmd = c
-			used++
-			break
-		}
-		if len(c.Commands) > 0 {
-			cmd = c
-			used++
-			if used >= len(args) || args[0] == "help" {
-				break
-			}
-			continue
-		}
-		// len(c.Commands) == 0 && !c.Runnable() => help text; stop at "help"
-		break
-	}
-	return cmd, used
 }
 
 func invoke(cmd *base.Command, args []string) {
@@ -220,7 +195,7 @@ func invoke(cmd *base.Command, args []string) {
 	if cmd != envcmd.CmdEnv {
 		buildcfg.Check()
 		if cfg.ExperimentErr != nil {
-			base.Fatal(cfg.ExperimentErr)
+			base.Fatalf("go: %v", cfg.ExperimentErr)
 		}
 	}
 
@@ -229,7 +204,7 @@ func invoke(cmd *base.Command, args []string) {
 	// the same default computation of these as we do,
 	// but in practice there might be skew
 	// This makes sure we all agree.
-	cfg.OrigEnv = toolchain.FilterEnv(os.Environ())
+	cfg.OrigEnv = os.Environ()
 	cfg.CmdEnv = envcmd.MkEnv()
 	for _, env := range cfg.CmdEnv {
 		if os.Getenv(env.Name) != env.Value {
@@ -245,20 +220,6 @@ func invoke(cmd *base.Command, args []string) {
 		cmd.Flag.Parse(args[1:])
 		args = cmd.Flag.Args()
 	}
-
-	if cfg.DebugRuntimeTrace != "" {
-		f, err := os.Create(cfg.DebugRuntimeTrace)
-		if err != nil {
-			base.Fatalf("creating trace file: %v", err)
-		}
-		if err := rtrace.Start(f); err != nil {
-			base.Fatalf("starting event trace: %v", err)
-		}
-		defer func() {
-			rtrace.Stop()
-		}()
-	}
-
 	ctx := maybeStartTrace(context.Background())
 	ctx, span := trace.StartSpan(ctx, fmt.Sprint("Running ", cmd.Name(), " command"))
 	cmd.Run(ctx, cmd, args)
@@ -290,45 +251,4 @@ func maybeStartTrace(pctx context.Context) context.Context {
 	})
 
 	return ctx
-}
-
-// handleChdirFlag handles the -C flag before doing anything else.
-// The -C flag must be the first flag on the command line, to make it easy to find
-// even with commands that have custom flag parsing.
-// handleChdirFlag handles the flag by chdir'ing to the directory
-// and then removing that flag from the command line entirely.
-//
-// We have to handle the -C flag this way for two reasons:
-//
-//   1. Toolchain selection needs to be in the right directory to look for go.mod and go.work.
-//
-//   2. A toolchain switch later on reinvokes the new go command with the same arguments.
-//      The parent toolchain has already done the chdir; the child must not try to do it again.
-func handleChdirFlag() {
-	_, used := lookupCmd(os.Args[1:])
-	used++ // because of [1:]
-	if used >= len(os.Args) {
-		return
-	}
-
-	var dir string
-	switch a := os.Args[used]; {
-	default:
-		return
-
-	case a == "-C", a == "--C":
-		if used+1 >= len(os.Args) {
-			return
-		}
-		dir = os.Args[used+1]
-		os.Args = slices.Delete(os.Args, used, used+2)
-
-	case strings.HasPrefix(a, "-C="), strings.HasPrefix(a, "--C="):
-		_, dir, _ = strings.Cut(a, "=")
-		os.Args = slices.Delete(os.Args, used, used+1)
-	}
-
-	if err := os.Chdir(dir); err != nil {
-		base.Fatalf("go: %v", err)
-	}
 }

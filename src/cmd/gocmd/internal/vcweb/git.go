@@ -10,7 +10,6 @@ import (
 	"net/http/cgi"
 	"os/exec"
 	"runtime"
-	"slices"
 	"sync"
 )
 
@@ -42,7 +41,7 @@ func (h *gitHandler) Handler(dir string, env []string, logger *log.Logger) (http
 		Logger: logger,
 		Args:   []string{"http-backend"},
 		Dir:    dir,
-		Env: append(slices.Clip(env),
+		Env: append(env[:len(env):len(env)],
 			"GIT_PROJECT_ROOT="+dir,
 			"GIT_HTTP_EXPORT_ALL=1",
 		),

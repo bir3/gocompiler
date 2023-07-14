@@ -801,7 +801,6 @@ const (
 	AEXTSWSLICC
 	ASTDCCC
 	ATD
-	ASETB
 
 	/* 64-bit pseudo operation */
 	ADWORD
@@ -997,8 +996,6 @@ const (
 	AVSHASIGMAD
 	AVMRGEW
 	AVMRGOW
-	AVCLZLSBB
-	AVCTZLSBB
 
 	/* VSX */
 	ALXV

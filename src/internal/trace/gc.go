@@ -27,7 +27,6 @@ type UtilFlags int
 
 const (
 	// UtilSTW means utilization should account for STW events.
-	// This includes non-GC STW events, which are typically user-requested.
 	UtilSTW UtilFlags = 1 << iota
 	// UtilBackground means utilization should account for
 	// background mark workers.
@@ -94,11 +93,11 @@ func MutatorUtilization(events []*Event, flags UtilFlags) [][]MutatorUtil {
 				}
 				ps = append(ps, perP{series: series})
 			}
-		case EvSTWStart:
+		case EvGCSTWStart:
 			if flags&UtilSTW != 0 {
 				stw++
 			}
-		case EvSTWDone:
+		case EvGCSTWDone:
 			if flags&UtilSTW != 0 {
 				stw--
 			}

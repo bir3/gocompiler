@@ -19,16 +19,12 @@ import (
 	"github.com/bir3/gocompiler/src/cmd/gocmd/internal/base"
 	"github.com/bir3/gocompiler/src/cmd/gocmd/internal/cfg"
 	"github.com/bir3/gocompiler/src/cmd/gocmd/internal/fsys"
-	"github.com/bir3/gocompiler/src/cmd/gocmd/internal/gover"
 	"github.com/bir3/gocompiler/src/cmd/gocmd/internal/load"
 	"github.com/bir3/gocompiler/src/cmd/gocmd/internal/str"
 	"github.com/bir3/gocompiler/src/cmd/internal/objabi"
 	"github.com/bir3/gocompiler/src/cmd/internal/quoted"
 	"crypto/sha1"
 )
-
-// Tests can override this by setting $TESTGO_TOOLCHAIN_VERSION.
-var ToolchainVersion = runtime.Version()
 
 // The 'path' used for GOROOT_FINAL when -trimpath is specified
 const trimPathGoRootFinal string = "$GOROOT"
@@ -100,7 +96,7 @@ func (gcToolchain) gc(b *Builder, a *Action, archive string, importcfg, embedcfg
 			v = "1.16"
 		}
 		if allowedVersion(v) {
-			defaultGcFlags = append(defaultGcFlags, "-lang=go"+gover.Lang(v))
+			defaultGcFlags = append(defaultGcFlags, "-lang=go"+v)
 		}
 	}
 	if p.Standard {
@@ -142,14 +138,14 @@ func (gcToolchain) gc(b *Builder, a *Action, archive string, importcfg, embedcfg
 	if p.Internal.OmitDebug || cfg.Goos == "plan9" || cfg.Goarch == "wasm" {
 		defaultGcFlags = append(defaultGcFlags, "-dwarf=false")
 	}
-	if strings.HasPrefix(ToolchainVersion, "go1") && !strings.Contains(os.Args[0], "go_bootstrap") {
-		defaultGcFlags = append(defaultGcFlags, "-goversion", ToolchainVersion)
+	if strings.HasPrefix(RuntimeVersion, "go1") && !strings.Contains(os.Args[0], "go_bootstrap") {
+		defaultGcFlags = append(defaultGcFlags, "-goversion", RuntimeVersion)
 	}
 	if p.Internal.CoverageCfg != "" {
 		defaultGcFlags = append(defaultGcFlags, "-coveragecfg="+p.Internal.CoverageCfg)
 	}
-	if p.Internal.PGOProfile != "" {
-		defaultGcFlags = append(defaultGcFlags, "-pgoprofile="+p.Internal.PGOProfile)
+	if cfg.BuildPGOFile != "" {
+		defaultGcFlags = append(defaultGcFlags, "-pgoprofile="+cfg.BuildPGOFile)
 	}
 	if symabis != "" {
 		defaultGcFlags = append(defaultGcFlags, "-symabis", symabis)
@@ -173,7 +169,7 @@ func (gcToolchain) gc(b *Builder, a *Action, archive string, importcfg, embedcfg
 	}
 	// Add -c=N to use concurrent backend compilation, if possible.
 	if c := gcBackendConcurrency(gcflags); c > 1 {
-		defaultGcFlags = append(defaultGcFlags, fmt.Sprintf("-c=%d", c))
+		gcflags = append(gcflags, fmt.Sprintf("-c=%d", c))
 	}
 
 	args := []any{cfg.BuildToolexec, base.Tool("compile"), "-o", ofile, "-trimpath", a.trimpath(), defaultGcFlags, gcflags}
@@ -647,14 +643,9 @@ func (gcToolchain) ld(b *Builder, root *Action, out, importcfg, mainpkg string) 
 		// linker's build id, which will cause our build id to not
 		// match the next time the tool is built.
 		// Rely on the external build id instead.
-		if !platform.MustLinkExternal(cfg.Goos, cfg.Goarch, false) {
+		if !platform.MustLinkExternal(cfg.Goos, cfg.Goarch) {
 			ldflags = append(ldflags, "-X=cmd/internal/objabi.buildID="+root.buildID)
 		}
-	}
-
-	// Store default GODEBUG in binaries.
-	if root.Package.DefaultGODEBUG != "" {
-		ldflags = append(ldflags, "-X=runtime.godebugDefault="+root.Package.DefaultGODEBUG)
 	}
 
 	// If the user has not specified the -extld option, then specify the
@@ -687,10 +678,8 @@ func (gcToolchain) ld(b *Builder, root *Action, out, importcfg, mainpkg string) 
 	// just the final path element.
 	// On Windows, DLL file name is recorded in PE file
 	// export section, so do like on OS X.
-	// On Linux, for a shared object, at least with the Gold linker,
-	// the output file path is recorded in the .gnu.version_d section.
 	dir := "."
-	if cfg.BuildBuildmode == "c-shared" || cfg.BuildBuildmode == "plugin" {
+	if (cfg.Goos == "darwin" || cfg.Goos == "windows") && cfg.BuildBuildmode == "c-shared" {
 		dir, out = filepath.Split(out)
 	}
 

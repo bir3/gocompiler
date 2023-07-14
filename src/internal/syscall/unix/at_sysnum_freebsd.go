@@ -10,9 +10,6 @@ const (
 	AT_REMOVEDIR        = 0x800
 	AT_SYMLINK_NOFOLLOW = 0x200
 
-	UTIME_OMIT = -0x2
-
-	unlinkatTrap       uintptr = syscall.SYS_UNLINKAT
-	openatTrap         uintptr = syscall.SYS_OPENAT
-	posixFallocateTrap uintptr = syscall.SYS_POSIX_FALLOCATE
+	unlinkatTrap uintptr = syscall.SYS_UNLINKAT
+	openatTrap   uintptr = syscall.SYS_OPENAT
 )

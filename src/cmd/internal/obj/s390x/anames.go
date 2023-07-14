@@ -716,6 +716,5 @@ var Anames = []string{
 	"BYTE",
 	"WORD",
 	"DWORD",
-	"BRRK",
 	"LAST",
 }

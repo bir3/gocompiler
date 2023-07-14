@@ -19,28 +19,24 @@ func Init() (*sys.Arch, ld.Arch) {
 		Minalign:         minAlign,
 		Dwarfregsp:       dwarfRegSP,
 		Dwarfreglr:       dwarfRegLR,
-		CodePad:          []byte{0x00, 0x00, 0x2a, 0x00}, // BREAK 0
 		Adddynrel:        adddynrel,
 		Archinit:         archinit,
 		Archreloc:        archreloc,
 		Archrelocvariant: archrelocvariant,
 		Extreloc:         extreloc,
+		Elfreloc1:        elfreloc1,
+		ElfrelocSize:     24,
+		Elfsetupplt:      elfsetupplt,
 		Machoreloc1:      machoreloc1,
 		Gentext:          gentext,
 
-		ELF: ld.ELFArch{
-			Linuxdynld:     "/lib64/ld.so.1",
-			LinuxdynldMusl: "/lib64/ld-musl-loongarch.so.1",
-			Freebsddynld:   "XXX",
-			Openbsddynld:   "XXX",
-			Netbsddynld:    "XXX",
-			Dragonflydynld: "XXX",
-			Solarisdynld:   "XXX",
-
-			Reloc1:    elfreloc1,
-			RelocSize: 24,
-			SetupPLT:  elfsetupplt,
-		},
+		Linuxdynld:     "/lib64/ld.so.1",
+		LinuxdynldMusl: "/lib64/ld-musl-loongarch.so.1",
+		Freebsddynld:   "XXX",
+		Openbsddynld:   "XXX",
+		Netbsddynld:    "XXX",
+		Dragonflydynld: "XXX",
+		Solarisdynld:   "XXX",
 	}
 
 	return arch, theArch
