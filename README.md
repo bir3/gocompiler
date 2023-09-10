@@ -4,8 +4,8 @@
 The Go compiler as a package
 
 ```bash
-# go1.20.6
-go get github.com/bir3/gocompiler@v0.4.206
+# go1.20.8
+go get github.com/bir3/gocompiler@v0.5.208
 ```
 
 
@@ -61,8 +61,16 @@ func main() {
 # Standard library
 
 The standard library is embedded and is extracted on first run
-to standard config location, e.g. `$HOME/config/gocompiler` or `$HOME/Library/Caches/gocompiler`
+to standard config location;
+- `$HOME/.config/bir3-gocompiler` (linux)
+- `$HOME/Library/Application Support/bir3-gocompiler` (mac)
 
+# Private Go build cache
+
+To avoid interfering with the standard Go toolchain build cache, the package has a private 
+Go build cache;
+- `$HOME/.cache/bir3-gocompiler` (linux)
+- `$HOME/Library/Caches/bir3-gocompiler` (mac)
 
 # Limitations
 

@@ -88,9 +88,9 @@ func (versionFlag) Get() interface{} { return nil }
 func (versionFlag) String() string   { return "" }
 func (versionFlag) Set(s string) error {
 	
-name := os.Getenv("GOCOMPILER_TOOL")
+name := os.Getenv("BIR3_GOCOMPILER_TOOL")
 if name == "" {
-    panic("empty GOCOMPILER_TOOL env var")
+    panic("empty BIR3_GOCOMPILER_TOOL env var")
 }
 
 

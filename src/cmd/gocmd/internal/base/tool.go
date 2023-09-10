@@ -41,7 +41,7 @@ func ToolCommand(exe string, args ...string) *exec.Cmd {
 			panic(fmt.Sprintf("ToolCommand[gocompiler] failed to get self executable: %s", err))
 		}
 		cmd = exec.Command(exe, args...)
-		cmd.Env = append(cmd.Environ(), "GOCOMPILER_TOOL="+tool)
+		cmd.Env = append(cmd.Environ(), "BIR3_GOCOMPILER_TOOL="+tool)
 	} else {
 		cmd = exec.Command(exe, args...)
 	}

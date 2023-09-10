@@ -10,6 +10,7 @@ import (
 	"fmt"
 	"os"
 	"os/exec"
+	"path/filepath"
 
         "github.com/bir3/gocompiler/src/cmd/asm" //syncimport: "$pkg/src/$cmd/asm"
         "github.com/bir3/gocompiler/src/cmd/cgo" //syncimport: "$pkg/src/$cmd/cgo"
@@ -17,58 +18,37 @@ import (
         "github.com/bir3/gocompiler/src/cmd/gocmd" //syncimport: "$pkg/src/$cmd/gocmd"
         "github.com/bir3/gocompiler/src/cmd/gofmt" //syncimport: "$pkg/src/$cmd/gofmt"
         "github.com/bir3/gocompiler/src/cmd/link" //syncimport: "$pkg/src/$cmd/link"
-
-	/*
-        "github.com/bir3/gocompiler/src/cmd/addr2line" //syncimport: "$pkg/src/$cmd/addr2line"
-        "github.com/bir3/gocompiler/src/cmd/buildid" //syncimport: "$pkg/src/$cmd/buildid"
-        "github.com/bir3/gocompiler/src/cmd/covdata" //syncimport: "$pkg/src/$cmd/covdata"
-        "github.com/bir3/gocompiler/src/cmd/dist" //syncimport: "$pkg/src/$cmd/dist"
-        "github.com/bir3/gocompiler/src/cmd/doc" //syncimport: "$pkg/src/$cmd/doc"
-        "github.com/bir3/gocompiler/src/cmd/fix" //syncimport: "$pkg/src/$cmd/fix"
-        "github.com/bir3/gocompiler/src/cmd/nm" //syncimport: "$pkg/src/$cmd/nm"
-        "github.com/bir3/gocompiler/src/cmd/objdump" //syncimport: "$pkg/src/$cmd/objdump"
-        "github.com/bir3/gocompiler/src/cmd/pack" //syncimport: "$pkg/src/$cmd/pack"
-        "github.com/bir3/gocompiler/src/cmd/test2json" //syncimport: "$pkg/src/$cmd/test2json"
-        "github.com/bir3/gocompiler/src/cmd/trace" //syncimport: "$pkg/src/$cmd/trace"
-	*/
         "github.com/bir3/gocompiler/vfs" //syncimport: "$pkg/vfs"
 )
 
-func DebugShowEmbed() {
-	vfs.DebugShowEmbed()
+type Info struct {
+	GoVersion string
+	CacheDir  string
+	GOROOT    string
+}
+
+func GetInfo() (Info, error) {
+	info := Info{}
+	info.GoVersion = GoVersion()
+	d, err := cacheDir()
+	if err != nil {
+		return Info{}, err
+	}
+	info.CacheDir = d
+	info.GOROOT, err = vfs.PrivateGOROOT()
+	if err != nil {
+		return Info{}, err
+	}
+	return info, nil
 }
 
 func IsRunToolchainRequest() bool {
-	return os.Getenv("GOCOMPILER_TOOL") != ""
+	return os.Getenv("BIR3_GOCOMPILER_TOOL") != ""
 }
 
 // adding extra executables : 44 MB -> 51 MB
 func RunToolchain() {
-	switch os.Getenv("GOCOMPILER_TOOL") {
-	/*
-		case "addr2line":
-			addr2line.Main()
-		case "buildid":
-			buildid.Main()
-		case "covdata":
-			covdata.Main()
-		case "dist":
-			dist.Main()
-		case "doc":
-			doc.Main()
-		case "fix":
-			fix.Main()
-		case "nm":
-			nm.Main()
-		case "objdump":
-			objdump.Main()
-		case "pack":
-			pack.Main()
-		case "test2json":
-			test2json.Main()
-		case "trace":
-			trace.Main()
-	*/
+	switch os.Getenv("BIR3_GOCOMPILER_TOOL") {
 	case "go":
 		gocmd.Main()
 	case "compile":
@@ -81,8 +61,17 @@ func RunToolchain() {
 		cgo.Main()
 	case "gofmt":
 		gofmt.Main()
+	case "debug-info":
+		info, err := GetInfo()
+		if err != nil {
+			fmt.Fprintf(os.Stderr, "ERROR: %s\n", err)
+		}
+		fmt.Printf("Embedded Go compiler github.com/bir3/gocompiler\n")
+		fmt.Printf("go-version    : %s\n", info.GoVersion)
+		fmt.Printf("cache-dir     : %s\n", info.CacheDir)
+		fmt.Printf("GOROOT/stdlib : %s\n", info.GOROOT)
 	default:
-		fmt.Fprintf(os.Stderr, "ERROR: unknown GOCOMPILER_TOOL=%s\n", os.Getenv("GOCOMPILER_TOOL"))
+		fmt.Fprintf(os.Stderr, "ERROR: unknown BIR3_GOCOMPILER_TOOL=%s\n", os.Getenv("BIR3_GOCOMPILER_TOOL"))
 		os.Exit(3)
 	}
 }
@@ -92,24 +81,62 @@ type Result struct {
 	Stderr string
 }
 
-func Command(env []string, args ...string) (*exec.Cmd, error) {
-	if vfs.SharedExe == "" {
-		if vfs.SharedExeError == nil {
-			panic("program error")
+func cacheDir() (string, error) {
+	d, err := os.UserCacheDir()
+	if err != nil {
+		return "", err
+	}
+	d = filepath.Join(d, "bir3-gocompiler")
+
+	if !filepath.IsAbs(d) {
+		return "", fmt.Errorf("not absolute path: %s", d)
+	}
+
+	info, err := os.Stat(d)
+	if err == nil {
+		if info.IsDir() {
+			return d, nil
 		}
-		return nil, vfs.SharedExeError
+		return "", fmt.Errorf("not a folder: %s", d)
+	}
+	// this runs only once
+	err = os.MkdirAll(d, 0777)
+	if err != nil {
+		return "", nil
+	}
+	readme := `
+cache for github.com/bir3/gocompiler
+= Go compiler as a package
+= private Go build cache to avoid interfering with the standard Go toolchain build cache
+`
+	os.WriteFile(filepath.Join(d, "README-bir3"), []byte(readme), 0666)
+	return d, nil
+}
+
+func Command(env []string, args ...string) (*exec.Cmd, error) {
+	SharedExe, err := os.Executable()
+
+	if err != nil {
+		return nil, err
 	}
 	if len(args) < 2 {
 		return nil, errors.New("too few arguments")
 	}
-
-	cmd := exec.Command(vfs.SharedExe, args[1:]...)
+	err = vfs.SetupStdlib() // no-op if already done
+	if err != nil {
+		return nil, err
+	}
+	privateCacheDir, err := cacheDir()
+	if err != nil {
+		return nil, err
+	}
+	cmd := exec.Command(SharedExe, args[1:]...)
 
 	cmd.Env = make([]string, len(env), len(env)+10)
 	copy(cmd.Env, env)
 
-	cmd.Env = append(cmd.Env, fmt.Sprintf("GOCOMPILER_TOOL=%s", args[0]))
-
+	cmd.Env = append(cmd.Env, fmt.Sprintf("BIR3_GOCOMPILER_TOOL=%s", args[0]))
+	cmd.Env = append(cmd.Env, fmt.Sprintf("GOCACHE=%s", privateCacheDir))
 	return cmd, nil
 }
 
@@ -141,5 +168,5 @@ func Run(args ...string) (Result, error) {
 }
 
 func GoVersion() string {
-	return "go1.20.6"
+	return "go1.20.8"
 }
