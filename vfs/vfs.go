@@ -10,7 +10,8 @@ import (
 	"os"
 	"path/filepath"
 
-	"github.com/bir3/gocompiler/src/cmd/gocmd/extract_stdlib"
+	"github.com/bir3/gocompiler/extra"
+	"github.com/bir3/gocompiler/extra/extract_stdlib"
 )
 
 //go:embed goroot
@@ -62,12 +63,12 @@ func SetupStdlib() error {
 }
 
 func PrivateGOROOT() (string, error) {
-	return configDir("bir3-gocompiler/stdlib-go1.20.8-397a") //syncvar:
+	return configDir("bir3-gocompiler/stdlib-go1.20.10-364e") //syncvar:
 
 }
 
 func extractStdlib(d string) error {
-	f, err := content.Open("goroot/stdlib-go1.20.8-397a.tar.zst") //syncvar:
+	f, err := content.Open("goroot/stdlib-go1.20.10-364e.tar.zst") //syncvar:
 	if err != nil {
 		panic(fmt.Sprintf("gocompiler stdlib init failed - %s", err))
 	}
@@ -94,7 +95,7 @@ func configDir(folder string) (string, error) {
 		return "", fmt.Errorf("config folder %s is not absolute path for stdlib - %w", d, err)
 	}
 	if err == nil {
-		err = os.MkdirAll(d, 0755)
+		err = extra.MkdirAllRace(d, 0755)
 	}
 	if err != nil {
 		return "", fmt.Errorf("failed to create config folder %s for stdlib - %w", d, err)
