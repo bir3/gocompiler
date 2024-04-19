@@ -7,7 +7,6 @@ import (
 	"os"
 	"os/exec"
 	"path/filepath"
-	"runtime"
 	"strings"
 	"time"
 )
@@ -60,38 +59,6 @@ type Signal = os.Signal
 
 var ErrWaitDelay error = exec.ErrWaitDelay
 
-func log(msg string) {
-	f, err := os.OpenFile("/tmp/bir3.log", os.O_APPEND|os.O_RDWR|os.O_CREATE, 0666)
-	if err != nil {
-		panic("exit")
-	}
-	fmt.Fprintf(f, "%s\n", msg)
-	f.Close()
-
-}
-func stackTrace() (string, []string) {
-	b := make([]byte, 9900) // adjust buffer size to be larger than expected stack
-	n := runtime.Stack(b, false)
-	s := string(b[:n])
-	fstack := []string{}
-	lines := strings.Split(s, "\n")
-	for _, line := range lines {
-		line := strings.TrimSpace(line)
-		if strings.HasPrefix(line, "/Volumes") {
-			i := strings.Index(line, "/src/")
-			//k := strings.Index(line, ":")
-			if i > 0 {
-				f := line[i+5:]
-				fstack = append(fstack, f)
-				if len(fstack) > 4 {
-					break
-				}
-			}
-		}
-	}
-	return s, fstack
-}
-
 func (p process) Signal(sig Signal) error {
 	return p.c.realCmd.Process.Signal(sig)
 }
@@ -110,12 +77,6 @@ func (p processState) SystemTime() time.Duration {
 }
 
 func Command(name string, arg ...string) *Cmd {
-	log("x1")
-	if len(arg) > 1 {
-		log(fmt.Sprintf("### bir3.exec, arg[0]=%s arg[1]=%s", arg[0], arg[1]))
-		//panic("exit")
-	}
-	//xcmd := exec.Command(name, arg...)
 	return &Cmd{name: name, arg: arg, isCommand: true,
 		Path: name,
 		Args: append([]string{name}, arg...),
@@ -123,10 +84,6 @@ func Command(name string, arg ...string) *Cmd {
 }
 
 func CommandContext(ctx context.Context, name string, arg ...string) *Cmd {
-	log("x2")
-	if len(arg) > 1 {
-		log(fmt.Sprintf("### bir3.exec, arg[0]=%s arg[1]=%s", arg[0], arg[1]))
-	}
 	return &Cmd{ctx: ctx, name: name, arg: arg, isCommandContext: true,
 		Path: name,
 		Args: append([]string{name}, arg...),
@@ -157,17 +114,7 @@ func LookPath(file string) (string, error) {
 
 func (c *Cmd) Run() error {
 	c.mirror()
-	log(fmt.Sprintf("isTool=%t Run with Args[0]=%s Path=%s GOROOT=%s", c.isTool, c.realCmd.Args[0], c.Path, os.Getenv("GOROOT")))
-	if c.isTool {
-		s, fstack := stackTrace()
-		if len(fstack) > 0 {
-			log(fmt.Sprintf("who: fstack[0]=%s\n stack=%s\n", fstack[0], s))
-		}
-		///log("")
-		//panic("who is it")
-	}
 	err := c.realCmd.Run()
-	log(fmt.Sprintf("- Run result=%s", err))
 	return err
 }
 func (c *Cmd) Environ() []string {
@@ -213,7 +160,6 @@ func (c *Cmd) mirror() {
 
 func (c *Cmd) Start() error {
 	c.mirror()
-	log(fmt.Sprintf("isTool=%t Start with Args[0]=%s", c.isTool, c.realCmd.Args[0]))
 	return c.realCmd.Start()
 }
 func (c *Cmd) Wait() error {
@@ -221,13 +167,11 @@ func (c *Cmd) Wait() error {
 	return c.realCmd.Wait()
 }
 func (c *Cmd) CombinedOutput() ([]byte, error) {
-	log(fmt.Sprintf("CombinedOutput with Args[0]=%s", c.realCmd.Args[0]))
 	c.mirror()
 	return c.realCmd.CombinedOutput()
 
 }
 func (c *Cmd) Output() ([]byte, error) {
-	log(fmt.Sprintf("Output with Args[0]=%s", c.realCmd.Args[0]))
 	c.mirror()
 	return c.realCmd.Output()
 
