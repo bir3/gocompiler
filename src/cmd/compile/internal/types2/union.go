@@ -14,7 +14,7 @@ import (
 
 // A Union represents a union of terms embedded in an interface.
 type Union struct {
-	terms []*Term // list of syntactical terms (not a canonicalized termlist)
+	terms []*Term	// list of syntactical terms (not a canonicalized termlist)
 }
 
 // NewUnion returns a new Union type with the given terms.
@@ -26,21 +26,21 @@ func NewUnion(terms []*Term) *Union {
 	return &Union{terms}
 }
 
-func (u *Union) Len() int         { return len(u.terms) }
-func (u *Union) Term(i int) *Term { return u.terms[i] }
+func (u *Union) Len() int		{ return len(u.terms) }
+func (u *Union) Term(i int) *Term	{ return u.terms[i] }
 
-func (u *Union) Underlying() Type { return u }
-func (u *Union) String() string   { return TypeString(u, nil) }
+func (u *Union) Underlying() Type	{ return u }
+func (u *Union) String() string		{ return TypeString(u, nil) }
 
 // A Term represents a term in a Union.
 type Term term
 
 // NewTerm returns a new union term.
-func NewTerm(tilde bool, typ Type) *Term { return &Term{tilde, typ} }
+func NewTerm(tilde bool, typ Type) *Term	{ return &Term{tilde, typ} }
 
-func (t *Term) Tilde() bool    { return t.tilde }
-func (t *Term) Type() Type     { return t.typ }
-func (t *Term) String() string { return (*term)(t).String() }
+func (t *Term) Tilde() bool	{ return t.tilde }
+func (t *Term) Type() Type	{ return t.typ }
+func (t *Term) String() string	{ return (*term)(t).String() }
 
 // ----------------------------------------------------------------------------
 // Implementation
@@ -63,10 +63,10 @@ func parseUnion(check *Checker, uexpr syntax.Expr) Type {
 			// Single type. Ok to return early because all relevant
 			// checks have been performed in parseTilde (no need to
 			// run through term validity check below).
-			return term.typ // typ already recorded through check.typ in parseTilde
+			return term.typ	// typ already recorded through check.typ in parseTilde
 		}
 		if len(terms) >= maxTermCount {
-			if u != Typ[Invalid] {
+			if isValid(u) {
 				check.errorf(x, InvalidUnion, "cannot handle more than %d union terms (implementation limitation)", maxTermCount)
 				u = Typ[Invalid]
 			}
@@ -80,7 +80,7 @@ func parseUnion(check *Checker, uexpr syntax.Expr) Type {
 		}
 	}
 
-	if u == Typ[Invalid] {
+	if !isValid(u) {
 		return u
 	}
 
@@ -89,7 +89,7 @@ func parseUnion(check *Checker, uexpr syntax.Expr) Type {
 	// Note: This is a quadratic algorithm, but unions tend to be short.
 	check.later(func() {
 		for i, t := range terms {
-			if t.typ == Typ[Invalid] {
+			if !isValid(t.typ) {
 				continue
 			}
 
@@ -98,7 +98,7 @@ func parseUnion(check *Checker, uexpr syntax.Expr) Type {
 			if t.tilde {
 				if f != nil {
 					check.errorf(tlist[i], InvalidUnion, "invalid use of ~ (%s is an interface)", t.typ)
-					continue // don't report another error for t
+					continue	// don't report another error for t
 				}
 
 				if !Identical(u, t.typ) {
@@ -121,7 +121,7 @@ func parseUnion(check *Checker, uexpr syntax.Expr) Type {
 				case tset.comparable:
 					check.errorf(tlist[i], InvalidUnion, "cannot use %s in union (%s embeds comparable)", t, t)
 				}
-				continue // terms with interface types are not subject to the no-overlap rule
+				continue	// terms with interface types are not subject to the no-overlap rule
 			}
 
 			// Report overlapping (non-disjoint) terms such as
@@ -143,7 +143,7 @@ func parseTilde(check *Checker, tx syntax.Expr) *Term {
 		tilde = true
 	}
 	typ := check.typ(x)
-	// Embedding stand-alone type parameters is not permitted (issue #47127).
+	// Embedding stand-alone type parameters is not permitted (go.dev/issue/47127).
 	// We don't need this restriction anymore if we make the underlying type of a type
 	// parameter its constraint interface: if we embed a lone type parameter, we will
 	// simply use its underlying type (like we do for other named, embedded interfaces),

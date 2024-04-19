@@ -6,6 +6,7 @@ package liveness
 
 import (
 	"fmt"
+	"github.com/bir3/gocompiler/src/internal/abi"
 
 	"github.com/bir3/gocompiler/src/cmd/compile/internal/base"
 	"github.com/bir3/gocompiler/src/cmd/compile/internal/bitvec"
@@ -13,7 +14,6 @@ import (
 	"github.com/bir3/gocompiler/src/cmd/compile/internal/objw"
 	"github.com/bir3/gocompiler/src/cmd/compile/internal/ssa"
 	"github.com/bir3/gocompiler/src/cmd/internal/obj"
-	"github.com/bir3/gocompiler/src/cmd/internal/objabi"
 )
 
 // Argument liveness tracking.
@@ -45,34 +45,34 @@ const allLiveIdx = -1
 
 // name and offset
 type nameOff struct {
-	n   *ir.Name
-	off int64
+	n	*ir.Name
+	off	int64
 }
 
-func (a nameOff) FrameOffset() int64 { return a.n.FrameOffset() + a.off }
-func (a nameOff) String() string     { return fmt.Sprintf("%v+%d", a.n, a.off) }
+func (a nameOff) FrameOffset() int64	{ return a.n.FrameOffset() + a.off }
+func (a nameOff) String() string	{ return fmt.Sprintf("%v+%d", a.n, a.off) }
 
 type blockArgEffects struct {
-	livein  bitvec.BitVec // variables live at block entry
-	liveout bitvec.BitVec // variables live at block exit
+	livein	bitvec.BitVec	// variables live at block entry
+	liveout	bitvec.BitVec	// variables live at block exit
 }
 
 type argLiveness struct {
-	fn   *ir.Func
-	f    *ssa.Func
-	args []nameOff         // name and offset of spill slots
-	idx  map[nameOff]int32 // index in args
+	fn	*ir.Func
+	f	*ssa.Func
+	args	[]nameOff		// name and offset of spill slots
+	idx	map[nameOff]int32	// index in args
 
-	be []blockArgEffects // indexed by block ID
+	be	[]blockArgEffects	// indexed by block ID
 
-	bvset bvecSet // Set of liveness bitmaps, used for uniquifying.
+	bvset	bvecSet	// Set of liveness bitmaps, used for uniquifying.
 
 	// Liveness map indices at each Value (where it changes) and Block entry.
 	// During the computation the indices are temporarily index to bvset.
 	// At the end they will be index (offset) to the output funcdata (changed
 	// in (*argLiveness).emit).
-	blockIdx map[ssa.ID]int
-	valueIdx map[ssa.ID]int
+	blockIdx	map[ssa.ID]int
+	valueIdx	map[ssa.ID]int
 }
 
 // ArgLiveness computes the liveness information of register argument spill slots.
@@ -88,17 +88,17 @@ func ArgLiveness(fn *ir.Func, f *ssa.Func, pp *objw.Progs) (blockIdx, valueIdx m
 	}
 
 	lv := &argLiveness{
-		fn:       fn,
-		f:        f,
-		idx:      make(map[nameOff]int32),
-		be:       make([]blockArgEffects, f.NumBlocks()),
-		blockIdx: make(map[ssa.ID]int),
-		valueIdx: make(map[ssa.ID]int),
+		fn:		fn,
+		f:		f,
+		idx:		make(map[nameOff]int32),
+		be:		make([]blockArgEffects, f.NumBlocks()),
+		blockIdx:	make(map[ssa.ID]int),
+		valueIdx:	make(map[ssa.ID]int),
 	}
 	// Gather all register arg spill slots.
 	for _, a := range f.OwnAux.ABIInfo().InParams() {
-		n, ok := a.Name.(*ir.Name)
-		if !ok || len(a.Registers) == 0 {
+		n := a.Name
+		if n == nil || len(a.Registers) == 0 {
 			continue
 		}
 		_, offs := a.RegisterTypesAndOffsets()
@@ -112,11 +112,11 @@ func ArgLiveness(fn *ir.Func, f *ssa.Func, pp *objw.Progs) (blockIdx, valueIdx m
 		}
 	}
 	if len(lv.args) > 10 {
-		lv.args = lv.args[:10] // We print no more than 10 args.
+		lv.args = lv.args[:10]	// We print no more than 10 args.
 	}
 
 	// We spill address-taken or non-SSA-able value upfront, so they are always live.
-	alwaysLive := func(n *ir.Name) bool { return n.Addrtaken() || !f.Frontend().CanSSA(n.Type()) }
+	alwaysLive := func(n *ir.Name) bool { return n.Addrtaken() || !ssa.CanSSA(n.Type()) }
 
 	// We'll emit the smallest offset for the slots that need liveness info.
 	// No need to include a slot with a lower offset if it is always live.
@@ -124,7 +124,7 @@ func ArgLiveness(fn *ir.Func, f *ssa.Func, pp *objw.Progs) (blockIdx, valueIdx m
 		lv.args = lv.args[1:]
 	}
 	if len(lv.args) == 0 {
-		return // everything is always live
+		return	// everything is always live
 	}
 
 	for i, a := range lv.args {
@@ -173,7 +173,7 @@ func ArgLiveness(fn *ir.Func, f *ssa.Func, pp *objw.Progs) (blockIdx, valueIdx m
 	// where it changes.
 	live := bitvec.New(nargs)
 	addToSet := func(bv bitvec.BitVec) (int, bool) {
-		if bv.Count() == int(nargs) { // special case for all live
+		if bv.Count() == int(nargs) {	// special case for all live
 			return allLiveIdx, false
 		}
 		return lv.bvset.add(bv)
@@ -221,7 +221,7 @@ func ArgLiveness(fn *ir.Func, f *ssa.Func, pp *objw.Progs) (blockIdx, valueIdx m
 	//lv.print()
 
 	p := pp.Prog(obj.AFUNCDATA)
-	p.From.SetConst(objabi.FUNCDATA_ArgLiveInfo)
+	p.From.SetConst(abi.FUNCDATA_ArgLiveInfo)
 	p.To.Type = obj.TYPE_MEM
 	p.To.Name = obj.NAME_EXTERN
 	p.To.Sym = lsym
@@ -231,7 +231,7 @@ func ArgLiveness(fn *ir.Func, f *ssa.Func, pp *objw.Progs) (blockIdx, valueIdx m
 
 // valueEffect applies the effect of v to live, return whether it is changed.
 func (lv *argLiveness) valueEffect(v *ssa.Value, live bitvec.BitVec) bool {
-	if v.Op != ssa.OpStoreReg { // TODO: include other store instructions?
+	if v.Op != ssa.OpStoreReg {	// TODO: include other store instructions?
 		return false
 	}
 	n, off := ssa.AutoVar(v)
@@ -255,9 +255,9 @@ func mayFault(v *ssa.Value) bool {
 		return false
 	}
 	if len(v.Args) == 0 {
-		return false // assume constant op cannot fault
+		return false	// assume constant op cannot fault
 	}
-	return true // conservatively assume all other ops could fault
+	return true	// conservatively assume all other ops could fault
 }
 
 func (lv *argLiveness) print() {
@@ -317,7 +317,7 @@ func (lv *argLiveness) emit() *obj.LSym {
 	lsym := base.Ctxt.Lookup(lv.fn.LSym.Name + ".argliveinfo")
 	lsym.Set(obj.AttrContentAddressable, true)
 
-	off := objw.Uint8(lsym, 0, argOffsets[0]) // smallest offset that needs liveness info.
+	off := objw.Uint8(lsym, 0, argOffsets[0])	// smallest offset that needs liveness info.
 	for idx, live := range livenessMaps {
 		idx2off[idx] = off
 		off = objw.BitVec(lsym, off, live)

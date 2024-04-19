@@ -40,7 +40,7 @@ import (
 	"encoding/gob"
 	"fmt"
 	"github.com/bir3/gocompiler/src/go/types"
-	"io/ioutil"
+	"io"
 	"log"
 	"reflect"
 	"sort"
@@ -60,15 +60,15 @@ const debug = false
 //
 // All of Set's methods except String are safe to call concurrently.
 type Set struct {
-	pkg *types.Package
-	mu  sync.Mutex
-	m   map[key]analysis.Fact
+	pkg	*types.Package
+	mu	sync.Mutex
+	m	map[key]analysis.Fact
 }
 
 type key struct {
-	pkg *types.Package
-	obj types.Object // (object facts only)
-	t   reflect.Type
+	pkg	*types.Package
+	obj	types.Object	// (object facts only)
+	t	reflect.Type
 }
 
 // ImportObjectFact implements analysis.Pass.ImportObjectFact.
@@ -94,7 +94,7 @@ func (s *Set) ExportObjectFact(obj types.Object, fact analysis.Fact) {
 	}
 	key := key{pkg: obj.Pkg(), obj: obj, t: reflect.TypeOf(fact)}
 	s.mu.Lock()
-	s.m[key] = fact // clobber any existing entry
+	s.m[key] = fact	// clobber any existing entry
 	s.mu.Unlock()
 }
 
@@ -129,7 +129,7 @@ func (s *Set) ImportPackageFact(pkg *types.Package, ptr analysis.Fact) bool {
 func (s *Set) ExportPackageFact(fact analysis.Fact) {
 	key := key{pkg: s.pkg, t: reflect.TypeOf(fact)}
 	s.mu.Lock()
-	s.m[key] = fact // clobber any existing entry
+	s.m[key] = fact	// clobber any existing entry
 	s.mu.Unlock()
 }
 
@@ -147,9 +147,9 @@ func (s *Set) AllPackageFacts(filter map[reflect.Type]bool) []analysis.PackageFa
 
 // gobFact is the Gob declaration of a serialized fact.
 type gobFact struct {
-	PkgPath string          // path of package
-	Object  objectpath.Path // optional path of object relative to package itself
-	Fact    analysis.Fact   // type and value of user-defined Fact
+	PkgPath	string		// path of package
+	Object	objectpath.Path	// optional path of object relative to package itself
+	Fact	analysis.Fact	// type and value of user-defined Fact
 }
 
 // A Decoder decodes the facts from the direct imports of the package
@@ -158,28 +158,56 @@ type gobFact struct {
 // for the same package. Each call to Decode returns an independent
 // fact set.
 type Decoder struct {
-	pkg      *types.Package
-	packages map[string]*types.Package
+	pkg		*types.Package
+	getPackage	GetPackageFunc
 }
 
 // NewDecoder returns a fact decoder for the specified package.
+//
+// It uses a brute-force recursive approach to enumerate all objects
+// defined by dependencies of pkg, so that it can learn the set of
+// package paths that may be mentioned in the fact encoding. This does
+// not scale well; use [NewDecoderFunc] where possible.
 func NewDecoder(pkg *types.Package) *Decoder {
 	// Compute the import map for this package.
 	// See the package doc comment.
-	return &Decoder{pkg, importMap(pkg.Imports())}
+	m := importMap(pkg.Imports())
+	getPackageFunc := func(path string) *types.Package { return m[path] }
+	return NewDecoderFunc(pkg, getPackageFunc)
 }
 
-// Decode decodes all the facts relevant to the analysis of package pkg.
-// The read function reads serialized fact data from an external source
-// for one of of pkg's direct imports. The empty file is a valid
-// encoding of an empty fact set.
+// NewDecoderFunc returns a fact decoder for the specified package.
+//
+// It calls the getPackage function for the package path string of
+// each dependency (perhaps indirect) that it encounters in the
+// encoding. If the function returns nil, the fact is discarded.
+//
+// This function is preferred over [NewDecoder] when the client is
+// capable of efficient look-up of packages by package path.
+func NewDecoderFunc(pkg *types.Package, getPackage GetPackageFunc) *Decoder {
+	return &Decoder{
+		pkg:		pkg,
+		getPackage:	getPackage,
+	}
+}
+
+// A GetPackageFunc function returns the package denoted by a package path.
+type GetPackageFunc = func(pkgPath string) *types.Package
+
+// Decode decodes all the facts relevant to the analysis of package
+// pkgPath. The read function reads serialized fact data from an external
+// source for one of pkg's direct imports, identified by package path.
+// The empty file is a valid encoding of an empty fact set.
 //
 // It is the caller's responsibility to call gob.Register on all
 // necessary fact types.
-func (d *Decoder) Decode(read func(*types.Package) ([]byte, error)) (*Set, error) {
+//
+// Concurrent calls to Decode are safe, so long as the
+// [GetPackageFunc] (if any) is also concurrency-safe.
+func (d *Decoder) Decode(read func(pkgPath string) ([]byte, error)) (*Set, error) {
 	// Read facts from imported packages.
 	// Facts may describe indirectly imported packages, or their objects.
-	m := make(map[key]analysis.Fact) // one big bucket
+	m := make(map[key]analysis.Fact)	// one big bucket
 	for _, imp := range d.pkg.Imports() {
 		logf := func(format string, args ...interface{}) {
 			if debug {
@@ -190,25 +218,23 @@ func (d *Decoder) Decode(read func(*types.Package) ([]byte, error)) (*Set, error
 		}
 
 		// Read the gob-encoded facts.
-		data, err := read(imp)
+		data, err := read(imp.Path())
 		if err != nil {
 			return nil, fmt.Errorf("in %s, can't import facts for package %q: %v",
 				d.pkg.Path(), imp.Path(), err)
 		}
 		if len(data) == 0 {
-			continue // no facts
+			continue	// no facts
 		}
 		var gobFacts []gobFact
 		if err := gob.NewDecoder(bytes.NewReader(data)).Decode(&gobFacts); err != nil {
 			return nil, fmt.Errorf("decoding facts for %q: %v", imp.Path(), err)
 		}
-		if debug {
-			logf("decoded %d facts: %v", len(gobFacts), gobFacts)
-		}
+		logf("decoded %d facts: %v", len(gobFacts), gobFacts)
 
 		// Parse each one into a key and a Fact.
 		for _, f := range gobFacts {
-			factPkg := d.packages[f.PkgPath]
+			factPkg := d.getPackage(f.PkgPath)	// possibly an indirect dependency
 			if factPkg == nil {
 				// Fact relates to a dependency that was
 				// unused in this translation unit. Skip.
@@ -243,6 +269,7 @@ func (d *Decoder) Decode(read func(*types.Package) ([]byte, error)) (*Set, error
 // It may fail if one of the Facts could not be gob-encoded, but this is
 // a sign of a bug in an Analyzer.
 func (s *Set) Encode() []byte {
+	encoder := new(objectpath.Encoder)
 
 	// TODO(adonovan): opt: use a more efficient encoding
 	// that avoids repeating PkgPath for each fact.
@@ -255,21 +282,48 @@ func (s *Set) Encode() []byte {
 		if debug {
 			log.Printf("%v => %s\n", k, fact)
 		}
+
+		// Don't export facts that we imported from another
+		// package, unless they represent fields or methods,
+		// or package-level types.
+		// (Facts about packages, and other package-level
+		// objects, are only obtained from direct imports so
+		// they needn't be reexported.)
+		//
+		// This is analogous to the pruning done by "deep"
+		// export data for types, but not as precise because
+		// we aren't careful about which structs or methods
+		// we rexport: it should be only those referenced
+		// from the API of s.pkg.
+		// TOOD(adonovan): opt: be more precise. e.g.
+		// intersect with the set of objects computed by
+		// importMap(s.pkg.Imports()).
+		// TOOD(adonovan): opt: implement "shallow" facts.
+		if k.pkg != s.pkg {
+			if k.obj == nil {
+				continue	// imported package fact
+			}
+			if _, isType := k.obj.(*types.TypeName); !isType &&
+				k.obj.Parent() == k.obj.Pkg().Scope() {
+				continue	// imported fact about package-level non-type object
+			}
+		}
+
 		var object objectpath.Path
 		if k.obj != nil {
-			path, err := objectpath.For(k.obj)
+			path, err := encoder.For(k.obj)
 			if err != nil {
 				if debug {
 					log.Printf("discarding fact %s about %s\n", fact, k.obj)
 				}
-				continue // object not accessible from package API; discard fact
+				continue	// object not accessible from package API; discard fact
 			}
 			object = path
 		}
 		gobFacts = append(gobFacts, gobFact{
-			PkgPath: k.pkg.Path(),
-			Object:  object,
-			Fact:    fact,
+			PkgPath:	k.pkg.Path(),
+			Object:		object,
+			Fact:		fact,
 		})
 	}
 	s.mu.Unlock()
@@ -288,7 +342,7 @@ func (s *Set) Encode() []byte {
 		if tx != ty {
 			return tx.String() < ty.String()
 		}
-		return false // equal
+		return false	// equal
 	})
 
 	var buf bytes.Buffer
@@ -296,7 +350,7 @@ func (s *Set) Encode() []byte {
 		if err := gob.NewEncoder(&buf).Encode(gobFacts); err != nil {
 			// Fact encoding should never fail. Identify the culprit.
 			for _, gf := range gobFacts {
-				if err := gob.NewEncoder(ioutil.Discard).Encode(gf); err != nil {
+				if err := gob.NewEncoder(io.Discard).Encode(gf); err != nil {
 					fact := gf.Fact
 					pkgpath := reflect.TypeOf(fact).Elem().PkgPath()
 					log.Panicf("internal error: gob encoding of analysis fact %s failed: %v; please report a bug against fact %T in package %q",

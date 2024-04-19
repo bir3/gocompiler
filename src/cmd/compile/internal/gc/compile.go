@@ -15,7 +15,7 @@ import (
 	"github.com/bir3/gocompiler/src/cmd/compile/internal/liveness"
 	"github.com/bir3/gocompiler/src/cmd/compile/internal/objw"
 	"github.com/bir3/gocompiler/src/cmd/compile/internal/ssagen"
-	"github.com/bir3/gocompiler/src/cmd/compile/internal/typecheck"
+	"github.com/bir3/gocompiler/src/cmd/compile/internal/staticinit"
 	"github.com/bir3/gocompiler/src/cmd/compile/internal/types"
 	"github.com/bir3/gocompiler/src/cmd/compile/internal/walk"
 	"github.com/bir3/gocompiler/src/cmd/internal/obj"
@@ -24,7 +24,7 @@ import (
 // "Portable" code generation.
 
 var (
-	compilequeue []*ir.Func // functions waiting to be compiled
+	compilequeue []*ir.Func	// functions waiting to be compiled
 )
 
 func enqueueFunc(fn *ir.Func) {
@@ -38,8 +38,17 @@ func enqueueFunc(fn *ir.Func) {
 		return
 	}
 
+	// Don't try compiling dead hidden closure.
+	if fn.IsDeadcodeClosure() {
+		return
+	}
+
 	if clo := fn.OClosure; clo != nil && !ir.IsTrivialClosure(clo) {
-		return // we'll get this as part of its enclosing function
+		return	// we'll get this as part of its enclosing function
+	}
+
+	if ssagen.CreateWasmImportWrapper(fn) {
+		return
 	}
 
 	if len(fn.Body) == 0 {
@@ -47,7 +56,7 @@ func enqueueFunc(fn *ir.Func) {
 		ir.InitLSym(fn, false)
 		types.CalcSize(fn.Type())
 		a := ssagen.AbiForBodylessFuncStackMap(fn)
-		abiInfo := a.ABIAnalyzeFuncType(fn.Type().FuncType()) // abiInfo has spill/home locations for wrapper
+		abiInfo := a.ABIAnalyzeFuncType(fn.Type())	// abiInfo has spill/home locations for wrapper
 		liveness.WriteFuncMap(fn, abiInfo)
 		if fn.ABI == obj.ABI0 {
 			x := ssagen.EmitArgInfo(fn, abiInfo)
@@ -84,24 +93,26 @@ func prepareFunc(fn *ir.Func) {
 	// (e.g. in MarkTypeUsedInInterface).
 	ir.InitLSym(fn, true)
 
+	// If this function is a compiler-generated outlined global map
+	// initializer function, register its LSym for later processing.
+	if staticinit.MapInitToVar != nil {
+		if _, ok := staticinit.MapInitToVar[fn]; ok {
+			ssagen.RegisterMapInitLsym(fn.Linksym())
+		}
+	}
+
 	// Calculate parameter offsets.
 	types.CalcSize(fn.Type())
 
-	typecheck.DeclContext = ir.PAUTO
 	ir.CurFunc = fn
 	walk.Walk(fn)
-	ir.CurFunc = nil // enforce no further uses of CurFunc
-	typecheck.DeclContext = ir.PEXTERN
+	ir.CurFunc = nil	// enforce no further uses of CurFunc
 }
 
 // compileFunctions compiles all functions in compilequeue.
 // It fans out nBackendWorkers to do the work
 // and waits for them to complete.
 func compileFunctions() {
-	if len(compilequeue) == 0 {
-		return
-	}
-
 	if race.Enabled {
 		// Randomize compilation order to try to shake out races.
 		tmp := make([]*ir.Func, len(compilequeue))
@@ -175,7 +186,7 @@ func compileFunctions() {
 		}
 	}
 
-	types.CalcSizeDisabled = true // not safe to calculate sizes concurrently
+	types.CalcSizeDisabled = true	// not safe to calculate sizes concurrently
 	base.Ctxt.InParallel = true
 
 	compile(compilequeue)

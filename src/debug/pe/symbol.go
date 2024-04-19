@@ -17,12 +17,12 @@ const COFFSymbolSize = 18
 
 // COFFSymbol represents single COFF symbol table record.
 type COFFSymbol struct {
-	Name               [8]uint8
-	Value              uint32
-	SectionNumber      int16
-	Type               uint16
-	StorageClass       uint8
-	NumberOfAuxSymbols uint8
+	Name			[8]uint8
+	Value			uint32
+	SectionNumber		int16
+	Type			uint16
+	StorageClass		uint8
+	NumberOfAuxSymbols	uint8
 }
 
 // readCOFFSymbols reads in the symbol table for a PE file, returning
@@ -55,11 +55,11 @@ func readCOFFSymbols(fh *FileHeader, r io.ReadSeeker) ([]COFFSymbol, error) {
 	if fh.NumberOfSymbols <= 0 {
 		return nil, nil
 	}
-	_, err := r.Seek(int64(fh.PointerToSymbolTable), seekStart)
+	_, err := r.Seek(int64(fh.PointerToSymbolTable), io.SeekStart)
 	if err != nil {
 		return nil, fmt.Errorf("fail to seek to symbol table: %v", err)
 	}
-	c := saferio.SliceCap((*COFFSymbol)(nil), uint64(fh.NumberOfSymbols))
+	c := saferio.SliceCap[COFFSymbol](uint64(fh.NumberOfSymbols))
 	if c < 0 {
 		return nil, errors.New("too many symbols; file may be corrupt")
 	}
@@ -130,25 +130,25 @@ func removeAuxSymbols(allsyms []COFFSymbol, st StringTable) ([]*Symbol, error) {
 		}
 		aux = sym.NumberOfAuxSymbols
 		s := &Symbol{
-			Name:          name,
-			Value:         sym.Value,
-			SectionNumber: sym.SectionNumber,
-			Type:          sym.Type,
-			StorageClass:  sym.StorageClass,
+			Name:		name,
+			Value:		sym.Value,
+			SectionNumber:	sym.SectionNumber,
+			Type:		sym.Type,
+			StorageClass:	sym.StorageClass,
 		}
 		syms = append(syms, s)
 	}
 	return syms, nil
 }
 
-// Symbol is similar to COFFSymbol with Name field replaced
+// Symbol is similar to [COFFSymbol] with Name field replaced
 // by Go string. Symbol also does not have NumberOfAuxSymbols.
 type Symbol struct {
-	Name          string
-	Value         uint32
-	SectionNumber int16
-	Type          uint16
-	StorageClass  uint8
+	Name		string
+	Value		uint32
+	SectionNumber	int16
+	Type		uint16
+	StorageClass	uint8
 }
 
 // COFFSymbolAuxFormat5 describes the expected form of an aux symbol
@@ -160,29 +160,29 @@ type Symbol struct {
 // https://docs.microsoft.com/en-us/windows/win32/debug/pe-format#auxiliary-format-5-section-definitions
 // for more on what's going on here.
 type COFFSymbolAuxFormat5 struct {
-	Size           uint32
-	NumRelocs      uint16
-	NumLineNumbers uint16
-	Checksum       uint32
-	SecNum         uint16
-	Selection      uint8
-	_              [3]uint8 // padding
+	Size		uint32
+	NumRelocs	uint16
+	NumLineNumbers	uint16
+	Checksum	uint32
+	SecNum		uint16
+	Selection	uint8
+	_		[3]uint8	// padding
 }
 
 // These constants make up the possible values for the 'Selection'
 // field in an AuxFormat5.
 const (
-	IMAGE_COMDAT_SELECT_NODUPLICATES = 1
-	IMAGE_COMDAT_SELECT_ANY          = 2
-	IMAGE_COMDAT_SELECT_SAME_SIZE    = 3
-	IMAGE_COMDAT_SELECT_EXACT_MATCH  = 4
-	IMAGE_COMDAT_SELECT_ASSOCIATIVE  = 5
-	IMAGE_COMDAT_SELECT_LARGEST      = 6
+	IMAGE_COMDAT_SELECT_NODUPLICATES	= 1
+	IMAGE_COMDAT_SELECT_ANY			= 2
+	IMAGE_COMDAT_SELECT_SAME_SIZE		= 3
+	IMAGE_COMDAT_SELECT_EXACT_MATCH		= 4
+	IMAGE_COMDAT_SELECT_ASSOCIATIVE		= 5
+	IMAGE_COMDAT_SELECT_LARGEST		= 6
 )
 
-// COFFSymbolReadSectionDefAux returns a blob of axiliary information
+// COFFSymbolReadSectionDefAux returns a blob of auxiliary information
 // (including COMDAT info) for a section definition symbol. Here 'idx'
-// is the index of a section symbol in the main COFFSymbol array for
+// is the index of a section symbol in the main [COFFSymbol] array for
 // the File. Return value is a pointer to the appropriate aux symbol
 // struct. For more info, see:
 //

@@ -26,14 +26,14 @@ import (
 
 // Keep these in sync with cmd/gofmt/gofmt.go.
 const (
-	tabWidth    = 8
-	printerMode = printer.UseSpaces | printer.TabIndent | printerNormalizeNumbers
+	tabWidth	= 8
+	printerMode	= printer.UseSpaces | printer.TabIndent | printerNormalizeNumbers
 
 	// printerNormalizeNumbers means to canonicalize number literal prefixes
 	// and exponents while printing. See https://golang.org/doc/go1.13#gofmt.
 	//
 	// This value is defined in go/printer specifically for go/format and cmd/gofmt.
-	printerNormalizeNumbers = 1 << 30
+	printerNormalizeNumbers	= 1 << 30
 )
 
 var config = printer.Config{Mode: printerMode, Tabwidth: tabWidth}
@@ -42,11 +42,11 @@ const parserMode = parser.ParseComments | parser.SkipObjectResolution
 
 // Node formats node in canonical gofmt style and writes the result to dst.
 //
-// The node type must be *ast.File, *printer.CommentedNode, []ast.Decl,
-// []ast.Stmt, or assignment-compatible to ast.Expr, ast.Decl, ast.Spec,
-// or ast.Stmt. Node does not modify node. Imports are not sorted for
+// The node type must be *[ast.File], *[printer.CommentedNode], [][ast.Decl],
+// [][ast.Stmt], or assignment-compatible to [ast.Expr], [ast.Decl], [ast.Spec],
+// or [ast.Stmt]. Node does not modify node. Imports are not sorted for
 // nodes representing partial source files (for instance, if the node is
-// not an *ast.File or a *printer.CommentedNode not wrapping an *ast.File).
+// not an *[ast.File] or a *[printer.CommentedNode] not wrapping an *[ast.File]).
 //
 // The function may return early (before the entire result is written)
 // and return a formatting error, for instance due to an incorrect AST.

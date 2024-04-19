@@ -2,11 +2,10 @@
 // Use of this source code is governed by a BSD-style
 // license that can be found in the LICENSE file.
 
-// Package lostcancel defines an Analyzer that checks for failure to
-// call a context cancellation function.
 package lostcancel
 
 import (
+	_ "embed"
 	"fmt"
 	"github.com/bir3/gocompiler/src/go/ast"
 	"github.com/bir3/gocompiler/src/go/types"
@@ -14,21 +13,19 @@ import (
 	"github.com/bir3/gocompiler/src/xvendor/golang.org/x/tools/go/analysis"
 	"github.com/bir3/gocompiler/src/xvendor/golang.org/x/tools/go/analysis/passes/ctrlflow"
 	"github.com/bir3/gocompiler/src/xvendor/golang.org/x/tools/go/analysis/passes/inspect"
+	"github.com/bir3/gocompiler/src/xvendor/golang.org/x/tools/go/analysis/passes/internal/analysisutil"
 	"github.com/bir3/gocompiler/src/xvendor/golang.org/x/tools/go/ast/inspector"
 	"github.com/bir3/gocompiler/src/xvendor/golang.org/x/tools/go/cfg"
 )
 
-const Doc = `check cancel func returned by context.WithCancel is called
-
-The cancellation function returned by context.WithCancel, WithTimeout,
-and WithDeadline must be called or the new context will remain live
-until its parent context is cancelled.
-(The background context is never cancelled.)`
+//go:embed doc.go
+var doc string
 
 var Analyzer = &analysis.Analyzer{
-	Name: "lostcancel",
-	Doc:  Doc,
-	Run:  run,
+	Name:	"lostcancel",
+	Doc:	analysisutil.MustExtractDoc(doc, "lostcancel"),
+	URL:	"https://pkg.go.dev/golang.org/x/tools/go/analysis/passes/lostcancel",
+	Run:	run,
 	Requires: []*analysis.Analyzer{
 		inspect.Analyzer,
 		ctrlflow.Analyzer,
@@ -51,7 +48,7 @@ var contextPackage = "context"
 // checkLostCancel analyzes a single named or literal function.
 func run(pass *analysis.Pass) (interface{}, error) {
 	// Fast path: bypass check if file doesn't use context.WithCancel.
-	if !hasImport(pass.Pkg, contextPackage) {
+	if !analysisutil.Imports(pass.Pkg, contextPackage) {
 		return nil, nil
 	}
 
@@ -90,13 +87,13 @@ func runFunc(pass *analysis.Pass, node ast.Node) {
 		switch n.(type) {
 		case *ast.FuncLit:
 			if len(stack) > 0 {
-				return false // don't stray into nested functions
+				return false	// don't stray into nested functions
 			}
 		case nil:
-			stack = stack[:len(stack)-1] // pop
+			stack = stack[:len(stack)-1]	// pop
 			return true
 		}
-		stack = append(stack, n) // push
+		stack = append(stack, n)	// push
 
 		// Look for [{AssignStmt,ValueSpec} CallExpr SelectorExpr]:
 		//
@@ -107,7 +104,7 @@ func runFunc(pass *analysis.Pass, node ast.Node) {
 		if !isContextWithCancel(pass.TypesInfo, n) || !isCall(stack[len(stack)-2]) {
 			return true
 		}
-		var id *ast.Ident // id of cancel var
+		var id *ast.Ident	// id of cancel var
 		stmt := stack[len(stack)-3]
 		switch stmt := stmt.(type) {
 		case *ast.ValueSpec:
@@ -138,7 +135,7 @@ func runFunc(pass *analysis.Pass, node ast.Node) {
 	})
 
 	if len(cancelvars) == 0 {
-		return // no need to inspect CFG
+		return	// no need to inspect CFG
 	}
 
 	// Obtain the CFG.
@@ -160,7 +157,7 @@ func runFunc(pass *analysis.Pass, node ast.Node) {
 		g = cfgs.FuncLit(node)
 	}
 	if sig == nil {
-		return // missing type information
+		return	// missing type information
 	}
 
 	// Print CFG.
@@ -180,16 +177,7 @@ func runFunc(pass *analysis.Pass, node ast.Node) {
 	}
 }
 
-func isCall(n ast.Node) bool { _, ok := n.(*ast.CallExpr); return ok }
-
-func hasImport(pkg *types.Package, path string) bool {
-	for _, imp := range pkg.Imports() {
-		if imp.Path() == path {
-			return true
-		}
-	}
-	return false
-}
+func isCall(n ast.Node) bool	{ _, ok := n.(*ast.CallExpr); return ok }
 
 // isContextWithCancel reports whether n is one of the qualified identifiers
 // context.With{Cancel,Timeout,Deadline}.
@@ -304,7 +292,7 @@ outer:
 				if debug {
 					fmt.Printf("found path to return in block %s\n", b)
 				}
-				return ret // found
+				return ret	// found
 			}
 
 			// Recur

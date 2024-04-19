@@ -5,7 +5,6 @@
 package ld
 
 import (
-	"github.com/bir3/gocompiler/src/cmd/internal/sys"
 	"fmt"
 	"github.com/bir3/gocompiler/src/internal/buildcfg"
 	"github.com/bir3/gocompiler/src/internal/platform"
@@ -18,7 +17,7 @@ import (
 type BuildMode uint8
 
 const (
-	BuildModeUnset BuildMode = iota
+	BuildModeUnset	BuildMode	= iota
 	BuildModeExe
 	BuildModePIE
 	BuildModeCArchive
@@ -27,103 +26,42 @@ const (
 	BuildModePlugin
 )
 
+// Set implements flag.Value to set the build mode based on the argument
+// to the -buildmode flag.
 func (mode *BuildMode) Set(s string) error {
-	badmode := func() error {
-		return fmt.Errorf("buildmode %s not supported on %s/%s", s, buildcfg.GOOS, buildcfg.GOARCH)
-	}
 	switch s {
 	default:
 		return fmt.Errorf("invalid buildmode: %q", s)
 	case "exe":
 		switch buildcfg.GOOS + "/" + buildcfg.GOARCH {
-		case "darwin/arm64", "windows/arm", "windows/arm64": // On these platforms, everything is PIE
+		case "darwin/arm64", "windows/arm", "windows/arm64":	// On these platforms, everything is PIE
 			*mode = BuildModePIE
 		default:
 			*mode = BuildModeExe
 		}
 	case "pie":
-		switch buildcfg.GOOS {
-		case "aix", "android", "linux", "windows", "darwin", "ios":
-		case "freebsd":
-			switch buildcfg.GOARCH {
-			case "amd64":
-			default:
-				return badmode()
-			}
-		default:
-			return badmode()
-		}
 		*mode = BuildModePIE
 	case "c-archive":
-		switch buildcfg.GOOS {
-		case "aix", "darwin", "ios", "linux":
-		case "freebsd":
-			switch buildcfg.GOARCH {
-			case "amd64":
-			default:
-				return badmode()
-			}
-		case "windows":
-			switch buildcfg.GOARCH {
-			case "amd64", "386", "arm", "arm64":
-			default:
-				return badmode()
-			}
-		default:
-			return badmode()
-		}
 		*mode = BuildModeCArchive
 	case "c-shared":
-		switch buildcfg.GOARCH {
-		case "386", "amd64", "arm", "arm64", "ppc64le", "riscv64", "s390x":
-		default:
-			return badmode()
-		}
 		*mode = BuildModeCShared
 	case "shared":
-		switch buildcfg.GOOS {
-		case "linux":
-			switch buildcfg.GOARCH {
-			case "386", "amd64", "arm", "arm64", "ppc64le", "s390x":
-			default:
-				return badmode()
-			}
-		default:
-			return badmode()
-		}
 		*mode = BuildModeShared
 	case "plugin":
-		switch buildcfg.GOOS {
-		case "linux":
-			switch buildcfg.GOARCH {
-			case "386", "amd64", "arm", "arm64", "s390x", "ppc64le":
-			default:
-				return badmode()
-			}
-		case "darwin":
-			switch buildcfg.GOARCH {
-			case "amd64", "arm64":
-			default:
-				return badmode()
-			}
-		case "freebsd":
-			switch buildcfg.GOARCH {
-			case "amd64":
-			default:
-				return badmode()
-			}
-		default:
-			return badmode()
-		}
 		*mode = BuildModePlugin
 	}
+
+	if !platform.BuildModeSupported("gc", s, buildcfg.GOOS, buildcfg.GOARCH) {
+		return fmt.Errorf("buildmode %s not supported on %s/%s", s, buildcfg.GOOS, buildcfg.GOARCH)
+	}
+
 	return nil
 }
 
-func (mode *BuildMode) String() string {
-	switch *mode {
+func (mode BuildMode) String() string {
+	switch mode {
 	case BuildModeUnset:
-		return "" // avoid showing a default in usage message
+		return ""	// avoid showing a default in usage message
 	case BuildModeExe:
 		return "exe"
 	case BuildModePIE:
@@ -137,14 +75,14 @@ func (mode *BuildMode) String() string {
 	case BuildModePlugin:
 		return "plugin"
 	}
-	return fmt.Sprintf("BuildMode(%d)", uint8(*mode))
+	return fmt.Sprintf("BuildMode(%d)", uint8(mode))
 }
 
 // LinkMode indicates whether an external linker is used for the final link.
 type LinkMode uint8
 
 const (
-	LinkAuto LinkMode = iota
+	LinkAuto	LinkMode	= iota
 	LinkInternal
 	LinkExternal
 )
@@ -186,7 +124,7 @@ func mustLinkExternal(ctxt *Link) (res bool, reason string) {
 		}()
 	}
 
-	if platform.MustLinkExternal(buildcfg.GOOS, buildcfg.GOARCH) {
+	if platform.MustLinkExternal(buildcfg.GOOS, buildcfg.GOARCH, false) {
 		return true, fmt.Sprintf("%s/%s requires external linking", buildcfg.GOOS, buildcfg.GOARCH)
 	}
 
@@ -198,24 +136,8 @@ func mustLinkExternal(ctxt *Link) (res bool, reason string) {
 		return true, "asan"
 	}
 
-	// Internally linking cgo is incomplete on some architectures.
-	// https://golang.org/issue/14449
-	if iscgo && ctxt.Arch.InFamily(sys.Loong64, sys.MIPS64, sys.MIPS, sys.RISCV64) {
+	if iscgo && platform.MustLinkExternal(buildcfg.GOOS, buildcfg.GOARCH, true) {
 		return true, buildcfg.GOARCH + " does not support internal cgo"
-	}
-	if iscgo && (buildcfg.GOOS == "android" || buildcfg.GOOS == "dragonfly") {
-		// It seems that on Dragonfly thread local storage is
-		// set up by the dynamic linker, so internal cgo linking
-		// doesn't work. Test case is "go test runtime/cgo".
-		return true, buildcfg.GOOS + " does not support internal cgo"
-	}
-	if iscgo && buildcfg.GOOS == "windows" && buildcfg.GOARCH == "arm64" {
-		// windows/arm64 internal linking is not implemented.
-		return true, buildcfg.GOOS + "/" + buildcfg.GOARCH + " does not support internal cgo"
-	}
-	if iscgo && ctxt.Arch == sys.ArchPPC64 {
-		// Big Endian PPC64 cgo internal linking is not implemented for aix or linux.
-		return true, buildcfg.GOOS + " does not support internal cgo"
 	}
 
 	// Some build modes require work the internal linker cannot do (yet).
@@ -225,12 +147,7 @@ func mustLinkExternal(ctxt *Link) (res bool, reason string) {
 	case BuildModeCShared:
 		return true, "buildmode=c-shared"
 	case BuildModePIE:
-		switch buildcfg.GOOS + "/" + buildcfg.GOARCH {
-		case "android/arm64":
-		case "linux/amd64", "linux/arm64", "linux/ppc64le":
-		case "windows/386", "windows/amd64", "windows/arm", "windows/arm64":
-		case "darwin/amd64", "darwin/arm64":
-		default:
+		if !platform.InternalLinkPIESupported(buildcfg.GOOS, buildcfg.GOARCH) {
 			// Internal linking does not support TLS_IE.
 			return true, "buildmode=pie"
 		}
@@ -300,7 +217,7 @@ func determineLinkMode(ctxt *Link) {
 		}
 	case LinkExternal:
 		switch {
-		case buildcfg.GOARCH == "ppc64" && buildcfg.GOOS != "aix":
+		case buildcfg.GOARCH == "ppc64" && buildcfg.GOOS == "linux":
 			Exitf("external linking not supported for %s/ppc64", buildcfg.GOOS)
 		}
 	}

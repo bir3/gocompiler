@@ -11,8 +11,8 @@ import (
 )
 
 var (
-	kernelVersion53Once sync.Once
-	kernelVersion53     bool
+	kernelVersion53Once	sync.Once
+	kernelVersion53		bool
 )
 
 const maxCopyFileRangeRound = 1 << 30

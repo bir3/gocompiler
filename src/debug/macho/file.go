@@ -32,14 +32,14 @@ import (
 // A File represents an open Mach-O file.
 type File struct {
 	FileHeader
-	ByteOrder binary.ByteOrder
-	Loads     []Load
-	Sections  []*Section
+	ByteOrder	binary.ByteOrder
+	Loads		[]Load
+	Sections	[]*Section
 
-	Symtab   *Symtab
-	Dysymtab *Dysymtab
+	Symtab		*Symtab
+	Dysymtab	*Dysymtab
 
-	closer io.Closer
+	closer	io.Closer
 }
 
 // A Load represents any Mach-O load command.
@@ -50,21 +50,21 @@ type Load interface {
 // A LoadBytes is the uninterpreted bytes of a Mach-O load command.
 type LoadBytes []byte
 
-func (b LoadBytes) Raw() []byte { return b }
+func (b LoadBytes) Raw() []byte	{ return b }
 
 // A SegmentHeader is the header for a Mach-O 32-bit or 64-bit load segment command.
 type SegmentHeader struct {
-	Cmd     LoadCmd
-	Len     uint32
-	Name    string
-	Addr    uint64
-	Memsz   uint64
-	Offset  uint64
-	Filesz  uint64
-	Maxprot uint32
-	Prot    uint32
-	Nsect   uint32
-	Flag    uint32
+	Cmd	LoadCmd
+	Len	uint32
+	Name	string
+	Addr	uint64
+	Memsz	uint64
+	Offset	uint64
+	Filesz	uint64
+	Maxprot	uint32
+	Prot	uint32
+	Nsect	uint32
+	Flag	uint32
 }
 
 // A Segment represents a Mach-O 32-bit or 64-bit load segment command.
@@ -79,7 +79,7 @@ type Segment struct {
 	// Open() to avoid fighting over the seek offset
 	// with other clients.
 	io.ReaderAt
-	sr *io.SectionReader
+	sr	*io.SectionReader
 }
 
 // Data reads and returns the contents of the segment.
@@ -88,37 +88,37 @@ func (s *Segment) Data() ([]byte, error) {
 }
 
 // Open returns a new ReadSeeker reading the segment.
-func (s *Segment) Open() io.ReadSeeker { return io.NewSectionReader(s.sr, 0, 1<<63-1) }
+func (s *Segment) Open() io.ReadSeeker	{ return io.NewSectionReader(s.sr, 0, 1<<63-1) }
 
 type SectionHeader struct {
-	Name   string
-	Seg    string
-	Addr   uint64
-	Size   uint64
-	Offset uint32
-	Align  uint32
-	Reloff uint32
-	Nreloc uint32
-	Flags  uint32
+	Name	string
+	Seg	string
+	Addr	uint64
+	Size	uint64
+	Offset	uint32
+	Align	uint32
+	Reloff	uint32
+	Nreloc	uint32
+	Flags	uint32
 }
 
 // A Reloc represents a Mach-O relocation.
 type Reloc struct {
-	Addr  uint32
-	Value uint32
+	Addr	uint32
+	Value	uint32
 	// when Scattered == false && Extern == true, Value is the symbol number.
 	// when Scattered == false && Extern == false, Value is the section number.
 	// when Scattered == true, Value is the value that this reloc refers to.
-	Type      uint8
-	Len       uint8 // 0=byte, 1=word, 2=long, 3=quad
-	Pcrel     bool
-	Extern    bool // valid if Scattered == false
-	Scattered bool
+	Type		uint8
+	Len		uint8	// 0=byte, 1=word, 2=long, 3=quad
+	Pcrel		bool
+	Extern		bool	// valid if Scattered == false
+	Scattered	bool
 }
 
 type Section struct {
 	SectionHeader
-	Relocs []Reloc
+	Relocs	[]Reloc
 
 	// Embed ReaderAt for ReadAt method.
 	// Do not embed SectionReader directly
@@ -127,7 +127,7 @@ type Section struct {
 	// Open() to avoid fighting over the seek offset
 	// with other clients.
 	io.ReaderAt
-	sr *io.SectionReader
+	sr	*io.SectionReader
 }
 
 // Data reads and returns the contents of the Mach-O section.
@@ -136,44 +136,44 @@ func (s *Section) Data() ([]byte, error) {
 }
 
 // Open returns a new ReadSeeker reading the Mach-O section.
-func (s *Section) Open() io.ReadSeeker { return io.NewSectionReader(s.sr, 0, 1<<63-1) }
+func (s *Section) Open() io.ReadSeeker	{ return io.NewSectionReader(s.sr, 0, 1<<63-1) }
 
 // A Dylib represents a Mach-O load dynamic library command.
 type Dylib struct {
 	LoadBytes
-	Name           string
-	Time           uint32
-	CurrentVersion uint32
-	CompatVersion  uint32
+	Name		string
+	Time		uint32
+	CurrentVersion	uint32
+	CompatVersion	uint32
 }
 
 // A Symtab represents a Mach-O symbol table command.
 type Symtab struct {
 	LoadBytes
 	SymtabCmd
-	Syms []Symbol
+	Syms	[]Symbol
 }
 
 // A Dysymtab represents a Mach-O dynamic symbol table command.
 type Dysymtab struct {
 	LoadBytes
 	DysymtabCmd
-	IndirectSyms []uint32 // indices into Symtab.Syms
+	IndirectSyms	[]uint32	// indices into Symtab.Syms
 }
 
 // A Rpath represents a Mach-O rpath command.
 type Rpath struct {
 	LoadBytes
-	Path string
+	Path	string
 }
 
 // A Symbol is a Mach-O 32-bit or 64-bit symbol table entry.
 type Symbol struct {
-	Name  string
-	Type  uint8
-	Sect  uint8
-	Desc  uint16
-	Value uint64
+	Name	string
+	Type	uint8
+	Sect	uint8
+	Desc	uint16
+	Value	uint64
 }
 
 /*
@@ -183,9 +183,9 @@ type Symbol struct {
 // FormatError is returned by some operations if the data does
 // not have the correct format for an object file.
 type FormatError struct {
-	off int64
-	msg string
-	val any
+	off	int64
+	msg	string
+	val	any
 }
 
 func (e *FormatError) Error() string {
@@ -197,7 +197,7 @@ func (e *FormatError) Error() string {
 	return msg
 }
 
-// Open opens the named file using os.Open and prepares it for use as a Mach-O binary.
+// Open opens the named file using [os.Open] and prepares it for use as a Mach-O binary.
 func Open(name string) (*File, error) {
 	f, err := os.Open(name)
 	if err != nil {
@@ -212,8 +212,8 @@ func Open(name string) (*File, error) {
 	return ff, nil
 }
 
-// Close closes the File.
-// If the File was created using NewFile directly instead of Open,
+// Close closes the [File].
+// If the [File] was created using [NewFile] directly instead of [Open],
 // Close has no effect.
 func (f *File) Close() error {
 	var err error
@@ -224,7 +224,7 @@ func (f *File) Close() error {
 	return err
 }
 
-// NewFile creates a new File for accessing a Mach-O binary in an underlying reader.
+// NewFile creates a new [File] for accessing a Mach-O binary in an underlying reader.
 // The Mach-O binary is expected to start at position 0 in the ReaderAt.
 func NewFile(r io.ReaderAt) (*File, error) {
 	f := new(File)
@@ -263,7 +263,7 @@ func NewFile(r io.ReaderAt) (*File, error) {
 	if err != nil {
 		return nil, err
 	}
-	c := saferio.SliceCap((*Load)(nil), uint64(f.Ncmd))
+	c := saferio.SliceCap[Load](uint64(f.Ncmd))
 	if c < 0 {
 		return nil, &FormatError{offset, "too many load commands", nil}
 	}
@@ -323,8 +323,8 @@ func NewFile(r io.ReaderAt) (*File, error) {
 			if err := binary.Read(b, bo, &hdr); err != nil {
 				return nil, err
 			}
-			strtab := make([]byte, hdr.Strsize)
-			if _, err := r.ReadAt(strtab, int64(hdr.Stroff)); err != nil {
+			strtab, err := saferio.ReadDataAt(r, uint64(hdr.Strsize), int64(hdr.Stroff))
+			if err != nil {
 				return nil, err
 			}
 			var symsz int
@@ -350,7 +350,9 @@ func NewFile(r io.ReaderAt) (*File, error) {
 			if err := binary.Read(b, bo, &hdr); err != nil {
 				return nil, err
 			}
-			if hdr.Iundefsym > uint32(len(f.Symtab.Syms)) {
+			if f.Symtab == nil {
+				return nil, &FormatError{offset, "dynamic symbol table seen before any ordinary symbol table", nil}
+			} else if hdr.Iundefsym > uint32(len(f.Symtab.Syms)) {
 				return nil, &FormatError{offset, fmt.Sprintf(
 					"undefined symbols index in dynamic symbol table command is greater than symbol table length (%d > %d)",
 					hdr.Iundefsym, len(f.Symtab.Syms)), nil}
@@ -359,8 +361,8 @@ func NewFile(r io.ReaderAt) (*File, error) {
 					"number of undefined symbols after index in dynamic symbol table command is greater than symbol table length (%d > %d)",
 					hdr.Iundefsym+hdr.Nundefsym, len(f.Symtab.Syms)), nil}
 			}
-			dat := make([]byte, hdr.Nindirectsyms*4)
-			if _, err := r.ReadAt(dat, int64(hdr.Indirectsymoff)); err != nil {
+			dat, err := saferio.ReadDataAt(r, uint64(hdr.Nindirectsyms)*4, int64(hdr.Indirectsymoff))
+			if err != nil {
 				return nil, err
 			}
 			x := make([]uint32, hdr.Nindirectsyms)
@@ -470,7 +472,7 @@ func NewFile(r io.ReaderAt) (*File, error) {
 
 func (f *File) parseSymtab(symdat, strtab, cmddat []byte, hdr *SymtabCmd, offset int64) (*Symtab, error) {
 	bo := f.ByteOrder
-	c := saferio.SliceCap((*Symbol)(nil), uint64(hdr.Nsyms))
+	c := saferio.SliceCap[Symbol](uint64(hdr.Nsyms))
 	if c < 0 {
 		return nil, &FormatError{offset, "too many symbols", nil}
 	}
@@ -502,11 +504,11 @@ func (f *File) parseSymtab(symdat, strtab, cmddat []byte, hdr *SymtabCmd, offset
 			name = name[1:]
 		}
 		symtab = append(symtab, Symbol{
-			Name:  name,
-			Type:  n.Type,
-			Sect:  n.Sect,
-			Desc:  n.Desc,
-			Value: n.Value,
+			Name:	name,
+			Type:	n.Type,
+			Sect:	n.Sect,
+			Desc:	n.Desc,
+			Value:	n.Value,
 		})
 	}
 	st := new(Symtab)
@@ -516,8 +518,8 @@ func (f *File) parseSymtab(symdat, strtab, cmddat []byte, hdr *SymtabCmd, offset
 }
 
 type relocInfo struct {
-	Addr   uint32
-	Symnum uint32
+	Addr	uint32
+	Symnum	uint32
 }
 
 func (f *File) pushSection(sh *Section, r io.ReaderAt) error {
@@ -543,7 +545,7 @@ func (f *File) pushSection(sh *Section, r io.ReaderAt) error {
 				return err
 			}
 
-			if ri.Addr&(1<<31) != 0 { // scattered
+			if ri.Addr&(1<<31) != 0 {	// scattered
 				rel.Addr = ri.Addr & (1<<24 - 1)
 				rel.Type = uint8((ri.Addr >> 24) & (1<<4 - 1))
 				rel.Len = uint8((ri.Addr >> 28) & (1<<2 - 1))

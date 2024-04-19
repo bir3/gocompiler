@@ -21,11 +21,11 @@ import (
 // for our purposes and made a TokenReader. It forms the lowest level,
 // turning text from readers into tokens.
 type Tokenizer struct {
-	tok  ScanToken
-	s    *scanner.Scanner
-	base *src.PosBase
-	line int
-	file *os.File // If non-nil, file descriptor to close.
+	tok	ScanToken
+	s	*scanner.Scanner
+	base	*src.PosBase
+	line	int
+	file	*os.File	// If non-nil, file descriptor to close.
 }
 
 func NewTokenizer(name string, r io.Reader, file *os.File) *Tokenizer {
@@ -43,10 +43,10 @@ func NewTokenizer(name string, r io.Reader, file *os.File) *Tokenizer {
 	s.Position.Filename = name
 	s.IsIdentRune = isIdentRune
 	return &Tokenizer{
-		s:    &s,
-		base: src.NewFileBase(name, objabi.AbsFile(objabi.WorkingDir(), name, *flags.TrimPath)),
-		line: 1,
-		file: file,
+		s:	&s,
+		base:	src.NewFileBase(name, objabi.AbsFile(objabi.WorkingDir(), name, *flags.TrimPath)),
+		line:	1,
+		file:	file,
 	}
 }
 
@@ -56,11 +56,11 @@ func isIdentRune(ch rune, i int) bool {
 		return true
 	}
 	switch ch {
-	case '_': // Underscore; traditional.
+	case '_':	// Underscore; traditional.
 		return true
-	case '\u00B7': // Represents the period in runtime.exit. U+00B7 '·' middle dot
+	case '\u00B7':	// Represents the period in runtime.exit. U+00B7 '·' middle dot
 		return true
-	case '\u2215': // Represents the slash in runtime/debug.setGCPercent. U+2215 '∕' division slash
+	case '\u2215':	// Represents the slash in runtime/debug.setGCPercent. U+2215 '∕' division slash
 		return true
 	}
 	// Digits are OK only after the first character.

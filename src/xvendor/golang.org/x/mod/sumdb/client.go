@@ -19,7 +19,7 @@ import (
 )
 
 // A ClientOps provides the external operations
-// (file caching, HTTP fetches, and so on) needed by the Client.
+// (file caching, HTTP fetches, and so on) needed by the [Client].
 // The methods must be safe for concurrent use by multiple goroutines.
 type ClientOps interface {
 	// ReadRemote reads and returns the content served at the given path
@@ -72,44 +72,44 @@ type ClientOps interface {
 // ErrWriteConflict signals a write conflict during Client.WriteConfig.
 var ErrWriteConflict = errors.New("write conflict")
 
-// ErrSecurity is returned by Client operations that invoke Client.SecurityError.
+// ErrSecurity is returned by [Client] operations that invoke Client.SecurityError.
 var ErrSecurity = errors.New("security error: misbehaving server")
 
 // A Client is a client connection to a checksum database.
 // All the methods are safe for simultaneous use by multiple goroutines.
 type Client struct {
-	ops ClientOps // access to operations in the external world
+	ops	ClientOps	// access to operations in the external world
 
-	didLookup uint32
+	didLookup	uint32
 
 	// one-time initialized data
-	initOnce   sync.Once
-	initErr    error          // init error, if any
-	name       string         // name of accepted verifier
-	verifiers  note.Verifiers // accepted verifiers (just one, but Verifiers for note.Open)
-	tileReader tileReader
-	tileHeight int
-	nosumdb    string
+	initOnce	sync.Once
+	initErr		error		// init error, if any
+	name		string		// name of accepted verifier
+	verifiers	note.Verifiers	// accepted verifiers (just one, but Verifiers for note.Open)
+	tileReader	tileReader
+	tileHeight	int
+	nosumdb		string
 
-	record    parCache // cache of record lookup, keyed by path@vers
-	tileCache parCache // cache of c.readTile, keyed by tile
+	record		parCache	// cache of record lookup, keyed by path@vers
+	tileCache	parCache	// cache of c.readTile, keyed by tile
 
-	latestMu  sync.Mutex
-	latest    tlog.Tree // latest known tree head
-	latestMsg []byte    // encoded signed note for latest
+	latestMu	sync.Mutex
+	latest		tlog.Tree	// latest known tree head
+	latestMsg	[]byte		// encoded signed note for latest
 
-	tileSavedMu sync.Mutex
-	tileSaved   map[tlog.Tile]bool // which tiles have been saved using c.ops.WriteCache already
+	tileSavedMu	sync.Mutex
+	tileSaved	map[tlog.Tile]bool	// which tiles have been saved using c.ops.WriteCache already
 }
 
-// NewClient returns a new Client using the given Client.
+// NewClient returns a new [Client] using the given [ClientOps].
 func NewClient(ops ClientOps) *Client {
 	return &Client{
 		ops: ops,
 	}
 }
 
-// init initiailzes the client (if not already initialized)
+// init initializes the client (if not already initialized)
 // and returns any initialization error.
 func (c *Client) init() error {
 	c.initOnce.Do(c.initWork)
@@ -155,7 +155,7 @@ func (c *Client) initWork() {
 }
 
 // SetTileHeight sets the tile height for the Client.
-// Any call to SetTileHeight must happen before the first call to Lookup.
+// Any call to SetTileHeight must happen before the first call to [Client.Lookup].
 // If SetTileHeight is not called, the Client defaults to tile height 8.
 // SetTileHeight can be called at most once,
 // and if so it must be called before the first call to Lookup.
@@ -174,7 +174,7 @@ func (c *Client) SetTileHeight(height int) {
 
 // SetGONOSUMDB sets the list of comma-separated GONOSUMDB patterns for the Client.
 // For any module path matching one of the patterns,
-// Lookup will return ErrGONOSUMDB.
+// [Client.Lookup] will return ErrGONOSUMDB.
 // SetGONOSUMDB can be called at most once,
 // and if so it must be called before the first call to Lookup.
 func (c *Client) SetGONOSUMDB(list string) {
@@ -187,8 +187,8 @@ func (c *Client) SetGONOSUMDB(list string) {
 	c.nosumdb = list
 }
 
-// ErrGONOSUMDB is returned by Lookup for paths that match
-// a pattern listed in the GONOSUMDB list (set by SetGONOSUMDB,
+// ErrGONOSUMDB is returned by [Client.Lookup] for paths that match
+// a pattern listed in the GONOSUMDB list (set by [Client.SetGONOSUMDB],
 // usually from the environment variable).
 var ErrGONOSUMDB = errors.New("skipped (listed in GONOSUMDB)")
 
@@ -278,8 +278,8 @@ func (c *Client) Lookup(path, vers string) (lines []string, err error) {
 	// path and version) and also avoids having multiple of the same
 	// request in flight at once.
 	type cached struct {
-		data []byte
-		err  error
+		data	[]byte
+		err	error
 	}
 	result := c.record.Do(file, func() interface{} {
 		// Try the on-disk cache, or else get from web.
@@ -381,7 +381,7 @@ func (c *Client) mergeLatest(msg []byte) error {
 }
 
 const (
-	msgPast = 1 + iota
+	msgPast	= 1 + iota
 	msgNow
 	msgFuture
 )
@@ -553,6 +553,11 @@ func (r *tileReader) ReadTiles(tiles []tlog.Tile) ([][]byte, error) {
 		wg.Add(1)
 		go func(i int, tile tlog.Tile) {
 			defer wg.Done()
+			defer func() {
+				if e := recover(); e != nil {
+					errs[i] = fmt.Errorf("panic: %v", e)
+				}
+			}()
 			data[i], errs[i] = r.c.readTile(tile)
 		}(i, tile)
 	}
@@ -580,8 +585,8 @@ func (c *Client) tileRemotePath(tile tlog.Tile) string {
 // readTile reads a single tile, either from the on-disk cache or the server.
 func (c *Client) readTile(tile tlog.Tile) ([]byte, error) {
 	type cached struct {
-		data []byte
-		err  error
+		data	[]byte
+		err	error
 	}
 
 	result := c.tileCache.Do(tile, func() interface{} {
@@ -600,7 +605,7 @@ func (c *Client) readTile(tile tlog.Tile) ([]byte, error) {
 		if tile != full {
 			data, err := c.ops.ReadCache(c.tileCacheKey(full))
 			if err == nil {
-				c.markTileSaved(tile) // don't save tile later; we already have full
+				c.markTileSaved(tile)	// don't save tile later; we already have full
 				return cached{data[:len(data)/full.W*tile.W], nil}
 			}
 		}

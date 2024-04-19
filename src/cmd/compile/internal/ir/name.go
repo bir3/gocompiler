@@ -18,7 +18,7 @@ import (
 // An Ident is an identifier, possibly qualified.
 type Ident struct {
 	miniExpr
-	sym *types.Sym
+	sym	*types.Sym
 }
 
 func NewIdent(pos src.XPos, sym *types.Sym) *Ident {
@@ -29,115 +29,47 @@ func NewIdent(pos src.XPos, sym *types.Sym) *Ident {
 	return n
 }
 
-func (n *Ident) Sym() *types.Sym { return n.sym }
+func (n *Ident) Sym() *types.Sym	{ return n.sym }
 
 // Name holds Node fields used only by named nodes (ONAME, OTYPE, some OLITERAL).
 type Name struct {
 	miniExpr
-	BuiltinOp Op         // uint8
-	Class     Class      // uint8
-	pragma    PragmaFlag // int16
-	flags     bitset16
-	DictIndex uint16 // index of the dictionary entry describing the type of this variable declaration plus 1
-	sym       *types.Sym
-	Func      *Func // TODO(austin): nil for I.M, eqFor, hashfor, and hashmem
-	Offset_   int64
-	val       constant.Value
-	Opt       interface{} // for use by escape analysis
-	Embed     *[]Embed    // list of embedded files, for ONAME var
+	BuiltinOp	Op		// uint8
+	Class		Class		// uint8
+	pragma		PragmaFlag	// int16
+	flags		bitset16
+	DictIndex	uint16	// index of the dictionary entry describing the type of this variable declaration plus 1
+	sym		*types.Sym
+	Func		*Func	// TODO(austin): nil for I.M
+	Offset_		int64
+	val		constant.Value
+	Opt		interface{}	// for use by escape analysis
+	Embed		*[]Embed	// list of embedded files, for ONAME var
 
 	// For a local variable (not param) or extern, the initializing assignment (OAS or OAS2).
-	// For a closure var, the ONAME node of the outer captured variable.
+	// For a closure var, the ONAME node of the original (outermost) captured variable.
 	// For the case-local variables of a type switch, the type switch guard (OTYPESW).
 	// For a range variable, the range statement (ORANGE)
 	// For a recv variable in a case of a select statement, the receive assignment (OSELRECV2)
 	// For the name of a function, points to corresponding Func node.
-	Defn Node
+	Defn	Node
 
 	// The function, method, or closure in which local variable or param is declared.
-	Curfn *Func
+	Curfn	*Func
 
-	Heapaddr *Name // temp holding heap address of param
+	Heapaddr	*Name	// temp holding heap address of param
 
-	// ONAME closure linkage
-	// Consider:
-	//
-	//	func f() {
-	//		x := 1 // x1
-	//		func() {
-	//			use(x) // x2
-	//			func() {
-	//				use(x) // x3
-	//				--- parser is here ---
-	//			}()
-	//		}()
-	//	}
-	//
-	// There is an original declaration of x and then a chain of mentions of x
-	// leading into the current function. Each time x is mentioned in a new closure,
-	// we create a variable representing x for use in that specific closure,
-	// since the way you get to x is different in each closure.
-	//
-	// Let's number the specific variables as shown in the code:
-	// x1 is the original x, x2 is when mentioned in the closure,
-	// and x3 is when mentioned in the closure in the closure.
-	//
-	// We keep these linked (assume N > 1):
-	//
-	//   - x1.Defn = original declaration statement for x (like most variables)
-	//   - x1.Innermost = current innermost closure x (in this case x3), or nil for none
-	//   - x1.IsClosureVar() = false
-	//
-	//   - xN.Defn = x1, N > 1
-	//   - xN.IsClosureVar() = true, N > 1
-	//   - x2.Outer = nil
-	//   - xN.Outer = x(N-1), N > 2
-	//
-	//
-	// When we look up x in the symbol table, we always get x1.
-	// Then we can use x1.Innermost (if not nil) to get the x
-	// for the innermost known closure function,
-	// but the first reference in a closure will find either no x1.Innermost
-	// or an x1.Innermost with .Funcdepth < Funcdepth.
-	// In that case, a new xN must be created, linked in with:
-	//
-	//     xN.Defn = x1
-	//     xN.Outer = x1.Innermost
-	//     x1.Innermost = xN
-	//
-	// When we finish the function, we'll process its closure variables
-	// and find xN and pop it off the list using:
-	//
-	//     x1 := xN.Defn
-	//     x1.Innermost = xN.Outer
-	//
-	// We leave x1.Innermost set so that we can still get to the original
-	// variable quickly. Not shown here, but once we're
-	// done parsing a function and no longer need xN.Outer for the
-	// lexical x reference links as described above, funcLit
-	// recomputes xN.Outer as the semantic x reference link tree,
-	// even filling in x in intermediate closures that might not
-	// have mentioned it along the way to inner closures that did.
-	// See funcLit for details.
-	//
-	// During the eventual compilation, then, for closure variables we have:
-	//
-	//     xN.Defn = original variable
-	//     xN.Outer = variable captured in next outward scope
-	//                to make closure where xN appears
-	//
-	// Because of the sharding of pieces of the node, x.Defn means x.Name.Defn
-	// and x.Innermost/Outer means x.Name.Param.Innermost/Outer.
-	Innermost *Name
-	Outer     *Name
+	// Outer points to the immediately enclosing function's copy of this
+	// closure variable. If not a closure variable, then Outer is nil.
+	Outer	*Name
 }
 
-func (n *Name) isExpr() {}
+func (n *Name) isExpr()	{}
 
-func (n *Name) copy() Node                                  { panic(n.no("copy")) }
-func (n *Name) doChildren(do func(Node) bool) bool          { return false }
-func (n *Name) editChildren(edit func(Node) Node)           {}
-func (n *Name) editChildrenWithHidden(edit func(Node) Node) {}
+func (n *Name) copy() Node					{ panic(n.no("copy")) }
+func (n *Name) doChildren(do func(Node) bool) bool		{ return false }
+func (n *Name) editChildren(edit func(Node) Node)		{}
+func (n *Name) editChildrenWithHidden(edit func(Node) Node)	{}
 
 // RecordFrameOffset records the frame offset for the name.
 // It is used by package types when laying out function arguments.
@@ -147,11 +79,39 @@ func (n *Name) RecordFrameOffset(offset int64) {
 
 // NewNameAt returns a new ONAME Node associated with symbol s at position pos.
 // The caller is responsible for setting Curfn.
-func NewNameAt(pos src.XPos, sym *types.Sym) *Name {
+func NewNameAt(pos src.XPos, sym *types.Sym, typ *types.Type) *Name {
 	if sym == nil {
 		base.Fatalf("NewNameAt nil")
 	}
-	return newNameAt(pos, ONAME, sym)
+	n := newNameAt(pos, ONAME, sym)
+	if typ != nil {
+		n.SetType(typ)
+		n.SetTypecheck(1)
+	}
+	return n
+}
+
+// NewBuiltin returns a new Name representing a builtin function,
+// either predeclared or from package unsafe.
+func NewBuiltin(sym *types.Sym, op Op) *Name {
+	n := newNameAt(src.NoXPos, ONAME, sym)
+	n.BuiltinOp = op
+	n.SetTypecheck(1)
+	sym.Def = n
+	return n
+}
+
+// NewLocal returns a new function-local variable with the given name and type.
+func (fn *Func) NewLocal(pos src.XPos, sym *types.Sym, typ *types.Type) *Name {
+	if fn.Dcl == nil {
+		base.FatalfAt(pos, "must call DeclParams on %v first", fn)
+	}
+
+	n := NewNameAt(pos, sym, typ)
+	n.Class = PAUTO
+	n.Curfn = fn
+	fn.Dcl = append(fn.Dcl, n)
+	return n
 }
 
 // NewDeclNameAt returns a new Name associated with symbol s at position pos.
@@ -176,6 +136,7 @@ func NewConstAt(pos src.XPos, sym *types.Sym, typ *types.Type, val constant.Valu
 	}
 	n := newNameAt(pos, OLITERAL, sym)
 	n.SetType(typ)
+	n.SetTypecheck(1)
 	n.SetVal(val)
 	return n
 }
@@ -189,88 +150,82 @@ func newNameAt(pos src.XPos, op Op, sym *types.Sym) *Name {
 	return n
 }
 
-func (n *Name) Name() *Name         { return n }
-func (n *Name) Sym() *types.Sym     { return n.sym }
-func (n *Name) SetSym(x *types.Sym) { n.sym = x }
-func (n *Name) SubOp() Op           { return n.BuiltinOp }
-func (n *Name) SetSubOp(x Op)       { n.BuiltinOp = x }
-func (n *Name) SetFunc(x *Func)     { n.Func = x }
-func (n *Name) Offset() int64       { panic("Name.Offset") }
-func (n *Name) SetOffset(x int64) {
-	if x != 0 {
-		panic("Name.SetOffset")
-	}
-}
-func (n *Name) FrameOffset() int64     { return n.Offset_ }
-func (n *Name) SetFrameOffset(x int64) { n.Offset_ = x }
+func (n *Name) Name() *Name		{ return n }
+func (n *Name) Sym() *types.Sym		{ return n.sym }
+func (n *Name) SetSym(x *types.Sym)	{ n.sym = x }
+func (n *Name) SubOp() Op		{ return n.BuiltinOp }
+func (n *Name) SetSubOp(x Op)		{ n.BuiltinOp = x }
+func (n *Name) SetFunc(x *Func)		{ n.Func = x }
+func (n *Name) FrameOffset() int64	{ return n.Offset_ }
+func (n *Name) SetFrameOffset(x int64)	{ n.Offset_ = x }
 
-func (n *Name) Linksym() *obj.LSym               { return n.sym.Linksym() }
-func (n *Name) LinksymABI(abi obj.ABI) *obj.LSym { return n.sym.LinksymABI(abi) }
+func (n *Name) Linksym() *obj.LSym			{ return n.sym.Linksym() }
+func (n *Name) LinksymABI(abi obj.ABI) *obj.LSym	{ return n.sym.LinksymABI(abi) }
 
-func (*Name) CanBeNtype()    {}
-func (*Name) CanBeAnSSASym() {}
-func (*Name) CanBeAnSSAAux() {}
+func (*Name) CanBeNtype()	{}
+func (*Name) CanBeAnSSASym()	{}
+func (*Name) CanBeAnSSAAux()	{}
 
 // Pragma returns the PragmaFlag for p, which must be for an OTYPE.
-func (n *Name) Pragma() PragmaFlag { return n.pragma }
+func (n *Name) Pragma() PragmaFlag	{ return n.pragma }
 
 // SetPragma sets the PragmaFlag for p, which must be for an OTYPE.
-func (n *Name) SetPragma(flag PragmaFlag) { n.pragma = flag }
+func (n *Name) SetPragma(flag PragmaFlag)	{ n.pragma = flag }
 
 // Alias reports whether p, which must be for an OTYPE, is a type alias.
-func (n *Name) Alias() bool { return n.flags&nameAlias != 0 }
+func (n *Name) Alias() bool	{ return n.flags&nameAlias != 0 }
 
 // SetAlias sets whether p, which must be for an OTYPE, is a type alias.
-func (n *Name) SetAlias(alias bool) { n.flags.set(nameAlias, alias) }
+func (n *Name) SetAlias(alias bool)	{ n.flags.set(nameAlias, alias) }
 
 const (
-	nameReadonly                 = 1 << iota
-	nameByval                    // is the variable captured by value or by reference
-	nameNeedzero                 // if it contains pointers, needs to be zeroed on function entry
-	nameAutoTemp                 // is the variable a temporary (implies no dwarf info. reset if escapes to heap)
-	nameUsed                     // for variable declared and not used error
-	nameIsClosureVar             // PAUTOHEAP closure pseudo-variable; original (if any) at n.Defn
-	nameIsOutputParamHeapAddr    // pointer to a result parameter's heap copy
-	nameIsOutputParamInRegisters // output parameter in registers spills as an auto
-	nameAddrtaken                // address taken, even if not moved to heap
-	nameInlFormal                // PAUTO created by inliner, derived from callee formal
-	nameInlLocal                 // PAUTO created by inliner, derived from callee local
-	nameOpenDeferSlot            // if temporary var storing info for open-coded defers
-	nameLibfuzzer8BitCounter     // if PEXTERN should be assigned to __sancov_cntrs section
-	nameCoverageCounter          // instrumentation counter var for cmd/cover
-	nameCoverageAuxVar           // instrumentation pkg ID variable cmd/cover
-	nameAlias                    // is type name an alias
+	nameReadonly			= 1 << iota
+	nameByval			// is the variable captured by value or by reference
+	nameNeedzero			// if it contains pointers, needs to be zeroed on function entry
+	nameAutoTemp			// is the variable a temporary (implies no dwarf info. reset if escapes to heap)
+	nameUsed			// for variable declared and not used error
+	nameIsClosureVar		// PAUTOHEAP closure pseudo-variable; original (if any) at n.Defn
+	nameIsOutputParamHeapAddr	// pointer to a result parameter's heap copy
+	nameIsOutputParamInRegisters	// output parameter in registers spills as an auto
+	nameAddrtaken			// address taken, even if not moved to heap
+	nameInlFormal			// PAUTO created by inliner, derived from callee formal
+	nameInlLocal			// PAUTO created by inliner, derived from callee local
+	nameOpenDeferSlot		// if temporary var storing info for open-coded defers
+	nameLibfuzzer8BitCounter	// if PEXTERN should be assigned to __sancov_cntrs section
+	nameCoverageCounter		// instrumentation counter var for cmd/cover
+	nameCoverageAuxVar		// instrumentation pkg ID variable cmd/cover
+	nameAlias			// is type name an alias
 )
 
-func (n *Name) Readonly() bool                 { return n.flags&nameReadonly != 0 }
-func (n *Name) Needzero() bool                 { return n.flags&nameNeedzero != 0 }
-func (n *Name) AutoTemp() bool                 { return n.flags&nameAutoTemp != 0 }
-func (n *Name) Used() bool                     { return n.flags&nameUsed != 0 }
-func (n *Name) IsClosureVar() bool             { return n.flags&nameIsClosureVar != 0 }
-func (n *Name) IsOutputParamHeapAddr() bool    { return n.flags&nameIsOutputParamHeapAddr != 0 }
-func (n *Name) IsOutputParamInRegisters() bool { return n.flags&nameIsOutputParamInRegisters != 0 }
-func (n *Name) Addrtaken() bool                { return n.flags&nameAddrtaken != 0 }
-func (n *Name) InlFormal() bool                { return n.flags&nameInlFormal != 0 }
-func (n *Name) InlLocal() bool                 { return n.flags&nameInlLocal != 0 }
-func (n *Name) OpenDeferSlot() bool            { return n.flags&nameOpenDeferSlot != 0 }
-func (n *Name) Libfuzzer8BitCounter() bool     { return n.flags&nameLibfuzzer8BitCounter != 0 }
-func (n *Name) CoverageCounter() bool          { return n.flags&nameCoverageCounter != 0 }
-func (n *Name) CoverageAuxVar() bool           { return n.flags&nameCoverageAuxVar != 0 }
+func (n *Name) Readonly() bool			{ return n.flags&nameReadonly != 0 }
+func (n *Name) Needzero() bool			{ return n.flags&nameNeedzero != 0 }
+func (n *Name) AutoTemp() bool			{ return n.flags&nameAutoTemp != 0 }
+func (n *Name) Used() bool			{ return n.flags&nameUsed != 0 }
+func (n *Name) IsClosureVar() bool		{ return n.flags&nameIsClosureVar != 0 }
+func (n *Name) IsOutputParamHeapAddr() bool	{ return n.flags&nameIsOutputParamHeapAddr != 0 }
+func (n *Name) IsOutputParamInRegisters() bool	{ return n.flags&nameIsOutputParamInRegisters != 0 }
+func (n *Name) Addrtaken() bool			{ return n.flags&nameAddrtaken != 0 }
+func (n *Name) InlFormal() bool			{ return n.flags&nameInlFormal != 0 }
+func (n *Name) InlLocal() bool			{ return n.flags&nameInlLocal != 0 }
+func (n *Name) OpenDeferSlot() bool		{ return n.flags&nameOpenDeferSlot != 0 }
+func (n *Name) Libfuzzer8BitCounter() bool	{ return n.flags&nameLibfuzzer8BitCounter != 0 }
+func (n *Name) CoverageCounter() bool		{ return n.flags&nameCoverageCounter != 0 }
+func (n *Name) CoverageAuxVar() bool		{ return n.flags&nameCoverageAuxVar != 0 }
 
-func (n *Name) setReadonly(b bool)                 { n.flags.set(nameReadonly, b) }
-func (n *Name) SetNeedzero(b bool)                 { n.flags.set(nameNeedzero, b) }
-func (n *Name) SetAutoTemp(b bool)                 { n.flags.set(nameAutoTemp, b) }
-func (n *Name) SetUsed(b bool)                     { n.flags.set(nameUsed, b) }
-func (n *Name) SetIsClosureVar(b bool)             { n.flags.set(nameIsClosureVar, b) }
-func (n *Name) SetIsOutputParamHeapAddr(b bool)    { n.flags.set(nameIsOutputParamHeapAddr, b) }
-func (n *Name) SetIsOutputParamInRegisters(b bool) { n.flags.set(nameIsOutputParamInRegisters, b) }
-func (n *Name) SetAddrtaken(b bool)                { n.flags.set(nameAddrtaken, b) }
-func (n *Name) SetInlFormal(b bool)                { n.flags.set(nameInlFormal, b) }
-func (n *Name) SetInlLocal(b bool)                 { n.flags.set(nameInlLocal, b) }
-func (n *Name) SetOpenDeferSlot(b bool)            { n.flags.set(nameOpenDeferSlot, b) }
-func (n *Name) SetLibfuzzer8BitCounter(b bool)     { n.flags.set(nameLibfuzzer8BitCounter, b) }
-func (n *Name) SetCoverageCounter(b bool)          { n.flags.set(nameCoverageCounter, b) }
-func (n *Name) SetCoverageAuxVar(b bool)           { n.flags.set(nameCoverageAuxVar, b) }
+func (n *Name) setReadonly(b bool)			{ n.flags.set(nameReadonly, b) }
+func (n *Name) SetNeedzero(b bool)			{ n.flags.set(nameNeedzero, b) }
+func (n *Name) SetAutoTemp(b bool)			{ n.flags.set(nameAutoTemp, b) }
+func (n *Name) SetUsed(b bool)				{ n.flags.set(nameUsed, b) }
+func (n *Name) SetIsClosureVar(b bool)			{ n.flags.set(nameIsClosureVar, b) }
+func (n *Name) SetIsOutputParamHeapAddr(b bool)		{ n.flags.set(nameIsOutputParamHeapAddr, b) }
+func (n *Name) SetIsOutputParamInRegisters(b bool)	{ n.flags.set(nameIsOutputParamInRegisters, b) }
+func (n *Name) SetAddrtaken(b bool)			{ n.flags.set(nameAddrtaken, b) }
+func (n *Name) SetInlFormal(b bool)			{ n.flags.set(nameInlFormal, b) }
+func (n *Name) SetInlLocal(b bool)			{ n.flags.set(nameInlLocal, b) }
+func (n *Name) SetOpenDeferSlot(b bool)			{ n.flags.set(nameOpenDeferSlot, b) }
+func (n *Name) SetLibfuzzer8BitCounter(b bool)		{ n.flags.set(nameLibfuzzer8BitCounter, b) }
+func (n *Name) SetCoverageCounter(b bool)		{ n.flags.set(nameCoverageCounter, b) }
+func (n *Name) SetCoverageAuxVar(b bool)		{ n.flags.set(nameCoverageAuxVar, b) }
 
 // OnStack reports whether variable n may reside on the stack.
 func (n *Name) OnStack() bool {
@@ -351,15 +306,12 @@ func NewClosureVar(pos src.XPos, fn *Func, n *Name) *Name {
 		base.Fatalf("NewClosureVar: %+v", n)
 	}
 
-	c := NewNameAt(pos, n.Sym())
+	c := NewNameAt(pos, n.Sym(), n.Type())
 	c.Curfn = fn
 	c.Class = PAUTOHEAP
 	c.SetIsClosureVar(true)
 	c.Defn = n.Canonical()
 	c.Outer = n
-
-	c.SetType(n.Type())
-	c.SetTypecheck(n.Typecheck())
 
 	fn.ClosureVars = append(fn.ClosureVars, c)
 
@@ -377,86 +329,11 @@ func NewHiddenParam(pos src.XPos, fn *Func, sym *types.Sym, typ *types.Type) *Na
 
 	// Create a fake parameter, disassociated from any real function, to
 	// pretend to capture.
-	fake := NewNameAt(pos, sym)
+	fake := NewNameAt(pos, sym, typ)
 	fake.Class = PPARAM
-	fake.SetType(typ)
 	fake.SetByval(true)
 
 	return NewClosureVar(pos, fn, fake)
-}
-
-// CaptureName returns a Name suitable for referring to n from within function
-// fn or from the package block if fn is nil. If n is a free variable declared
-// within a function that encloses fn, then CaptureName returns the closure
-// variable that refers to n within fn, creating it if necessary.
-// Otherwise, it simply returns n.
-func CaptureName(pos src.XPos, fn *Func, n *Name) *Name {
-	if n.Op() != ONAME || n.Curfn == nil {
-		return n // okay to use directly
-	}
-	if n.IsClosureVar() {
-		base.FatalfAt(pos, "misuse of CaptureName on closure variable: %v", n)
-	}
-
-	c := n.Innermost
-	if c == nil {
-		c = n
-	}
-	if c.Curfn == fn {
-		return c
-	}
-
-	if fn == nil {
-		base.FatalfAt(pos, "package-block reference to %v, declared in %v", n, n.Curfn)
-	}
-
-	// Do not have a closure var for the active closure yet; make one.
-	c = NewClosureVar(pos, fn, c)
-
-	// Link into list of active closure variables.
-	// Popped from list in FinishCaptureNames.
-	n.Innermost = c
-
-	return c
-}
-
-// FinishCaptureNames handles any work leftover from calling CaptureName
-// earlier. outerfn should be the function that immediately encloses fn.
-func FinishCaptureNames(pos src.XPos, outerfn, fn *Func) {
-	// closure-specific variables are hanging off the
-	// ordinary ones; see CaptureName above.
-	// unhook them.
-	// make the list of pointers for the closure call.
-	for _, cv := range fn.ClosureVars {
-		// Unlink from n; see comment above on type Name for these fields.
-		n := cv.Defn.(*Name)
-		n.Innermost = cv.Outer
-
-		// If the closure usage of n is not dense, we need to make it
-		// dense by recapturing n within the enclosing function.
-		//
-		// That is, suppose we just finished parsing the innermost
-		// closure f4 in this code:
-		//
-		//	func f() {
-		//		n := 1
-		//		func() { // f2
-		//			use(n)
-		//			func() { // f3
-		//				func() { // f4
-		//					use(n)
-		//				}()
-		//			}()
-		//		}()
-		//	}
-		//
-		// At this point cv.Outer is f2's n; there is no n for f3. To
-		// construct the closure f4 from within f3, we need to use f3's
-		// n and in this case we need to create f3's n with CaptureName.
-		//
-		// We'll decide later in walk whether to use v directly or &v.
-		cv.Outer = CaptureName(pos, outerfn, n)
-	}
 }
 
 // SameSource reports whether two nodes refer to the same source
@@ -503,20 +380,20 @@ type Class uint8
 
 //go:generate stringer -type=Class name.go
 const (
-	Pxxx       Class = iota // no class; used during ssa conversion to indicate pseudo-variables
-	PEXTERN                 // global variables
-	PAUTO                   // local variables
-	PAUTOHEAP               // local variables or parameters moved to heap
-	PPARAM                  // input arguments
-	PPARAMOUT               // output results
-	PTYPEPARAM              // type params
-	PFUNC                   // global functions
+	Pxxx		Class	= iota	// no class; used during ssa conversion to indicate pseudo-variables
+	PEXTERN				// global variables
+	PAUTO				// local variables
+	PAUTOHEAP			// local variables or parameters moved to heap
+	PPARAM				// input arguments
+	PPARAMOUT			// output results
+	PTYPEPARAM			// type params
+	PFUNC				// global functions
 
 	// Careful: Class is stored in three bits in Node.flags.
-	_ = uint((1 << 3) - iota) // static assert for iota <= (1 << 3)
+	_	= uint((1 << 3) - iota)	// static assert for iota <= (1 << 3)
 )
 
 type Embed struct {
-	Pos      src.XPos
-	Patterns []string
+	Pos		src.XPos
+	Patterns	[]string
 }

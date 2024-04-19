@@ -37,12 +37,12 @@ type commands map[string]*command
 // during report generation, any postprocessing functions, and whether
 // the command expects a regexp parameter (typically a function name).
 type command struct {
-	format      int           // report format to generate
-	postProcess PostProcessor // postprocessing to run on report
-	visualizer  PostProcessor // display output using some callback
-	hasParam    bool          // collect a parameter from the CLI
-	description string        // single-line description text saying what the command does
-	usage       string        // multi-line help text saying how the command is used
+	format		int		// report format to generate
+	postProcess	PostProcessor	// postprocessing to run on report
+	visualizer	PostProcessor	// display output using some callback
+	hasParam	bool		// collect a parameter from the CLI
+	description	string		// single-line description text saying what the command does
+	usage		string		// multi-line help text saying how the command is used
 }
 
 // help returns a help string for a command.
@@ -82,49 +82,49 @@ var interactiveMode = false
 // pprofCommands are the report generation commands recognized by pprof.
 var pprofCommands = commands{
 	// Commands that require no post-processing.
-	"comments": {report.Comments, nil, nil, false, "Output all profile comments", ""},
-	"disasm":   {report.Dis, nil, nil, true, "Output assembly listings annotated with samples", listHelp("disasm", true)},
-	"dot":      {report.Dot, nil, nil, false, "Outputs a graph in DOT format", reportHelp("dot", false, true)},
-	"list":     {report.List, nil, nil, true, "Output annotated source for functions matching regexp", listHelp("list", false)},
-	"peek":     {report.Tree, nil, nil, true, "Output callers/callees of functions matching regexp", "peek func_regex\nDisplay callers and callees of functions matching func_regex."},
-	"raw":      {report.Raw, nil, nil, false, "Outputs a text representation of the raw profile", ""},
-	"tags":     {report.Tags, nil, nil, false, "Outputs all tags in the profile", "tags [tag_regex]* [-ignore_regex]* [>file]\nList tags with key:value matching tag_regex and exclude ignore_regex."},
-	"text":     {report.Text, nil, nil, false, "Outputs top entries in text form", reportHelp("text", true, true)},
-	"top":      {report.Text, nil, nil, false, "Outputs top entries in text form", reportHelp("top", true, true)},
-	"traces":   {report.Traces, nil, nil, false, "Outputs all profile samples in text form", ""},
-	"tree":     {report.Tree, nil, nil, false, "Outputs a text rendering of call graph", reportHelp("tree", true, true)},
+	"comments":	{report.Comments, nil, nil, false, "Output all profile comments", ""},
+	"disasm":	{report.Dis, nil, nil, true, "Output assembly listings annotated with samples", listHelp("disasm", true)},
+	"dot":		{report.Dot, nil, nil, false, "Outputs a graph in DOT format", reportHelp("dot", false, true)},
+	"list":		{report.List, nil, nil, true, "Output annotated source for functions matching regexp", listHelp("list", false)},
+	"peek":		{report.Tree, nil, nil, true, "Output callers/callees of functions matching regexp", "peek func_regex\nDisplay callers and callees of functions matching func_regex."},
+	"raw":		{report.Raw, nil, nil, false, "Outputs a text representation of the raw profile", ""},
+	"tags":		{report.Tags, nil, nil, false, "Outputs all tags in the profile", "tags [tag_regex]* [-ignore_regex]* [>file]\nList tags with key:value matching tag_regex and exclude ignore_regex."},
+	"text":		{report.Text, nil, nil, false, "Outputs top entries in text form", reportHelp("text", true, true)},
+	"top":		{report.Text, nil, nil, false, "Outputs top entries in text form", reportHelp("top", true, true)},
+	"traces":	{report.Traces, nil, nil, false, "Outputs all profile samples in text form", ""},
+	"tree":		{report.Tree, nil, nil, false, "Outputs a text rendering of call graph", reportHelp("tree", true, true)},
 
 	// Save binary formats to a file
-	"callgrind": {report.Callgrind, nil, awayFromTTY("callgraph.out"), false, "Outputs a graph in callgrind format", reportHelp("callgrind", false, true)},
-	"proto":     {report.Proto, nil, awayFromTTY("pb.gz"), false, "Outputs the profile in compressed protobuf format", ""},
-	"topproto":  {report.TopProto, nil, awayFromTTY("pb.gz"), false, "Outputs top entries in compressed protobuf format", ""},
+	"callgrind":	{report.Callgrind, nil, awayFromTTY("callgraph.out"), false, "Outputs a graph in callgrind format", reportHelp("callgrind", false, true)},
+	"proto":	{report.Proto, nil, awayFromTTY("pb.gz"), false, "Outputs the profile in compressed protobuf format", ""},
+	"topproto":	{report.TopProto, nil, awayFromTTY("pb.gz"), false, "Outputs top entries in compressed protobuf format", ""},
 
 	// Generate report in DOT format and postprocess with dot
-	"gif": {report.Dot, invokeDot("gif"), awayFromTTY("gif"), false, "Outputs a graph image in GIF format", reportHelp("gif", false, true)},
-	"pdf": {report.Dot, invokeDot("pdf"), awayFromTTY("pdf"), false, "Outputs a graph in PDF format", reportHelp("pdf", false, true)},
-	"png": {report.Dot, invokeDot("png"), awayFromTTY("png"), false, "Outputs a graph image in PNG format", reportHelp("png", false, true)},
-	"ps":  {report.Dot, invokeDot("ps"), awayFromTTY("ps"), false, "Outputs a graph in PS format", reportHelp("ps", false, true)},
+	"gif":	{report.Dot, invokeDot("gif"), awayFromTTY("gif"), false, "Outputs a graph image in GIF format", reportHelp("gif", false, true)},
+	"pdf":	{report.Dot, invokeDot("pdf"), awayFromTTY("pdf"), false, "Outputs a graph in PDF format", reportHelp("pdf", false, true)},
+	"png":	{report.Dot, invokeDot("png"), awayFromTTY("png"), false, "Outputs a graph image in PNG format", reportHelp("png", false, true)},
+	"ps":	{report.Dot, invokeDot("ps"), awayFromTTY("ps"), false, "Outputs a graph in PS format", reportHelp("ps", false, true)},
 
 	// Save SVG output into a file
-	"svg": {report.Dot, massageDotSVG(), awayFromTTY("svg"), false, "Outputs a graph in SVG format", reportHelp("svg", false, true)},
+	"svg":	{report.Dot, massageDotSVG(), awayFromTTY("svg"), false, "Outputs a graph in SVG format", reportHelp("svg", false, true)},
 
 	// Visualize postprocessed dot output
-	"eog":    {report.Dot, invokeDot("svg"), invokeVisualizer("svg", []string{"eog"}), false, "Visualize graph through eog", reportHelp("eog", false, false)},
-	"evince": {report.Dot, invokeDot("pdf"), invokeVisualizer("pdf", []string{"evince"}), false, "Visualize graph through evince", reportHelp("evince", false, false)},
-	"gv":     {report.Dot, invokeDot("ps"), invokeVisualizer("ps", []string{"gv --noantialias"}), false, "Visualize graph through gv", reportHelp("gv", false, false)},
-	"web":    {report.Dot, massageDotSVG(), invokeVisualizer("svg", browsers()), false, "Visualize graph through web browser", reportHelp("web", false, false)},
+	"eog":		{report.Dot, invokeDot("svg"), invokeVisualizer("svg", []string{"eog"}), false, "Visualize graph through eog", reportHelp("eog", false, false)},
+	"evince":	{report.Dot, invokeDot("pdf"), invokeVisualizer("pdf", []string{"evince"}), false, "Visualize graph through evince", reportHelp("evince", false, false)},
+	"gv":		{report.Dot, invokeDot("ps"), invokeVisualizer("ps", []string{"gv --noantialias"}), false, "Visualize graph through gv", reportHelp("gv", false, false)},
+	"web":		{report.Dot, massageDotSVG(), invokeVisualizer("svg", browsers()), false, "Visualize graph through web browser", reportHelp("web", false, false)},
 
 	// Visualize callgrind output
-	"kcachegrind": {report.Callgrind, nil, invokeVisualizer("grind", kcachegrind), false, "Visualize report in KCachegrind", reportHelp("kcachegrind", false, false)},
+	"kcachegrind":	{report.Callgrind, nil, invokeVisualizer("grind", kcachegrind), false, "Visualize report in KCachegrind", reportHelp("kcachegrind", false, false)},
 
 	// Visualize HTML directly generated by report.
-	"weblist": {report.WebList, nil, invokeVisualizer("html", browsers()), true, "Display annotated source in a web browser", listHelp("weblist", false)},
+	"weblist":	{report.WebList, nil, invokeVisualizer("html", browsers()), true, "Display annotated source in a web browser", listHelp("weblist", false)},
 }
 
 // configHelp contains help text per configuration parameter.
 var configHelp = map[string]string{
 	// Filename for file-based output formats, stdout by default.
-	"output": helpText("Output filename for file-based outputs"),
+	"output":	helpText("Output filename for file-based outputs"),
 
 	// Comparisons.
 	"drop_negative": helpText(
@@ -147,9 +147,9 @@ var configHelp = map[string]string{
 		"For time-based profiles, use seconds, milliseconds, nanoseconds, etc.",
 		"For memory profiles, use megabytes, kilobytes, bytes, etc.",
 		"Using auto will scale each value independently to the most natural unit."),
-	"compact_labels": "Show minimal headers",
-	"source_path":    "Search path for source files",
-	"trim_path":      "Path to trim from source paths before search",
+	"compact_labels":	"Show minimal headers",
+	"source_path":		"Search path for source files",
+	"trim_path":		"Path to trim from source paths before search",
 	"intel_syntax": helpText(
 		"Show assembly in Intel syntax",
 		"Only applicable to commands `disasm` and `weblist`"),
@@ -159,8 +159,8 @@ var configHelp = map[string]string{
 		"Max number of nodes to show",
 		"Uses heuristics to limit the number of locations to be displayed.",
 		"On graphs, dotted edges represent paths through nodes that have been removed."),
-	"nodefraction": "Hide nodes below <f>*total",
-	"edgefraction": "Hide edges below <f>*total",
+	"nodefraction":	"Hide nodes below <f>*total",
+	"edgefraction":	"Hide edges below <f>*total",
 	"trim": helpText(
 		"Honor nodefraction/edgefraction/nodecount defaults",
 		"Set to false to get the full profile, without any trimming."),
@@ -229,8 +229,8 @@ var configHelp = map[string]string{
 		"Scales profile based on the base profile."),
 
 	// Data sorting criteria
-	"flat": helpText("Sort entries based on own weight"),
-	"cum":  helpText("Sort entries based on cumulative weight"),
+	"flat":	helpText("Sort entries based on own weight"),
+	"cum":	helpText("Sort entries based on cumulative weight"),
 
 	// Output granularity
 	"functions": helpText(
@@ -239,8 +239,8 @@ var configHelp = map[string]string{
 	"filefunctions": helpText(
 		"Aggregate at the function level.",
 		"Takes into account the filename where the function was defined."),
-	"files": "Aggregate at the file level.",
-	"lines": "Aggregate at the source code line level.",
+	"files":	"Aggregate at the file level.",
+	"lines":	"Aggregate at the source code line level.",
 	"addresses": helpText(
 		"Aggregate at the address level.",
 		"Includes functions' addresses in the output."),

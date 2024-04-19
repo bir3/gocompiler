@@ -23,48 +23,48 @@ import (
 )
 
 type MachoHdr struct {
-	cpu    uint32
-	subcpu uint32
+	cpu	uint32
+	subcpu	uint32
 }
 
 type MachoSect struct {
-	name    string
-	segname string
-	addr    uint64
-	size    uint64
-	off     uint32
-	align   uint32
-	reloc   uint32
-	nreloc  uint32
-	flag    uint32
-	res1    uint32
-	res2    uint32
+	name	string
+	segname	string
+	addr	uint64
+	size	uint64
+	off	uint32
+	align	uint32
+	reloc	uint32
+	nreloc	uint32
+	flag	uint32
+	res1	uint32
+	res2	uint32
 }
 
 type MachoSeg struct {
-	name       string
-	vsize      uint64
-	vaddr      uint64
-	fileoffset uint64
-	filesize   uint64
-	prot1      uint32
-	prot2      uint32
-	nsect      uint32
-	msect      uint32
-	sect       []MachoSect
-	flag       uint32
+	name		string
+	vsize		uint64
+	vaddr		uint64
+	fileoffset	uint64
+	filesize	uint64
+	prot1		uint32
+	prot2		uint32
+	nsect		uint32
+	msect		uint32
+	sect		[]MachoSect
+	flag		uint32
 }
 
 // MachoPlatformLoad represents a LC_VERSION_MIN_* or
 // LC_BUILD_VERSION load command.
 type MachoPlatformLoad struct {
-	platform MachoPlatform // One of PLATFORM_* constants.
-	cmd      MachoLoad
+	platform	MachoPlatform	// One of PLATFORM_* constants.
+	cmd		MachoLoad
 }
 
 type MachoLoad struct {
-	type_ uint32
-	data  []uint32
+	type_	uint32
+	data	[]uint32
 }
 
 type MachoPlatform int
@@ -79,180 +79,180 @@ const (
 )
 
 const (
-	MACHO_CPU_AMD64                      = 1<<24 | 7
-	MACHO_CPU_386                        = 7
-	MACHO_SUBCPU_X86                     = 3
-	MACHO_CPU_ARM                        = 12
-	MACHO_SUBCPU_ARM                     = 0
-	MACHO_SUBCPU_ARMV7                   = 9
-	MACHO_CPU_ARM64                      = 1<<24 | 12
-	MACHO_SUBCPU_ARM64_ALL               = 0
-	MACHO_SUBCPU_ARM64_V8                = 1
-	MACHO_SUBCPU_ARM64E                  = 2
-	MACHO32SYMSIZE                       = 12
-	MACHO64SYMSIZE                       = 16
-	MACHO_X86_64_RELOC_UNSIGNED          = 0
-	MACHO_X86_64_RELOC_SIGNED            = 1
-	MACHO_X86_64_RELOC_BRANCH            = 2
-	MACHO_X86_64_RELOC_GOT_LOAD          = 3
-	MACHO_X86_64_RELOC_GOT               = 4
-	MACHO_X86_64_RELOC_SUBTRACTOR        = 5
-	MACHO_X86_64_RELOC_SIGNED_1          = 6
-	MACHO_X86_64_RELOC_SIGNED_2          = 7
-	MACHO_X86_64_RELOC_SIGNED_4          = 8
-	MACHO_ARM_RELOC_VANILLA              = 0
-	MACHO_ARM_RELOC_PAIR                 = 1
-	MACHO_ARM_RELOC_SECTDIFF             = 2
-	MACHO_ARM_RELOC_BR24                 = 5
-	MACHO_ARM64_RELOC_UNSIGNED           = 0
-	MACHO_ARM64_RELOC_BRANCH26           = 2
-	MACHO_ARM64_RELOC_PAGE21             = 3
-	MACHO_ARM64_RELOC_PAGEOFF12          = 4
-	MACHO_ARM64_RELOC_GOT_LOAD_PAGE21    = 5
-	MACHO_ARM64_RELOC_GOT_LOAD_PAGEOFF12 = 6
-	MACHO_ARM64_RELOC_ADDEND             = 10
-	MACHO_GENERIC_RELOC_VANILLA          = 0
-	MACHO_FAKE_GOTPCREL                  = 100
+	MACHO_CPU_AMD64				= 1<<24 | 7
+	MACHO_CPU_386				= 7
+	MACHO_SUBCPU_X86			= 3
+	MACHO_CPU_ARM				= 12
+	MACHO_SUBCPU_ARM			= 0
+	MACHO_SUBCPU_ARMV7			= 9
+	MACHO_CPU_ARM64				= 1<<24 | 12
+	MACHO_SUBCPU_ARM64_ALL			= 0
+	MACHO_SUBCPU_ARM64_V8			= 1
+	MACHO_SUBCPU_ARM64E			= 2
+	MACHO32SYMSIZE				= 12
+	MACHO64SYMSIZE				= 16
+	MACHO_X86_64_RELOC_UNSIGNED		= 0
+	MACHO_X86_64_RELOC_SIGNED		= 1
+	MACHO_X86_64_RELOC_BRANCH		= 2
+	MACHO_X86_64_RELOC_GOT_LOAD		= 3
+	MACHO_X86_64_RELOC_GOT			= 4
+	MACHO_X86_64_RELOC_SUBTRACTOR		= 5
+	MACHO_X86_64_RELOC_SIGNED_1		= 6
+	MACHO_X86_64_RELOC_SIGNED_2		= 7
+	MACHO_X86_64_RELOC_SIGNED_4		= 8
+	MACHO_ARM_RELOC_VANILLA			= 0
+	MACHO_ARM_RELOC_PAIR			= 1
+	MACHO_ARM_RELOC_SECTDIFF		= 2
+	MACHO_ARM_RELOC_BR24			= 5
+	MACHO_ARM64_RELOC_UNSIGNED		= 0
+	MACHO_ARM64_RELOC_BRANCH26		= 2
+	MACHO_ARM64_RELOC_PAGE21		= 3
+	MACHO_ARM64_RELOC_PAGEOFF12		= 4
+	MACHO_ARM64_RELOC_GOT_LOAD_PAGE21	= 5
+	MACHO_ARM64_RELOC_GOT_LOAD_PAGEOFF12	= 6
+	MACHO_ARM64_RELOC_ADDEND		= 10
+	MACHO_GENERIC_RELOC_VANILLA		= 0
+	MACHO_FAKE_GOTPCREL			= 100
 )
 
 const (
-	MH_MAGIC    = 0xfeedface
-	MH_MAGIC_64 = 0xfeedfacf
+	MH_MAGIC	= 0xfeedface
+	MH_MAGIC_64	= 0xfeedfacf
 
-	MH_OBJECT  = 0x1
-	MH_EXECUTE = 0x2
+	MH_OBJECT	= 0x1
+	MH_EXECUTE	= 0x2
 
-	MH_NOUNDEFS = 0x1
-	MH_DYLDLINK = 0x4
-	MH_PIE      = 0x200000
+	MH_NOUNDEFS	= 0x1
+	MH_DYLDLINK	= 0x4
+	MH_PIE		= 0x200000
 )
 
 const (
-	LC_SEGMENT                  = 0x1
-	LC_SYMTAB                   = 0x2
-	LC_SYMSEG                   = 0x3
-	LC_THREAD                   = 0x4
-	LC_UNIXTHREAD               = 0x5
-	LC_LOADFVMLIB               = 0x6
-	LC_IDFVMLIB                 = 0x7
-	LC_IDENT                    = 0x8
-	LC_FVMFILE                  = 0x9
-	LC_PREPAGE                  = 0xa
-	LC_DYSYMTAB                 = 0xb
-	LC_LOAD_DYLIB               = 0xc
-	LC_ID_DYLIB                 = 0xd
-	LC_LOAD_DYLINKER            = 0xe
-	LC_ID_DYLINKER              = 0xf
-	LC_PREBOUND_DYLIB           = 0x10
-	LC_ROUTINES                 = 0x11
-	LC_SUB_FRAMEWORK            = 0x12
-	LC_SUB_UMBRELLA             = 0x13
-	LC_SUB_CLIENT               = 0x14
-	LC_SUB_LIBRARY              = 0x15
-	LC_TWOLEVEL_HINTS           = 0x16
-	LC_PREBIND_CKSUM            = 0x17
-	LC_LOAD_WEAK_DYLIB          = 0x80000018
-	LC_SEGMENT_64               = 0x19
-	LC_ROUTINES_64              = 0x1a
-	LC_UUID                     = 0x1b
-	LC_RPATH                    = 0x8000001c
-	LC_CODE_SIGNATURE           = 0x1d
-	LC_SEGMENT_SPLIT_INFO       = 0x1e
-	LC_REEXPORT_DYLIB           = 0x8000001f
-	LC_LAZY_LOAD_DYLIB          = 0x20
-	LC_ENCRYPTION_INFO          = 0x21
-	LC_DYLD_INFO                = 0x22
-	LC_DYLD_INFO_ONLY           = 0x80000022
-	LC_LOAD_UPWARD_DYLIB        = 0x80000023
-	LC_VERSION_MIN_MACOSX       = 0x24
-	LC_VERSION_MIN_IPHONEOS     = 0x25
-	LC_FUNCTION_STARTS          = 0x26
-	LC_DYLD_ENVIRONMENT         = 0x27
-	LC_MAIN                     = 0x80000028
-	LC_DATA_IN_CODE             = 0x29
-	LC_SOURCE_VERSION           = 0x2A
-	LC_DYLIB_CODE_SIGN_DRS      = 0x2B
-	LC_ENCRYPTION_INFO_64       = 0x2C
-	LC_LINKER_OPTION            = 0x2D
-	LC_LINKER_OPTIMIZATION_HINT = 0x2E
-	LC_VERSION_MIN_TVOS         = 0x2F
-	LC_VERSION_MIN_WATCHOS      = 0x30
-	LC_VERSION_NOTE             = 0x31
-	LC_BUILD_VERSION            = 0x32
-	LC_DYLD_EXPORTS_TRIE        = 0x80000033
-	LC_DYLD_CHAINED_FIXUPS      = 0x80000034
+	LC_SEGMENT			= 0x1
+	LC_SYMTAB			= 0x2
+	LC_SYMSEG			= 0x3
+	LC_THREAD			= 0x4
+	LC_UNIXTHREAD			= 0x5
+	LC_LOADFVMLIB			= 0x6
+	LC_IDFVMLIB			= 0x7
+	LC_IDENT			= 0x8
+	LC_FVMFILE			= 0x9
+	LC_PREPAGE			= 0xa
+	LC_DYSYMTAB			= 0xb
+	LC_LOAD_DYLIB			= 0xc
+	LC_ID_DYLIB			= 0xd
+	LC_LOAD_DYLINKER		= 0xe
+	LC_ID_DYLINKER			= 0xf
+	LC_PREBOUND_DYLIB		= 0x10
+	LC_ROUTINES			= 0x11
+	LC_SUB_FRAMEWORK		= 0x12
+	LC_SUB_UMBRELLA			= 0x13
+	LC_SUB_CLIENT			= 0x14
+	LC_SUB_LIBRARY			= 0x15
+	LC_TWOLEVEL_HINTS		= 0x16
+	LC_PREBIND_CKSUM		= 0x17
+	LC_LOAD_WEAK_DYLIB		= 0x80000018
+	LC_SEGMENT_64			= 0x19
+	LC_ROUTINES_64			= 0x1a
+	LC_UUID				= 0x1b
+	LC_RPATH			= 0x8000001c
+	LC_CODE_SIGNATURE		= 0x1d
+	LC_SEGMENT_SPLIT_INFO		= 0x1e
+	LC_REEXPORT_DYLIB		= 0x8000001f
+	LC_LAZY_LOAD_DYLIB		= 0x20
+	LC_ENCRYPTION_INFO		= 0x21
+	LC_DYLD_INFO			= 0x22
+	LC_DYLD_INFO_ONLY		= 0x80000022
+	LC_LOAD_UPWARD_DYLIB		= 0x80000023
+	LC_VERSION_MIN_MACOSX		= 0x24
+	LC_VERSION_MIN_IPHONEOS		= 0x25
+	LC_FUNCTION_STARTS		= 0x26
+	LC_DYLD_ENVIRONMENT		= 0x27
+	LC_MAIN				= 0x80000028
+	LC_DATA_IN_CODE			= 0x29
+	LC_SOURCE_VERSION		= 0x2A
+	LC_DYLIB_CODE_SIGN_DRS		= 0x2B
+	LC_ENCRYPTION_INFO_64		= 0x2C
+	LC_LINKER_OPTION		= 0x2D
+	LC_LINKER_OPTIMIZATION_HINT	= 0x2E
+	LC_VERSION_MIN_TVOS		= 0x2F
+	LC_VERSION_MIN_WATCHOS		= 0x30
+	LC_VERSION_NOTE			= 0x31
+	LC_BUILD_VERSION		= 0x32
+	LC_DYLD_EXPORTS_TRIE		= 0x80000033
+	LC_DYLD_CHAINED_FIXUPS		= 0x80000034
 )
 
 const (
-	S_REGULAR                  = 0x0
-	S_ZEROFILL                 = 0x1
-	S_NON_LAZY_SYMBOL_POINTERS = 0x6
-	S_SYMBOL_STUBS             = 0x8
-	S_MOD_INIT_FUNC_POINTERS   = 0x9
-	S_ATTR_PURE_INSTRUCTIONS   = 0x80000000
-	S_ATTR_DEBUG               = 0x02000000
-	S_ATTR_SOME_INSTRUCTIONS   = 0x00000400
+	S_REGULAR			= 0x0
+	S_ZEROFILL			= 0x1
+	S_NON_LAZY_SYMBOL_POINTERS	= 0x6
+	S_SYMBOL_STUBS			= 0x8
+	S_MOD_INIT_FUNC_POINTERS	= 0x9
+	S_ATTR_PURE_INSTRUCTIONS	= 0x80000000
+	S_ATTR_DEBUG			= 0x02000000
+	S_ATTR_SOME_INSTRUCTIONS	= 0x00000400
 )
 
 const (
-	PLATFORM_MACOS    MachoPlatform = 1
-	PLATFORM_IOS      MachoPlatform = 2
-	PLATFORM_TVOS     MachoPlatform = 3
-	PLATFORM_WATCHOS  MachoPlatform = 4
-	PLATFORM_BRIDGEOS MachoPlatform = 5
+	PLATFORM_MACOS		MachoPlatform	= 1
+	PLATFORM_IOS		MachoPlatform	= 2
+	PLATFORM_TVOS		MachoPlatform	= 3
+	PLATFORM_WATCHOS	MachoPlatform	= 4
+	PLATFORM_BRIDGEOS	MachoPlatform	= 5
 )
 
 // rebase table opcode
 const (
-	REBASE_TYPE_POINTER         = 1
-	REBASE_TYPE_TEXT_ABSOLUTE32 = 2
-	REBASE_TYPE_TEXT_PCREL32    = 3
+	REBASE_TYPE_POINTER		= 1
+	REBASE_TYPE_TEXT_ABSOLUTE32	= 2
+	REBASE_TYPE_TEXT_PCREL32	= 3
 
-	REBASE_OPCODE_MASK                               = 0xF0
-	REBASE_IMMEDIATE_MASK                            = 0x0F
-	REBASE_OPCODE_DONE                               = 0x00
-	REBASE_OPCODE_SET_TYPE_IMM                       = 0x10
-	REBASE_OPCODE_SET_SEGMENT_AND_OFFSET_ULEB        = 0x20
-	REBASE_OPCODE_ADD_ADDR_ULEB                      = 0x30
-	REBASE_OPCODE_ADD_ADDR_IMM_SCALED                = 0x40
-	REBASE_OPCODE_DO_REBASE_IMM_TIMES                = 0x50
-	REBASE_OPCODE_DO_REBASE_ULEB_TIMES               = 0x60
-	REBASE_OPCODE_DO_REBASE_ADD_ADDR_ULEB            = 0x70
-	REBASE_OPCODE_DO_REBASE_ULEB_TIMES_SKIPPING_ULEB = 0x80
+	REBASE_OPCODE_MASK					= 0xF0
+	REBASE_IMMEDIATE_MASK					= 0x0F
+	REBASE_OPCODE_DONE					= 0x00
+	REBASE_OPCODE_SET_TYPE_IMM				= 0x10
+	REBASE_OPCODE_SET_SEGMENT_AND_OFFSET_ULEB		= 0x20
+	REBASE_OPCODE_ADD_ADDR_ULEB				= 0x30
+	REBASE_OPCODE_ADD_ADDR_IMM_SCALED			= 0x40
+	REBASE_OPCODE_DO_REBASE_IMM_TIMES			= 0x50
+	REBASE_OPCODE_DO_REBASE_ULEB_TIMES			= 0x60
+	REBASE_OPCODE_DO_REBASE_ADD_ADDR_ULEB			= 0x70
+	REBASE_OPCODE_DO_REBASE_ULEB_TIMES_SKIPPING_ULEB	= 0x80
 )
 
 // bind table opcode
 const (
-	BIND_TYPE_POINTER         = 1
-	BIND_TYPE_TEXT_ABSOLUTE32 = 2
-	BIND_TYPE_TEXT_PCREL32    = 3
+	BIND_TYPE_POINTER		= 1
+	BIND_TYPE_TEXT_ABSOLUTE32	= 2
+	BIND_TYPE_TEXT_PCREL32		= 3
 
-	BIND_SPECIAL_DYLIB_SELF            = 0
-	BIND_SPECIAL_DYLIB_MAIN_EXECUTABLE = -1
-	BIND_SPECIAL_DYLIB_FLAT_LOOKUP     = -2
-	BIND_SPECIAL_DYLIB_WEAK_LOOKUP     = -3
+	BIND_SPECIAL_DYLIB_SELF			= 0
+	BIND_SPECIAL_DYLIB_MAIN_EXECUTABLE	= -1
+	BIND_SPECIAL_DYLIB_FLAT_LOOKUP		= -2
+	BIND_SPECIAL_DYLIB_WEAK_LOOKUP		= -3
 
-	BIND_OPCODE_MASK                                         = 0xF0
-	BIND_IMMEDIATE_MASK                                      = 0x0F
-	BIND_OPCODE_DONE                                         = 0x00
-	BIND_OPCODE_SET_DYLIB_ORDINAL_IMM                        = 0x10
-	BIND_OPCODE_SET_DYLIB_ORDINAL_ULEB                       = 0x20
-	BIND_OPCODE_SET_DYLIB_SPECIAL_IMM                        = 0x30
-	BIND_OPCODE_SET_SYMBOL_TRAILING_FLAGS_IMM                = 0x40
-	BIND_OPCODE_SET_TYPE_IMM                                 = 0x50
-	BIND_OPCODE_SET_ADDEND_SLEB                              = 0x60
-	BIND_OPCODE_SET_SEGMENT_AND_OFFSET_ULEB                  = 0x70
-	BIND_OPCODE_ADD_ADDR_ULEB                                = 0x80
-	BIND_OPCODE_DO_BIND                                      = 0x90
-	BIND_OPCODE_DO_BIND_ADD_ADDR_ULEB                        = 0xA0
-	BIND_OPCODE_DO_BIND_ADD_ADDR_IMM_SCALED                  = 0xB0
-	BIND_OPCODE_DO_BIND_ULEB_TIMES_SKIPPING_ULEB             = 0xC0
-	BIND_OPCODE_THREADED                                     = 0xD0
-	BIND_SUBOPCODE_THREADED_SET_BIND_ORDINAL_TABLE_SIZE_ULEB = 0x00
-	BIND_SUBOPCODE_THREADED_APPLY                            = 0x01
+	BIND_OPCODE_MASK						= 0xF0
+	BIND_IMMEDIATE_MASK						= 0x0F
+	BIND_OPCODE_DONE						= 0x00
+	BIND_OPCODE_SET_DYLIB_ORDINAL_IMM				= 0x10
+	BIND_OPCODE_SET_DYLIB_ORDINAL_ULEB				= 0x20
+	BIND_OPCODE_SET_DYLIB_SPECIAL_IMM				= 0x30
+	BIND_OPCODE_SET_SYMBOL_TRAILING_FLAGS_IMM			= 0x40
+	BIND_OPCODE_SET_TYPE_IMM					= 0x50
+	BIND_OPCODE_SET_ADDEND_SLEB					= 0x60
+	BIND_OPCODE_SET_SEGMENT_AND_OFFSET_ULEB				= 0x70
+	BIND_OPCODE_ADD_ADDR_ULEB					= 0x80
+	BIND_OPCODE_DO_BIND						= 0x90
+	BIND_OPCODE_DO_BIND_ADD_ADDR_ULEB				= 0xA0
+	BIND_OPCODE_DO_BIND_ADD_ADDR_IMM_SCALED				= 0xB0
+	BIND_OPCODE_DO_BIND_ULEB_TIMES_SKIPPING_ULEB			= 0xC0
+	BIND_OPCODE_THREADED						= 0xD0
+	BIND_SUBOPCODE_THREADED_SET_BIND_ORDINAL_TABLE_SIZE_ULEB	= 0x00
+	BIND_SUBOPCODE_THREADED_APPLY					= 0x01
 )
 
-const machoHeaderSize64 = 8 * 4 // size of 64-bit Mach-O header
+const machoHeaderSize64 = 8 * 4	// size of 64-bit Mach-O header
 
 // Mach-O file writing
 // https://developer.apple.com/mac/library/DOCUMENTATION/DeveloperTools/Conceptual/MachORuntime/Reference/reference.html
@@ -272,7 +272,7 @@ var ndebug int
 var nsect int
 
 const (
-	SymKindLocal = 0 + iota
+	SymKindLocal	= 0 + iota
 	SymKindExtdef
 	SymKindUndef
 	NumSymKind
@@ -363,9 +363,9 @@ func machowrite(ctxt *Link, arch *sys.Arch, out *OutBuf, linkmode LinkMode) int 
 	out.Write32(machohdr.cpu)
 	out.Write32(machohdr.subcpu)
 	if linkmode == LinkExternal {
-		out.Write32(MH_OBJECT) /* file type - mach object */
+		out.Write32(MH_OBJECT)	/* file type - mach object */
 	} else {
-		out.Write32(MH_EXECUTE) /* file type - mach executable */
+		out.Write32(MH_EXECUTE)	/* file type - mach executable */
 	}
 	out.Write32(uint32(len(load)) + uint32(nseg) + uint32(ndebug))
 	out.Write32(uint32(loadsize))
@@ -376,9 +376,9 @@ func machowrite(ctxt *Link, arch *sys.Arch, out *OutBuf, linkmode LinkMode) int 
 	if ctxt.IsPIE() && linkmode == LinkInternal {
 		flags |= MH_PIE | MH_DYLDLINK
 	}
-	out.Write32(flags) /* flags */
+	out.Write32(flags)	/* flags */
 	if arch.PtrSize == 8 {
-		out.Write32(0) /* reserved */
+		out.Write32(0)	/* reserved */
 	}
 
 	for i := 0; i < nseg; i++ {
@@ -421,9 +421,9 @@ func machowrite(ctxt *Link, arch *sys.Arch, out *OutBuf, linkmode LinkMode) int 
 				out.Write32(t.reloc)
 				out.Write32(t.nreloc)
 				out.Write32(t.flag)
-				out.Write32(t.res1) /* reserved */
-				out.Write32(t.res2) /* reserved */
-				out.Write32(0)      /* reserved */
+				out.Write32(t.res1)	/* reserved */
+				out.Write32(t.res2)	/* reserved */
+				out.Write32(0)		/* reserved */
 			} else {
 				out.WriteStringN(t.name, 16)
 				out.WriteStringN(t.segname, 16)
@@ -434,8 +434,8 @@ func machowrite(ctxt *Link, arch *sys.Arch, out *OutBuf, linkmode LinkMode) int 
 				out.Write32(t.reloc)
 				out.Write32(t.nreloc)
 				out.Write32(t.flag)
-				out.Write32(t.res1) /* reserved */
-				out.Write32(t.res2) /* reserved */
+				out.Write32(t.res1)	/* reserved */
+				out.Write32(t.res2)	/* reserved */
 			}
 		}
 	}
@@ -483,15 +483,15 @@ func (ctxt *Link) domacho() {
 				// Having too old a version here was also implicated in some problems
 				// calling into macOS libraries (go.dev/issue/56784).
 				// In general this can be the most recent supported macOS version.
-				version = 10<<16 | 13<<8 | 0<<0 // 10.13.0
+				version = 10<<16 | 13<<8 | 0<<0	// 10.13.0
 			case sys.ARM64:
-				version = 11<<16 | 0<<8 | 0<<0 // 11.0.0
+				version = 11<<16 | 0<<8 | 0<<0	// 11.0.0
 			}
 			ml := newMachoLoad(ctxt.Arch, LC_BUILD_VERSION, 4)
 			ml.data[0] = uint32(machoPlatform)
-			ml.data[1] = version // OS version
-			ml.data[2] = version // SDK version
-			ml.data[3] = 0       // ntools
+			ml.data[1] = version	// OS version
+			ml.data[2] = version	// SDK version
+			ml.data[3] = 0		// ntools
 		}
 	}
 
@@ -510,23 +510,23 @@ func (ctxt *Link) domacho() {
 	sb.SetReachable(true)
 
 	if ctxt.IsInternal() {
-		s = ctxt.loader.LookupOrCreateSym(".plt", 0) // will be __symbol_stub
+		s = ctxt.loader.LookupOrCreateSym(".plt", 0)	// will be __symbol_stub
 		sb = ctxt.loader.MakeSymbolUpdater(s)
 		sb.SetType(sym.SMACHOPLT)
 		sb.SetReachable(true)
 
-		s = ctxt.loader.LookupOrCreateSym(".got", 0) // will be __nl_symbol_ptr
+		s = ctxt.loader.LookupOrCreateSym(".got", 0)	// will be __nl_symbol_ptr
 		sb = ctxt.loader.MakeSymbolUpdater(s)
 		sb.SetType(sym.SMACHOGOT)
 		sb.SetReachable(true)
 		sb.SetAlign(4)
 
-		s = ctxt.loader.LookupOrCreateSym(".linkedit.plt", 0) // indirect table for .plt
+		s = ctxt.loader.LookupOrCreateSym(".linkedit.plt", 0)	// indirect table for .plt
 		sb = ctxt.loader.MakeSymbolUpdater(s)
 		sb.SetType(sym.SMACHOINDIRECTPLT)
 		sb.SetReachable(true)
 
-		s = ctxt.loader.LookupOrCreateSym(".linkedit.got", 0) // indirect table for .got
+		s = ctxt.loader.LookupOrCreateSym(".linkedit.got", 0)	// indirect table for .got
 		sb = ctxt.loader.MakeSymbolUpdater(s)
 		sb.SetType(sym.SMACHOINDIRECTGOT)
 		sb.SetReachable(true)
@@ -632,14 +632,14 @@ func machoshbits(ctxt *Link, mseg *MachoSeg, sect *sym.Section, segname string) 
 	if sect.Name == ".plt" {
 		msect.name = "__symbol_stub1"
 		msect.flag = S_ATTR_PURE_INSTRUCTIONS | S_ATTR_SOME_INSTRUCTIONS | S_SYMBOL_STUBS
-		msect.res1 = 0 //nkind[SymKindLocal];
+		msect.res1 = 0	//nkind[SymKindLocal];
 		msect.res2 = 6
 	}
 
 	if sect.Name == ".got" {
 		msect.name = "__nl_symbol_ptr"
 		msect.flag = S_NON_LAZY_SYMBOL_POINTERS
-		msect.res1 = uint32(ctxt.loader.SymSize(ctxt.ArchSyms.LinkEditPLT) / 4) /* offset into indirect symbol table */
+		msect.res1 = uint32(ctxt.loader.SymSize(ctxt.ArchSyms.LinkEditPLT) / 4)	/* offset into indirect symbol table */
 	}
 
 	if sect.Name == ".init_array" {
@@ -665,8 +665,8 @@ func machoshbits(ctxt *Link, mseg *MachoSeg, sect *sym.Section, segname string) 
 
 func asmbMacho(ctxt *Link) {
 	machlink := doMachoLink(ctxt)
-	if !*FlagS && ctxt.IsExternal() {
-		symo := int64(Segdwarf.Fileoff + uint64(Rnd(int64(Segdwarf.Filelen), int64(*FlagRound))) + uint64(machlink))
+	if ctxt.IsExternal() {
+		symo := int64(Segdwarf.Fileoff + uint64(Rnd(int64(Segdwarf.Filelen), *FlagRound)) + uint64(machlink))
 		ctxt.Out.SeekSet(symo)
 		machoEmitReloc(ctxt)
 	}
@@ -708,8 +708,9 @@ func asmbMacho(ctxt *Link) {
 	}
 
 	/* text */
-	v := Rnd(int64(uint64(HEADR)+Segtext.Length), int64(*FlagRound))
+	v := Rnd(int64(uint64(HEADR)+Segtext.Length), *FlagRound)
 
+	var mstext *MachoSeg
 	if ctxt.LinkMode != LinkExternal {
 		ms = newMachoSeg("__TEXT", 20)
 		ms.vaddr = uint64(va)
@@ -718,6 +719,7 @@ func asmbMacho(ctxt *Link) {
 		ms.filesize = uint64(v)
 		ms.prot1 = 7
 		ms.prot2 = 5
+		mstext = ms
 	}
 
 	for _, sect := range Segtext.Sections {
@@ -733,7 +735,7 @@ func asmbMacho(ctxt *Link) {
 		ms.filesize = Segrelrodata.Filelen
 		ms.prot1 = 3
 		ms.prot2 = 3
-		ms.flag = 0x10 // SG_READ_ONLY
+		ms.flag = 0x10	// SG_READ_ONLY
 	}
 
 	for _, sect := range Segrelrodata.Sections {
@@ -776,9 +778,9 @@ func asmbMacho(ctxt *Link) {
 
 		case sys.AMD64:
 			ml := newMachoLoad(ctxt.Arch, LC_UNIXTHREAD, 42+2)
-			ml.data[0] = 4                           /* thread type */
-			ml.data[1] = 42                          /* word count */
-			ml.data[2+32] = uint32(Entryvalue(ctxt)) /* start pc */
+			ml.data[0] = 4					/* thread type */
+			ml.data[1] = 42					/* word count */
+			ml.data[2+32] = uint32(Entryvalue(ctxt))	/* start pc */
 			ml.data[2+32+1] = uint32(Entryvalue(ctxt) >> 32)
 
 		case sys.ARM64:
@@ -801,7 +803,7 @@ func asmbMacho(ctxt *Link) {
 
 		if ctxt.LinkMode != LinkExternal {
 			ms := newMachoSeg("__LINKEDIT", 0)
-			ms.vaddr = uint64(Rnd(int64(Segdata.Vaddr+Segdata.Length), int64(*FlagRound)))
+			ms.vaddr = uint64(Rnd(int64(Segdata.Vaddr+Segdata.Length), *FlagRound))
 			ms.vsize = uint64(s1 + s2 + s3 + s4 + s5 + s6 + s7)
 			ms.fileoffset = uint64(linkoff)
 			ms.filesize = ms.vsize
@@ -813,37 +815,37 @@ func asmbMacho(ctxt *Link) {
 
 		if ctxt.LinkMode != LinkExternal && ctxt.IsPIE() {
 			ml := newMachoLoad(ctxt.Arch, LC_DYLD_INFO_ONLY, 10)
-			ml.data[0] = uint32(linkoff)      // rebase off
-			ml.data[1] = uint32(s1)           // rebase size
-			ml.data[2] = uint32(linkoff + s1) // bind off
-			ml.data[3] = uint32(s2)           // bind size
-			ml.data[4] = 0                    // weak bind off
-			ml.data[5] = 0                    // weak bind size
-			ml.data[6] = 0                    // lazy bind off
-			ml.data[7] = 0                    // lazy bind size
-			ml.data[8] = 0                    // export
-			ml.data[9] = 0                    // export size
+			ml.data[0] = uint32(linkoff)		// rebase off
+			ml.data[1] = uint32(s1)			// rebase size
+			ml.data[2] = uint32(linkoff + s1)	// bind off
+			ml.data[3] = uint32(s2)			// bind size
+			ml.data[4] = 0				// weak bind off
+			ml.data[5] = 0				// weak bind size
+			ml.data[6] = 0				// lazy bind off
+			ml.data[7] = 0				// lazy bind size
+			ml.data[8] = 0				// export
+			ml.data[9] = 0				// export size
 		}
 
 		ml := newMachoLoad(ctxt.Arch, LC_SYMTAB, 4)
-		ml.data[0] = uint32(linkoff + s1 + s2)                /* symoff */
-		ml.data[1] = uint32(nsortsym)                         /* nsyms */
-		ml.data[2] = uint32(linkoff + s1 + s2 + s3 + s4 + s5) /* stroff */
-		ml.data[3] = uint32(s6)                               /* strsize */
-
-		machodysymtab(ctxt, linkoff+s1+s2)
+		ml.data[0] = uint32(linkoff + s1 + s2)			/* symoff */
+		ml.data[1] = uint32(nsortsym)				/* nsyms */
+		ml.data[2] = uint32(linkoff + s1 + s2 + s3 + s4 + s5)	/* stroff */
+		ml.data[3] = uint32(s6)					/* strsize */
 
 		if ctxt.LinkMode != LinkExternal {
+			machodysymtab(ctxt, linkoff+s1+s2)
+
 			ml := newMachoLoad(ctxt.Arch, LC_LOAD_DYLINKER, 6)
-			ml.data[0] = 12 /* offset to string */
+			ml.data[0] = 12	/* offset to string */
 			stringtouint32(ml.data[1:], "/usr/lib/dyld")
 
 			for _, lib := range dylib {
 				ml = newMachoLoad(ctxt.Arch, LC_LOAD_DYLIB, 4+(uint32(len(lib))+1+7)/8*2)
-				ml.data[0] = 24 /* offset of string from beginning of load */
-				ml.data[1] = 0  /* time stamp */
-				ml.data[2] = 0  /* version */
-				ml.data[3] = 0  /* compatibility version */
+				ml.data[0] = 24	/* offset of string from beginning of load */
+				ml.data[1] = 0	/* time stamp */
+				ml.data[2] = 0	/* version */
+				ml.data[3] = 0	/* compatibility version */
 				stringtouint32(ml.data[4:], lib)
 			}
 		}
@@ -868,14 +870,14 @@ func asmbMacho(ctxt *Link) {
 		if int64(len(data)) != codesigOff {
 			panic("wrong size")
 		}
-		codesign.Sign(ldr.Data(cs), bytes.NewReader(data), "a.out", codesigOff, int64(Segtext.Fileoff), int64(Segtext.Filelen), ctxt.IsExe() || ctxt.IsPIE())
+		codesign.Sign(ldr.Data(cs), bytes.NewReader(data), "a.out", codesigOff, int64(mstext.fileoffset), int64(mstext.filesize), ctxt.IsExe() || ctxt.IsPIE())
 		ctxt.Out.SeekSet(codesigOff)
 		ctxt.Out.Write(ldr.Data(cs))
 	}
 }
 
 func symkind(ldr *loader.Loader, s loader.Sym) int {
-	if ldr.SymType(s) == sym.SDYNIMPORT {
+	if t := ldr.SymType(s); t == sym.SDYNIMPORT || t == sym.SHOSTOBJ || t == sym.SUNDEFEXT {
 		return SymKindUndef
 	}
 	if ldr.AttrCgoExport(s) {
@@ -892,30 +894,39 @@ func collectmachosyms(ctxt *Link) {
 		nkind[symkind(ldr, s)]++
 	}
 
-	// Add special runtime.text and runtime.etext symbols.
+	// On Mach-O, even with -s, we still need to keep dynamically exported and
+	// referenced symbols. We can strip defined local text and data symbols.
+	// So *FlagS is applied based on symbol type.
+
+	// Add special runtime.text and runtime.etext symbols (which are local).
 	// We've already included this symbol in Textp on darwin if ctxt.DynlinkingGo().
 	// See data.go:/textaddress
-	if !ctxt.DynlinkingGo() {
-		s := ldr.Lookup("runtime.text", 0)
-		if ldr.SymType(s) == sym.STEXT {
-			addsym(s)
-		}
-		for n := range Segtext.Sections[1:] {
-			s := ldr.Lookup(fmt.Sprintf("runtime.text.%d", n+1), 0)
-			if s != 0 {
+	if !*FlagS {
+		if !ctxt.DynlinkingGo() {
+			s := ldr.Lookup("runtime.text", 0)
+			if ldr.SymType(s) == sym.STEXT {
 				addsym(s)
-			} else {
-				break
 			}
-		}
-		s = ldr.Lookup("runtime.etext", 0)
-		if ldr.SymType(s) == sym.STEXT {
-			addsym(s)
+			for n := range Segtext.Sections[1:] {
+				s := ldr.Lookup(fmt.Sprintf("runtime.text.%d", n+1), 0)
+				if s != 0 {
+					addsym(s)
+				} else {
+					break
+				}
+			}
+			s = ldr.Lookup("runtime.etext", 0)
+			if ldr.SymType(s) == sym.STEXT {
+				addsym(s)
+			}
 		}
 	}
 
 	// Add text symbols.
 	for _, s := range ctxt.Textp {
+		if *FlagS && !ldr.AttrCgoExportDynamic(s) {
+			continue
+		}
 		addsym(s)
 	}
 
@@ -923,7 +934,7 @@ func collectmachosyms(ctxt *Link) {
 		if ldr.AttrNotInSymbolTable(s) {
 			return false
 		}
-		name := ldr.SymName(s) // TODO: try not to read the name
+		name := ldr.SymName(s)	// TODO: try not to read the name
 		if name == "" || name[0] == '.' {
 			return false
 		}
@@ -936,7 +947,7 @@ func collectmachosyms(ctxt *Link) {
 			continue
 		}
 		t := ldr.SymType(s)
-		if t >= sym.SELFRXSECT && t < sym.SXREF { // data sections handled in dodata
+		if t >= sym.SELFRXSECT && t < sym.SXREF {	// data sections handled in dodata
 			if t == sym.STLSBSS {
 				// TLSBSS is not used on darwin. See data.go:allocateDataSections
 				continue
@@ -944,11 +955,16 @@ func collectmachosyms(ctxt *Link) {
 			if !shouldBeInSymbolTable(s) {
 				continue
 			}
+			if *FlagS && !ldr.AttrCgoExportDynamic(s) {
+				continue
+			}
 			addsym(s)
+			continue
 		}
 
 		switch t {
 		case sym.SDYNIMPORT, sym.SHOSTOBJ, sym.SUNDEFEXT:
+			// Keep dynamic symbol references even if *FlagS.
 			addsym(s)
 		}
 
@@ -995,7 +1011,7 @@ func machosymorder(ctxt *Link) {
 		if k1 != k2 {
 			return k1 < k2
 		}
-		return ldr.SymExtname(s1) < ldr.SymExtname(s2) // Note: unnamed symbols are not added in collectmachosyms
+		return ldr.SymExtname(s1) < ldr.SymExtname(s2)	// Note: unnamed symbols are not added in collectmachosyms
 	})
 	for i, s := range sortsym {
 		ldr.SetSymDynid(s, int32(i))
@@ -1035,7 +1051,7 @@ func machoShouldExport(ctxt *Link, ldr *loader.Loader, s loader.Sym) bool {
 	if strings.HasPrefix(name, "go:link.pkghash") {
 		return true
 	}
-	return ldr.SymType(s) >= sym.SFirstWritable // only writable sections
+	return ldr.SymType(s) >= sym.SFirstWritable	// only writable sections
 }
 
 func machosymtab(ctxt *Link) {
@@ -1061,18 +1077,18 @@ func machosymtab(ctxt *Link) {
 		symstr.Addstring(name)
 
 		if t := ldr.SymType(s); t == sym.SDYNIMPORT || t == sym.SHOSTOBJ || t == sym.SUNDEFEXT {
-			symtab.AddUint8(0x01)                             // type N_EXT, external symbol
-			symtab.AddUint8(0)                                // no section
-			symtab.AddUint16(ctxt.Arch, 0)                    // desc
-			symtab.AddUintXX(ctxt.Arch, 0, ctxt.Arch.PtrSize) // no value
+			symtab.AddUint8(0x01)					// type N_EXT, external symbol
+			symtab.AddUint8(0)					// no section
+			symtab.AddUint16(ctxt.Arch, 0)				// desc
+			symtab.AddUintXX(ctxt.Arch, 0, ctxt.Arch.PtrSize)	// no value
 		} else {
 			if export || ldr.AttrCgoExportDynamic(s) {
-				symtab.AddUint8(0x0f) // N_SECT | N_EXT
+				symtab.AddUint8(0x0f)	// N_SECT | N_EXT
 			} else if ldr.AttrCgoExportStatic(s) {
 				// Only export statically, not dynamically. (N_PEXT is like hidden visibility)
-				symtab.AddUint8(0x1f) // N_SECT | N_EXT | N_PEXT
+				symtab.AddUint8(0x1f)	// N_SECT | N_EXT | N_PEXT
 			} else {
-				symtab.AddUint8(0x0e) // N_SECT
+				symtab.AddUint8(0x0e)	// N_SECT
 			}
 			o := s
 			if outer := ldr.OuterSym(o); outer != 0 {
@@ -1084,7 +1100,7 @@ func machosymtab(ctxt *Link) {
 			} else {
 				symtab.AddUint8(uint8(ldr.SymSect(o).Extnum))
 			}
-			symtab.AddUint16(ctxt.Arch, 0) // desc
+			symtab.AddUint16(ctxt.Arch, 0)	// desc
 			symtab.AddUintXX(ctxt.Arch, uint64(ldr.SymAddr(s)), ctxt.Arch.PtrSize)
 		}
 	}
@@ -1094,23 +1110,23 @@ func machodysymtab(ctxt *Link, base int64) {
 	ml := newMachoLoad(ctxt.Arch, LC_DYSYMTAB, 18)
 
 	n := 0
-	ml.data[0] = uint32(n)                   /* ilocalsym */
-	ml.data[1] = uint32(nkind[SymKindLocal]) /* nlocalsym */
+	ml.data[0] = uint32(n)				/* ilocalsym */
+	ml.data[1] = uint32(nkind[SymKindLocal])	/* nlocalsym */
 	n += nkind[SymKindLocal]
 
-	ml.data[2] = uint32(n)                    /* iextdefsym */
-	ml.data[3] = uint32(nkind[SymKindExtdef]) /* nextdefsym */
+	ml.data[2] = uint32(n)				/* iextdefsym */
+	ml.data[3] = uint32(nkind[SymKindExtdef])	/* nextdefsym */
 	n += nkind[SymKindExtdef]
 
-	ml.data[4] = uint32(n)                   /* iundefsym */
-	ml.data[5] = uint32(nkind[SymKindUndef]) /* nundefsym */
+	ml.data[4] = uint32(n)				/* iundefsym */
+	ml.data[5] = uint32(nkind[SymKindUndef])	/* nundefsym */
 
-	ml.data[6] = 0  /* tocoffset */
-	ml.data[7] = 0  /* ntoc */
-	ml.data[8] = 0  /* modtaboff */
-	ml.data[9] = 0  /* nmodtab */
-	ml.data[10] = 0 /* extrefsymoff */
-	ml.data[11] = 0 /* nextrefsyms */
+	ml.data[6] = 0	/* tocoffset */
+	ml.data[7] = 0	/* ntoc */
+	ml.data[8] = 0	/* modtaboff */
+	ml.data[9] = 0	/* nmodtab */
+	ml.data[10] = 0	/* extrefsymoff */
+	ml.data[11] = 0	/* nextrefsyms */
 
 	ldr := ctxt.loader
 
@@ -1118,13 +1134,13 @@ func machodysymtab(ctxt *Link, base int64) {
 	s1 := ldr.SymSize(ldr.Lookup(".machosymtab", 0))
 	s2 := ldr.SymSize(ctxt.ArchSyms.LinkEditPLT)
 	s3 := ldr.SymSize(ctxt.ArchSyms.LinkEditGOT)
-	ml.data[12] = uint32(base + s1)     /* indirectsymoff */
-	ml.data[13] = uint32((s2 + s3) / 4) /* nindirectsyms */
+	ml.data[12] = uint32(base + s1)		/* indirectsymoff */
+	ml.data[13] = uint32((s2 + s3) / 4)	/* nindirectsyms */
 
-	ml.data[14] = 0 /* extreloff */
-	ml.data[15] = 0 /* nextrel */
-	ml.data[16] = 0 /* locreloff */
-	ml.data[17] = 0 /* nlocrel */
+	ml.data[14] = 0	/* extreloff */
+	ml.data[15] = 0	/* nextrel */
+	ml.data[16] = 0	/* locreloff */
+	ml.data[17] = 0	/* nlocrel */
 }
 
 func doMachoLink(ctxt *Link) int64 {
@@ -1169,7 +1185,7 @@ func doMachoLink(ctxt *Link) int64 {
 	}
 
 	if size > 0 {
-		linkoff = Rnd(int64(uint64(HEADR)+Segtext.Length), int64(*FlagRound)) + Rnd(int64(Segrelrodata.Filelen), int64(*FlagRound)) + Rnd(int64(Segdata.Filelen), int64(*FlagRound)) + Rnd(int64(Segdwarf.Filelen), int64(*FlagRound))
+		linkoff = Rnd(int64(uint64(HEADR)+Segtext.Length), *FlagRound) + Rnd(int64(Segrelrodata.Filelen), *FlagRound) + Rnd(int64(Segdata.Filelen), *FlagRound) + Rnd(int64(Segdwarf.Filelen), *FlagRound)
 		ctxt.Out.SeekSet(linkoff)
 
 		ctxt.Out.Write(ldr.Data(s1))
@@ -1184,7 +1200,7 @@ func doMachoLink(ctxt *Link) int64 {
 		size += ldr.SymSize(s7)
 	}
 
-	return Rnd(size, int64(*FlagRound))
+	return Rnd(size, *FlagRound)
 }
 
 func machorelocsect(ctxt *Link, out *OutBuf, sect *sym.Section, syms []loader.Sym) {
@@ -1323,8 +1339,8 @@ func peekMachoPlatform(m *macho.File) (*MachoPlatformLoad, error) {
 			return nil, err
 		}
 		return &MachoPlatformLoad{
-			platform: p,
-			cmd:      ml,
+			platform:	p,
+			cmd:		ml,
 		}, nil
 	}
 	return nil, nil
@@ -1338,8 +1354,8 @@ func peekMachoPlatform(m *macho.File) (*MachoPlatformLoad, error) {
 // In the binary it uses a compact stateful bytecode encoding. So we record
 // entries as we go and build the table at the end.
 type machoRebaseRecord struct {
-	sym loader.Sym
-	off int64
+	sym	loader.Sym
+	off	int64
 }
 
 var machorebase []machoRebaseRecord
@@ -1355,8 +1371,8 @@ func MachoAddRebase(s loader.Sym, off int64) {
 // In the binary it uses a compact stateful bytecode encoding. So we record
 // entries as we go and build the table at the end.
 type machoBindRecord struct {
-	off  int64
-	targ loader.Sym
+	off	int64
+	targ	loader.Sym
 }
 
 var machobind []machoBindRecord
@@ -1399,7 +1415,7 @@ func machoDyldInfo(ctxt *Link) {
 				return i + 1
 			}
 		}
-		return BIND_SPECIAL_DYLIB_FLAT_LOOKUP // don't know where it is from
+		return BIND_SPECIAL_DYLIB_FLAT_LOOKUP	// don't know where it is from
 	}
 
 	// Rebase table.
@@ -1437,7 +1453,7 @@ func machoDyldInfo(ctxt *Link) {
 		} else if d >= 128 {
 			bind.AddUint8(BIND_OPCODE_SET_DYLIB_ORDINAL_ULEB)
 			bind.AddUleb(uint64(d))
-		} else { // d <= 0
+		} else {	// d <= 0
 			bind.AddUint8(BIND_OPCODE_SET_DYLIB_SPECIAL_IMM | uint8(d)&0xf)
 		}
 
@@ -1449,7 +1465,7 @@ func machoDyldInfo(ctxt *Link) {
 		bind.AddUint8(BIND_OPCODE_DO_BIND)
 	}
 	bind.AddUint8(BIND_OPCODE_DONE)
-	sz = Rnd(bind.Size(), 16) // make it 16-byte aligned, see the comment in doMachoLink
+	sz = Rnd(bind.Size(), 16)	// make it 16-byte aligned, see the comment in doMachoLink
 	bind.Grow(sz)
 	bind.SetSize(sz)
 

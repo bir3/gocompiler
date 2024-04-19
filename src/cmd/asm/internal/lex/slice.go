@@ -12,18 +12,18 @@ import (
 
 // A Slice reads from a slice of Tokens.
 type Slice struct {
-	tokens []Token
-	base   *src.PosBase
-	line   int
-	pos    int
+	tokens	[]Token
+	base	*src.PosBase
+	line	int
+	pos	int
 }
 
 func NewSlice(base *src.PosBase, line int, tokens []Token) *Slice {
 	return &Slice{
-		tokens: tokens,
-		base:   base,
-		line:   line,
-		pos:    -1, // Next will advance to zero.
+		tokens:	tokens,
+		base:	base,
+		line:	line,
+		pos:	-1,	// Next will advance to zero.
 	}
 }
 
@@ -65,7 +65,7 @@ func (s *Slice) Col() int {
 	//	#define A #define B(x) x
 	// and
 	//	#define A #define B (x) x
-	// The first has definition of B has an argument, the second doesn't. Because we let
+	// The first definition of B has an argument, the second doesn't. Because we let
 	// text/scanner strip the blanks for us, this is extremely rare, hard to fix, and not worth it.
 	return s.pos
 }

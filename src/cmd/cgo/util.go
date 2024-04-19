@@ -9,7 +9,7 @@ import (
 	"fmt"
 	"github.com/bir3/gocompiler/src/go/token"
 	"os"
-	"os/exec"
+	"github.com/bir3/gocompiler/exec"
 )
 
 // run runs the command argv, feeding in stdin on standard input.

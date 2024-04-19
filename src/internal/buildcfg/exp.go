@@ -16,7 +16,7 @@ import (
 // (platform-default) experiment configuration.
 type ExperimentFlags struct {
 	goexperiment.Flags
-	baseline goexperiment.Flags
+	baseline	goexperiment.Flags
 }
 
 // Experiment contains the toolchain experiments enabled for the
@@ -65,19 +65,22 @@ func ParseGOEXPERIMENT(goos, goarch, goexp string) (*ExperimentFlags, error) {
 	case "amd64", "arm64", "ppc64le", "ppc64", "riscv64":
 		regabiAlwaysOn = true
 		regabiSupported = true
+	case "loong64":
+		regabiSupported = true
 	}
 
 	baseline := goexperiment.Flags{
-		RegabiWrappers:   regabiSupported,
-		RegabiArgs:       regabiSupported,
-		Unified:          true,
-		CoverageRedesign: true,
+		RegabiWrappers:		regabiSupported,
+		RegabiArgs:		regabiSupported,
+		CoverageRedesign:	true,
+		AllocHeaders:		true,
+		ExecTracer2:		true,
 	}
 
 	// Start with the statically enabled set of experiments.
 	flags := &ExperimentFlags{
-		Flags:    baseline,
-		baseline: baseline,
+		Flags:		baseline,
+		baseline:	baseline,
 	}
 
 	// Pick up any changes to the baseline configuration from the
@@ -130,7 +133,7 @@ func ParseGOEXPERIMENT(goos, goarch, goexp string) (*ExperimentFlags, error) {
 		flags.RegabiWrappers = true
 		flags.RegabiArgs = true
 	}
-	// regabi is only supported on amd64, arm64, riscv64, ppc64 and ppc64le.
+	// regabi is only supported on amd64, arm64, loong64, riscv64, ppc64 and ppc64le.
 	if !regabiSupported {
 		flags.RegabiWrappers = false
 		flags.RegabiArgs = false

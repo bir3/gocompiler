@@ -169,7 +169,7 @@ func compileTagFilter(name, value string, numLabelUnits map[string]string, ui pl
 func parseTagFilterRange(filter string) func(int64, string) bool {
 	ranges := tagFilterRangeRx.FindAllStringSubmatch(filter, 2)
 	if len(ranges) == 0 {
-		return nil // No ranges were identified
+		return nil	// No ranges were identified
 	}
 	v, err := strconv.ParseInt(ranges[0][1], 10, 64)
 	if err != nil {

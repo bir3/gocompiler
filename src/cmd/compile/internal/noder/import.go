@@ -29,8 +29,8 @@ import (
 )
 
 type gcimports struct {
-	ctxt     *types2.Context
-	packages map[string]*types2.Package
+	ctxt		*types2.Context
+	packages	map[string]*types2.Package
 }
 
 func (m *gcimports) Import(path string) (*types2.Package, error) {
@@ -133,7 +133,10 @@ func resolveImportPath(path string) (string, error) {
 		return "", errors.New("cannot import \"main\"")
 	}
 
-	if base.Ctxt.Pkgpath != "" && path == base.Ctxt.Pkgpath {
+	if base.Ctxt.Pkgpath == "" {
+		panic("missing pkgpath")
+	}
+	if path == base.Ctxt.Pkgpath {
 		return "", fmt.Errorf("import %q while compiling that package (import cycle)", path)
 	}
 
@@ -231,10 +234,6 @@ func readImportFile(path string, target *ir.Package, env *types2.Context, packag
 
 	switch c {
 	case 'u':
-		if !buildcfg.Experiment.Unified {
-			base.Fatalf("unexpected export data format")
-		}
-
 		// TODO(mdempsky): This seems a bit clunky.
 		data = strings.TrimSuffix(data, "\n$$\n")
 
@@ -243,20 +242,6 @@ func readImportFile(path string, target *ir.Package, env *types2.Context, packag
 		// Read package descriptors for both types2 and compiler backend.
 		readPackage(newPkgReader(pr), pkg1, false)
 		pkg2 = importer.ReadPackage(env, packages, pr)
-
-	case 'i':
-		if buildcfg.Experiment.Unified {
-			base.Fatalf("unexpected export data format")
-		}
-
-		typecheck.ReadImports(pkg1, data)
-
-		if packages != nil {
-			pkg2, err = importer.ImportData(packages, data, path)
-			if err != nil {
-				return
-			}
-		}
 
 	default:
 		// Indexed format is distinguished by an 'i' byte,
@@ -281,7 +266,7 @@ func findExportData(f *os.File) (r *bio.Reader, end int64, err error) {
 		return
 	}
 
-	if line == "!<arch>\n" { // package archive
+	if line == "!<arch>\n" {	// package archive
 		// package export block should be first
 		sz := int64(archive.ReadHeader(r.Reader, "__.PKGDEF"))
 		if sz <= 0 {

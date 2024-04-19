@@ -16,6 +16,7 @@ import (
 
 	"github.com/bir3/gocompiler/src/cmd/gocmd/internal/base"
 	"github.com/bir3/gocompiler/src/cmd/gocmd/internal/cfg"
+	"github.com/bir3/gocompiler/src/cmd/gocmd/internal/gover"
 	"github.com/bir3/gocompiler/src/cmd/gocmd/internal/modfetch"
 	"github.com/bir3/gocompiler/src/cmd/gocmd/internal/modfetch/codehost"
 	"github.com/bir3/gocompiler/src/cmd/gocmd/internal/modindex"
@@ -23,12 +24,11 @@ import (
 	"github.com/bir3/gocompiler/src/cmd/gocmd/internal/search"
 
 	"github.com/bir3/gocompiler/src/xvendor/golang.org/x/mod/module"
-	"github.com/bir3/gocompiler/src/xvendor/golang.org/x/mod/semver"
 )
 
 var (
-	infoStart, _ = hex.DecodeString("3077af0c9274080241e1c107e6d618e6")
-	infoEnd, _   = hex.DecodeString("f932433186182072008242104116d8f2")
+	infoStart, _	= hex.DecodeString("3077af0c9274080241e1c107e6d618e6")
+	infoEnd, _	= hex.DecodeString("f932433186182072008242104116d8f2")
 )
 
 func isStandardImportPath(path string) bool {
@@ -96,8 +96,8 @@ func ModuleInfo(ctx context.Context, path string) *modinfo.ModulePublic {
 	rs := LoadModFile(ctx)
 
 	var (
-		v  string
-		ok bool
+		v	string
+		ok	bool
 	)
 	if rs.pruning == pruned {
 		v, ok = rs.rootSelected(path)
@@ -105,14 +105,14 @@ func ModuleInfo(ctx context.Context, path string) *modinfo.ModulePublic {
 	if !ok {
 		mg, err := rs.Graph(ctx)
 		if err != nil {
-			base.Fatalf("go: %v", err)
+			base.Fatal(err)
 		}
 		v = mg.Selected(path)
 	}
 
 	if v == "none" {
 		return &modinfo.ModulePublic{
-			Path: path,
+			Path:	path,
 			Error: &modinfo.ModuleError{
 				Err: "module not in current build",
 			},
@@ -152,62 +152,72 @@ func addUpdate(ctx context.Context, m *modinfo.ModulePublic) {
 		return
 	}
 
-	if semver.Compare(info.Version, m.Version) > 0 {
+	if gover.ModCompare(m.Path, info.Version, m.Version) > 0 {
 		m.Update = &modinfo.ModulePublic{
-			Path:    m.Path,
-			Version: info.Version,
-			Time:    &info.Time,
+			Path:		m.Path,
+			Version:	info.Version,
+			Time:		&info.Time,
 		}
 	}
 }
 
-// mergeOrigin merges two origins,
-// returning and possibly modifying one of its arguments.
-// If the two origins conflict, mergeOrigin returns a non-specific one
-// that will not pass CheckReuse.
-// If m1 or m2 is nil, the other is returned unmodified.
-// But if m1 or m2 is non-nil and uncheckable, the result is also uncheckable,
-// to preserve uncheckability.
+// mergeOrigin returns the union of data from two origins,
+// returning either a new origin or one of its unmodified arguments.
+// If the two origins conflict including if either is nil,
+// mergeOrigin returns nil.
 func mergeOrigin(m1, m2 *codehost.Origin) *codehost.Origin {
-	if m1 == nil {
-		return m2
-	}
-	if m2 == nil {
-		return m1
-	}
-	if !m1.Checkable() {
-		return m1
-	}
-	if !m2.Checkable() {
-		return m2
+	if m1 == nil || m2 == nil {
+		return nil
 	}
 
-	merged := new(codehost.Origin)
-	*merged = *m1 // Clone to avoid overwriting fields in cached results.
+	if m2.VCS != m1.VCS ||
+		m2.URL != m1.URL ||
+		m2.Subdir != m1.Subdir {
+		return nil
+	}
 
+	merged := *m1
+	if m2.Hash != "" {
+		if m1.Hash != "" && m1.Hash != m2.Hash {
+			return nil
+		}
+		merged.Hash = m2.Hash
+	}
 	if m2.TagSum != "" {
 		if m1.TagSum != "" && (m1.TagSum != m2.TagSum || m1.TagPrefix != m2.TagPrefix) {
-			merged.ClearCheckable()
-			return merged
+			return nil
 		}
 		merged.TagSum = m2.TagSum
 		merged.TagPrefix = m2.TagPrefix
 	}
-	if m2.Hash != "" {
-		if m1.Hash != "" && (m1.Hash != m2.Hash || m1.Ref != m2.Ref) {
-			merged.ClearCheckable()
-			return merged
+	if m2.Ref != "" {
+		if m1.Ref != "" && m1.Ref != m2.Ref {
+			return nil
 		}
-		merged.Hash = m2.Hash
 		merged.Ref = m2.Ref
 	}
-	return merged
+
+	switch {
+	case merged == *m1:
+		return m1
+	case merged == *m2:
+		return m2
+	default:
+		// Clone the result to avoid an alloc for merged
+		// if the result is equal to one of the arguments.
+		clone := merged
+		return &clone
+	}
 }
 
 // addVersions fills in m.Versions with the list of known versions.
 // Excluded versions will be omitted. If listRetracted is false, retracted
 // versions will also be omitted.
 func addVersions(ctx context.Context, m *modinfo.ModulePublic, listRetracted bool) {
+	// TODO(bcmills): Would it make sense to check for reuse here too?
+	// Perhaps that doesn't buy us much, though: we would always have to fetch
+	// all of the version tags to list the available versions anyway.
+
 	allowed := CheckAllowed
 	if listRetracted {
 		allowed = CheckExclusions
@@ -282,9 +292,9 @@ func addDeprecation(ctx context.Context, m *modinfo.ModulePublic) {
 func moduleInfo(ctx context.Context, rs *Requirements, m module.Version, mode ListMode, reuse map[module.Version]*modinfo.ModulePublic) *modinfo.ModulePublic {
 	if m.Version == "" && MainModules.Contains(m.Path) {
 		info := &modinfo.ModulePublic{
-			Path:    m.Path,
-			Version: m.Version,
-			Main:    true,
+			Path:		m.Path,
+			Version:	m.Version,
+			Main:		true,
 		}
 		if v, ok := rawGoVersion.Load(m); ok {
 			info.GoVersion = v.(string)
@@ -299,9 +309,9 @@ func moduleInfo(ctx context.Context, rs *Requirements, m module.Version, mode Li
 	}
 
 	info := &modinfo.ModulePublic{
-		Path:     m.Path,
-		Version:  m.Version,
-		Indirect: rs != nil && !rs.direct[m.Path],
+		Path:		m.Path,
+		Version:	m.Version,
+		Indirect:	rs != nil && !rs.direct[m.Path],
 	}
 	if v, ok := rawGoVersion.Load(m); ok {
 		info.GoVersion = v.(string)
@@ -309,13 +319,8 @@ func moduleInfo(ctx context.Context, rs *Requirements, m module.Version, mode Li
 
 	// completeFromModCache fills in the extra fields in m using the module cache.
 	completeFromModCache := func(m *modinfo.ModulePublic) {
-		if old := reuse[module.Version{Path: m.Path, Version: m.Version}]; old != nil {
-			if err := checkReuse(ctx, m.Path, old.Origin); err == nil {
-				*m = *old
-				m.Query = ""
-				m.Dir = ""
-				return
-			}
+		if gover.IsToolchain(m.Path) {
+			return
 		}
 
 		checksumOk := func(suffix string) bool {
@@ -323,7 +328,18 @@ func moduleInfo(ctx context.Context, rs *Requirements, m module.Version, mode Li
 				modfetch.HaveSum(module.Version{Path: m.Path, Version: m.Version + suffix})
 		}
 
+		mod := module.Version{Path: m.Path, Version: m.Version}
+
 		if m.Version != "" {
+			if old := reuse[mod]; old != nil {
+				if err := checkReuse(ctx, mod, old.Origin); err == nil {
+					*m = *old
+					m.Query = ""
+					m.Dir = ""
+					return
+				}
+			}
+
 			if q, err := Query(ctx, m.Path, m.Version, "", nil); err != nil {
 				m.Error = &modinfo.ModuleError{Err: err.Error()}
 			} else {
@@ -331,7 +347,6 @@ func moduleInfo(ctx context.Context, rs *Requirements, m module.Version, mode Li
 				m.Time = &q.Time
 			}
 		}
-		mod := module.Version{Path: m.Path, Version: m.Version}
 
 		if m.GoVersion == "" && checksumOk("/go.mod") {
 			// Load the go.mod file to determine the Go version, since it hasn't
@@ -343,7 +358,7 @@ func moduleInfo(ctx context.Context, rs *Requirements, m module.Version, mode Li
 
 		if m.Version != "" {
 			if checksumOk("/go.mod") {
-				gomod, err := modfetch.CachePath(mod, "mod")
+				gomod, err := modfetch.CachePath(ctx, mod, "mod")
 				if err == nil {
 					if info, err := os.Stat(gomod); err == nil && info.Mode().IsRegular() {
 						m.GoMod = gomod
@@ -351,7 +366,7 @@ func moduleInfo(ctx context.Context, rs *Requirements, m module.Version, mode Li
 				}
 			}
 			if checksumOk("") {
-				dir, err := modfetch.DownloadDir(mod)
+				dir, err := modfetch.DownloadDir(ctx, mod)
 				if err == nil {
 					m.Dir = dir
 				}
@@ -366,7 +381,7 @@ func moduleInfo(ctx context.Context, rs *Requirements, m module.Version, mode Li
 	if rs == nil {
 		// If this was an explicitly-versioned argument to 'go mod download' or
 		// 'go list -m', report the actual requested version, not its replacement.
-		completeFromModCache(info) // Will set m.Error in vendor mode.
+		completeFromModCache(info)	// Will set m.Error in vendor mode.
 		return info
 	}
 
@@ -389,8 +404,8 @@ func moduleInfo(ctx context.Context, rs *Requirements, m module.Version, mode Li
 	// worth the cost, and we're going to overwrite the GoMod and Dir from the
 	// replacement anyway. See https://golang.org/issue/27859.
 	info.Replace = &modinfo.ModulePublic{
-		Path:    r.Path,
-		Version: r.Version,
+		Path:		r.Path,
+		Version:	r.Version,
 	}
 	if v, ok := rawGoVersion.Load(m); ok {
 		info.Replace.GoVersion = v.(string)
@@ -417,7 +432,7 @@ func moduleInfo(ctx context.Context, rs *Requirements, m module.Version, mode Li
 // If the package was loaded, its containing module and true are returned.
 // Otherwise, module.Version{} and false are returned.
 func findModule(ld *loader, path string) (module.Version, bool) {
-	if pkg, ok := ld.pkgCache.Get(path).(*loadPkg); ok {
+	if pkg, ok := ld.pkgCache.Get(path); ok {
 		return pkg.mod, pkg.mod != module.Version{}
 	}
 	return module.Version{}, false

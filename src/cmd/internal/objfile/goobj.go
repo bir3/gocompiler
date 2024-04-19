@@ -20,10 +20,10 @@ import (
 )
 
 type goobjFile struct {
-	goobj *archive.GoObj
-	r     *goobj.Reader
-	f     *os.File
-	arch  *sys.Arch
+	goobj	*archive.GoObj
+	r	*goobj.Reader
+	f	*os.File
+	arch	*sys.Arch
 }
 
 func openGoFile(f *os.File) (*File, error) {
@@ -35,7 +35,7 @@ func openGoFile(f *os.File) (*File, error) {
 L:
 	for _, e := range a.Entries {
 		switch e.Type {
-		case archive.EntryPkgDef:
+		case archive.EntryPkgDef, archive.EntrySentinelNonObj:
 			continue
 		case archive.EntryGoObj:
 			o := e.Obj
@@ -53,8 +53,8 @@ L:
 				}
 			}
 			entries = append(entries, &Entry{
-				name: e.Name,
-				raw:  &goobjFile{e.Obj, r, f, arch},
+				name:	e.Name,
+				raw:	&goobjFile{e.Obj, r, f, arch},
 			})
 			continue
 		case archive.EntryNativeObj:
@@ -62,8 +62,8 @@ L:
 			for _, try := range openers {
 				if raw, err := try(nr); err == nil {
 					entries = append(entries, &Entry{
-						name: e.Name,
-						raw:  raw,
+						name:	e.Name,
+						raw:	raw,
 					})
 					continue L
 				}
@@ -82,11 +82,11 @@ func goobjName(name string, ver int) string {
 }
 
 type goobjReloc struct {
-	Off  int32
-	Size uint8
-	Type objabi.RelocType
-	Add  int64
-	Sym  string
+	Off	int32
+	Size	uint8
+	Type	objabi.RelocType
+	Add	int64
+	Sym	string
 }
 
 func (r goobjReloc) String(insnOffset uint64) string {
@@ -156,7 +156,7 @@ func (f *goobjFile) symbols() ([]Sym, error) {
 	for i := uint32(0); i < ndef; i++ {
 		osym := r.Sym(i)
 		if osym.Name(r) == "" {
-			continue // not a real symbol
+			continue	// not a real symbol
 		}
 		name := osym.Name(r)
 		ver := osym.ABI()
@@ -178,10 +178,10 @@ func (f *goobjFile) symbols() ([]Sym, error) {
 		}
 
 		sym := Sym{
-			Name: name,
-			Addr: uint64(r.DataOff(i)),
-			Size: int64(osym.Siz()),
-			Code: code,
+			Name:	name,
+			Addr:	uint64(r.DataOff(i)),
+			Size:	int64(osym.Siz()),
+			Code:	code,
 		}
 
 		relocs := r.Relocs(i)
@@ -189,14 +189,14 @@ func (f *goobjFile) symbols() ([]Sym, error) {
 		for j := range relocs {
 			rel := &relocs[j]
 			sym.Relocs[j] = Reloc{
-				Addr: uint64(r.DataOff(i)) + uint64(rel.Off()),
-				Size: uint64(rel.Siz()),
+				Addr:	uint64(r.DataOff(i)) + uint64(rel.Off()),
+				Size:	uint64(rel.Siz()),
 				Stringer: goobjReloc{
-					Off:  rel.Off(),
-					Size: rel.Siz(),
-					Type: objabi.RelocType(rel.Type()),
-					Add:  rel.Add(),
-					Sym:  resolveSymRef(rel.Sym()),
+					Off:	rel.Off(),
+					Size:	rel.Siz(),
+					Type:	objabi.RelocType(rel.Type()),
+					Add:	rel.Add(),
+					Sym:	resolveSymRef(rel.Sym()),
 				},
 			}
 		}

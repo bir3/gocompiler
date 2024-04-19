@@ -9,18 +9,19 @@ package modcmd
 import (
 	"github.com/bir3/gocompiler/src/cmd/gocmd/internal/base"
 	"github.com/bir3/gocompiler/src/cmd/gocmd/internal/cfg"
+	"github.com/bir3/gocompiler/src/cmd/gocmd/internal/gover"
 	"github.com/bir3/gocompiler/src/cmd/gocmd/internal/imports"
 	"github.com/bir3/gocompiler/src/cmd/gocmd/internal/modload"
+	"github.com/bir3/gocompiler/src/cmd/gocmd/internal/toolchain"
 	"context"
 	"fmt"
 
 	"github.com/bir3/gocompiler/src/xvendor/golang.org/x/mod/modfile"
-	"github.com/bir3/gocompiler/src/xvendor/golang.org/x/mod/semver"
 )
 
 var cmdTidy = &base.Command{
-	UsageLine: "go mod tidy [-e] [-v] [-x] [-go=version] [-compat=version]",
-	Short:     "add missing and remove unused modules",
+	UsageLine:	"go mod tidy [-e] [-v] [-x] [-go=version] [-compat=version]",
+	Short:		"add missing and remove unused modules",
 	Long: `
 Tidy makes sure go.mod matches the source code in the module.
 It adds any missing modules necessary to build the current module's
@@ -52,13 +53,13 @@ The -x flag causes tidy to print the commands download executes.
 
 See https://golang.org/ref/mod#go-mod-tidy for more about 'go mod tidy'.
 	`,
-	Run: runTidy,
+	Run:	runTidy,
 }
 
 var (
-	tidyE      bool          // if true, report errors but proceed anyway.
-	tidyGo     goVersionFlag // go version to write to the tidied go.mod file (toggles lazy loading)
-	tidyCompat goVersionFlag // go version for which the tidied go.mod and go.sum files should be “compatible”
+	tidyE		bool		// if true, report errors but proceed anyway.
+	tidyGo		goVersionFlag	// go version to write to the tidied go.mod file (toggles lazy loading)
+	tidyCompat	goVersionFlag	// go version for which the tidied go.mod and go.sum files should be “compatible”
 )
 
 func init() {
@@ -79,16 +80,16 @@ type goVersionFlag struct {
 	v string
 }
 
-func (f *goVersionFlag) String() string { return f.v }
-func (f *goVersionFlag) Get() any       { return f.v }
+func (f *goVersionFlag) String() string	{ return f.v }
+func (f *goVersionFlag) Get() any	{ return f.v }
 
 func (f *goVersionFlag) Set(s string) error {
 	if s != "" {
-		latest := modload.LatestGoVersion()
+		latest := gover.Local()
 		if !modfile.GoVersionRE.MatchString(s) {
 			return fmt.Errorf("expecting a Go version like %q", latest)
 		}
-		if semver.Compare("v"+s, "v"+latest) > 0 {
+		if gover.Compare(s, latest) > 0 {
 			return fmt.Errorf("maximum supported Go version is %s", latest)
 		}
 	}
@@ -115,15 +116,24 @@ func runTidy(ctx context.Context, cmd *base.Command, args []string) {
 	modload.ForceUseModules = true
 	modload.RootMode = modload.NeedRoot
 
+	goVersion := tidyGo.String()
+	if goVersion != "" && gover.Compare(gover.Local(), goVersion) < 0 {
+		toolchain.SwitchOrFatal(ctx, &gover.TooNewError{
+			What:		"-go flag",
+			GoVersion:	goVersion,
+		})
+	}
+
 	modload.LoadPackages(ctx, modload.PackageOpts{
-		GoVersion:                tidyGo.String(),
-		Tags:                     imports.AnyTags(),
-		Tidy:                     true,
-		TidyCompatibleVersion:    tidyCompat.String(),
-		VendorModulesInGOROOTSrc: true,
-		ResolveMissingImports:    true,
-		LoadTests:                true,
-		AllowErrors:              tidyE,
-		SilenceMissingStdImports: true,
+		TidyGoVersion:			tidyGo.String(),
+		Tags:				imports.AnyTags(),
+		Tidy:				true,
+		TidyCompatibleVersion:		tidyCompat.String(),
+		VendorModulesInGOROOTSrc:	true,
+		ResolveMissingImports:		true,
+		LoadTests:			true,
+		AllowErrors:			tidyE,
+		SilenceMissingStdImports:	true,
+		Switcher:			new(toolchain.Switcher),
 	}, "all")
 }

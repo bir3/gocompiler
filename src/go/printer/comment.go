@@ -31,7 +31,7 @@ func formatDocComment(list []*ast.Comment) []*ast.Comment {
 			// reformatting it will only make the situation worse.
 			return list
 		}
-		text = text[2 : len(text)-2] // cut /* and */
+		text = text[2 : len(text)-2]	// cut /* and */
 	} else if strings.HasPrefix(list[0].Text, "//") {
 		kind = "//"
 		var b strings.Builder
@@ -69,8 +69,8 @@ func formatDocComment(list []*ast.Comment) []*ast.Comment {
 	slash := list[0].Slash
 	if kind == "/*" {
 		c := &ast.Comment{
-			Slash: slash,
-			Text:  "/*\n" + text + "*/",
+			Slash:	slash,
+			Text:	"/*\n" + text + "*/",
 		}
 		return []*ast.Comment{c}
 	}
@@ -88,19 +88,19 @@ func formatDocComment(list []*ast.Comment) []*ast.Comment {
 			line = "// " + line
 		}
 		out = append(out, &ast.Comment{
-			Slash: slash,
-			Text:  line,
+			Slash:	slash,
+			Text:	line,
 		})
 	}
 	if len(directives) > 0 {
 		out = append(out, &ast.Comment{
-			Slash: slash,
-			Text:  "//",
+			Slash:	slash,
+			Text:	"//",
 		})
 		for _, c := range directives {
 			out = append(out, &ast.Comment{
-				Slash: slash,
-				Text:  c.Text,
+				Slash:	slash,
+				Text:	c.Text,
 			})
 		}
 	}

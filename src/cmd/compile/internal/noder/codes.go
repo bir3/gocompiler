@@ -9,11 +9,11 @@ import "github.com/bir3/gocompiler/src/internal/pkgbits"
 // A codeStmt distinguishes among statement encodings.
 type codeStmt int
 
-func (c codeStmt) Marker() pkgbits.SyncMarker { return pkgbits.SyncStmt1 }
-func (c codeStmt) Value() int                 { return int(c) }
+func (c codeStmt) Marker() pkgbits.SyncMarker	{ return pkgbits.SyncStmt1 }
+func (c codeStmt) Value() int			{ return int(c) }
 
 const (
-	stmtEnd codeStmt = iota
+	stmtEnd	codeStmt	= iota
 	stmtLabel
 	stmtBlock
 	stmtExpr
@@ -33,14 +33,14 @@ const (
 // A codeExpr distinguishes among expression encodings.
 type codeExpr int
 
-func (c codeExpr) Marker() pkgbits.SyncMarker { return pkgbits.SyncExpr }
-func (c codeExpr) Value() int                 { return int(c) }
+func (c codeExpr) Marker() pkgbits.SyncMarker	{ return pkgbits.SyncExpr }
+func (c codeExpr) Value() int			{ return int(c) }
 
 // TODO(mdempsky): Split expr into addr, for lvalues.
 const (
-	exprConst  codeExpr = iota
-	exprLocal           // local variable
-	exprGlobal          // global variable or function
+	exprConst	codeExpr	= iota
+	exprLocal			// local variable
+	exprGlobal			// global variable or function
 	exprCompLit
 	exprFuncLit
 	exprFieldVal
@@ -55,19 +55,23 @@ const (
 	exprConvert
 	exprNew
 	exprMake
-	exprNil
+	exprSizeof
+	exprAlignof
+	exprOffsetof
+	exprZero
 	exprFuncInst
 	exprRecv
 	exprReshape
+	exprRuntimeBuiltin	// a reference to a runtime function from transformed syntax. Followed by string name, e.g., "panicrangeexit"
 )
 
 type codeAssign int
 
-func (c codeAssign) Marker() pkgbits.SyncMarker { return pkgbits.SyncAssign }
-func (c codeAssign) Value() int                 { return int(c) }
+func (c codeAssign) Marker() pkgbits.SyncMarker	{ return pkgbits.SyncAssign }
+func (c codeAssign) Value() int			{ return int(c) }
 
 const (
-	assignBlank codeAssign = iota
+	assignBlank	codeAssign	= iota
 	assignDef
 	assignExpr
 )
@@ -75,11 +79,11 @@ const (
 // A codeDecl distinguishes among declaration encodings.
 type codeDecl int
 
-func (c codeDecl) Marker() pkgbits.SyncMarker { return pkgbits.SyncDecl }
-func (c codeDecl) Value() int                 { return int(c) }
+func (c codeDecl) Marker() pkgbits.SyncMarker	{ return pkgbits.SyncDecl }
+func (c codeDecl) Value() int			{ return int(c) }
 
 const (
-	declEnd codeDecl = iota
+	declEnd	codeDecl	= iota
 	declFunc
 	declMethod
 	declVar

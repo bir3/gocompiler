@@ -20,22 +20,22 @@ import (
 
 // An Example represents an example function found in a test source file.
 type Example struct {
-	Name        string // name of the item being exemplified (including optional suffix)
-	Suffix      string // example suffix, without leading '_' (only populated by NewFromFiles)
-	Doc         string // example function doc string
-	Code        ast.Node
-	Play        *ast.File // a whole program version of the example
-	Comments    []*ast.CommentGroup
-	Output      string // expected output
-	Unordered   bool
-	EmptyOutput bool // expect empty output
-	Order       int  // original source code order
+	Name		string	// name of the item being exemplified (including optional suffix)
+	Suffix		string	// example suffix, without leading '_' (only populated by NewFromFiles)
+	Doc		string	// example function doc string
+	Code		ast.Node
+	Play		*ast.File	// a whole program version of the example
+	Comments	[]*ast.CommentGroup
+	Output		string	// expected output
+	Unordered	bool
+	EmptyOutput	bool	// expect empty output
+	Order		int	// original source code order
 }
 
 // Examples returns the examples found in testFiles, sorted by Name field.
 // The Order fields record the order in which the examples were encountered.
 // The Suffix field is not populated when Examples is called directly, it is
-// only populated by NewFromFiles for examples it finds in _test.go files.
+// only populated by [NewFromFiles] for examples it finds in _test.go files.
 //
 // Playable Examples must be in a package whose name ends in "_test".
 // An Example is "playable" (the Play field is non-nil) in either of these
@@ -50,8 +50,8 @@ type Example struct {
 func Examples(testFiles ...*ast.File) []*Example {
 	var list []*Example
 	for _, file := range testFiles {
-		hasTests := false // file contains tests, fuzz test, or benchmarks
-		numDecl := 0      // number of non-import declarations in the file
+		hasTests := false	// file contains tests, fuzz test, or benchmarks
+		numDecl := 0		// number of non-import declarations in the file
 		var flist []*Example
 		for _, decl := range file.Decls {
 			if g, ok := decl.(*ast.GenDecl); ok && g.Tok != token.IMPORT {
@@ -72,9 +72,9 @@ func Examples(testFiles ...*ast.File) []*Example {
 				continue
 			}
 			if params := f.Type.Params; len(params.List) != 0 {
-				continue // function has params; not a valid example
+				continue	// function has params; not a valid example
 			}
-			if f.Body == nil { // ast.File.Body nil dereference (see issue 28044)
+			if f.Body == nil {	// ast.File.Body nil dereference (see issue 28044)
 				continue
 			}
 			var doc string
@@ -83,15 +83,15 @@ func Examples(testFiles ...*ast.File) []*Example {
 			}
 			output, unordered, hasOutput := exampleOutput(f.Body, file.Comments)
 			flist = append(flist, &Example{
-				Name:        name[len("Example"):],
-				Doc:         doc,
-				Code:        f.Body,
-				Play:        playExample(file, f),
-				Comments:    file.Comments,
-				Output:      output,
-				Unordered:   unordered,
-				EmptyOutput: output == "" && hasOutput,
-				Order:       len(flist),
+				Name:		name[len("Example"):],
+				Doc:		doc,
+				Code:		f.Body,
+				Play:		playExample(file, f),
+				Comments:	file.Comments,
+				Output:		output,
+				Unordered:	unordered,
+				EmptyOutput:	output == "" && hasOutput,
+				Order:		len(flist),
 			})
 		}
 		if !hasTests && numDecl > 1 && len(flist) == 1 {
@@ -130,7 +130,7 @@ func exampleOutput(b *ast.BlockStmt, comments []*ast.CommentGroup) (output strin
 			return text, unordered, true
 		}
 	}
-	return "", false, false // no suitable comment found
+	return "", false, false	// no suitable comment found
 }
 
 // isTest tells whether name looks like a test, example, fuzz test, or
@@ -140,7 +140,7 @@ func isTest(name, prefix string) bool {
 	if !strings.HasPrefix(name, prefix) {
 		return false
 	}
-	if len(name) == len(prefix) { // "Test" is ok
+	if len(name) == len(prefix) {	// "Test" is ok
 		return true
 	}
 	rune, _ := utf8.DecodeRuneInString(name[len(prefix):])
@@ -202,7 +202,7 @@ func playExample(file *ast.File, f *ast.FuncDecl) *ast.File {
 	// example. The heuristic assumes package names match base import
 	// paths for imports w/o renames (should be good enough most of the time).
 	var namedImports []ast.Spec
-	var blankImports []ast.Spec // _ imports
+	var blankImports []ast.Spec	// _ imports
 
 	// To preserve the blank lines between groups of imports, find the
 	// start position of each group, and assign that position to all
@@ -291,17 +291,17 @@ func playExample(file *ast.File, f *ast.FuncDecl) *ast.File {
 
 	// Synthesize import declaration.
 	importDecl := &ast.GenDecl{
-		Tok:    token.IMPORT,
-		Lparen: 1, // Need non-zero Lparen and Rparen so that printer
-		Rparen: 1, // treats this as a factored import.
+		Tok:	token.IMPORT,
+		Lparen:	1,	// Need non-zero Lparen and Rparen so that printer
+		Rparen:	1,	// treats this as a factored import.
 	}
 	importDecl.Specs = append(namedImports, blankImports...)
 
 	// Synthesize main function.
 	funcDecl := &ast.FuncDecl{
-		Name: ast.NewIdent("main"),
-		Type: f.Type,
-		Body: body,
+		Name:	ast.NewIdent("main"),
+		Type:	f.Type,
+		Body:	body,
 	}
 
 	decls := make([]ast.Decl, 0, 2+len(depDecls))
@@ -318,9 +318,9 @@ func playExample(file *ast.File, f *ast.FuncDecl) *ast.File {
 
 	// Synthesize file.
 	return &ast.File{
-		Name:     ast.NewIdent("main"),
-		Decls:    decls,
-		Comments: comments,
+		Name:		ast.NewIdent("main"),
+		Decls:		decls,
+		Comments:	comments,
 	}
 }
 
@@ -339,8 +339,8 @@ func findDeclsAndUnresolved(body ast.Node, topDecls map[*ast.Object]ast.Decl, ty
 
 	unresolved := make(map[string]bool)
 	var depDecls []ast.Decl
-	usedDecls := make(map[ast.Decl]bool)   // set of top-level decls reachable from the body
-	usedObjs := make(map[*ast.Object]bool) // set of objects reachable from the body (each declared by a usedDecl)
+	usedDecls := make(map[ast.Decl]bool)	// set of top-level decls reachable from the body
+	usedObjs := make(map[*ast.Object]bool)	// set of objects reachable from the body (each declared by a usedDecl)
 
 	var inspectFunc func(ast.Node) bool
 	inspectFunc = func(n ast.Node) bool {
@@ -431,7 +431,7 @@ func findDeclsAndUnresolved(body ast.Node, topDecls map[*ast.Object]ast.Decl, ty
 		case *ast.FuncDecl:
 			ds = append(ds, d)
 		case *ast.GenDecl:
-			containsIota := false // does any spec have iota?
+			containsIota := false	// does any spec have iota?
 			// Collect all Specs that were mentioned in the example.
 			var specs []ast.Spec
 			for _, s := range d.Specs {
@@ -475,7 +475,7 @@ func findDeclsAndUnresolved(body ast.Node, topDecls map[*ast.Object]ast.Decl, ty
 					ds = append(ds, d)
 				} else {
 					// Synthesize a GenDecl with just the Specs we need.
-					nd := *d // copy the GenDecl
+					nd := *d	// copy the GenDecl
 					nd.Specs = specs
 					if len(specs) == 1 {
 						// Remove grouping parens if there is only one spec.
@@ -579,9 +579,9 @@ func stripOutputComment(body *ast.BlockStmt, comments []*ast.CommentGroup) (*ast
 
 	// Copy body and comments, as the originals may be used elsewhere.
 	newBody := &ast.BlockStmt{
-		Lbrace: body.Lbrace,
-		List:   body.List,
-		Rbrace: last.Pos(),
+		Lbrace:	body.Lbrace,
+		List:	body.List,
+		Rbrace:	last.Pos(),
 	}
 	newComments := make([]*ast.CommentGroup, len(comments)-1)
 	copy(newComments, comments[:i])
@@ -624,7 +624,7 @@ func classifyExamples(p *Package, examples []*Example) {
 	}
 	// Mapping of names for funcs, types, and methods to the example listing.
 	ids := make(map[string]*[]*Example)
-	ids[""] = &p.Examples // package-level examples have an empty name
+	ids[""] = &p.Examples	// package-level examples have an empty name
 	for _, f := range p.Funcs {
 		if !token.IsExported(f.Name) {
 			continue

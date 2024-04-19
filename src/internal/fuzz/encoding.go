@@ -67,7 +67,7 @@ func marshalCorpusFile(vals ...any) []byte {
 			}
 		case string:
 			fmt.Fprintf(b, "string(%q)\n", t)
-		case rune: // int32
+		case rune:	// int32
 			// Although rune and int32 are represented by the same type, only a subset
 			// of valid int32 values can be expressed as rune literals. Notably,
 			// negative numbers, surrogate halves, and values above unicode.MaxRune
@@ -85,11 +85,11 @@ func marshalCorpusFile(vals ...any) []byte {
 			} else {
 				fmt.Fprintf(b, "int32(%v)\n", t)
 			}
-		case byte: // uint8
+		case byte:	// uint8
 			// For bytes, we arbitrarily prefer the character interpretation.
 			// (Every byte has a valid character encoding.)
 			fmt.Fprintf(b, "byte(%q)\n", t)
-		case []byte: // []uint8
+		case []byte:	// []uint8
 			fmt.Fprintf(b, "[]byte(%q)\n", t)
 		default:
 			panic(fmt.Sprintf("unsupported type: %T", t))
@@ -195,8 +195,8 @@ func parseCorpusValue(line []byte) (any, error) {
 	}
 
 	var (
-		val  string
-		kind token.Token
+		val	string
+		kind	token.Token
 	)
 	if op, ok := arg.(*ast.UnaryExpr); ok {
 		switch lit := op.X.(type) {
@@ -205,7 +205,7 @@ func parseCorpusValue(line []byte) (any, error) {
 				return nil, fmt.Errorf("unsupported operation on int/float: %v", op.Op)
 			}
 			// Special case for negative numbers.
-			val = op.Op.String() + lit.Value // e.g. "-" + "124"
+			val = op.Op.String() + lit.Value	// e.g. "-" + "124"
 			kind = lit.Kind
 		case *ast.Ident:
 			if lit.Name != "Inf" {

@@ -23,7 +23,7 @@ import (
 	"github.com/bir3/gocompiler/src/cmd/internal/src"
 )
 
-func Info(fnsym *obj.LSym, infosym *obj.LSym, curfn interface{}) ([]dwarf.Scope, dwarf.InlCalls) {
+func Info(fnsym *obj.LSym, infosym *obj.LSym, curfn obj.Func) (scopes []dwarf.Scope, inlcalls dwarf.InlCalls) {
 	fn := curfn.(*ir.Func)
 
 	if fn.Nname != nil {
@@ -74,7 +74,7 @@ func Info(fnsym *obj.LSym, infosym *obj.LSym, curfn interface{}) ([]dwarf.Scope,
 	// Populate decls for fn.
 	if isODCLFUNC {
 		for _, n := range fn.Dcl {
-			if n.Op() != ir.ONAME { // might be OTYPE or OLITERAL
+			if n.Op() != ir.ONAME {	// might be OTYPE or OLITERAL
 				continue
 			}
 			switch n.Class {
@@ -124,8 +124,7 @@ func Info(fnsym *obj.LSym, infosym *obj.LSym, curfn interface{}) ([]dwarf.Scope,
 		varScopes = append(varScopes, findScope(fn.Marks, pos))
 	}
 
-	scopes := assembleScopes(fnsym, fn, dwarfVars, varScopes)
-	var inlcalls dwarf.InlCalls
+	scopes = assembleScopes(fnsym, fn, dwarfVars, varScopes)
 	if base.Flag.GenDwarfInl > 0 {
 		inlcalls = assembleInlines(fnsym, dwarfVars)
 	}
@@ -205,7 +204,7 @@ func createDwarfVars(fnsym *obj.LSym, complexOK bool, fn *ir.Func, apDecls []*ir
 		if c == '.' || n.Type().IsUntyped() {
 			continue
 		}
-		if n.Class == ir.PPARAM && !ssagen.TypeOK(n.Type()) {
+		if n.Class == ir.PPARAM && !ssa.CanSSA(n.Type()) {
 			// SSA-able args get location lists, and may move in and
 			// out of registers, so those are handled elsewhere.
 			// Autos and named output params seem to get handled
@@ -240,17 +239,17 @@ func createDwarfVars(fnsym *obj.LSym, complexOK bool, fn *ir.Func, apDecls []*ir
 		}
 		declpos := base.Ctxt.InnermostPos(n.Pos())
 		vars = append(vars, &dwarf.Var{
-			Name:          n.Sym().Name,
-			IsReturnValue: isReturnValue,
-			Abbrev:        abbrev,
-			StackOffset:   int32(n.FrameOffset()),
-			Type:          base.Ctxt.Lookup(typename),
-			DeclFile:      declpos.RelFilename(),
-			DeclLine:      declpos.RelLine(),
-			DeclCol:       declpos.RelCol(),
-			InlIndex:      int32(inlIndex),
-			ChildIndex:    -1,
-			DictIndex:     n.DictIndex,
+			Name:		n.Sym().Name,
+			IsReturnValue:	isReturnValue,
+			Abbrev:		abbrev,
+			StackOffset:	int32(n.FrameOffset()),
+			Type:		base.Ctxt.Lookup(typename),
+			DeclFile:	declpos.RelFilename(),
+			DeclLine:	declpos.RelLine(),
+			DeclCol:	declpos.RelCol(),
+			InlIndex:	int32(inlIndex),
+			ChildIndex:	-1,
+			DictIndex:	n.DictIndex,
 		})
 		// Record go type of to insure that it gets emitted by the linker.
 		fnsym.Func().RecordAutoType(reflectdata.TypeLinksym(n.Type()))
@@ -271,22 +270,19 @@ func createDwarfVars(fnsym *obj.LSym, complexOK bool, fn *ir.Func, apDecls []*ir
 func sortDeclsAndVars(fn *ir.Func, decls []*ir.Name, vars []*dwarf.Var) {
 	paramOrder := make(map[*ir.Name]int)
 	idx := 1
-	for _, selfn := range types.RecvsParamsResults {
-		fsl := selfn(fn.Type()).FieldSlice()
-		for _, f := range fsl {
-			if n, ok := f.Nname.(*ir.Name); ok {
-				paramOrder[n] = idx
-				idx++
-			}
+	for _, f := range fn.Type().RecvParamsResults() {
+		if n, ok := f.Nname.(*ir.Name); ok {
+			paramOrder[n] = idx
+			idx++
 		}
 	}
 	sort.Stable(varsAndDecls{decls, vars, paramOrder})
 }
 
 type varsAndDecls struct {
-	decls      []*ir.Name
-	vars       []*dwarf.Var
-	paramOrder map[*ir.Name]int
+	decls		[]*ir.Name
+	vars		[]*dwarf.Var
+	paramOrder	map[*ir.Name]int
 }
 
 func (v varsAndDecls) Len() int {
@@ -327,7 +323,7 @@ func preInliningDcls(fnsym *obj.LSym) []*ir.Name {
 		c := n.Sym().Name[0]
 		// Avoid reporting "_" parameters, since if there are more than
 		// one, it can result in a collision later on, as in #23179.
-		if unversion(n.Sym().Name) == "_" || c == '.' || n.Type().IsUntyped() {
+		if n.Sym().Name == "_" || c == '.' || n.Type().IsUntyped() {
 			continue
 		}
 		rdcl = append(rdcl, n)
@@ -397,18 +393,18 @@ func createSimpleVar(fnsym *obj.LSym, n *ir.Name) *dwarf.Var {
 	}
 	declpos := base.Ctxt.InnermostPos(declPos(n))
 	return &dwarf.Var{
-		Name:          n.Sym().Name,
-		IsReturnValue: n.Class == ir.PPARAMOUT,
-		IsInlFormal:   n.InlFormal(),
-		Abbrev:        abbrev,
-		StackOffset:   int32(offs),
-		Type:          base.Ctxt.Lookup(typename),
-		DeclFile:      declpos.RelFilename(),
-		DeclLine:      declpos.RelLine(),
-		DeclCol:       declpos.RelCol(),
-		InlIndex:      int32(inlIndex),
-		ChildIndex:    -1,
-		DictIndex:     n.DictIndex,
+		Name:		n.Sym().Name,
+		IsReturnValue:	n.Class == ir.PPARAMOUT,
+		IsInlFormal:	n.InlFormal(),
+		Abbrev:		abbrev,
+		StackOffset:	int32(offs),
+		Type:		base.Ctxt.Lookup(typename),
+		DeclFile:	declpos.RelFilename(),
+		DeclLine:	declpos.RelLine(),
+		DeclCol:	declpos.RelCol(),
+		InlIndex:	int32(inlIndex),
+		ChildIndex:	-1,
+		DictIndex:	n.DictIndex,
 	}
 }
 
@@ -498,22 +494,22 @@ func createComplexVar(fnsym *obj.LSym, fn *ir.Func, varID ssa.VarID) *dwarf.Var 
 	}
 	declpos := base.Ctxt.InnermostPos(n.Pos())
 	dvar := &dwarf.Var{
-		Name:          n.Sym().Name,
-		IsReturnValue: n.Class == ir.PPARAMOUT,
-		IsInlFormal:   n.InlFormal(),
-		Abbrev:        abbrev,
-		Type:          base.Ctxt.Lookup(typename),
+		Name:		n.Sym().Name,
+		IsReturnValue:	n.Class == ir.PPARAMOUT,
+		IsInlFormal:	n.InlFormal(),
+		Abbrev:		abbrev,
+		Type:		base.Ctxt.Lookup(typename),
 		// The stack offset is used as a sorting key, so for decomposed
 		// variables just give it the first one. It's not used otherwise.
 		// This won't work well if the first slot hasn't been assigned a stack
 		// location, but it's not obvious how to do better.
-		StackOffset: ssagen.StackOffset(debug.Slots[debug.VarSlots[varID][0]]),
-		DeclFile:    declpos.RelFilename(),
-		DeclLine:    declpos.RelLine(),
-		DeclCol:     declpos.RelCol(),
-		InlIndex:    int32(inlIndex),
-		ChildIndex:  -1,
-		DictIndex:   n.DictIndex,
+		StackOffset:	ssagen.StackOffset(debug.Slots[debug.VarSlots[varID][0]]),
+		DeclFile:	declpos.RelFilename(),
+		DeclLine:	declpos.RelLine(),
+		DeclCol:	declpos.RelCol(),
+		InlIndex:	int32(inlIndex),
+		ChildIndex:	-1,
+		DictIndex:	n.DictIndex,
 	}
 	list := debug.LocationLists[varID]
 	if len(list) != 0 {
@@ -528,9 +524,7 @@ func createComplexVar(fnsym *obj.LSym, fn *ir.Func, varID ssa.VarID) *dwarf.Var 
 // in the DWARF info.
 func RecordFlags(flags ...string) {
 	if base.Ctxt.Pkgpath == "" {
-		// We can't record the flags if we don't know what the
-		// package name is.
-		return
+		panic("missing pkgpath")
 	}
 
 	type BoolFlag interface {

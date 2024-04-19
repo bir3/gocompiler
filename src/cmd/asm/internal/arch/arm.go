@@ -16,71 +16,71 @@ import (
 )
 
 var armLS = map[string]uint8{
-	"U":  arm.C_UBIT,
-	"S":  arm.C_SBIT,
-	"W":  arm.C_WBIT,
-	"P":  arm.C_PBIT,
-	"PW": arm.C_WBIT | arm.C_PBIT,
-	"WP": arm.C_WBIT | arm.C_PBIT,
+	"U":	arm.C_UBIT,
+	"S":	arm.C_SBIT,
+	"W":	arm.C_WBIT,
+	"P":	arm.C_PBIT,
+	"PW":	arm.C_WBIT | arm.C_PBIT,
+	"WP":	arm.C_WBIT | arm.C_PBIT,
 }
 
 var armSCOND = map[string]uint8{
-	"EQ":  arm.C_SCOND_EQ,
-	"NE":  arm.C_SCOND_NE,
-	"CS":  arm.C_SCOND_HS,
-	"HS":  arm.C_SCOND_HS,
-	"CC":  arm.C_SCOND_LO,
-	"LO":  arm.C_SCOND_LO,
-	"MI":  arm.C_SCOND_MI,
-	"PL":  arm.C_SCOND_PL,
-	"VS":  arm.C_SCOND_VS,
-	"VC":  arm.C_SCOND_VC,
-	"HI":  arm.C_SCOND_HI,
-	"LS":  arm.C_SCOND_LS,
-	"GE":  arm.C_SCOND_GE,
-	"LT":  arm.C_SCOND_LT,
-	"GT":  arm.C_SCOND_GT,
-	"LE":  arm.C_SCOND_LE,
-	"AL":  arm.C_SCOND_NONE,
-	"U":   arm.C_UBIT,
-	"S":   arm.C_SBIT,
-	"W":   arm.C_WBIT,
-	"P":   arm.C_PBIT,
-	"PW":  arm.C_WBIT | arm.C_PBIT,
-	"WP":  arm.C_WBIT | arm.C_PBIT,
-	"F":   arm.C_FBIT,
-	"IBW": arm.C_WBIT | arm.C_PBIT | arm.C_UBIT,
-	"IAW": arm.C_WBIT | arm.C_UBIT,
-	"DBW": arm.C_WBIT | arm.C_PBIT,
-	"DAW": arm.C_WBIT,
-	"IB":  arm.C_PBIT | arm.C_UBIT,
-	"IA":  arm.C_UBIT,
-	"DB":  arm.C_PBIT,
-	"DA":  0,
+	"EQ":	arm.C_SCOND_EQ,
+	"NE":	arm.C_SCOND_NE,
+	"CS":	arm.C_SCOND_HS,
+	"HS":	arm.C_SCOND_HS,
+	"CC":	arm.C_SCOND_LO,
+	"LO":	arm.C_SCOND_LO,
+	"MI":	arm.C_SCOND_MI,
+	"PL":	arm.C_SCOND_PL,
+	"VS":	arm.C_SCOND_VS,
+	"VC":	arm.C_SCOND_VC,
+	"HI":	arm.C_SCOND_HI,
+	"LS":	arm.C_SCOND_LS,
+	"GE":	arm.C_SCOND_GE,
+	"LT":	arm.C_SCOND_LT,
+	"GT":	arm.C_SCOND_GT,
+	"LE":	arm.C_SCOND_LE,
+	"AL":	arm.C_SCOND_NONE,
+	"U":	arm.C_UBIT,
+	"S":	arm.C_SBIT,
+	"W":	arm.C_WBIT,
+	"P":	arm.C_PBIT,
+	"PW":	arm.C_WBIT | arm.C_PBIT,
+	"WP":	arm.C_WBIT | arm.C_PBIT,
+	"F":	arm.C_FBIT,
+	"IBW":	arm.C_WBIT | arm.C_PBIT | arm.C_UBIT,
+	"IAW":	arm.C_WBIT | arm.C_UBIT,
+	"DBW":	arm.C_WBIT | arm.C_PBIT,
+	"DAW":	arm.C_WBIT,
+	"IB":	arm.C_PBIT | arm.C_UBIT,
+	"IA":	arm.C_UBIT,
+	"DB":	arm.C_PBIT,
+	"DA":	0,
 }
 
 var armJump = map[string]bool{
-	"B":    true,
-	"BL":   true,
-	"BX":   true,
-	"BEQ":  true,
-	"BNE":  true,
-	"BCS":  true,
-	"BHS":  true,
-	"BCC":  true,
-	"BLO":  true,
-	"BMI":  true,
-	"BPL":  true,
-	"BVS":  true,
-	"BVC":  true,
-	"BHI":  true,
-	"BLS":  true,
-	"BGE":  true,
-	"BLT":  true,
-	"BGT":  true,
-	"BLE":  true,
-	"CALL": true,
-	"JMP":  true,
+	"B":	true,
+	"BL":	true,
+	"BX":	true,
+	"BEQ":	true,
+	"BNE":	true,
+	"BCS":	true,
+	"BHS":	true,
+	"BCC":	true,
+	"BLO":	true,
+	"BMI":	true,
+	"BPL":	true,
+	"BVS":	true,
+	"BVC":	true,
+	"BHI":	true,
+	"BLS":	true,
+	"BGE":	true,
+	"BLT":	true,
+	"BGT":	true,
+	"BLE":	true,
+	"CALL":	true,
+	"JMP":	true,
 }
 
 func jumpArm(word string) bool {
@@ -116,7 +116,7 @@ const aMCR = arm.ALAST + 1
 // MRC or MCR.
 func IsARMMRC(op obj.As) bool {
 	switch op {
-	case arm.AMRC, aMCR: // Note: aMCR is defined in this package.
+	case arm.AMRC, aMCR:	// Note: aMCR is defined in this package.
 		return true
 	}
 	return false
@@ -154,16 +154,16 @@ func ARMMRCOffset(op obj.As, cond string, x0, x1, x2, x3, x4, x5 int64) (offset 
 	if !ok {
 		return
 	}
-	offset = (0xe << 24) | // opcode
-		(op1 << 20) | // MCR/MRC
-		((int64(bits) ^ arm.C_SCOND_XOR) << 28) | // scond
-		((x0 & 15) << 8) | //coprocessor number
-		((x1 & 7) << 21) | // coprocessor operation
-		((x2 & 15) << 12) | // ARM register
-		((x3 & 15) << 16) | // Crn
-		((x4 & 15) << 0) | // Crm
-		((x5 & 7) << 5) | // coprocessor information
-		(1 << 4) /* must be set */
+	offset = (0xe << 24) |	// opcode
+		(op1 << 20) |	// MCR/MRC
+		((int64(bits) ^ arm.C_SCOND_XOR) << 28) |	// scond
+		((x0 & 15) << 8) |	//coprocessor number
+		((x1 & 7) << 21) |	// coprocessor operation
+		((x2 & 15) << 12) |	// ARM register
+		((x3 & 15) << 16) |	// Crn
+		((x4 & 15) << 0) |	// Crm
+		((x5 & 7) << 5) |	// coprocessor information
+		(1 << 4)	/* must be set */
 	return offset, arm.AMRC, true
 }
 

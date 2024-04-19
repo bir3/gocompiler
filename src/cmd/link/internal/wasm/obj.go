@@ -11,15 +11,15 @@ import (
 
 func Init() (*sys.Arch, ld.Arch) {
 	theArch := ld.Arch{
-		Funcalign: 16,
-		Maxalign:  32,
-		Minalign:  1,
+		Funcalign:	16,
+		Maxalign:	32,
+		Minalign:	1,
 
-		Archinit:      archinit,
-		AssignAddress: assignAddress,
-		Asmb:          asmb,
-		Asmb2:         asmb2,
-		Gentext:       gentext,
+		Archinit:	archinit,
+		AssignAddress:	assignAddress,
+		Asmb:		asmb,
+		Asmb2:		asmb2,
+		Gentext:	gentext,
 	}
 
 	return sys.ArchWasm, theArch

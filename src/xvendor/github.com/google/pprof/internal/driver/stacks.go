@@ -31,7 +31,7 @@ func (ui *webInterface) stackView(w http.ResponseWriter, req *http.Request) {
 		cfg.Granularity = "filefunctions"
 	})
 	if rpt == nil {
-		return // error already reported
+		return	// error already reported
 	}
 
 	// Make stack data and generate corresponding JSON.
@@ -48,11 +48,11 @@ func (ui *webInterface) stackView(w http.ResponseWriter, req *http.Request) {
 	for i, src := range stacks.Sources {
 		nodes[i] = src.FullName
 	}
-	nodes[0] = "" // root is not a real node
+	nodes[0] = ""	// root is not a real node
 
 	_, legend := report.TextItems(rpt)
 	ui.render(w, req, "stacks", rpt, errList, legend, webArgs{
-		Stacks: template.JS(b),
-		Nodes:  nodes,
+		Stacks:	template.JS(b),
+		Nodes:	nodes,
 	})
 }

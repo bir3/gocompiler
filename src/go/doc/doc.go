@@ -15,75 +15,75 @@ import (
 
 // Package is the documentation for an entire package.
 type Package struct {
-	Doc        string
-	Name       string
-	ImportPath string
-	Imports    []string
-	Filenames  []string
-	Notes      map[string][]*Note
+	Doc		string
+	Name		string
+	ImportPath	string
+	Imports		[]string
+	Filenames	[]string
+	Notes		map[string][]*Note
 
 	// Deprecated: For backward compatibility Bugs is still populated,
 	// but all new code should use Notes instead.
-	Bugs []string
+	Bugs	[]string
 
 	// declarations
-	Consts []*Value
-	Types  []*Type
-	Vars   []*Value
-	Funcs  []*Func
+	Consts	[]*Value
+	Types	[]*Type
+	Vars	[]*Value
+	Funcs	[]*Func
 
 	// Examples is a sorted list of examples associated with
 	// the package. Examples are extracted from _test.go files
 	// provided to NewFromFiles.
-	Examples []*Example
+	Examples	[]*Example
 
-	importByName map[string]string
-	syms         map[string]bool
+	importByName	map[string]string
+	syms		map[string]bool
 }
 
 // Value is the documentation for a (possibly grouped) var or const declaration.
 type Value struct {
-	Doc   string
-	Names []string // var or const names in declaration order
-	Decl  *ast.GenDecl
+	Doc	string
+	Names	[]string	// var or const names in declaration order
+	Decl	*ast.GenDecl
 
-	order int
+	order	int
 }
 
 // Type is the documentation for a type declaration.
 type Type struct {
-	Doc  string
-	Name string
-	Decl *ast.GenDecl
+	Doc	string
+	Name	string
+	Decl	*ast.GenDecl
 
 	// associated declarations
-	Consts  []*Value // sorted list of constants of (mostly) this type
-	Vars    []*Value // sorted list of variables of (mostly) this type
-	Funcs   []*Func  // sorted list of functions returning this type
-	Methods []*Func  // sorted list of methods (including embedded ones) of this type
+	Consts	[]*Value	// sorted list of constants of (mostly) this type
+	Vars	[]*Value	// sorted list of variables of (mostly) this type
+	Funcs	[]*Func		// sorted list of functions returning this type
+	Methods	[]*Func		// sorted list of methods (including embedded ones) of this type
 
 	// Examples is a sorted list of examples associated with
 	// this type. Examples are extracted from _test.go files
 	// provided to NewFromFiles.
-	Examples []*Example
+	Examples	[]*Example
 }
 
 // Func is the documentation for a func declaration.
 type Func struct {
-	Doc  string
-	Name string
-	Decl *ast.FuncDecl
+	Doc	string
+	Name	string
+	Decl	*ast.FuncDecl
 
 	// methods
 	// (for functions, these fields have the respective zero value)
-	Recv  string // actual   receiver "T" or "*T" possibly followed by type parameters [P1, ..., Pn]
-	Orig  string // original receiver "T" or "*T"
-	Level int    // embedding level; 0 means not embedded
+	Recv	string	// actual   receiver "T" or "*T" possibly followed by type parameters [P1, ..., Pn]
+	Orig	string	// original receiver "T" or "*T"
+	Level	int	// embedding level; 0 means not embedded
 
 	// Examples is a sorted list of examples associated with this
 	// function or method. Examples are extracted from _test.go files
 	// provided to NewFromFiles.
-	Examples []*Example
+	Examples	[]*Example
 }
 
 // A Note represents a marked comment starting with "MARKER(uid): note body".
@@ -91,18 +91,18 @@ type Func struct {
 // at least one character is recognized. The ":" following the uid is optional.
 // Notes are collected in the Package.Notes map indexed by the notes marker.
 type Note struct {
-	Pos, End token.Pos // position range of the comment containing the marker
-	UID      string    // uid found with the marker
-	Body     string    // note body text
+	Pos, End	token.Pos	// position range of the comment containing the marker
+	UID		string		// uid found with the marker
+	Body		string		// note body text
 }
 
-// Mode values control the operation of New and NewFromFiles.
+// Mode values control the operation of [New] and [NewFromFiles].
 type Mode int
 
 const (
 	// AllDecls says to extract documentation for all package-level
 	// declarations, not just exported ones.
-	AllDecls Mode = 1 << iota
+	AllDecls	Mode	= 1 << iota
 
 	// AllMethods says to show all embedded methods, not just the ones of
 	// invisible (unexported) anonymous fields.
@@ -116,7 +116,7 @@ const (
 
 // New computes the package documentation for the given package AST.
 // New takes ownership of the AST pkg and may edit or overwrite it.
-// To have the Examples fields populated, use NewFromFiles and include
+// To have the [Examples] fields populated, use [NewFromFiles] and include
 // the package's _test.go files.
 func New(pkg *ast.Package, importPath string, mode Mode) *Package {
 	var r reader
@@ -124,20 +124,20 @@ func New(pkg *ast.Package, importPath string, mode Mode) *Package {
 	r.computeMethodSets()
 	r.cleanupTypes()
 	p := &Package{
-		Doc:        r.doc,
-		Name:       pkg.Name,
-		ImportPath: importPath,
-		Imports:    sortedKeys(r.imports),
-		Filenames:  r.filenames,
-		Notes:      r.notes,
-		Bugs:       noteBodies(r.notes["BUG"]),
-		Consts:     sortedValues(r.values, token.CONST),
-		Types:      sortedTypes(r.types, mode&AllMethods != 0),
-		Vars:       sortedValues(r.values, token.VAR),
-		Funcs:      sortedFuncs(r.funcs, true),
+		Doc:		r.doc,
+		Name:		pkg.Name,
+		ImportPath:	importPath,
+		Imports:	sortedKeys(r.imports),
+		Filenames:	r.filenames,
+		Notes:		r.notes,
+		Bugs:		noteBodies(r.notes["BUG"]),
+		Consts:		sortedValues(r.values, token.CONST),
+		Types:		sortedTypes(r.types, mode&AllMethods != 0),
+		Vars:		sortedValues(r.values, token.VAR),
+		Funcs:		sortedFuncs(r.funcs, true),
 
-		importByName: r.importByName,
-		syms:         make(map[string]bool),
+		importByName:	r.importByName,
+		syms:		make(map[string]bool),
 	}
 
 	p.collectValues(p.Consts)
@@ -175,7 +175,7 @@ func (p *Package) collectFuncs(funcs []*Func) {
 		if f.Recv != "" {
 			r := strings.TrimPrefix(f.Recv, "*")
 			if i := strings.IndexByte(r, '['); i >= 0 {
-				r = r[:i] // remove type parameters
+				r = r[:i]	// remove type parameters
 			}
 			p.syms[r+"."+f.Name] = true
 		} else {
@@ -198,9 +198,9 @@ func (p *Package) collectFuncs(funcs []*Func) {
 // Examples found in _test.go files are associated with the corresponding
 // type, function, method, or the package, based on their name.
 // If the example has a suffix in its name, it is set in the
-// Example.Suffix field. Examples with malformed names are skipped.
+// [Example.Suffix] field. [Examples] with malformed names are skipped.
 //
-// Optionally, a single extra argument of type Mode can be provided to
+// Optionally, a single extra argument of type [Mode] can be provided to
 // control low-level aspects of the documentation extraction behavior.
 //
 // NewFromFiles takes ownership of the AST files and may edit them,
@@ -211,7 +211,7 @@ func NewFromFiles(fset *token.FileSet, files []*ast.File, importPath string, opt
 		panic(fmt.Errorf("doc.NewFromFiles: no token.FileSet provided (fset == nil)"))
 	}
 	var mode Mode
-	switch len(opts) { // There can only be 0 or 1 options, so a simple switch works for now.
+	switch len(opts) {	// There can only be 0 or 1 options, so a simple switch works for now.
 	case 0:
 		// Nothing to do.
 	case 1:
@@ -226,8 +226,8 @@ func NewFromFiles(fset *token.FileSet, files []*ast.File, importPath string, opt
 
 	// Collect .go and _test.go files.
 	var (
-		goFiles     = make(map[string]*ast.File)
-		testGoFiles []*ast.File
+		goFiles		= make(map[string]*ast.File)
+		testGoFiles	[]*ast.File
 	)
 	for i := range files {
 		f := fset.File(files[i].Pos())
@@ -248,7 +248,7 @@ func NewFromFiles(fset *token.FileSet, files []*ast.File, importPath string, opt
 	// ast.Importer implementation is made below. It might be possible to short-circuit and simplify.
 
 	// Compute package documentation.
-	pkg, _ := ast.NewPackage(fset, goFiles, simpleImporter, nil) // Ignore errors that can happen due to unresolved identifiers.
+	pkg, _ := ast.NewPackage(fset, goFiles, simpleImporter, nil)	// Ignore errors that can happen due to unresolved identifiers.
 	p := New(pkg, importPath, mode)
 	classifyExamples(p, Examples(testGoFiles...))
 	return p, nil
@@ -263,7 +263,7 @@ func simpleImporter(imports map[string]*ast.Object, path string) (*ast.Object, e
 	if pkg == nil {
 		// note that strings.LastIndex returns -1 if there is no "/"
 		pkg = ast.NewObj(ast.Pkg, path[strings.LastIndex(path, "/")+1:])
-		pkg.Data = ast.NewScope(nil) // required by ast.NewPackage for dot-import
+		pkg.Data = ast.NewScope(nil)	// required by ast.NewPackage for dot-import
 		imports[path] = pkg
 	}
 	return pkg, nil
@@ -293,14 +293,14 @@ func (p *Package) lookupSym(recv, name string) bool {
 func (p *Package) lookupPackage(name string) (importPath string, ok bool) {
 	if path, ok := p.importByName[name]; ok {
 		if path == "" {
-			return "", false // multiple imports used the name
+			return "", false	// multiple imports used the name
 		}
-		return path, true // found import
+		return path, true	// found import
 	}
 	if p.Name == name {
-		return "", true // allow reference to this package
+		return "", true	// allow reference to this package
 	}
-	return "", false // unknown name
+	return "", false	// unknown name
 }
 
 // Parser returns a doc comment parser configured
@@ -309,8 +309,8 @@ func (p *Package) lookupPackage(name string) (importPath string, ok bool) {
 // customize it before use.
 func (p *Package) Parser() *comment.Parser {
 	return &comment.Parser{
-		LookupPackage: p.lookupPackage,
-		LookupSym:     p.lookupSym,
+		LookupPackage:	p.lookupPackage,
+		LookupSym:	p.lookupSym,
 	}
 }
 

@@ -11,72 +11,73 @@ import (
 	"github.com/bir3/gocompiler/src/cmd/internal/sys"
 	"encoding/binary"
 	"fmt"
+	"github.com/bir3/gocompiler/src/internal/abi"
 	"io"
 	"math"
 )
 
 var Register = map[string]int16{
-	"SP":    REG_SP,
-	"CTXT":  REG_CTXT,
-	"g":     REG_g,
-	"RET0":  REG_RET0,
-	"RET1":  REG_RET1,
-	"RET2":  REG_RET2,
-	"RET3":  REG_RET3,
-	"PAUSE": REG_PAUSE,
+	"SP":		REG_SP,
+	"CTXT":		REG_CTXT,
+	"g":		REG_g,
+	"RET0":		REG_RET0,
+	"RET1":		REG_RET1,
+	"RET2":		REG_RET2,
+	"RET3":		REG_RET3,
+	"PAUSE":	REG_PAUSE,
 
-	"R0":  REG_R0,
-	"R1":  REG_R1,
-	"R2":  REG_R2,
-	"R3":  REG_R3,
-	"R4":  REG_R4,
-	"R5":  REG_R5,
-	"R6":  REG_R6,
-	"R7":  REG_R7,
-	"R8":  REG_R8,
-	"R9":  REG_R9,
-	"R10": REG_R10,
-	"R11": REG_R11,
-	"R12": REG_R12,
-	"R13": REG_R13,
-	"R14": REG_R14,
-	"R15": REG_R15,
+	"R0":	REG_R0,
+	"R1":	REG_R1,
+	"R2":	REG_R2,
+	"R3":	REG_R3,
+	"R4":	REG_R4,
+	"R5":	REG_R5,
+	"R6":	REG_R6,
+	"R7":	REG_R7,
+	"R8":	REG_R8,
+	"R9":	REG_R9,
+	"R10":	REG_R10,
+	"R11":	REG_R11,
+	"R12":	REG_R12,
+	"R13":	REG_R13,
+	"R14":	REG_R14,
+	"R15":	REG_R15,
 
-	"F0":  REG_F0,
-	"F1":  REG_F1,
-	"F2":  REG_F2,
-	"F3":  REG_F3,
-	"F4":  REG_F4,
-	"F5":  REG_F5,
-	"F6":  REG_F6,
-	"F7":  REG_F7,
-	"F8":  REG_F8,
-	"F9":  REG_F9,
-	"F10": REG_F10,
-	"F11": REG_F11,
-	"F12": REG_F12,
-	"F13": REG_F13,
-	"F14": REG_F14,
-	"F15": REG_F15,
+	"F0":	REG_F0,
+	"F1":	REG_F1,
+	"F2":	REG_F2,
+	"F3":	REG_F3,
+	"F4":	REG_F4,
+	"F5":	REG_F5,
+	"F6":	REG_F6,
+	"F7":	REG_F7,
+	"F8":	REG_F8,
+	"F9":	REG_F9,
+	"F10":	REG_F10,
+	"F11":	REG_F11,
+	"F12":	REG_F12,
+	"F13":	REG_F13,
+	"F14":	REG_F14,
+	"F15":	REG_F15,
 
-	"F16": REG_F16,
-	"F17": REG_F17,
-	"F18": REG_F18,
-	"F19": REG_F19,
-	"F20": REG_F20,
-	"F21": REG_F21,
-	"F22": REG_F22,
-	"F23": REG_F23,
-	"F24": REG_F24,
-	"F25": REG_F25,
-	"F26": REG_F26,
-	"F27": REG_F27,
-	"F28": REG_F28,
-	"F29": REG_F29,
-	"F30": REG_F30,
-	"F31": REG_F31,
+	"F16":	REG_F16,
+	"F17":	REG_F17,
+	"F18":	REG_F18,
+	"F19":	REG_F19,
+	"F20":	REG_F20,
+	"F21":	REG_F21,
+	"F22":	REG_F22,
+	"F23":	REG_F23,
+	"F24":	REG_F24,
+	"F25":	REG_F25,
+	"F26":	REG_F26,
+	"F27":	REG_F27,
+	"F28":	REG_F28,
+	"F29":	REG_F29,
+	"F30":	REG_F30,
+	"F31":	REG_F31,
 
-	"PC_B": REG_PC_B,
+	"PC_B":	REG_PC_B,
 }
 
 var registerNames []string
@@ -96,39 +97,37 @@ func rconv(r int) string {
 }
 
 var unaryDst = map[obj.As]bool{
-	ASet:          true,
-	ATee:          true,
-	ACall:         true,
-	ACallIndirect: true,
-	ACallImport:   true,
-	ABr:           true,
-	ABrIf:         true,
-	ABrTable:      true,
-	AI32Store:     true,
-	AI64Store:     true,
-	AF32Store:     true,
-	AF64Store:     true,
-	AI32Store8:    true,
-	AI32Store16:   true,
-	AI64Store8:    true,
-	AI64Store16:   true,
-	AI64Store32:   true,
-	ACALLNORESUME: true,
+	ASet:		true,
+	ATee:		true,
+	ACall:		true,
+	ACallIndirect:	true,
+	ABr:		true,
+	ABrIf:		true,
+	ABrTable:	true,
+	AI32Store:	true,
+	AI64Store:	true,
+	AF32Store:	true,
+	AF64Store:	true,
+	AI32Store8:	true,
+	AI32Store16:	true,
+	AI64Store8:	true,
+	AI64Store16:	true,
+	AI64Store32:	true,
+	ACALLNORESUME:	true,
 }
 
 var Linkwasm = obj.LinkArch{
-	Arch:       sys.ArchWasm,
-	Init:       instinit,
-	Preprocess: preprocess,
-	Assemble:   assemble,
-	UnaryDst:   unaryDst,
+	Arch:		sys.ArchWasm,
+	Init:		instinit,
+	Preprocess:	preprocess,
+	Assemble:	assemble,
+	UnaryDst:	unaryDst,
 }
 
 var (
-	morestack       *obj.LSym
-	morestackNoCtxt *obj.LSym
-	gcWriteBarrier  *obj.LSym
-	sigpanic        *obj.LSym
+	morestack	*obj.LSym
+	morestackNoCtxt	*obj.LSym
+	sigpanic	*obj.LSym
 )
 
 const (
@@ -136,10 +135,17 @@ const (
 	WasmImport = 1 << 0
 )
 
+const (
+	// This is a special wasm module name that when used as the module name
+	// in //go:wasmimport will cause the generated code to pass the stack pointer
+	// directly to the imported function. In other words, any function that
+	// uses the gojs module understands the internal Go WASM ABI directly.
+	GojsModule = "gojs"
+)
+
 func instinit(ctxt *obj.Link) {
 	morestack = ctxt.Lookup("runtime.morestack")
 	morestackNoCtxt = ctxt.Lookup("runtime.morestack_noctxt")
-	gcWriteBarrier = ctxt.LookupABI("runtime.gcWriteBarrier", obj.ABIInternal)
 	sigpanic = ctxt.LookupABI("runtime.sigpanic", obj.ABIInternal)
 }
 
@@ -179,7 +185,121 @@ func preprocess(ctxt *obj.Link, s *obj.LSym, newprog obj.ProgAlloc) {
 	s.Func().Args = s.Func().Text.To.Val.(int32)
 	s.Func().Locals = int32(framesize)
 
-	if s.Func().Text.From.Sym.Wrapper() {
+	// If the function exits just to call out to a wasmimport, then
+	// generate the code to translate from our internal Go-stack
+	// based call convention to the native webassembly call convention.
+	if wi := s.Func().WasmImport; wi != nil {
+		s.Func().WasmImportSym = wi.CreateSym(ctxt)
+		p := s.Func().Text
+		if p.Link != nil {
+			panic("wrapper functions for WASM imports should not have a body")
+		}
+		to := obj.Addr{
+			Type:	obj.TYPE_MEM,
+			Name:	obj.NAME_EXTERN,
+			Sym:	s,
+		}
+
+		// If the module that the import is for is our magic "gojs" module, then this
+		// indicates that the called function understands the Go stack-based call convention
+		// so we just pass the stack pointer to it, knowing it will read the params directly
+		// off the stack and push the results into memory based on the stack pointer.
+		if wi.Module == GojsModule {
+			// The called function has a signature of 'func(sp int)'. It has access to the memory
+			// value somewhere to be able to address the memory based on the "sp" value.
+
+			p = appendp(p, AGet, regAddr(REG_SP))
+			p = appendp(p, ACall, to)
+
+			p.Mark = WasmImport
+		} else {
+			if len(wi.Results) > 1 {
+				// TODO(evanphx) implement support for the multi-value proposal:
+				// https://github.com/WebAssembly/multi-value/blob/master/proposals/multi-value/Overview.md
+				panic("invalid results type")	// impossible until multi-value proposal has landed
+			}
+			if len(wi.Results) == 1 {
+				// If we have a result (rather than returning nothing at all), then
+				// we'll write the result to the Go stack relative to the current stack pointer.
+				// We cache the current stack pointer value on the wasm stack here and then use
+				// it after the Call instruction to store the result.
+				p = appendp(p, AGet, regAddr(REG_SP))
+			}
+			for _, f := range wi.Params {
+				// Each load instructions will consume the value of sp on the stack, so
+				// we need to read sp for each param. WASM appears to not have a stack dup instruction
+				// (a strange omission for a stack-based VM), if it did, we'd be using the dup here.
+				p = appendp(p, AGet, regAddr(REG_SP))
+
+				// Offset is the location of the param on the Go stack (ie relative to sp).
+				// Because of our call convention, the parameters are located an additional 8 bytes
+				// from sp because we store the return address as an int64 at the bottom of the stack.
+				// Ie the stack looks like [return_addr, param3, param2, param1, etc]
+
+				// Ergo, we add 8 to the true byte offset of the param to skip the return address.
+				loadOffset := f.Offset + 8
+
+				// We're reading the value from the Go stack onto the WASM stack and leaving it there
+				// for CALL to pick them up.
+				switch f.Type {
+				case obj.WasmI32:
+					p = appendp(p, AI32Load, constAddr(loadOffset))
+				case obj.WasmI64:
+					p = appendp(p, AI64Load, constAddr(loadOffset))
+				case obj.WasmF32:
+					p = appendp(p, AF32Load, constAddr(loadOffset))
+				case obj.WasmF64:
+					p = appendp(p, AF64Load, constAddr(loadOffset))
+				case obj.WasmPtr:
+					p = appendp(p, AI64Load, constAddr(loadOffset))
+					p = appendp(p, AI32WrapI64)
+				default:
+					panic("bad param type")
+				}
+			}
+
+			// The call instruction is marked as being for a wasm import so that a later phase
+			// will generate relocation information that allows us to patch this with then
+			// offset of the imported function in the wasm imports.
+			p = appendp(p, ACall, to)
+			p.Mark = WasmImport
+
+			if len(wi.Results) == 1 {
+				f := wi.Results[0]
+
+				// Much like with the params, we need to adjust the offset we store the result value
+				// to by 8 bytes to account for the return address on the Go stack.
+				storeOffset := f.Offset + 8
+
+				// This code is paired the code above that reads the stack pointer onto the wasm
+				// stack. We've done this so we have a consistent view of the sp value as it might
+				// be manipulated by the call and we want to ignore that manipulation here.
+				switch f.Type {
+				case obj.WasmI32:
+					p = appendp(p, AI32Store, constAddr(storeOffset))
+				case obj.WasmI64:
+					p = appendp(p, AI64Store, constAddr(storeOffset))
+				case obj.WasmF32:
+					p = appendp(p, AF32Store, constAddr(storeOffset))
+				case obj.WasmF64:
+					p = appendp(p, AF64Store, constAddr(storeOffset))
+				case obj.WasmPtr:
+					p = appendp(p, AI64ExtendI32U)
+					p = appendp(p, AI64Store, constAddr(storeOffset))
+				default:
+					panic("bad result type")
+				}
+			}
+		}
+
+		p = appendp(p, obj.ARET)
+
+		// It should be 0 already, but we'll set it to 0 anyway just to be sure
+		// that the code below which adds frame expansion code to the function body
+		// isn't run. We don't want the frame expansion code because our function
+		// body is just the code to translate and call the imported function.
+		framesize = 0
+	} else if s.Func().Text.From.Sym.Wrapper() {
 		// if g._panic != nil && g._panic.argp == FP {
 		//   g._panic.argp = bottom-of-frame
 		// }
@@ -201,15 +321,15 @@ func preprocess(ctxt *obj.Link, s *obj.LSym, newprog obj.ProgAlloc) {
 		// End
 
 		gpanic := obj.Addr{
-			Type:   obj.TYPE_MEM,
-			Reg:    REGG,
-			Offset: 4 * 8, // g_panic
+			Type:	obj.TYPE_MEM,
+			Reg:	REGG,
+			Offset:	4 * 8,	// g_panic
 		}
 
 		panicargp := obj.Addr{
-			Type:   obj.TYPE_MEM,
-			Reg:    REG_R0,
-			Offset: 0, // panic.argp
+			Type:	obj.TYPE_MEM,
+			Reg:	REG_R0,
+			Offset:	0,	// panic.argp
 		}
 
 		p := s.Func().Text
@@ -243,7 +363,9 @@ func preprocess(ctxt *obj.Link, s *obj.LSym, newprog obj.ProgAlloc) {
 		p.Spadj = int32(framesize)
 	}
 
-	needMoreStack := !s.Func().Text.From.Sym.NoSplit()
+	// If the framesize is 0, then imply nosplit because it's a specially
+	// generated function.
+	needMoreStack := framesize > 0 && !s.Func().Text.From.Sym.NoSplit()
 
 	// If the maymorestack debug option is enabled, insert the
 	// call to maymorestack *before* processing resume points so
@@ -261,9 +383,9 @@ func preprocess(ctxt *obj.Link, s *obj.LSym, newprog obj.ProgAlloc) {
 		p = appendp(p, ASet, regAddr(REG_SP))
 		p.Spadj = tempFrame
 		ctxtp := obj.Addr{
-			Type:   obj.TYPE_MEM,
-			Reg:    REG_SP,
-			Offset: 0,
+			Type:	obj.TYPE_MEM,
+			Reg:	REG_SP,
+			Offset:	0,
 		}
 		p = appendp(p, AMOVD, regAddr(REGCTXT), ctxtp)
 
@@ -292,7 +414,7 @@ func preprocess(ctxt *obj.Link, s *obj.LSym, newprog obj.ProgAlloc) {
 	// and collect other explicit resume points.
 	numResumePoints := 0
 	explicitBlockDepth := 0
-	pc := int64(0) // pc is only incremented when necessary, this avoids bloat of the BrTable instruction
+	pc := int64(0)	// pc is only incremented when necessary, this avoids bloat of the BrTable instruction
 	var tableIdxs []uint64
 	tablePC := int64(0)
 	base := ctxt.PosTable.Pos(s.Func().Text.Pos).Base()
@@ -351,7 +473,7 @@ func preprocess(ctxt *obj.Link, s *obj.LSym, newprog obj.ProgAlloc) {
 	if needMoreStack {
 		p := pMorestack
 
-		if framesize <= objabi.StackSmall {
+		if framesize <= abi.StackSmall {
 			// small stack: SP <= stackguard
 			// Get SP
 			// Get g
@@ -362,7 +484,7 @@ func preprocess(ctxt *obj.Link, s *obj.LSym, newprog obj.ProgAlloc) {
 			p = appendp(p, AGet, regAddr(REG_SP))
 			p = appendp(p, AGet, regAddr(REGG))
 			p = appendp(p, AI32WrapI64)
-			p = appendp(p, AI32Load, constAddr(2*int64(ctxt.Arch.PtrSize))) // G.stackguard0
+			p = appendp(p, AI32Load, constAddr(2*int64(ctxt.Arch.PtrSize)))	// G.stackguard0
 			p = appendp(p, AI32LeU)
 		} else {
 			// large stack: SP-framesize <= stackguard-StackSmall
@@ -378,8 +500,8 @@ func preprocess(ctxt *obj.Link, s *obj.LSym, newprog obj.ProgAlloc) {
 			p = appendp(p, AGet, regAddr(REG_SP))
 			p = appendp(p, AGet, regAddr(REGG))
 			p = appendp(p, AI32WrapI64)
-			p = appendp(p, AI32Load, constAddr(2*int64(ctxt.Arch.PtrSize))) // G.stackguard0
-			p = appendp(p, AI32Const, constAddr(framesize-objabi.StackSmall))
+			p = appendp(p, AI32Load, constAddr(2*int64(ctxt.Arch.PtrSize)))	// G.stackguard0
+			p = appendp(p, AI32Const, constAddr(framesize-abi.StackSmall))
 			p = appendp(p, AI32Add)
 			p = appendp(p, AI32LeU)
 		}
@@ -423,8 +545,8 @@ func preprocess(ctxt *obj.Link, s *obj.LSym, newprog obj.ProgAlloc) {
 			if jmp.To.Type == obj.TYPE_BRANCH {
 				// jump to basic block
 				p = appendp(p, AI32Const, constAddr(jmp.To.Val.(*obj.Prog).Pc))
-				p = appendp(p, ASet, regAddr(REG_PC_B)) // write next basic block to PC_B
-				p = appendp(p, ABr)                     // jump to beginning of entryPointLoop
+				p = appendp(p, ASet, regAddr(REG_PC_B))	// write next basic block to PC_B
+				p = appendp(p, ABr)			// jump to beginning of entryPointLoop
 				entryPointLoopBranches = append(entryPointLoopBranches, p)
 				break
 			}
@@ -441,7 +563,7 @@ func preprocess(ctxt *obj.Link, s *obj.LSym, newprog obj.ProgAlloc) {
 			case obj.TYPE_NONE:
 				// (target PC is on stack)
 				p = appendp(p, AI32WrapI64)
-				p = appendp(p, AI32Const, constAddr(16)) // only needs PC_F bits (16-31), PC_B bits (0-15) are zero
+				p = appendp(p, AI32Const, constAddr(16))	// only needs PC_F bits (16-31), PC_B bits (0-15) are zero
 				p = appendp(p, AI32ShrU)
 
 				// Set PC_B parameter to function entry.
@@ -466,7 +588,7 @@ func preprocess(ctxt *obj.Link, s *obj.LSym, newprog obj.ProgAlloc) {
 
 			pcAfterCall := call.Link.Pc
 			if call.To.Sym == sigpanic {
-				pcAfterCall-- // sigpanic expects to be called without advancing the pc
+				pcAfterCall--	// sigpanic expects to be called without advancing the pc
 			}
 
 			// SP -= 8
@@ -478,10 +600,10 @@ func preprocess(ctxt *obj.Link, s *obj.LSym, newprog obj.ProgAlloc) {
 			// write return address to Go stack
 			p = appendp(p, AGet, regAddr(REG_SP))
 			p = appendp(p, AI64Const, obj.Addr{
-				Type:   obj.TYPE_ADDR,
-				Name:   obj.NAME_EXTERN,
-				Sym:    s,           // PC_F
-				Offset: pcAfterCall, // PC_B
+				Type:	obj.TYPE_ADDR,
+				Name:	obj.NAME_EXTERN,
+				Sym:	s,		// PC_F
+				Offset:	pcAfterCall,	// PC_B
 			})
 			p = appendp(p, AI64Store, constAddr(0))
 
@@ -497,7 +619,7 @@ func preprocess(ctxt *obj.Link, s *obj.LSym, newprog obj.ProgAlloc) {
 			case obj.TYPE_NONE:
 				// (target PC is on stack)
 				p = appendp(p, AI32WrapI64)
-				p = appendp(p, AI32Const, constAddr(16)) // only needs PC_F bits (16-31), PC_B bits (0-15) are zero
+				p = appendp(p, AI32Const, constAddr(16))	// only needs PC_F bits (16-31), PC_B bits (0-15) are zero
 				p = appendp(p, AI32ShrU)
 
 				// Set PC_B parameter to function entry.
@@ -514,13 +636,8 @@ func preprocess(ctxt *obj.Link, s *obj.LSym, newprog obj.ProgAlloc) {
 				panic("bad target for CALL")
 			}
 
-			// gcWriteBarrier has no return value, it never unwinds the stack
-			if call.To.Sym == gcWriteBarrier {
-				break
-			}
-
 			// return value of call is on the top of the stack, indicating whether to unwind the WebAssembly stack
-			if call.As == ACALLNORESUME && call.To.Sym != sigpanic { // sigpanic unwinds the stack, but it never resumes
+			if call.As == ACALLNORESUME && call.To.Sym != sigpanic {	// sigpanic unwinds the stack, but it never resumes
 				// trying to unwind WebAssembly stack but call has no resume point, terminate with error
 				p = appendp(p, AIf)
 				p = appendp(p, obj.AUNDEF)
@@ -580,7 +697,7 @@ func preprocess(ctxt *obj.Link, s *obj.LSym, newprog obj.ProgAlloc) {
 			p.From.Offset += framesize
 		case obj.NAME_PARAM:
 			p.From.Reg = REG_SP
-			p.From.Offset += framesize + 8 // parameters are after the frame and the 8-byte return address
+			p.From.Offset += framesize + 8	// parameters are after the frame and the 8-byte return address
 		}
 
 		switch p.To.Name {
@@ -588,7 +705,7 @@ func preprocess(ctxt *obj.Link, s *obj.LSym, newprog obj.ProgAlloc) {
 			p.To.Offset += framesize
 		case obj.NAME_PARAM:
 			p.To.Reg = REG_SP
-			p.To.Offset += framesize + 8 // parameters are after the frame and the 8-byte return address
+			p.To.Offset += framesize + 8	// parameters are after the frame and the 8-byte return address
 		}
 
 		switch p.As {
@@ -714,25 +831,19 @@ func preprocess(ctxt *obj.Link, s *obj.LSym, newprog obj.ProgAlloc) {
 			default:
 				panic("bad MOV type")
 			}
-
-		case ACallImport:
-			p.As = obj.ANOP
-			p = appendp(p, AGet, regAddr(REG_SP))
-			p = appendp(p, ACall, obj.Addr{Type: obj.TYPE_MEM, Name: obj.NAME_EXTERN, Sym: s})
-			p.Mark = WasmImport
 		}
 	}
 
 	{
 		p := s.Func().Text
 		if len(unwindExitBranches) > 0 {
-			p = appendp(p, ABlock) // unwindExit, used to return 1 when unwinding the stack
+			p = appendp(p, ABlock)	// unwindExit, used to return 1 when unwinding the stack
 			for _, b := range unwindExitBranches {
 				b.To = obj.Addr{Type: obj.TYPE_BRANCH, Val: p}
 			}
 		}
 		if len(entryPointLoopBranches) > 0 {
-			p = appendp(p, ALoop) // entryPointLoop, used to jump between basic blocks
+			p = appendp(p, ALoop)	// entryPointLoop, used to jump between basic blocks
 			for _, b := range entryPointLoopBranches {
 				b.To = obj.Addr{Type: obj.TYPE_BRANCH, Val: p}
 			}
@@ -742,19 +853,19 @@ func preprocess(ctxt *obj.Link, s *obj.LSym, newprog obj.ProgAlloc) {
 			for i := 0; i < numResumePoints+1; i++ {
 				p = appendp(p, ABlock)
 			}
-			p = appendp(p, AGet, regAddr(REG_PC_B)) // read next basic block from PC_B
+			p = appendp(p, AGet, regAddr(REG_PC_B))	// read next basic block from PC_B
 			p = appendp(p, ABrTable, obj.Addr{Val: tableIdxs})
-			p = appendp(p, AEnd) // end of Block
+			p = appendp(p, AEnd)	// end of Block
 		}
 		for p.Link != nil {
-			p = p.Link // function instructions
+			p = p.Link	// function instructions
 		}
 		if len(entryPointLoopBranches) > 0 {
-			p = appendp(p, AEnd) // end of entryPointLoop
+			p = appendp(p, AEnd)	// end of entryPointLoop
 		}
 		p = appendp(p, obj.AUNDEF)
 		if len(unwindExitBranches) > 0 {
-			p = appendp(p, AEnd) // end of unwindExit
+			p = appendp(p, AEnd)	// end of unwindExit
 			p = appendp(p, AI32Const, constAddr(1))
 		}
 	}
@@ -794,42 +905,51 @@ func regAddr(reg int16) obj.Addr {
 // Most of the Go functions has a single parameter (PC_B) in
 // Wasm ABI. This is a list of exceptions.
 var notUsePC_B = map[string]bool{
-	"_rt0_wasm_js":           true,
-	"wasm_export_run":        true,
-	"wasm_export_resume":     true,
-	"wasm_export_getsp":      true,
-	"wasm_pc_f_loop":         true,
-	"runtime.wasmDiv":        true,
-	"runtime.wasmTruncS":     true,
-	"runtime.wasmTruncU":     true,
-	"runtime.gcWriteBarrier": true,
-	"cmpbody":                true,
-	"memeqbody":              true,
-	"memcmp":                 true,
-	"memchr":                 true,
+	"_rt0_wasm_js":			true,
+	"_rt0_wasm_wasip1":		true,
+	"wasm_export_run":		true,
+	"wasm_export_resume":		true,
+	"wasm_export_getsp":		true,
+	"wasm_pc_f_loop":		true,
+	"gcWriteBarrier":		true,
+	"runtime.gcWriteBarrier1":	true,
+	"runtime.gcWriteBarrier2":	true,
+	"runtime.gcWriteBarrier3":	true,
+	"runtime.gcWriteBarrier4":	true,
+	"runtime.gcWriteBarrier5":	true,
+	"runtime.gcWriteBarrier6":	true,
+	"runtime.gcWriteBarrier7":	true,
+	"runtime.gcWriteBarrier8":	true,
+	"runtime.wasmDiv":		true,
+	"runtime.wasmTruncS":		true,
+	"runtime.wasmTruncU":		true,
+	"cmpbody":			true,
+	"memeqbody":			true,
+	"memcmp":			true,
+	"memchr":			true,
 }
 
 func assemble(ctxt *obj.Link, s *obj.LSym, newprog obj.ProgAlloc) {
 	type regVar struct {
-		global bool
-		index  uint64
+		global	bool
+		index	uint64
 	}
 
 	type varDecl struct {
-		count uint64
-		typ   valueType
+		count	uint64
+		typ	valueType
 	}
 
 	hasLocalSP := false
 	regVars := [MAXREG - MINREG]*regVar{
-		REG_SP - MINREG:    {true, 0},
-		REG_CTXT - MINREG:  {true, 1},
-		REG_g - MINREG:     {true, 2},
-		REG_RET0 - MINREG:  {true, 3},
-		REG_RET1 - MINREG:  {true, 4},
-		REG_RET2 - MINREG:  {true, 5},
-		REG_RET3 - MINREG:  {true, 6},
-		REG_PAUSE - MINREG: {true, 7},
+		REG_SP - MINREG:	{true, 0},
+		REG_CTXT - MINREG:	{true, 1},
+		REG_g - MINREG:		{true, 2},
+		REG_RET0 - MINREG:	{true, 3},
+		REG_RET1 - MINREG:	{true, 4},
+		REG_RET2 - MINREG:	{true, 5},
+		REG_RET3 - MINREG:	{true, 6},
+		REG_PAUSE - MINREG:	{true, 7},
 	}
 	var varDecls []*varDecl
 	useAssemblyRegMap := func() {
@@ -841,8 +961,8 @@ func assemble(ctxt *obj.Link, s *obj.LSym, newprog obj.ProgAlloc) {
 	// Function starts with declaration of locals: numbers and types.
 	// Some functions use a special calling convention.
 	switch s.Name {
-	case "_rt0_wasm_js", "wasm_export_run", "wasm_export_resume", "wasm_export_getsp", "wasm_pc_f_loop",
-		"runtime.wasmDiv", "runtime.wasmTruncS", "runtime.wasmTruncU", "memeqbody":
+	case "_rt0_wasm_js", "_rt0_wasm_wasip1", "wasm_export_run", "wasm_export_resume", "wasm_export_getsp",
+		"wasm_pc_f_loop", "runtime.wasmDiv", "runtime.wasmTruncS", "runtime.wasmTruncU", "memeqbody":
 		varDecls = []*varDecl{}
 		useAssemblyRegMap()
 	case "memchr", "memcmp":
@@ -851,8 +971,18 @@ func assemble(ctxt *obj.Link, s *obj.LSym, newprog obj.ProgAlloc) {
 	case "cmpbody":
 		varDecls = []*varDecl{{count: 2, typ: i64}}
 		useAssemblyRegMap()
-	case "runtime.gcWriteBarrier":
-		varDecls = []*varDecl{{count: 4, typ: i64}}
+	case "gcWriteBarrier":
+		varDecls = []*varDecl{{count: 5, typ: i64}}
+		useAssemblyRegMap()
+	case "runtime.gcWriteBarrier1",
+		"runtime.gcWriteBarrier2",
+		"runtime.gcWriteBarrier3",
+		"runtime.gcWriteBarrier4",
+		"runtime.gcWriteBarrier5",
+		"runtime.gcWriteBarrier6",
+		"runtime.gcWriteBarrier7",
+		"runtime.gcWriteBarrier8":
+		// no locals
 		useAssemblyRegMap()
 	default:
 		// Normal calling convention: PC_B as WebAssembly parameter. First local variable is local SP cache.
@@ -881,8 +1011,8 @@ func assemble(ctxt *obj.Link, s *obj.LSym, newprog obj.ProgAlloc) {
 			t := regType(reg)
 			if lastDecl == nil || lastDecl.typ != t {
 				lastDecl = &varDecl{
-					count: 0,
-					typ:   t,
+					count:	0,
+					typ:	t,
 				}
 				varDecls = append(varDecls, lastDecl)
 			}
@@ -919,7 +1049,7 @@ func assemble(ctxt *obj.Link, s *obj.LSym, newprog obj.ProgAlloc) {
 			}
 			if reg == REG_SP && hasLocalSP {
 				writeOpcode(w, ALocalGet)
-				writeUleb128(w, 1) // local SP
+				writeUleb128(w, 1)	// local SP
 				continue
 			}
 			if v.global {
@@ -941,7 +1071,7 @@ func assemble(ctxt *obj.Link, s *obj.LSym, newprog obj.ProgAlloc) {
 			}
 			if reg == REG_SP && hasLocalSP {
 				writeOpcode(w, ALocalTee)
-				writeUleb128(w, 1) // local SP
+				writeUleb128(w, 1)	// local SP
 			}
 			if v.global {
 				writeOpcode(w, AGlobalSet)
@@ -1017,7 +1147,7 @@ func assemble(ctxt *obj.Link, s *obj.LSym, newprog obj.ProgAlloc) {
 					panic("bad name for Call")
 				}
 				r := obj.Addrel(s)
-				r.Siz = 1 // actually variable sized
+				r.Siz = 1	// actually variable sized
 				r.Off = int32(w.Len())
 				r.Type = objabi.R_CALL
 				if p.Mark&WasmImport != 0 {
@@ -1035,7 +1165,7 @@ func assemble(ctxt *obj.Link, s *obj.LSym, newprog obj.ProgAlloc) {
 
 		case ACallIndirect:
 			writeUleb128(w, uint64(p.To.Offset))
-			w.WriteByte(0x00) // reserved value
+			w.WriteByte(0x00)	// reserved value
 			if hasLocalSP {
 				// The stack may have moved, which changes SP. Update the local SP variable.
 				updateLocalSP(w)
@@ -1044,7 +1174,7 @@ func assemble(ctxt *obj.Link, s *obj.LSym, newprog obj.ProgAlloc) {
 		case AI32Const, AI64Const:
 			if p.From.Name == obj.NAME_EXTERN {
 				r := obj.Addrel(s)
-				r.Siz = 1 // actually variable sized
+				r.Siz = 1	// actually variable sized
 				r.Off = int32(w.Len())
 				r.Type = objabi.R_ADDR
 				r.Sym = p.From.Sym
@@ -1096,16 +1226,16 @@ func assemble(ctxt *obj.Link, s *obj.LSym, newprog obj.ProgAlloc) {
 		}
 	}
 
-	w.WriteByte(0x0b) // end
+	w.WriteByte(0x0b)	// end
 
 	s.P = w.Bytes()
 }
 
 func updateLocalSP(w *bytes.Buffer) {
 	writeOpcode(w, AGlobalGet)
-	writeUleb128(w, 0) // global SP
+	writeUleb128(w, 0)	// global SP
 	writeOpcode(w, ALocalSet)
-	writeUleb128(w, 1) // local SP
+	writeUleb128(w, 1)	// local SP
 }
 
 func writeOpcode(w *bytes.Buffer, as obj.As) {
@@ -1133,10 +1263,10 @@ func writeOpcode(w *bytes.Buffer, as obj.As) {
 type valueType byte
 
 const (
-	i32 valueType = 0x7F
-	i64 valueType = 0x7E
-	f32 valueType = 0x7D
-	f64 valueType = 0x7C
+	i32	valueType	= 0x7F
+	i64	valueType	= 0x7E
+	f32	valueType	= 0x7D
+	f64	valueType	= 0x7C
 )
 
 func regType(reg int16) valueType {

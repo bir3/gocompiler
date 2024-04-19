@@ -27,26 +27,26 @@ import (
 )
 
 const (
-	defaultAddr2line = "addr2line"
+	defaultAddr2line	= "addr2line"
 
 	// addr2line may produce multiple lines of output. We
 	// use this sentinel to identify the end of the output.
-	sentinel = ^uint64(0)
+	sentinel	= ^uint64(0)
 )
 
 // addr2Liner is a connection to an addr2line command for obtaining
 // address and line number information from a binary.
 type addr2Liner struct {
-	mu   sync.Mutex
-	rw   lineReaderWriter
-	base uint64
+	mu	sync.Mutex
+	rw	lineReaderWriter
+	base	uint64
 
 	// nm holds an addr2Liner using nm tool. Certain versions of addr2line
 	// produce incomplete names due to
 	// https://sourceware.org/bugzilla/show_bug.cgi?id=17541. As a workaround,
 	// the names from nm are used when they look more complete. See addrInfo()
 	// code below for the exact heuristic.
-	nm *addr2LinerNM
+	nm	*addr2LinerNM
 }
 
 // lineReaderWriter is an interface to abstract the I/O to an addr2line
@@ -59,9 +59,9 @@ type lineReaderWriter interface {
 }
 
 type addr2LinerJob struct {
-	cmd *exec.Cmd
-	in  io.WriteCloser
-	out *bufio.Reader
+	cmd	*exec.Cmd
+	in	io.WriteCloser
+	out	*bufio.Reader
 }
 
 func (a *addr2LinerJob) write(s string) error {
@@ -83,7 +83,7 @@ func (a *addr2LinerJob) close() {
 	a.cmd.Wait()
 }
 
-// newAddr2liner starts the given addr2liner command reporting
+// newAddr2Liner starts the given addr2liner command reporting
 // information about the given executable file. If file is a shared
 // library, base should be the address at which it was mapped in the
 // program under consideration.
@@ -112,8 +112,8 @@ func newAddr2Liner(cmd, file string, base uint64) (*addr2Liner, error) {
 	}
 
 	a := &addr2Liner{
-		rw:   j,
-		base: base,
+		rw:	j,
+		base:	base,
 	}
 
 	return a, nil
@@ -165,9 +165,9 @@ func (d *addr2Liner) readFrame() (plugin.Frame, bool) {
 	}
 
 	return plugin.Frame{
-		Func: funcname,
-		File: fileline,
-		Line: linenumber}, false
+		Func:	funcname,
+		File:	fileline,
+		Line:	linenumber}, false
 }
 
 func (d *addr2Liner) rawAddrInfo(addr uint64) ([]plugin.Frame, error) {

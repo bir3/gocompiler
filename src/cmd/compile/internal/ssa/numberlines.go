@@ -32,7 +32,7 @@ func nextGoodStatementIndex(v *Value, i int, b *Block) int {
 	// If the value is the last one in the block, too bad, it will have to do
 	// (this assumes that the value ordering vaguely corresponds to the source
 	// program execution order, which tends to be true directly after ssa is
-	// first built.
+	// first built).
 	if i >= len(b.Values)-1 {
 		return i
 	}
@@ -43,12 +43,12 @@ func nextGoodStatementIndex(v *Value, i int, b *Block) int {
 	// Look ahead to see what the line number is on the next thing that could be a boundary.
 	for j := i + 1; j < len(b.Values); j++ {
 		u := b.Values[j]
-		if u.Pos.IsStmt() == src.PosNotStmt { // ignore non-statements
+		if u.Pos.IsStmt() == src.PosNotStmt {	// ignore non-statements
 			continue
 		}
 		if u.Pos.SameFileAndLine(v.Pos) {
 			if isPoorStatementOp(u.Op) {
-				continue // Keep looking, this is also not a good statement op
+				continue	// Keep looking, this is also not a good statement op
 			}
 			return j
 		}
@@ -86,8 +86,8 @@ func flc(p src.XPos) string {
 }
 
 type fileAndPair struct {
-	f  int32
-	lp lineRange
+	f	int32
+	lp	lineRange
 }
 
 type fileAndPairs []fileAndPair
@@ -144,12 +144,12 @@ func numberLines(f *Func) {
 				v = b.Values[i]
 				firstPosIndex = i
 				firstPos = v.Pos
-				v.Pos = firstPos.WithDefaultStmt() // default to default
+				v.Pos = firstPos.WithDefaultStmt()	// default to default
 				break
 			}
 		}
 
-		if firstPosIndex == -1 { // Effectively empty block, check block's own Pos, consider preds.
+		if firstPosIndex == -1 {	// Effectively empty block, check block's own Pos, consider preds.
 			line := src.NoXPos
 			for _, p := range b.Preds {
 				pbi := p.Block().ID
@@ -181,12 +181,12 @@ func numberLines(f *Func) {
 			continue
 		}
 		// check predecessors for any difference; if firstPos differs, then it is a boundary.
-		if len(b.Preds) == 0 { // Don't forget the entry block
+		if len(b.Preds) == 0 {	// Don't forget the entry block
 			b.Values[firstPosIndex].Pos = firstPos.WithIsStmt()
 			if f.pass.debug > 0 {
 				fmt.Printf("Mark stmt entry-block %s %s %s %s\n", f.Name, b, b.Values[firstPosIndex], flc(firstPos))
 			}
-		} else { // differing pred
+		} else {	// differing pred
 			for _, p := range b.Preds {
 				pbi := p.Block().ID
 				if !endlines[pbi].SameFileAndLine(firstPos) {
@@ -236,10 +236,10 @@ func numberLines(f *Func) {
 			entries = append(entries, fileAndPair{int32(k), v})
 		}
 		sort.Sort(entries)
-		total := uint64(0)            // sum over files of maxline(file) - minline(file)
-		maxfile := int32(0)           // max(file indices)
-		minline := uint32(0xffffffff) // min over files of minline(file)
-		maxline := uint32(0)          // max over files of maxline(file)
+		total := uint64(0)		// sum over files of maxline(file) - minline(file)
+		maxfile := int32(0)		// max(file indices)
+		minline := uint32(0xffffffff)	// min over files of minline(file)
+		maxline := uint32(0)		// max over files of maxline(file)
 		for _, v := range entries {
 			if f.pass.stats > 1 {
 				f.LogStat("file", v.f, "low", v.lp.first, "high", v.lp.last)

@@ -5,7 +5,7 @@ package x86
 import "github.com/bir3/gocompiler/src/cmd/internal/obj"
 
 var Anames = []string{
-	obj.A_ARCHSPECIFIC: "AAA",
+	obj.A_ARCHSPECIFIC:	"AAA",
 	"AAD",
 	"AAM",
 	"AAS",
@@ -745,6 +745,7 @@ var Anames = []string{
 	"RDGSBASEL",
 	"RDGSBASEQ",
 	"RDMSR",
+	"RDPID",
 	"RDPKRU",
 	"RDPMC",
 	"RDRANDL",

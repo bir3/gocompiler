@@ -17,20 +17,20 @@ import (
 // The undergoing I/O system call can either complete or be
 // interrupted by a note.
 type asyncIO struct {
-	res chan result
+	res	chan result
 
 	// mu guards the pid field.
-	mu sync.Mutex
+	mu	sync.Mutex
 
 	// pid holds the process id of
 	// the process running the IO operation.
-	pid int
+	pid	int
 }
 
 // result is the return value of a Read or Write operation.
 type result struct {
-	n   int
-	err error
+	n	int
+	err	error
 }
 
 // newAsyncIO returns a new asyncIO that performs an I/O

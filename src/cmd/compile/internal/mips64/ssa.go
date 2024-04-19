@@ -30,9 +30,9 @@ func isHILO(r int16) bool {
 // loadByType returns the load instruction of the given type.
 func loadByType(t *types.Type, r int16) obj.As {
 	if isFPreg(r) {
-		if t.Size() == 4 { // float32 or int32
+		if t.Size() == 4 {	// float32 or int32
 			return mips.AMOVF
-		} else { // float64 or int64
+		} else {	// float64 or int64
 			return mips.AMOVD
 		}
 	} else {
@@ -65,9 +65,9 @@ func loadByType(t *types.Type, r int16) obj.As {
 // storeByType returns the store instruction of the given type.
 func storeByType(t *types.Type, r int16) obj.As {
 	if isFPreg(r) {
-		if t.Size() == 4 { // float32 or int32
+		if t.Size() == 4 {	// float32 or int32
 			return mips.AMOVF
-		} else { // float64 or int64
+		} else {	// float64 or int64
 			return mips.AMOVD
 		}
 	} else {
@@ -356,8 +356,13 @@ func ssaGenValue(s *ssagen.State, v *ssa.Value) {
 		ssa.OpMIPS64TRUNCDV,
 		ssa.OpMIPS64MOVFD,
 		ssa.OpMIPS64MOVDF,
+		ssa.OpMIPS64MOVWfpgp,
+		ssa.OpMIPS64MOVWgpfp,
+		ssa.OpMIPS64MOVVfpgp,
+		ssa.OpMIPS64MOVVgpfp,
 		ssa.OpMIPS64NEGF,
 		ssa.OpMIPS64NEGD,
+		ssa.OpMIPS64ABSD,
 		ssa.OpMIPS64SQRTF,
 		ssa.OpMIPS64SQRTD:
 		p := s.Prog(v.Op.Asm())
@@ -500,13 +505,14 @@ func ssaGenValue(s *ssagen.State, v *ssa.Value) {
 		p := s.Prog(obj.ACALL)
 		p.To.Type = obj.TYPE_MEM
 		p.To.Name = obj.NAME_EXTERN
-		p.To.Sym = v.Aux.(*obj.LSym)
+		// AuxInt encodes how many buffer entries we need.
+		p.To.Sym = ir.Syms.GCWriteBarrier[v.AuxInt-1]
 	case ssa.OpMIPS64LoweredPanicBoundsA, ssa.OpMIPS64LoweredPanicBoundsB, ssa.OpMIPS64LoweredPanicBoundsC:
 		p := s.Prog(obj.ACALL)
 		p.To.Type = obj.TYPE_MEM
 		p.To.Name = obj.NAME_EXTERN
 		p.To.Sym = ssagen.BoundsCheckFunc[v.AuxInt]
-		s.UseArgs(16) // space used in callee args area by assembly stubs
+		s.UseArgs(16)	// space used in callee args area by assembly stubs
 	case ssa.OpMIPS64LoweredAtomicLoad8, ssa.OpMIPS64LoweredAtomicLoad32, ssa.OpMIPS64LoweredAtomicLoad64:
 		as := mips.AMOVV
 		switch v.Op {
@@ -670,6 +676,43 @@ func ssaGenValue(s *ssagen.State, v *ssa.Value) {
 		p4.Reg = v.Reg0()
 		p4.To.Type = obj.TYPE_REG
 		p4.To.Reg = v.Reg0()
+	case ssa.OpMIPS64LoweredAtomicAnd32,
+		ssa.OpMIPS64LoweredAtomicOr32:
+		// SYNC
+		// LL	(Rarg0), Rtmp
+		// AND/OR	Rarg1, Rtmp
+		// SC	Rtmp, (Rarg0)
+		// BEQ	Rtmp, -3(PC)
+		// SYNC
+		s.Prog(mips.ASYNC)
+
+		p := s.Prog(mips.ALL)
+		p.From.Type = obj.TYPE_MEM
+		p.From.Reg = v.Args[0].Reg()
+		p.To.Type = obj.TYPE_REG
+		p.To.Reg = mips.REGTMP
+
+		p1 := s.Prog(v.Op.Asm())
+		p1.From.Type = obj.TYPE_REG
+		p1.From.Reg = v.Args[1].Reg()
+		p1.Reg = mips.REGTMP
+		p1.To.Type = obj.TYPE_REG
+		p1.To.Reg = mips.REGTMP
+
+		p2 := s.Prog(mips.ASC)
+		p2.From.Type = obj.TYPE_REG
+		p2.From.Reg = mips.REGTMP
+		p2.To.Type = obj.TYPE_MEM
+		p2.To.Reg = v.Args[0].Reg()
+
+		p3 := s.Prog(mips.ABEQ)
+		p3.From.Type = obj.TYPE_REG
+		p3.From.Reg = mips.REGTMP
+		p3.To.Type = obj.TYPE_BRANCH
+		p3.To.SetTarget(p)
+
+		s.Prog(mips.ASYNC)
+
 	case ssa.OpMIPS64LoweredAtomicCas32, ssa.OpMIPS64LoweredAtomicCas64:
 		// MOVV $0, Rout
 		// SYNC
@@ -729,7 +772,7 @@ func ssaGenValue(s *ssagen.State, v *ssa.Value) {
 		if logopt.Enabled() {
 			logopt.LogOpt(v.Pos, "nilcheck", "genssa", v.Block.Func.Name)
 		}
-		if base.Debug.Nil != 0 && v.Pos.Line() > 1 { // v.Pos.Line()==1 in generated wrappers
+		if base.Debug.Nil != 0 && v.Pos.Line() > 1 {	// v.Pos.Line()==1 in generated wrappers
 			base.WarnfAt(v.Pos, "generated nil check")
 		}
 	case ssa.OpMIPS64FPFlagTrue,
@@ -753,7 +796,7 @@ func ssaGenValue(s *ssagen.State, v *ssa.Value) {
 		p3.From.Offset = 1
 		p3.To.Type = obj.TYPE_REG
 		p3.To.Reg = v.Reg()
-		p4 := s.Prog(obj.ANOP) // not a machine instruction, for branch to land
+		p4 := s.Prog(obj.ANOP)	// not a machine instruction, for branch to land
 		p2.To.SetTarget(p4)
 	case ssa.OpMIPS64LoweredGetClosurePtr:
 		// Closure pointer is R22 (mips.REGCTXT).
@@ -780,14 +823,14 @@ func ssaGenValue(s *ssagen.State, v *ssa.Value) {
 var blockJump = map[ssa.BlockKind]struct {
 	asm, invasm obj.As
 }{
-	ssa.BlockMIPS64EQ:  {mips.ABEQ, mips.ABNE},
-	ssa.BlockMIPS64NE:  {mips.ABNE, mips.ABEQ},
-	ssa.BlockMIPS64LTZ: {mips.ABLTZ, mips.ABGEZ},
-	ssa.BlockMIPS64GEZ: {mips.ABGEZ, mips.ABLTZ},
-	ssa.BlockMIPS64LEZ: {mips.ABLEZ, mips.ABGTZ},
-	ssa.BlockMIPS64GTZ: {mips.ABGTZ, mips.ABLEZ},
-	ssa.BlockMIPS64FPT: {mips.ABFPT, mips.ABFPF},
-	ssa.BlockMIPS64FPF: {mips.ABFPF, mips.ABFPT},
+	ssa.BlockMIPS64EQ:	{mips.ABEQ, mips.ABNE},
+	ssa.BlockMIPS64NE:	{mips.ABNE, mips.ABEQ},
+	ssa.BlockMIPS64LTZ:	{mips.ABLTZ, mips.ABGEZ},
+	ssa.BlockMIPS64GEZ:	{mips.ABGEZ, mips.ABLTZ},
+	ssa.BlockMIPS64LEZ:	{mips.ABLEZ, mips.ABGTZ},
+	ssa.BlockMIPS64GTZ:	{mips.ABGTZ, mips.ABLEZ},
+	ssa.BlockMIPS64FPT:	{mips.ABFPT, mips.ABFPF},
+	ssa.BlockMIPS64FPF:	{mips.ABFPF, mips.ABFPT},
 }
 
 func ssaGenBlock(s *ssagen.State, b, next *ssa.Block) {

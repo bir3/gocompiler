@@ -28,7 +28,7 @@ func ssaMarkMoves(s *ssagen.State, b *ssa.Block) {
 		v := b.Values[i]
 		if flive && v.Op == ssa.Op386MOVLconst {
 			// The "mark" is any non-nil Aux value.
-			v.Aux = v
+			v.Aux = ssa.AuxMark
 		}
 		if v.Type.IsFlags() {
 			flive = false
@@ -345,7 +345,7 @@ func ssaGenValue(s *ssagen.State, v *ssa.Value) {
 		p.From.Offset = v.AuxInt
 		p.To.Type = obj.TYPE_REG
 		p.To.Reg = r
-		p.SetFrom3Reg(v.Args[0].Reg())
+		p.AddRestSourceReg(v.Args[0].Reg())
 
 	case ssa.Op386SUBLconst,
 		ssa.Op386ADCLconst,
@@ -657,7 +657,7 @@ func ssaGenValue(s *ssagen.State, v *ssa.Value) {
 		p.To.Sym = ir.Syms.Duffcopy
 		p.To.Offset = v.AuxInt
 
-	case ssa.OpCopy: // TODO: use MOVLreg for reg->reg copies instead of OpCopy?
+	case ssa.OpCopy:	// TODO: use MOVLreg for reg->reg copies instead of OpCopy?
 		if v.Type.IsMemory() {
 			return
 		}
@@ -719,7 +719,7 @@ func ssaGenValue(s *ssagen.State, v *ssa.Value) {
 	case ssa.Op386LoweredGetCallerPC:
 		p := s.Prog(x86.AMOVL)
 		p.From.Type = obj.TYPE_MEM
-		p.From.Offset = -4 // PC is stored 4 bytes below first parameter.
+		p.From.Offset = -4	// PC is stored 4 bytes below first parameter.
 		p.From.Name = obj.NAME_PARAM
 		p.To.Type = obj.TYPE_REG
 		p.To.Reg = v.Reg()
@@ -728,7 +728,7 @@ func ssaGenValue(s *ssagen.State, v *ssa.Value) {
 		// caller's SP is the address of the first arg
 		p := s.Prog(x86.AMOVL)
 		p.From.Type = obj.TYPE_ADDR
-		p.From.Offset = -base.Ctxt.Arch.FixedFrameSize // 0 on 386, just to be consistent with other architectures
+		p.From.Offset = -base.Ctxt.Arch.FixedFrameSize	// 0 on 386, just to be consistent with other architectures
 		p.From.Name = obj.NAME_PARAM
 		p.To.Type = obj.TYPE_REG
 		p.To.Reg = v.Reg()
@@ -737,21 +737,22 @@ func ssaGenValue(s *ssagen.State, v *ssa.Value) {
 		p := s.Prog(obj.ACALL)
 		p.To.Type = obj.TYPE_MEM
 		p.To.Name = obj.NAME_EXTERN
-		p.To.Sym = v.Aux.(*obj.LSym)
+		// AuxInt encodes how many buffer entries we need.
+		p.To.Sym = ir.Syms.GCWriteBarrier[v.AuxInt-1]
 
 	case ssa.Op386LoweredPanicBoundsA, ssa.Op386LoweredPanicBoundsB, ssa.Op386LoweredPanicBoundsC:
 		p := s.Prog(obj.ACALL)
 		p.To.Type = obj.TYPE_MEM
 		p.To.Name = obj.NAME_EXTERN
 		p.To.Sym = ssagen.BoundsCheckFunc[v.AuxInt]
-		s.UseArgs(8) // space used in callee args area by assembly stubs
+		s.UseArgs(8)	// space used in callee args area by assembly stubs
 
 	case ssa.Op386LoweredPanicExtendA, ssa.Op386LoweredPanicExtendB, ssa.Op386LoweredPanicExtendC:
 		p := s.Prog(obj.ACALL)
 		p.To.Type = obj.TYPE_MEM
 		p.To.Name = obj.NAME_EXTERN
 		p.To.Sym = ssagen.ExtendCheckFunc[v.AuxInt]
-		s.UseArgs(12) // space used in callee args area by assembly stubs
+		s.UseArgs(12)	// space used in callee args area by assembly stubs
 
 	case ssa.Op386CALLstatic, ssa.Op386CALLclosure, ssa.Op386CALLinter:
 		s.Call(v)
@@ -827,9 +828,32 @@ func ssaGenValue(s *ssagen.State, v *ssa.Value) {
 		if logopt.Enabled() {
 			logopt.LogOpt(v.Pos, "nilcheck", "genssa", v.Block.Func.Name)
 		}
-		if base.Debug.Nil != 0 && v.Pos.Line() > 1 { // v.Pos.Line()==1 in generated wrappers
+		if base.Debug.Nil != 0 && v.Pos.Line() > 1 {	// v.Pos.Line()==1 in generated wrappers
 			base.WarnfAt(v.Pos, "generated nil check")
 		}
+	case ssa.Op386LoweredCtz32:
+		// BSFL in, out
+		p := s.Prog(x86.ABSFL)
+		p.From.Type = obj.TYPE_REG
+		p.From.Reg = v.Args[0].Reg()
+		p.To.Type = obj.TYPE_REG
+		p.To.Reg = v.Reg()
+
+		// JNZ 2(PC)
+		p1 := s.Prog(x86.AJNE)
+		p1.To.Type = obj.TYPE_BRANCH
+
+		// MOVL $32, out
+		p2 := s.Prog(x86.AMOVL)
+		p2.From.Type = obj.TYPE_CONST
+		p2.From.Offset = 32
+		p2.To.Type = obj.TYPE_REG
+		p2.To.Reg = v.Reg()
+
+		// NOP (so the JNZ has somewhere to land)
+		nop := s.Prog(obj.ANOP)
+		p1.To.SetTarget(nop)
+
 	case ssa.OpClobber:
 		p := s.Prog(x86.AMOVL)
 		p.From.Type = obj.TYPE_CONST
@@ -847,29 +871,29 @@ func ssaGenValue(s *ssagen.State, v *ssa.Value) {
 var blockJump = [...]struct {
 	asm, invasm obj.As
 }{
-	ssa.Block386EQ:  {x86.AJEQ, x86.AJNE},
-	ssa.Block386NE:  {x86.AJNE, x86.AJEQ},
-	ssa.Block386LT:  {x86.AJLT, x86.AJGE},
-	ssa.Block386GE:  {x86.AJGE, x86.AJLT},
-	ssa.Block386LE:  {x86.AJLE, x86.AJGT},
-	ssa.Block386GT:  {x86.AJGT, x86.AJLE},
-	ssa.Block386OS:  {x86.AJOS, x86.AJOC},
-	ssa.Block386OC:  {x86.AJOC, x86.AJOS},
-	ssa.Block386ULT: {x86.AJCS, x86.AJCC},
-	ssa.Block386UGE: {x86.AJCC, x86.AJCS},
-	ssa.Block386UGT: {x86.AJHI, x86.AJLS},
-	ssa.Block386ULE: {x86.AJLS, x86.AJHI},
-	ssa.Block386ORD: {x86.AJPC, x86.AJPS},
-	ssa.Block386NAN: {x86.AJPS, x86.AJPC},
+	ssa.Block386EQ:		{x86.AJEQ, x86.AJNE},
+	ssa.Block386NE:		{x86.AJNE, x86.AJEQ},
+	ssa.Block386LT:		{x86.AJLT, x86.AJGE},
+	ssa.Block386GE:		{x86.AJGE, x86.AJLT},
+	ssa.Block386LE:		{x86.AJLE, x86.AJGT},
+	ssa.Block386GT:		{x86.AJGT, x86.AJLE},
+	ssa.Block386OS:		{x86.AJOS, x86.AJOC},
+	ssa.Block386OC:		{x86.AJOC, x86.AJOS},
+	ssa.Block386ULT:	{x86.AJCS, x86.AJCC},
+	ssa.Block386UGE:	{x86.AJCC, x86.AJCS},
+	ssa.Block386UGT:	{x86.AJHI, x86.AJLS},
+	ssa.Block386ULE:	{x86.AJLS, x86.AJHI},
+	ssa.Block386ORD:	{x86.AJPC, x86.AJPS},
+	ssa.Block386NAN:	{x86.AJPS, x86.AJPC},
 }
 
 var eqfJumps = [2][2]ssagen.IndexJump{
-	{{Jump: x86.AJNE, Index: 1}, {Jump: x86.AJPS, Index: 1}}, // next == b.Succs[0]
-	{{Jump: x86.AJNE, Index: 1}, {Jump: x86.AJPC, Index: 0}}, // next == b.Succs[1]
+	{{Jump: x86.AJNE, Index: 1}, {Jump: x86.AJPS, Index: 1}},	// next == b.Succs[0]
+	{{Jump: x86.AJNE, Index: 1}, {Jump: x86.AJPC, Index: 0}},	// next == b.Succs[1]
 }
 var nefJumps = [2][2]ssagen.IndexJump{
-	{{Jump: x86.AJNE, Index: 0}, {Jump: x86.AJPC, Index: 1}}, // next == b.Succs[0]
-	{{Jump: x86.AJNE, Index: 0}, {Jump: x86.AJPS, Index: 0}}, // next == b.Succs[1]
+	{{Jump: x86.AJNE, Index: 0}, {Jump: x86.AJPC, Index: 1}},	// next == b.Succs[0]
+	{{Jump: x86.AJNE, Index: 0}, {Jump: x86.AJPS, Index: 0}},	// next == b.Succs[1]
 }
 
 func ssaGenBlock(s *ssagen.State, b, next *ssa.Block) {

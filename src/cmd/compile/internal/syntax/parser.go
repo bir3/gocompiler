@@ -6,6 +6,7 @@ package syntax
 
 import (
 	"fmt"
+	"github.com/bir3/gocompiler/src/go/build/constraint"
 	"io"
 	"strconv"
 	"strings"
@@ -15,23 +16,26 @@ const debug = false
 const trace = false
 
 type parser struct {
-	file  *PosBase
-	errh  ErrorHandler
-	mode  Mode
-	pragh PragmaHandler
+	file	*PosBase
+	errh	ErrorHandler
+	mode	Mode
+	pragh	PragmaHandler
 	scanner
 
-	base   *PosBase // current position base
-	first  error    // first error encountered
-	errcnt int      // number of errors encountered
-	pragma Pragma   // pragmas
+	base		*PosBase	// current position base
+	first		error		// first error encountered
+	errcnt		int		// number of errors encountered
+	pragma		Pragma		// pragmas
+	goVersion	string		// Go version from //go:build line
 
-	fnest  int    // function nesting level (for error handling)
-	xnest  int    // expression nesting level (for complit ambiguity resolution)
-	indent []byte // tracing support
+	top	bool	// in top of file (before package clause)
+	fnest	int	// function nesting level (for error handling)
+	xnest	int	// expression nesting level (for complit ambiguity resolution)
+	indent	[]byte	// tracing support
 }
 
 func (p *parser) init(file *PosBase, r io.Reader, errh ErrorHandler, pragh PragmaHandler, mode Mode) {
+	p.top = true
 	p.file = file
 	p.errh = errh
 	p.mode = mode
@@ -54,7 +58,7 @@ func (p *parser) init(file *PosBase, r io.Reader, errh ErrorHandler, pragh Pragm
 			// /*line*/ directives can be anywhere in the line.
 			text := commentText(msg)
 			if (col == colbase || msg[1] == '*') && strings.HasPrefix(text, "line ") {
-				var pos Pos // position immediately following the comment
+				var pos Pos	// position immediately following the comment
 				if msg[1] == '/' {
 					// line comment (newline is part of the comment)
 					pos = MakePos(p.file, line+1, colbase)
@@ -65,13 +69,20 @@ func (p *parser) init(file *PosBase, r io.Reader, errh ErrorHandler, pragh Pragm
 					// by updateBase)
 					pos = MakePos(p.file, line, col+uint(len(msg)))
 				}
-				p.updateBase(pos, line, col+2+5, text[5:]) // +2 to skip over // or /*
+				p.updateBase(pos, line, col+2+5, text[5:])	// +2 to skip over // or /*
 				return
 			}
 
 			// go: directive (but be conservative and test)
-			if pragh != nil && strings.HasPrefix(text, "go:") {
-				p.pragma = pragh(p.posAt(line, col+2), p.scanner.blank, text, p.pragma) // +2 to skip over // or /*
+			if strings.HasPrefix(text, "go:") {
+				if p.top && strings.HasPrefix(msg, "//go:build") {
+					if x, err := constraint.Parse(msg); err == nil {
+						p.goVersion = constraint.GoVersion(x)
+					}
+				}
+				if pragh != nil {
+					p.pragma = pragh(p.posAt(line, col+2), p.scanner.blank, text, p.pragma)	// +2 to skip over // or /*
+				}
 			}
 		},
 		directives,
@@ -112,7 +123,7 @@ func (p *parser) clearPragma() {
 func (p *parser) updateBase(pos Pos, tline, tcol uint, text string) {
 	i, n, ok := trailingDigits(text)
 	if i == 0 {
-		return // ignore (not a line directive)
+		return	// ignore (not a line directive)
 	}
 	// i > 0
 
@@ -132,7 +143,7 @@ func (p *parser) updateBase(pos Pos, tline, tcol uint, text string) {
 			p.errorAt(p.posAt(tline, tcol+i2), "invalid column number: "+text[i2:])
 			return
 		}
-		text = text[:i2-1] // lop off ":col"
+		text = text[:i2-1]	// lop off ":col"
 	} else {
 		//line filename:line
 		line = n
@@ -145,7 +156,7 @@ func (p *parser) updateBase(pos Pos, tline, tcol uint, text string) {
 
 	// If we have a column (//line filename:line:col form),
 	// an empty filename means to use the previous filename.
-	filename := text[:i-1] // lop off ":line"
+	filename := text[:i-1]	// lop off ":line"
 	trimmed := false
 	if filename == "" && ok2 {
 		filename = p.base.Filename()
@@ -157,7 +168,7 @@ func (p *parser) updateBase(pos Pos, tline, tcol uint, text string) {
 
 func commentText(s string) string {
 	if s[:2] == "/*" {
-		return s[2 : len(s)-2] // lop off /* and */
+		return s[2 : len(s)-2]	// lop off /* and */
 	}
 
 	// line comment (does not include newline)
@@ -166,14 +177,13 @@ func commentText(s string) string {
 	if s[i-1] == '\r' {
 		i--
 	}
-	return s[2:i] // lop off //, and \r at end, if any
+	return s[2:i]	// lop off //, and \r at end, if any
 }
 
 func trailingDigits(text string) (uint, uint, bool) {
-	// Want to use LastIndexByte below but it's not defined in Go1.4 and bootstrap fails.
-	i := strings.LastIndex(text, ":") // look from right (Windows filenames may contain ':')
+	i := strings.LastIndexByte(text, ':')	// look from right (Windows filenames may contain ':')
 	if i < 0 {
-		return 0, 0, false // no ":"
+		return 0, 0, false	// no ':'
 	}
 	// i >= 0
 	n, err := strconv.ParseUint(text[i+1:], 10, 0)
@@ -237,7 +247,7 @@ func (p *parser) syntaxErrorAt(pos Pos, msg string) {
 	}
 
 	if p.tok == _EOF && p.first != nil {
-		return // avoid meaningless follow-up errors
+		return	// avoid meaningless follow-up errors
 	}
 
 	// add punctuation etc. as needed to msg
@@ -292,9 +302,9 @@ func tokstring(tok token) string {
 }
 
 // Convenience methods using the current token position.
-func (p *parser) pos() Pos               { return p.posAt(p.line, p.col) }
-func (p *parser) error(msg string)       { p.errorAt(p.pos(), msg) }
-func (p *parser) syntaxError(msg string) { p.syntaxErrorAt(p.pos(), msg) }
+func (p *parser) pos() Pos			{ return p.posAt(p.line, p.col) }
+func (p *parser) error(msg string)		{ p.errorAt(p.pos(), msg) }
+func (p *parser) syntaxError(msg string)	{ p.syntaxErrorAt(p.pos(), msg) }
 
 // The stopset contains keywords that start a statement.
 // They are good synchronization points in case of syntax
@@ -325,7 +335,7 @@ func (p *parser) advance(followlist ...token) {
 
 	// compute follow set
 	// (not speed critical, advance is only called in error situations)
-	var followset uint64 = 1 << _EOF // don't skip over EOF
+	var followset uint64 = 1 << _EOF	// don't skip over EOF
 	if len(followlist) > 0 {
 		if p.fnest > 0 {
 			followset |= stopset
@@ -358,7 +368,7 @@ func (p *parser) trace(msg string) func() {
 	return func() {
 		p.indent = p.indent[:len(p.indent)-len(tab)]
 		if x := recover(); x != nil {
-			panic(x) // skip print_trace
+			panic(x)	// skip print_trace
 		}
 		p.print(")")
 	}
@@ -388,6 +398,8 @@ func (p *parser) fileOrNil() *File {
 	f.pos = p.pos()
 
 	// PackageClause
+	f.GoVersion = p.goVersion
+	p.top = false
 	if !p.got(_Package) {
 		p.syntaxError("package statement must be first")
 		return nil
@@ -507,7 +519,7 @@ func (p *parser) appendGroup(list []Decl, f func(*Group) Decl) []Decl {
 	if p.tok == _Lparen {
 		g := new(Group)
 		p.clearPragma()
-		p.next() // must consume "(" after calling clearPragma!
+		p.next()	// must consume "(" after calling clearPragma!
 		p.list("grouped declaration", _Semi, _Rparen, func() bool {
 			if x := f(g); x != nil {
 				list = append(list, x)
@@ -632,7 +644,7 @@ func (p *parser) typeDecl(group *Group) Decl {
 				// d.Name "[" pname ...
 				// d.Name "[" pname ptype ...
 				// d.Name "[" pname ptype "," ...
-				d.TParamList = p.paramList(pname, ptype, _Rbrack, true) // ptype may be nil
+				d.TParamList = p.paramList(pname, ptype, _Rbrack, true)	// ptype may be nil
 				d.Alias = p.gotAssign()
 				d.Type = p.typeOrNil()
 			} else {
@@ -686,14 +698,14 @@ func extractName(x Expr, force bool) (*Name, Expr) {
 		return x, nil
 	case *Operation:
 		if x.Y == nil {
-			break // unary expr
+			break	// unary expr
 		}
 		switch x.Op {
 		case Mul:
 			if name, _ := x.X.(*Name); name != nil && (force || isTypeElem(x.Y)) {
 				// x = name *x.Y
 				op := *x
-				op.X, op.Y = op.Y, nil // change op into unary *op.Y
+				op.X, op.Y = op.Y, nil	// change op into unary *op.Y
 				return name, &op
 			}
 		case Or:
@@ -786,6 +798,9 @@ func (p *parser) funcDeclOrNil() *FuncDecl {
 		f.Name = p.name()
 		f.TParamList, f.Type = p.funcType(context)
 	} else {
+		f.Name = NewName(p.pos(), "_")
+		f.Type = new(FuncType)
+		f.Type.pos = p.pos()
 		msg := "expected name or ("
 		if context != "" {
 			msg = "expected name"
@@ -872,7 +887,7 @@ func (p *parser) unaryExpr() Expr {
 			p.next()
 			// unaryExpr may have returned a parenthesized composite literal
 			// (see comment in operand) - remove parentheses if any
-			x.X = unparen(p.unaryExpr())
+			x.X = Unparen(p.unaryExpr())
 			return x
 		}
 
@@ -948,11 +963,11 @@ func (p *parser) callStmt() *CallStmt {
 
 	s := new(CallStmt)
 	s.pos = p.pos()
-	s.Tok = p.tok // _Defer or _Go
+	s.Tok = p.tok	// _Defer or _Go
 	p.next()
 
-	x := p.pexpr(nil, p.tok == _Lparen) // keep_parens so we can report error below
-	if t := unparen(x); t != x {
+	x := p.pexpr(nil, p.tok == _Lparen)	// keep_parens so we can report error below
+	if t := Unparen(x); t != x {
 		p.errorAt(x.Pos(), fmt.Sprintf("expression in %s must not be parenthesized", s.Tok))
 		// already progressed, no need to advance
 		x = t
@@ -1027,7 +1042,7 @@ func (p *parser) operand(keep_parens bool) Expr {
 		return ftyp
 
 	case _Lbrack, _Chan, _Map, _Struct, _Interface:
-		return p.type_() // othertype
+		return p.type_()	// othertype
 
 	default:
 		x := p.badExpr()
@@ -1132,7 +1147,7 @@ loop:
 			}
 
 			// x[i:...
-			// For better error message, don't simply use p.want(_Colon) here (issue #47704).
+			// For better error message, don't simply use p.want(_Colon) here (go.dev/issue/47704).
 			if !p.got(_Colon) {
 				p.syntaxError("expected comma, : or ]")
 				p.advance(_Comma, _Colon, _Rbrack)
@@ -1177,7 +1192,7 @@ loop:
 		case _Lbrace:
 			// operand may have returned a parenthesized complit
 			// type; accept it but complain if we have a complit
-			t := unparen(x)
+			t := Unparen(x)
 			// determine if '{' belongs to a composite literal or a block statement
 			complit_ok := false
 			switch t.(type) {
@@ -1220,7 +1235,7 @@ func isValue(x Expr) bool {
 	case *BasicLit, *CompositeLit, *FuncLit, *SliceExpr, *AssertExpr, *TypeSwitchGuard, *CallExpr:
 		return true
 	case *Operation:
-		return x.Op != Mul || x.Y != nil // *T may be a type
+		return x.Op != Mul || x.Y != nil	// *T may be a type
 	case *ParenExpr:
 		return isValue(x.X)
 	case *IndexExpr:
@@ -1602,7 +1617,7 @@ func (p *parser) fieldDecl(styp *StructType) {
 			typ = p.arrayOrTArgs()
 			if typ, ok := typ.(*IndexExpr); ok {
 				// embedded type T[P1, P2, ...]
-				typ.X = name // name == names[0]
+				typ.X = name	// name == names[0]
 				tag := p.oliteral()
 				p.addField(styp, pos, nil, typ, tag)
 				break
@@ -1626,7 +1641,7 @@ func (p *parser) fieldDecl(styp *StructType) {
 			p.syntaxError("cannot parenthesize embedded type")
 			p.next()
 			typ = p.qualifiedName(nil)
-			p.got(_Rparen) // no need to complain if missing
+			p.got(_Rparen)	// no need to complain if missing
 		} else {
 			// *T
 			typ = p.qualifiedName(nil)
@@ -1647,7 +1662,7 @@ func (p *parser) fieldDecl(styp *StructType) {
 			// (T)
 			typ = p.qualifiedName(nil)
 		}
-		p.got(_Rparen) // no need to complain if missing
+		p.got(_Rparen)	// no need to complain if missing
 		tag := p.oliteral()
 		p.addField(styp, pos, nil, typ, tag)
 
@@ -1968,8 +1983,8 @@ func (p *parser) paramList(name *Name, typ Expr, close token, requireNames bool)
 		return []*Field{par}
 	}
 
-	var named int // number of parameters that have an explicit name and type
-	var typed int // number of parameters that have an explicit type
+	var named int	// number of parameters that have an explicit name and type
+	var typed int	// number of parameters that have an explicit type
 	end := p.list("parameter list", _Comma, close, func() bool {
 		var par *Field
 		if typ != nil {
@@ -1983,8 +1998,8 @@ func (p *parser) paramList(name *Name, typ Expr, close token, requireNames bool)
 		} else {
 			par = p.paramDeclOrNil(name, close)
 		}
-		name = nil // 1st name was consumed if present
-		typ = nil  // 1st type was consumed if present
+		name = nil	// 1st name was consumed if present
+		typ = nil	// 1st type was consumed if present
 		if par != nil {
 			if debug && par.Name == nil && par.Type == nil {
 				panic("parameter without name or type")
@@ -2006,7 +2021,7 @@ func (p *parser) paramList(name *Name, typ Expr, close token, requireNames bool)
 
 	// distribute parameter types (len(list) > 0)
 	if named == 0 && !requireNames {
-		// all unnamed => found names are named types
+		// all unnamed and we're not in a type parameter list => found names are named types
 		for _, par := range list {
 			if typ := par.Name; typ != nil {
 				par.Type = typ
@@ -2014,40 +2029,50 @@ func (p *parser) paramList(name *Name, typ Expr, close token, requireNames bool)
 			}
 		}
 	} else if named != len(list) {
-		// some named => all must have names and types
-		var pos Pos  // left-most error position (or unknown)
-		var typ Expr // current type (from right to left)
+		// some named or we're in a type parameter list => all must be named
+		var errPos Pos	// left-most error position (or unknown)
+		var typ Expr	// current type (from right to left)
 		for i := len(list) - 1; i >= 0; i-- {
 			par := list[i]
 			if par.Type != nil {
 				typ = par.Type
 				if par.Name == nil {
-					pos = StartPos(typ)
-					par.Name = NewName(pos, "_")
+					errPos = StartPos(typ)
+					par.Name = NewName(errPos, "_")
 				}
 			} else if typ != nil {
 				par.Type = typ
 			} else {
 				// par.Type == nil && typ == nil => we only have a par.Name
-				pos = par.Name.Pos()
+				errPos = par.Name.Pos()
 				t := p.badExpr()
-				t.pos = pos // correct position
+				t.pos = errPos	// correct position
 				par.Type = t
 			}
 		}
-		if pos.IsKnown() {
+		if errPos.IsKnown() {
 			var msg string
 			if requireNames {
+				// Not all parameters are named because named != len(list).
+				// If named == typed we must have parameters that have no types,
+				// and they must be at the end of the parameter list, otherwise
+				// the types would have been filled in by the right-to-left sweep
+				// above and we wouldn't have an error. Since we are in a type
+				// parameter list, the missing types are constraints.
 				if named == typed {
-					pos = end // position error at closing ]
+					errPos = end	// position error at closing ]
 					msg = "missing type constraint"
 				} else {
-					msg = "type parameters must be named"
+					msg = "missing type parameter name"
+					// go.dev/issue/60812
+					if len(list) == 1 {
+						msg += " or invalid array length"
+					}
 				}
 			} else {
 				msg = "mixed named and unnamed parameters"
 			}
-			p.syntaxErrorAt(pos, msg)
+			p.syntaxErrorAt(errPos, msg)
 		}
 	}
 
@@ -2163,7 +2188,7 @@ func (p *parser) simpleStmt(lhs Expr, keyword token) SimpleStmt {
 func (p *parser) newRangeClause(lhs Expr, def bool) *RangeClause {
 	r := new(RangeClause)
 	r.pos = p.pos()
-	p.next() // consume _Range
+	p.next()	// consume _Range
 	r.Lhs = lhs
 	r.Def = def
 	r.X = p.expr()
@@ -2208,7 +2233,7 @@ func (p *parser) labeledStmtOrNil(label *Name) Stmt {
 	// report error at line of ':' token
 	p.syntaxErrorAt(s.pos, "missing statement after label")
 	// we are already at the end of the labeled statement - no need to advance
-	return nil // avoids follow-on errors (see e.g., fixedbugs/bug274.go)
+	return nil	// avoids follow-on errors (see e.g., fixedbugs/bug274.go)
 }
 
 // context must be a non-empty string unless we know that p.tok == _Lbrace.
@@ -2224,7 +2249,7 @@ func (p *parser) blockStmt(context string) *BlockStmt {
 	if !p.got(_Lbrace) {
 		p.syntaxError("expected { after " + context)
 		p.advance(_Name, _Rbrace)
-		s.Rbrace = p.pos() // in case we found "}"
+		s.Rbrace = p.pos()	// in case we found "}"
 		if p.got(_Rbrace) {
 			return s
 		}
@@ -2245,7 +2270,7 @@ func (p *parser) declStmt(f func(*Group) Decl) *DeclStmt {
 	s := new(DeclStmt)
 	s.pos = p.pos()
 
-	p.next() // _Const, _Type, or _Var
+	p.next()	// _Const, _Type, or _Var
 	s.DeclList = p.appendGroup(nil, f)
 
 	return s
@@ -2295,8 +2320,8 @@ func (p *parser) header(keyword token) (init SimpleStmt, cond Expr, post SimpleS
 
 	var condStmt SimpleStmt
 	var semi struct {
-		pos Pos
-		lit string // valid if pos.IsKnown()
+		pos	Pos
+		lit	string	// valid if pos.IsKnown()
 	}
 	if p.tok != _Lbrace {
 		if p.tok == _Semi {
@@ -2307,7 +2332,7 @@ func (p *parser) header(keyword token) (init SimpleStmt, cond Expr, post SimpleS
 			// asking for a '{' rather than a ';' here leads to a better error message
 			p.want(_Lbrace)
 			if p.tok != _Lbrace {
-				p.advance(_Lbrace, _Rbrace) // for better synchronization (e.g., issue #22581)
+				p.advance(_Lbrace, _Rbrace)	// for better synchronization (e.g., go.dev/issue/22581)
 			}
 		}
 		if keyword == _For {
@@ -2356,10 +2381,8 @@ done:
 		// further confusion.
 		var str string
 		if as, ok := s.(*AssignStmt); ok && as.Op == 0 {
-			// Emphasize Lhs and Rhs of assignment with parentheses to highlight '='.
-			// Do it always - it's not worth going through the trouble of doing it
-			// only for "complex" left and right sides.
-			str = "assignment (" + String(as.Lhs) + ") = (" + String(as.Rhs) + ")"
+			// Emphasize complex Lhs and Rhs of assignment with parentheses to highlight '='.
+			str = "assignment " + emphasize(as.Lhs) + " = " + emphasize(as.Rhs)
 		} else {
 			str = String(s)
 		}
@@ -2368,6 +2391,17 @@ done:
 
 	p.xnest = outer
 	return
+}
+
+// emphasize returns a string representation of x, with (top-level)
+// binary expressions emphasized by enclosing them in parentheses.
+func emphasize(x Expr) string {
+	s := String(x)
+	if op, _ := x.(*Operation); op != nil && op.Y != nil {
+		// binary expression
+		return "(" + s + ")"
+	}
+	return s
 }
 
 func (p *parser) ifStmt() *IfStmt {
@@ -2550,12 +2584,12 @@ func (p *parser) stmtOrNil() Stmt {
 	case _Operator, _Star:
 		switch p.op {
 		case Add, Sub, Mul, And, Xor, Not:
-			return p.simpleStmt(nil, 0) // unary operators
+			return p.simpleStmt(nil, 0)	// unary operators
 		}
 
-	case _Literal, _Func, _Lparen, // operands
-		_Lbrack, _Struct, _Map, _Chan, _Interface, // composite types
-		_Arrow: // receive operator
+	case _Literal, _Func, _Lparen,	// operands
+		_Lbrack, _Struct, _Map, _Chan, _Interface,	// composite types
+		_Arrow:	// receive operator
 		return p.simpleStmt(nil, 0)
 
 	case _For:
@@ -2633,7 +2667,7 @@ func (p *parser) stmtList() (l []Stmt) {
 		if !p.got(_Semi) && p.tok != _Rbrace {
 			p.syntaxError("at end of statement")
 			p.advance(_Semi, _Rbrace, _Case, _Default)
-			p.got(_Semi) // avoid spurious empty statement
+			p.got(_Semi)	// avoid spurious empty statement
 		}
 	}
 	return
@@ -2781,7 +2815,7 @@ func (p *parser) typeList(strict bool) (x Expr, comma bool) {
 				list = append(list, t)
 			}
 			l := new(ListExpr)
-			l.pos = x.Pos() // == list[0].Pos()
+			l.pos = x.Pos()	// == list[0].Pos()
 			l.ElemList = list
 			x = l
 		}
@@ -2790,8 +2824,8 @@ func (p *parser) typeList(strict bool) (x Expr, comma bool) {
 	return
 }
 
-// unparen removes all parentheses around an expression.
-func unparen(x Expr) Expr {
+// Unparen returns e with any enclosing parentheses stripped.
+func Unparen(x Expr) Expr {
 	for {
 		p, ok := x.(*ParenExpr)
 		if !ok {
@@ -2800,4 +2834,16 @@ func unparen(x Expr) Expr {
 		x = p.X
 	}
 	return x
+}
+
+// UnpackListExpr unpacks a *ListExpr into a []Expr.
+func UnpackListExpr(x Expr) []Expr {
+	switch x := x.(type) {
+	case nil:
+		return nil
+	case *ListExpr:
+		return x.ElemList
+	default:
+		return []Expr{x}
+	}
 }

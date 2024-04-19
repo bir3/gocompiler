@@ -19,10 +19,10 @@ type lineRange struct {
 // that (re)move values with statements attached.
 type xposmap struct {
 	// A map from file index to maps from line range to integers (block numbers)
-	maps map[int32]*biasedSparseMap
+	maps	map[int32]*biasedSparseMap
 	// The next two fields provide a single-item cache for common case of repeated lines from same file.
-	lastIndex int32            // -1 means no entry in cache
-	lastMap   *biasedSparseMap // map found at maps[lastIndex]
+	lastIndex	int32			// -1 means no entry in cache
+	lastMap		*biasedSparseMap	// map found at maps[lastIndex]
 }
 
 // newXposmap constructs an xposmap valid for inputs which have a file index in the keys of x,
@@ -33,7 +33,7 @@ func newXposmap(x map[int]lineRange) *xposmap {
 	for i, p := range x {
 		maps[int32(i)] = newBiasedSparseMap(int(p.first), int(p.last))
 	}
-	return &xposmap{maps: maps, lastIndex: -1} // zero for the rest is okay
+	return &xposmap{maps: maps, lastIndex: -1}	// zero for the rest is okay
 }
 
 // clear removes data from the map but leaves the sparse skeleton.

@@ -17,10 +17,10 @@ import (
 // on explicit reads + seeks provided by bio.Reader if needed.
 
 type MReader struct {
-	f        *os.File
-	rdr      *bio.Reader
-	fileView []byte
-	off      int64
+	f		*os.File
+	rdr		*bio.Reader
+	fileView	[]byte
+	off		int64
 }
 
 func NewMreader(f *os.File) (*MReader, error) {
@@ -30,9 +30,9 @@ func NewMreader(f *os.File) (*MReader, error) {
 		return nil, err
 	}
 	r := MReader{
-		f:        f,
-		rdr:      rdr,
-		fileView: rdr.SliceRO(uint64(fi.Size())),
+		f:		f,
+		rdr:		rdr,
+		fileView:	rdr.SliceRO(uint64(fi.Size())),
 	}
 	return &r, nil
 }

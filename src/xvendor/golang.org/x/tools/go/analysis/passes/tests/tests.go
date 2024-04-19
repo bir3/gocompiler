@@ -2,11 +2,10 @@
 // Use of this source code is governed by a BSD-style
 // license that can be found in the LICENSE file.
 
-// Package tests defines an Analyzer that checks for common mistaken
-// usages of tests and examples.
 package tests
 
 import (
+	_ "embed"
 	"fmt"
 	"github.com/bir3/gocompiler/src/go/ast"
 	"github.com/bir3/gocompiler/src/go/token"
@@ -17,23 +16,17 @@ import (
 	"unicode/utf8"
 
 	"github.com/bir3/gocompiler/src/xvendor/golang.org/x/tools/go/analysis"
-	"github.com/bir3/gocompiler/src/xvendor/golang.org/x/tools/internal/analysisinternal"
-	"github.com/bir3/gocompiler/src/xvendor/golang.org/x/tools/internal/typeparams"
+	"github.com/bir3/gocompiler/src/xvendor/golang.org/x/tools/go/analysis/passes/internal/analysisutil"
 )
 
-const Doc = `check for common mistaken usages of tests and examples
-
-The tests checker walks Test, Benchmark and Example functions checking
-malformed names, wrong signatures and examples documenting non-existent
-identifiers.
-
-Please see the documentation for package testing in golang.org/pkg/testing
-for the conventions that are enforced for Tests, Benchmarks, and Examples.`
+//go:embed doc.go
+var doc string
 
 var Analyzer = &analysis.Analyzer{
-	Name: "tests",
-	Doc:  Doc,
-	Run:  run,
+	Name:	"tests",
+	Doc:	analysisutil.MustExtractDoc(doc, "tests"),
+	URL:	"https://pkg.go.dev/golang.org/x/tools/go/analysis/passes/tests",
+	Run:	run,
 }
 
 var acceptedFuzzTypes = []types.Type{
@@ -73,9 +66,7 @@ func run(pass *analysis.Pass) (interface{}, error) {
 				checkTest(pass, fn, "Test")
 			case strings.HasPrefix(fn.Name.Name, "Benchmark"):
 				checkTest(pass, fn, "Benchmark")
-			}
-			// run fuzz tests diagnostics only for 1.18 i.e. when analysisinternal.DiagnoseFuzzTests is turned on.
-			if strings.HasPrefix(fn.Name.Name, "Fuzz") && analysisinternal.DiagnoseFuzzTests {
+			case strings.HasPrefix(fn.Name.Name, "Fuzz"):
 				checkTest(pass, fn, "Fuzz")
 				checkFuzz(pass, fn)
 			}
@@ -265,13 +256,7 @@ func isTestingType(typ types.Type, testingType string) bool {
 	if !ok {
 		return false
 	}
-	named, ok := ptr.Elem().(*types.Named)
-	if !ok {
-		return false
-	}
-	obj := named.Obj()
-	// obj.Pkg is nil for the error type.
-	return obj != nil && obj.Pkg() != nil && obj.Pkg().Path() == "testing" && obj.Name() == testingType
+	return analysisutil.IsNamedType(ptr.Elem(), "testing", testingType)
 }
 
 // Validate that fuzz target function's arguments are of accepted types.
@@ -349,8 +334,8 @@ func lookup(pkg *types.Package, name string) []types.Object {
 var outputRe = regexp.MustCompile(`(?i)^[[:space:]]*(unordered )?output:`)
 
 type commentMetadata struct {
-	isOutput bool
-	pos      token.Pos
+	isOutput	bool
+	pos		token.Pos
 }
 
 func checkExampleOutput(pass *analysis.Pass, fn *ast.FuncDecl, fileComments []*ast.CommentGroup) {
@@ -372,8 +357,8 @@ func checkExampleOutput(pass *analysis.Pass, fn *ast.FuncDecl, fileComments []*a
 		}
 
 		commentsInExample = append(commentsInExample, commentMetadata{
-			isOutput: isOutput,
-			pos:      cg.Pos(),
+			isOutput:	isOutput,
+			pos:		cg.Pos(),
 		})
 	}
 
@@ -389,8 +374,8 @@ func checkExampleOutput(pass *analysis.Pass, fn *ast.FuncDecl, fileComments []*a
 		if cg.isOutput && !isLast {
 			pass.Report(
 				analysis.Diagnostic{
-					Pos:     cg.pos,
-					Message: msg,
+					Pos:		cg.pos,
+					Message:	msg,
 				},
 			)
 		}
@@ -405,7 +390,7 @@ func checkExampleName(pass *analysis.Pass, fn *ast.FuncDecl) {
 	if results := fn.Type.Results; results != nil && len(results.List) != 0 {
 		pass.Reportf(fn.Pos(), "%s should return nothing", fnName)
 	}
-	if tparams := typeparams.ForFuncType(fn.Type); tparams != nil && len(tparams.List) > 0 {
+	if tparams := fn.Type.TypeParams; tparams != nil && len(tparams.List) > 0 {
 		pass.Reportf(fn.Pos(), "%s should not have type params", fnName)
 	}
 
@@ -415,10 +400,10 @@ func checkExampleName(pass *analysis.Pass, fn *ast.FuncDecl) {
 	}
 
 	var (
-		exName = strings.TrimPrefix(fnName, "Example")
-		elems  = strings.SplitN(exName, "_", 3)
-		ident  = elems[0]
-		objs   = lookup(pass.Pkg, ident)
+		exName	= strings.TrimPrefix(fnName, "Example")
+		elems	= strings.SplitN(exName, "_", 3)
+		ident	= elems[0]
+		objs	= lookup(pass.Pkg, ident)
 	)
 	if ident != "" && len(objs) == 0 {
 		// Check ExampleFoo and ExampleBadFoo.
@@ -474,7 +459,7 @@ func checkTest(pass *analysis.Pass, fn *ast.FuncDecl, prefix string) {
 		return
 	}
 
-	if tparams := typeparams.ForFuncType(fn.Type); tparams != nil && len(tparams.List) > 0 {
+	if tparams := fn.Type.TypeParams; tparams != nil && len(tparams.List) > 0 {
 		// Note: cmd/go/internal/load also errors about TestXXX and BenchmarkXXX functions with type parameters.
 		// We have currently decided to also warn before compilation/package loading. This can help users in IDEs.
 		// TODO(adonovan): use ReportRangef(tparams).

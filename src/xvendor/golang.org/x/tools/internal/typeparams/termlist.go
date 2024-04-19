@@ -30,7 +30,7 @@ func (xl termlist) String() string {
 	var buf bytes.Buffer
 	for i, x := range xl {
 		if i > 0 {
-			buf.WriteString(" ∪ ")
+			buf.WriteString(" | ")
 		}
 		buf.WriteString(x.String())
 	}
@@ -89,7 +89,7 @@ func (xl termlist) norm() termlist {
 					return allTermlist
 				}
 				xi = u1
-				used[j] = true // xj is now unioned into xi - ignore it in future iterations
+				used[j] = true	// xj is now unioned into xi - ignore it in future iterations
 			}
 		}
 		rl = append(rl, xi)
@@ -156,7 +156,7 @@ func (xl termlist) subsetOf(yl termlist) bool {
 	// each term x of xl must be a subset of yl
 	for _, x := range xl {
 		if !yl.supersetOf(x) {
-			return false // x is not a subset yl
+			return false	// x is not a subset yl
 		}
 	}
 	return true

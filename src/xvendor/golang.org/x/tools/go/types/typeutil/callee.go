@@ -22,7 +22,7 @@ func Callee(info *types.Info, call *ast.CallExpr) types.Object {
 	// Look through type instantiation if necessary.
 	isInstance := false
 	switch fun.(type) {
-	case *ast.IndexExpr, *typeparams.IndexListExpr:
+	case *ast.IndexExpr, *ast.IndexListExpr:
 		// When extracting the callee from an *IndexExpr, we need to check that
 		// it is a *types.Func and not a *types.Var.
 		// Example: Don't match a slice m within the expression `m[0]()`.
@@ -33,20 +33,20 @@ func Callee(info *types.Info, call *ast.CallExpr) types.Object {
 	var obj types.Object
 	switch fun := fun.(type) {
 	case *ast.Ident:
-		obj = info.Uses[fun] // type, var, builtin, or declared func
+		obj = info.Uses[fun]	// type, var, builtin, or declared func
 	case *ast.SelectorExpr:
 		if sel, ok := info.Selections[fun]; ok {
-			obj = sel.Obj() // method or field
+			obj = sel.Obj()	// method or field
 		} else {
-			obj = info.Uses[fun.Sel] // qualified identifier?
+			obj = info.Uses[fun.Sel]	// qualified identifier?
 		}
 	}
 	if _, ok := obj.(*types.TypeName); ok {
-		return nil // T(x) is a conversion, not a call
+		return nil	// T(x) is a conversion, not a call
 	}
 	// A Func is required to match instantiations.
 	if _, ok := obj.(*types.Func); isInstance && !ok {
-		return nil // Was not a Func.
+		return nil	// Was not a Func.
 	}
 	return obj
 }

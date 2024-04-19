@@ -21,11 +21,11 @@ const debugResolve = false
 func resolveFile(file *ast.File, handle *token.File, declErr func(token.Pos, string)) {
 	pkgScope := ast.NewScope(nil)
 	r := &resolver{
-		handle:   handle,
-		declErr:  declErr,
-		topScope: pkgScope,
-		pkgScope: pkgScope,
-		depth:    1,
+		handle:		handle,
+		declErr:	declErr,
+		topScope:	pkgScope,
+		pkgScope:	pkgScope,
+		depth:		1,
 	}
 
 	for _, decl := range file.Decls {
@@ -41,7 +41,7 @@ func resolveFile(file *ast.File, handle *token.File, declErr func(token.Pos, str
 	for _, ident := range r.unresolved {
 		// i <= index for current ident
 		assert(ident.Obj == unresolved, "object already resolved")
-		ident.Obj = r.pkgScope.Lookup(ident.Name) // also removes unresolved sentinel
+		ident.Obj = r.pkgScope.Lookup(ident.Name)	// also removes unresolved sentinel
 		if ident.Obj == nil {
 			r.unresolved[i] = ident
 			i++
@@ -57,19 +57,19 @@ func resolveFile(file *ast.File, handle *token.File, declErr func(token.Pos, str
 const maxScopeDepth int = 1e3
 
 type resolver struct {
-	handle  *token.File
-	declErr func(token.Pos, string)
+	handle	*token.File
+	declErr	func(token.Pos, string)
 
 	// Ordinary identifier scopes
-	pkgScope   *ast.Scope   // pkgScope.Outer == nil
-	topScope   *ast.Scope   // top-most scope; may be pkgScope
-	unresolved []*ast.Ident // unresolved identifiers
-	depth      int          // scope depth
+	pkgScope	*ast.Scope	// pkgScope.Outer == nil
+	topScope	*ast.Scope	// top-most scope; may be pkgScope
+	unresolved	[]*ast.Ident	// unresolved identifiers
+	depth		int		// scope depth
 
 	// Label scopes
 	// (maintained by open/close LabelScope)
-	labelScope  *ast.Scope     // label scope for current function
-	targetStack [][]*ast.Ident // stack of unresolved labels
+	labelScope	*ast.Scope	// label scope for current function
+	targetStack	[][]*ast.Ident	// stack of unresolved labels
 }
 
 func (r *resolver) trace(format string, args ...any) {
@@ -136,7 +136,7 @@ func (r *resolver) declare(decl, data any, scope *ast.Scope, kind ast.ObjKind, i
 		obj.Decl = decl
 		obj.Data = data
 		// Identifiers (for receiver type parameters) are written to the scope, but
-		// never set as the resolved object. See issue #50956.
+		// never set as the resolved object. See go.dev/issue/50956.
 		if _, ok := decl.(*ast.Ident); !ok {
 			ident.Obj = obj
 		}
@@ -159,7 +159,7 @@ func (r *resolver) shortVarDecl(decl *ast.AssignStmt) {
 	// Go spec: A short variable declaration may redeclare variables
 	// provided they were originally declared in the same block with
 	// the same type, and at least one of the non-blank variables is new.
-	n := 0 // number of new variables
+	n := 0	// number of new variables
 	for _, x := range decl.Lhs {
 		if ident, isIdent := x.(*ast.Ident); isIdent {
 			assert(ident.Obj == nil, "identifier already declared or resolved")
@@ -172,9 +172,9 @@ func (r *resolver) shortVarDecl(decl *ast.AssignStmt) {
 					r.trace("declaring %s@%v", ident.Name, ident.Pos())
 				}
 				if alt := r.topScope.Insert(obj); alt != nil {
-					ident.Obj = alt // redeclaration
+					ident.Obj = alt	// redeclaration
 				} else {
-					n++ // new declaration
+					n++	// new declaration
 				}
 			}
 		}
@@ -209,7 +209,7 @@ func (r *resolver) resolve(ident *ast.Ident, collectUnresolved bool) {
 			}
 			assert(obj.Name != "", "obj with no name")
 			// Identifiers (for receiver type parameters) are written to the scope,
-			// but never set as the resolved object. See issue #50956.
+			// but never set as the resolved object. See go.dev/issue/50956.
 			if _, ok := obj.Decl.(*ast.Ident); !ok {
 				ident.Obj = obj
 			}
@@ -234,7 +234,7 @@ func (r *resolver) walkExprs(list []ast.Expr) {
 
 func (r *resolver) walkLHS(list []ast.Expr) {
 	for _, expr := range list {
-		expr := unparen(expr)
+		expr := ast.Unparen(expr)
 		if _, ok := expr.(*ast.Ident); !ok && expr != nil {
 			ast.Walk(r, expr)
 		}
@@ -285,7 +285,7 @@ func (r *resolver) Visit(node ast.Node) ast.Visitor {
 		}
 		for _, e := range n.Elts {
 			if kv, _ := e.(*ast.KeyValueExpr); kv != nil {
-				// See issue #45160: try to resolve composite lit keys, but don't
+				// See go.dev/issue/45160: try to resolve composite lit keys, but don't
 				// collect them as unresolved if resolution failed. This replicates
 				// existing behavior when resolving during parsing.
 				if ident, _ := kv.Key.(*ast.Ident); ident != nil {
@@ -430,10 +430,10 @@ func (r *resolver) Visit(node ast.Node) ast.Visitor {
 				// token for the RHS OpPos. That information is not contained within
 				// the AST.
 				as := &ast.AssignStmt{
-					Lhs:    lhs,
-					Tok:    token.DEFINE,
-					TokPos: n.TokPos,
-					Rhs:    []ast.Expr{&ast.UnaryExpr{Op: token.RANGE, X: n.X}},
+					Lhs:	lhs,
+					Tok:	token.DEFINE,
+					TokPos:	n.TokPos,
+					Rhs:	[]ast.Expr{&ast.UnaryExpr{Op: token.RANGE, X: n.X}},
 				}
 				// TODO(rFindley): this walkLHS reproduced the parser resolution, but
 				// is it necessary? By comparison, for a normal AssignStmt we don't
@@ -545,15 +545,15 @@ func (r *resolver) walkRecv(recv *ast.FieldList) {
 	// trying to resolve the rest of the receiver, and avoid re-resolving the
 	// type parameter identifiers.
 	if recv == nil || len(recv.List) == 0 {
-		return // nothing to do
+		return	// nothing to do
 	}
 	typ := recv.List[0].Type
 	if ptr, ok := typ.(*ast.StarExpr); ok {
 		typ = ptr.X
 	}
 
-	var declareExprs []ast.Expr // exprs to declare
-	var resolveExprs []ast.Expr // exprs to resolve
+	var declareExprs []ast.Expr	// exprs to declare
+	var resolveExprs []ast.Expr	// exprs to resolve
 	switch typ := typ.(type) {
 	case *ast.IndexExpr:
 		declareExprs = []ast.Expr{typ.Index}

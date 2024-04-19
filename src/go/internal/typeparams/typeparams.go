@@ -15,17 +15,17 @@ func PackIndexExpr(x ast.Expr, lbrack token.Pos, exprs []ast.Expr, rbrack token.
 		panic("internal error: PackIndexExpr with empty expr slice")
 	case 1:
 		return &ast.IndexExpr{
-			X:      x,
-			Lbrack: lbrack,
-			Index:  exprs[0],
-			Rbrack: rbrack,
+			X:	x,
+			Lbrack:	lbrack,
+			Index:	exprs[0],
+			Rbrack:	rbrack,
 		}
 	default:
 		return &ast.IndexListExpr{
-			X:       x,
-			Lbrack:  lbrack,
-			Indices: exprs,
-			Rbrack:  rbrack,
+			X:		x,
+			Lbrack:		lbrack,
+			Indices:	exprs,
+			Rbrack:		rbrack,
 		}
 	}
 }
@@ -34,7 +34,7 @@ func PackIndexExpr(x ast.Expr, lbrack token.Pos, exprs []ast.Expr, rbrack token.
 //
 // Orig holds the original ast.Expr from which this IndexExpr was derived.
 type IndexExpr struct {
-	Orig ast.Expr // the wrapped expr, which may be distinct from the IndexListExpr below.
+	Orig	ast.Expr	// the wrapped expr, which may be distinct from the IndexListExpr below.
 	*ast.IndexListExpr
 }
 
@@ -42,10 +42,10 @@ func UnpackIndexExpr(n ast.Node) *IndexExpr {
 	switch e := n.(type) {
 	case *ast.IndexExpr:
 		return &IndexExpr{e, &ast.IndexListExpr{
-			X:       e.X,
-			Lbrack:  e.Lbrack,
-			Indices: []ast.Expr{e.Index},
-			Rbrack:  e.Rbrack,
+			X:		e.X,
+			Lbrack:		e.Lbrack,
+			Indices:	[]ast.Expr{e.Index},
+			Rbrack:		e.Rbrack,
 		}}
 	case *ast.IndexListExpr:
 		return &IndexExpr{e, e}

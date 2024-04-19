@@ -34,17 +34,17 @@ const (
 // obtaining address and line number information from a binary.
 type llvmSymbolizer struct {
 	sync.Mutex
-	filename string
-	rw       lineReaderWriter
-	base     uint64
+	filename	string
+	rw		lineReaderWriter
+	base		uint64
 }
 
 type llvmSymbolizerJob struct {
-	cmd *exec.Cmd
-	in  io.WriteCloser
-	out *bufio.Reader
+	cmd	*exec.Cmd
+	in	io.WriteCloser
+	out	*bufio.Reader
 	// llvm-symbolizer requires the symbol type, CODE or DATA, for symbolization.
-	symType string
+	symType	string
 }
 
 func (a *llvmSymbolizerJob) write(s string) error {
@@ -66,7 +66,7 @@ func (a *llvmSymbolizerJob) close() {
 	a.cmd.Wait()
 }
 
-// newLlvmSymbolizer starts the given llvmSymbolizer command reporting
+// newLLVMSymbolizer starts the given llvmSymbolizer command reporting
 // information about the given executable file. If file is a shared
 // library, base should be the address at which it was mapped in the
 // program under consideration.
@@ -76,8 +76,8 @@ func newLLVMSymbolizer(cmd, file string, base uint64, isData bool) (*llvmSymboli
 	}
 
 	j := &llvmSymbolizerJob{
-		cmd:     exec.Command(cmd, "--inlining", "-demangle=false"),
-		symType: "CODE",
+		cmd:		exec.Command(cmd, "--inlining", "-demangle=false"),
+		symType:	"CODE",
 	}
 	if isData {
 		j.symType = "DATA"
@@ -99,9 +99,9 @@ func newLLVMSymbolizer(cmd, file string, base uint64, isData bool) (*llvmSymboli
 	}
 
 	a := &llvmSymbolizer{
-		filename: file,
-		rw:       j,
-		base:     base,
+		filename:	file,
+		rw:		j,
+		base:		base,
 	}
 
 	return a, nil

@@ -2,40 +2,28 @@
 // Use of this source code is governed by a BSD-style
 // license that can be found in the LICENSE file.
 
-// Package ifaceassert defines an Analyzer that flags
-// impossible interface-interface type assertions.
 package ifaceassert
 
 import (
+	_ "embed"
 	"github.com/bir3/gocompiler/src/go/ast"
 	"github.com/bir3/gocompiler/src/go/types"
 
 	"github.com/bir3/gocompiler/src/xvendor/golang.org/x/tools/go/analysis"
 	"github.com/bir3/gocompiler/src/xvendor/golang.org/x/tools/go/analysis/passes/inspect"
+	"github.com/bir3/gocompiler/src/xvendor/golang.org/x/tools/go/analysis/passes/internal/analysisutil"
 	"github.com/bir3/gocompiler/src/xvendor/golang.org/x/tools/go/ast/inspector"
 )
 
-const Doc = `detect impossible interface-to-interface type assertions
-
-This checker flags type assertions v.(T) and corresponding type-switch cases
-in which the static type V of v is an interface that cannot possibly implement
-the target interface T. This occurs when V and T contain methods with the same
-name but different signatures. Example:
-
-	var v interface {
-		Read()
-	}
-	_ = v.(io.Reader)
-
-The Read method in v has a different signature than the Read method in
-io.Reader, so this assertion cannot succeed.
-`
+//go:embed doc.go
+var doc string
 
 var Analyzer = &analysis.Analyzer{
-	Name:     "ifaceassert",
-	Doc:      Doc,
-	Requires: []*analysis.Analyzer{inspect.Analyzer},
-	Run:      run,
+	Name:		"ifaceassert",
+	Doc:		analysisutil.MustExtractDoc(doc, "ifaceassert"),
+	URL:		"https://pkg.go.dev/golang.org/x/tools/go/analysis/passes/ifaceassert",
+	Requires:	[]*analysis.Analyzer{inspect.Analyzer},
+	Run:		run,
 }
 
 // assertableTo checks whether interface v can be asserted into t. It returns
@@ -71,8 +59,8 @@ func run(pass *analysis.Pass) (interface{}, error) {
 	}
 	inspect.Preorder(nodeFilter, func(n ast.Node) {
 		var (
-			assert  *ast.TypeAssertExpr // v.(T) expression
-			targets []ast.Expr          // interfaces T in v.(T)
+			assert	*ast.TypeAssertExpr	// v.(T) expression
+			targets	[]ast.Expr		// interfaces T in v.(T)
 		)
 		switch n := n.(type) {
 		case *ast.TypeAssertExpr:

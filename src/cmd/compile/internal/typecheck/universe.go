@@ -14,26 +14,26 @@ import (
 
 var (
 	okfor [ir.OEND][]bool
-	iscmp [ir.OEND]bool
 )
 
 var (
-	okforeq    [types.NTYPE]bool
-	okforadd   [types.NTYPE]bool
-	okforand   [types.NTYPE]bool
-	okfornone  [types.NTYPE]bool
-	okforbool  [types.NTYPE]bool
-	okforcap   [types.NTYPE]bool
-	okforlen   [types.NTYPE]bool
-	okforarith [types.NTYPE]bool
+	okforeq		[types.NTYPE]bool
+	okforadd	[types.NTYPE]bool
+	okforand	[types.NTYPE]bool
+	okfornone	[types.NTYPE]bool
+	okforbool	[types.NTYPE]bool
+	okforcap	[types.NTYPE]bool
+	okforlen	[types.NTYPE]bool
+	okforarith	[types.NTYPE]bool
 )
 
 var builtinFuncs = [...]struct {
-	name string
-	op   ir.Op
+	name	string
+	op	ir.Op
 }{
 	{"append", ir.OAPPEND},
 	{"cap", ir.OCAP},
+	{"clear", ir.OCLEAR},
 	{"close", ir.OCLOSE},
 	{"complex", ir.OCOMPLEX},
 	{"copy", ir.OCOPY},
@@ -41,22 +41,21 @@ var builtinFuncs = [...]struct {
 	{"imag", ir.OIMAG},
 	{"len", ir.OLEN},
 	{"make", ir.OMAKE},
+	{"max", ir.OMAX},
+	{"min", ir.OMIN},
 	{"new", ir.ONEW},
 	{"panic", ir.OPANIC},
 	{"print", ir.OPRINT},
-	{"println", ir.OPRINTN},
+	{"println", ir.OPRINTLN},
 	{"real", ir.OREAL},
 	{"recover", ir.ORECOVER},
 }
 
 var unsafeFuncs = [...]struct {
-	name string
-	op   ir.Op
+	name	string
+	op	ir.Op
 }{
 	{"Add", ir.OUNSAFEADD},
-	{"Alignof", ir.OALIGNOF},
-	{"Offsetof", ir.OOFFSETOF},
-	{"Sizeof", ir.OSIZEOF},
 	{"Slice", ir.OUNSAFESLICE},
 	{"SliceData", ir.OUNSAFESLICEDATA},
 	{"String", ir.OUNSAFESTRING},
@@ -68,22 +67,17 @@ func InitUniverse() {
 	types.InitTypes(func(sym *types.Sym, typ *types.Type) types.Object {
 		n := ir.NewDeclNameAt(src.NoXPos, ir.OTYPE, sym)
 		n.SetType(typ)
+		n.SetTypecheck(1)
 		sym.Def = n
 		return n
 	})
 
 	for _, s := range &builtinFuncs {
-		s2 := types.BuiltinPkg.Lookup(s.name)
-		def := NewName(s2)
-		def.BuiltinOp = s.op
-		s2.Def = def
+		ir.NewBuiltin(types.BuiltinPkg.Lookup(s.name), s.op)
 	}
 
 	for _, s := range &unsafeFuncs {
-		s2 := types.UnsafePkg.Lookup(s.name)
-		def := NewName(s2)
-		def.BuiltinOp = s.op
-		s2.Def = def
+		ir.NewBuiltin(types.UnsafePkg.Lookup(s.name), s.op)
 	}
 
 	s := types.BuiltinPkg.Lookup("true")
@@ -94,14 +88,11 @@ func InitUniverse() {
 
 	s = Lookup("_")
 	types.BlankSym = s
-	s.Def = NewName(s)
-	ir.AsNode(s.Def).SetType(types.Types[types.TBLANK])
-	ir.BlankNode = ir.AsNode(s.Def)
-	ir.BlankNode.SetTypecheck(1)
+	ir.BlankNode = ir.NewNameAt(src.NoXPos, s, types.Types[types.TBLANK])
+	s.Def = ir.BlankNode
 
 	s = types.BuiltinPkg.Lookup("_")
-	s.Def = NewName(s)
-	ir.AsNode(s.Def).SetType(types.Types[types.TBLANK])
+	s.Def = ir.NewNameAt(src.NoXPos, s, types.Types[types.TBLANK])
 
 	s = types.BuiltinPkg.Lookup("nil")
 	s.Def = NodNil()
@@ -161,11 +152,11 @@ func InitUniverse() {
 	okforeq[types.TCHAN] = true
 	okforeq[types.TSTRING] = true
 	okforeq[types.TBOOL] = true
-	okforeq[types.TMAP] = true    // nil only; refined in typecheck
-	okforeq[types.TFUNC] = true   // nil only; refined in typecheck
-	okforeq[types.TSLICE] = true  // nil only; refined in typecheck
-	okforeq[types.TARRAY] = true  // only if element type is comparable; refined in typecheck
-	okforeq[types.TSTRUCT] = true // only if all struct fields are comparable; refined in typecheck
+	okforeq[types.TMAP] = true	// nil only; refined in typecheck
+	okforeq[types.TFUNC] = true	// nil only; refined in typecheck
+	okforeq[types.TSLICE] = true	// nil only; refined in typecheck
+	okforeq[types.TARRAY] = true	// only if element type is comparable; refined in typecheck
+	okforeq[types.TSTRUCT] = true	// only if all struct fields are comparable; refined in typecheck
 
 	types.IsOrdered[types.TSTRING] = true
 
@@ -203,23 +194,4 @@ func InitUniverse() {
 	// special
 	okfor[ir.OCAP] = okforcap[:]
 	okfor[ir.OLEN] = okforlen[:]
-}
-
-// DeclareUniverse makes the universe block visible within the current package.
-func DeclareUniverse() {
-	// Operationally, this is similar to a dot import of builtinpkg, except
-	// that we silently skip symbols that are already declared in the
-	// package block rather than emitting a redeclared symbol error.
-
-	for _, s := range types.BuiltinPkg.Syms {
-		if s.Def == nil {
-			continue
-		}
-		s1 := Lookup(s.Name)
-		if s1.Def != nil {
-			continue
-		}
-
-		s1.Def = s.Def
-	}
 }

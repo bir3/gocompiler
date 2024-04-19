@@ -11,28 +11,30 @@ import (
 )
 
 const (
-	AI_CANONNAME = 0x2
-	AI_ALL       = 0x100
-	AI_V4MAPPED  = 0x800
-	AI_MASK      = 0x1407
+	AI_CANONNAME	= 0x2
+	AI_ALL		= 0x100
+	AI_V4MAPPED	= 0x800
+	AI_MASK		= 0x1407
 
-	EAI_AGAIN    = 2
-	EAI_NONAME   = 8
-	EAI_SYSTEM   = 11
-	EAI_OVERFLOW = 14
+	EAI_AGAIN	= 2
+	EAI_NODATA	= 7
+	EAI_NONAME	= 8
+	EAI_SERVICE	= 9
+	EAI_SYSTEM	= 11
+	EAI_OVERFLOW	= 14
 
-	NI_NAMEREQD = 4
+	NI_NAMEREQD	= 4
 )
 
 type Addrinfo struct {
-	Flags     int32
-	Family    int32
-	Socktype  int32
-	Protocol  int32
-	Addrlen   uint32
-	Canonname *byte
-	Addr      *syscall.RawSockaddr
-	Next      *Addrinfo
+	Flags		int32
+	Family		int32
+	Socktype	int32
+	Protocol	int32
+	Addrlen		uint32
+	Canonname	*byte
+	Addr		*syscall.RawSockaddr
+	Next		*Addrinfo
 }
 
 //go:cgo_ldflag "-lresolv"
@@ -118,7 +120,7 @@ func syscall_syscall6X(fn, a1, a2, a3, a4, a5, a6 uintptr) (r1, r2 uintptr, err 
 func syscall_syscall9(fn, a1, a2, a3, a4, a5, a6, a7, a8, a9 uintptr) (r1, r2 uintptr, err syscall.Errno)
 
 type ResState struct {
-	unexported [70]uintptr
+	unexported [69]uintptr
 }
 
 //go:cgo_import_dynamic libresolv_res_9_ninit res_9_ninit "/usr/lib/libresolv.9.dylib"

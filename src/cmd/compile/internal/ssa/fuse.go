@@ -10,15 +10,15 @@ import (
 )
 
 // fuseEarly runs fuse(f, fuseTypePlain|fuseTypeIntInRange).
-func fuseEarly(f *Func) { fuse(f, fuseTypePlain|fuseTypeIntInRange) }
+func fuseEarly(f *Func)	{ fuse(f, fuseTypePlain|fuseTypeIntInRange) }
 
 // fuseLate runs fuse(f, fuseTypePlain|fuseTypeIf|fuseTypeBranchRedirect).
-func fuseLate(f *Func) { fuse(f, fuseTypePlain|fuseTypeIf|fuseTypeBranchRedirect) }
+func fuseLate(f *Func)	{ fuse(f, fuseTypePlain|fuseTypeIf|fuseTypeBranchRedirect) }
 
 type fuseType uint8
 
 const (
-	fuseTypePlain fuseType = 1 << iota
+	fuseTypePlain	fuseType	= 1 << iota
 	fuseTypeIf
 	fuseTypeIntInRange
 	fuseTypeBranchRedirect
@@ -169,7 +169,7 @@ func fuseBlockIf(b *Block) bool {
 // There may be false positives.
 func isEmpty(b *Block) bool {
 	for _, v := range b.Values {
-		if v.Uses > 0 || v.Op.IsCall() || v.Op.HasSideEffects() || v.Type.IsVoid() {
+		if v.Uses > 0 || v.Op.IsCall() || v.Op.HasSideEffects() || v.Type.IsVoid() || opcodeTable[v.Op].nilCheck {
 			return false
 		}
 	}
@@ -187,7 +187,7 @@ func fuseBlockPlain(b *Block) bool {
 	}
 
 	c := b.Succs[0].b
-	if len(c.Preds) != 1 || c == b { // At least 2 distinct blocks.
+	if len(c.Preds) != 1 || c == b {	// At least 2 distinct blocks.
 		return false
 	}
 
@@ -200,14 +200,14 @@ func fuseBlockPlain(b *Block) bool {
 	for {
 		if c.Kind != BlockPlain {
 			break
-		} // Has exactly 1 successor
+		}	// Has exactly 1 successor
 		cNext := c.Succs[0].b
 		if cNext == b {
 			break
-		} // not a cycle
+		}	// not a cycle
 		if len(cNext.Preds) != 1 {
 			break
-		} // no other incoming edge
+		}	// no other incoming edge
 		c = cNext
 	}
 
@@ -219,13 +219,13 @@ func fuseBlockPlain(b *Block) bool {
 		// or to the next block's end, if possible.
 		b_next = bx.Succs[0].b
 		if bx.Pos.IsStmt() == src.PosIsStmt {
-			l := bx.Pos.Line() // looking for another place to mark for line l
+			l := bx.Pos.Line()	// looking for another place to mark for line l
 			outOfOrder := false
 			for _, v := range b_next.Values {
 				if v.Pos.IsStmt() == src.PosNotStmt {
 					continue
 				}
-				if l == v.Pos.Line() { // Found a Value with same line, therefore done.
+				if l == v.Pos.Line() {	// Found a Value with same line, therefore done.
 					v.Pos = v.Pos.WithIsStmt()
 					l = 0
 					break
@@ -248,8 +248,8 @@ func fuseBlockPlain(b *Block) bool {
 
 	// Compute the total number of values and find the largest value slice in the run, to maximize chance of storage reuse.
 	total := 0
-	totalBeforeMax := 0 // number of elements preceding the maximum block (i.e. its position in the result).
-	max_b := b          // block with maximum capacity
+	totalBeforeMax := 0	// number of elements preceding the maximum block (i.e. its position in the result).
+	max_b := b		// block with maximum capacity
 
 	for bx := b; ; bx = bx.Succs[0].b {
 		if cap(bx.Values) > cap(max_b.Values) {
@@ -281,7 +281,7 @@ func fuseBlockPlain(b *Block) bool {
 		max_b = c
 		totalBeforeMax = total - len(c.Values)
 		copy(t[totalBeforeMax:], c.Values)
-	} else if total <= cap(max_b.Values) { // in place, somewhere
+	} else if total <= cap(max_b.Values) {	// in place, somewhere
 		t = max_b.Values[0:total]
 		copy(t[totalBeforeMax:], max_b.Values)
 	} else {
@@ -294,7 +294,7 @@ func fuseBlockPlain(b *Block) bool {
 	for bx := b; ; bx = bx.Succs[0].b {
 		if bx != max_b {
 			copy(t[copyTo:], bx.Values)
-		} else if copyTo != totalBeforeMax { // trust but verify.
+		} else if copyTo != totalBeforeMax {	// trust but verify.
 			panic(fmt.Errorf("totalBeforeMax (%d) != copyTo (%d), max_b=%v, b=%v, c=%v", totalBeforeMax, copyTo, max_b, b, c))
 		}
 		if bx == c {

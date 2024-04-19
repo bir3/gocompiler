@@ -32,14 +32,14 @@ const (
 // addr2LinerNM is a connection to an nm command for obtaining symbol
 // information from a binary.
 type addr2LinerNM struct {
-	m []symbolInfo // Sorted list of symbol addresses from binary.
+	m []symbolInfo	// Sorted list of symbol addresses from binary.
 }
 
 type symbolInfo struct {
-	address uint64
-	size    uint64
-	name    string
-	symType string
+	address	uint64
+	size	uint64
+	name	string
+	symType	string
 }
 
 // isData returns if the symbol has a known data object symbol type.
@@ -102,10 +102,10 @@ func parseAddr2LinerNM(base uint64, nm io.Reader) (*addr2LinerNM, error) {
 			continue
 		}
 		a.m = append(a.m, symbolInfo{
-			address: address + base,
-			size:    size,
-			name:    fields[0],
-			symType: fields[1],
+			address:	address + base,
+			size:		size,
+			name:		fields[0],
+			symType:	fields[1],
 		})
 	}
 

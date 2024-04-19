@@ -21,21 +21,21 @@ import (
 // export data.
 type PkgDecoder struct {
 	// version is the file format version.
-	version uint32
+	version	uint32
 
 	// sync indicates whether the file uses sync markers.
-	sync bool
+	sync	bool
 
 	// pkgPath is the package path for the package to be decoded.
 	//
 	// TODO(mdempsky): Remove; unneeded since CL 391014.
-	pkgPath string
+	pkgPath	string
 
 	// elemData is the full data payload of the encoded package.
 	// Elements are densely and contiguously packed together.
 	//
 	// The last 8 bytes of elemData are the package fingerprint.
-	elemData string
+	elemData	string
 
 	// elemEnds stores the byte-offset end positions of element
 	// bitstreams within elemData.
@@ -45,25 +45,25 @@ type PkgDecoder struct {
 	//
 	// Note: elemEnds is indexed by absolute indices, not
 	// section-relative indices.
-	elemEnds []uint32
+	elemEnds	[]uint32
 
 	// elemEndsEnds stores the index-offset end positions of relocation
 	// sections within elemEnds.
 	//
 	// For example, section K's end positions start at elemEndsEnds[K-1]
 	// (or 0, if K==0) and end at elemEndsEnds[K].
-	elemEndsEnds [numRelocs]uint32
+	elemEndsEnds	[numRelocs]uint32
 
-	scratchRelocEnt []RelocEnt
+	scratchRelocEnt	[]RelocEnt
 }
 
 // PkgPath returns the package path for the package
 //
 // TODO(mdempsky): Remove; unneeded since CL 391014.
-func (pr *PkgDecoder) PkgPath() string { return pr.pkgPath }
+func (pr *PkgDecoder) PkgPath() string	{ return pr.pkgPath }
 
 // SyncMarkers reports whether pr uses sync markers.
-func (pr *PkgDecoder) SyncMarkers() bool { return pr.sync }
+func (pr *PkgDecoder) SyncMarkers() bool	{ return pr.sync }
 
 // NewPkgDecoder returns a PkgDecoder initialized to read the Unified
 // IR export data from input. pkgPath is the package path for the
@@ -188,9 +188,9 @@ func (pr *PkgDecoder) RetireDecoder(d *Decoder) {
 // Most callers should use NewDecoder instead.
 func (pr *PkgDecoder) NewDecoderRaw(k RelocKind, idx Index) Decoder {
 	r := Decoder{
-		common: pr,
-		k:      k,
-		Idx:    idx,
+		common:	pr,
+		k:	k,
+		Idx:	idx,
 	}
 
 	r.Data.Reset(pr.DataIdx(k, idx))
@@ -206,9 +206,9 @@ func (pr *PkgDecoder) NewDecoderRaw(k RelocKind, idx Index) Decoder {
 
 func (pr *PkgDecoder) TempDecoderRaw(k RelocKind, idx Index) Decoder {
 	r := Decoder{
-		common: pr,
-		k:      k,
-		Idx:    idx,
+		common:	pr,
+		k:	k,
+		Idx:	idx,
 	}
 
 	r.Data.Reset(pr.DataIdx(k, idx))
@@ -231,13 +231,13 @@ func (pr *PkgDecoder) TempDecoderRaw(k RelocKind, idx Index) Decoder {
 // A Decoder provides methods for decoding an individual element's
 // bitstream data.
 type Decoder struct {
-	common *PkgDecoder
+	common	*PkgDecoder
 
-	Relocs []RelocEnt
-	Data   strings.Reader
+	Relocs	[]RelocEnt
+	Data	strings.Reader
 
-	k   RelocKind
-	Idx Index
+	k	RelocKind
+	Idx	Index
 }
 
 func (r *Decoder) checkErr(err error) {
@@ -344,7 +344,7 @@ func (r *Decoder) Sync(mWant SyncMarker) {
 	}
 
 	fmt.Printf("\nexpected %v, reading at:\n", mWant)
-	var readerPCs [32]uintptr // TODO(mdempsky): Dynamically size?
+	var readerPCs [32]uintptr	// TODO(mdempsky): Dynamically size?
 	n := runtime.Callers(2, readerPCs[:])
 	for _, pc := range fmtFrames(readerPCs[:n]...) {
 		fmt.Printf("\t%s\n", pc)
@@ -378,13 +378,13 @@ func (r *Decoder) Uint64() uint64 {
 }
 
 // Len decodes and returns a non-negative int value from the element bitstream.
-func (r *Decoder) Len() int { x := r.Uint64(); v := int(x); assert(uint64(v) == x); return v }
+func (r *Decoder) Len() int	{ x := r.Uint64(); v := int(x); assert(uint64(v) == x); return v }
 
 // Int decodes and returns an int value from the element bitstream.
-func (r *Decoder) Int() int { x := r.Int64(); v := int(x); assert(int64(v) == x); return v }
+func (r *Decoder) Int() int	{ x := r.Int64(); v := int(x); assert(int64(v) == x); return v }
 
 // Uint decodes and returns a uint value from the element bitstream.
-func (r *Decoder) Uint() uint { x := r.Uint64(); v := uint(x); assert(uint64(v) == x); return v }
+func (r *Decoder) Uint() uint	{ x := r.Uint64(); v := uint(x); assert(uint64(v) == x); return v }
 
 // Code decodes a Code value from the element bitstream and returns
 // its ordinal value. It's the caller's responsibility to convert the

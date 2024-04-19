@@ -25,15 +25,15 @@ import (
 // CoverageMetaFileReader provides state and methods for reading
 // a meta-data file from a code coverage run.
 type CoverageMetaFileReader struct {
-	f          *os.File
-	hdr        coverage.MetaFileHeader
-	tmp        []byte
-	pkgOffsets []uint64
-	pkgLengths []uint64
-	strtab     *stringtab.Reader
-	fileRdr    *bufio.Reader
-	fileView   []byte
-	debug      bool
+	f		*os.File
+	hdr		coverage.MetaFileHeader
+	tmp		[]byte
+	pkgOffsets	[]uint64
+	pkgLengths	[]uint64
+	strtab		*stringtab.Reader
+	fileRdr		*bufio.Reader
+	fileView	[]byte
+	debug		bool
 }
 
 // NewCoverageMetaFileReader returns a new helper object for reading
@@ -44,9 +44,9 @@ type CoverageMetaFileReader struct {
 // operations.
 func NewCoverageMetaFileReader(f *os.File, fileView []byte) (*CoverageMetaFileReader, error) {
 	r := &CoverageMetaFileReader{
-		f:        f,
-		fileView: fileView,
-		tmp:      make([]byte, 256),
+		f:		f,
+		fileView:	fileView,
+		tmp:		make([]byte, 256),
 	}
 
 	if err := r.readFileHeader(); err != nil {
@@ -147,7 +147,7 @@ func (r *CoverageMetaFileReader) CounterMode() coverage.CounterMode {
 	return r.hdr.CMode
 }
 
-// CounterMode returns the counter granularity (single counter per
+// CounterGranularity returns the counter granularity (single counter per
 // function, or counter per block) selected when building for coverage
 // for the program that produce this meta-data file.
 func (r *CoverageMetaFileReader) CounterGranularity() coverage.CounterGranularity {

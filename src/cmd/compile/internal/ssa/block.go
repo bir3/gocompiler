@@ -13,32 +13,32 @@ import (
 type Block struct {
 	// A unique identifier for the block. The system will attempt to allocate
 	// these IDs densely, but no guarantees.
-	ID ID
+	ID	ID
 
 	// Source position for block's control operation
-	Pos src.XPos
+	Pos	src.XPos
 
 	// The kind of block this is.
-	Kind BlockKind
+	Kind	BlockKind
 
 	// Likely direction for branches.
 	// If BranchLikely, Succs[0] is the most likely branch taken.
 	// If BranchUnlikely, Succs[1] is the most likely branch taken.
 	// Ignored if len(Succs) < 2.
 	// Fatal if not BranchUnknown and len(Succs) > 2.
-	Likely BranchPrediction
+	Likely	BranchPrediction
 
 	// After flagalloc, records whether flags are live at the end of the block.
-	FlagsLiveAtEnd bool
+	FlagsLiveAtEnd	bool
 
 	// Subsequent blocks, if any. The number and order depend on the block kind.
-	Succs []Edge
+	Succs	[]Edge
 
 	// Inverse of successors.
 	// The order is significant to Phi nodes in the block.
 	// TODO: predecessors is a pain to maintain. Can we somehow order phi
 	// arguments by block id and have this field computed explicitly when needed?
-	Preds []Edge
+	Preds	[]Edge
 
 	// A list of values that determine how the block is exited. The number
 	// and type of control values depends on the Kind of the block. For
@@ -49,23 +49,23 @@ type Block struct {
 	// control values that can be ranged over.
 	//
 	// Controls[1] must be nil if Controls[0] is nil.
-	Controls [2]*Value
+	Controls	[2]*Value
 
 	// Auxiliary info for the block. Its value depends on the Kind.
-	Aux    Aux
-	AuxInt int64
+	Aux	Aux
+	AuxInt	int64
 
 	// The unordered set of Values that define the operation of this block.
 	// After the scheduling pass, this list is ordered.
-	Values []*Value
+	Values	[]*Value
 
 	// The containing function
-	Func *Func
+	Func	*Func
 
 	// Storage for Succs, Preds and Values.
-	succstorage [2]Edge
-	predstorage [4]Edge
-	valstorage  [9]*Value
+	succstorage	[2]Edge
+	predstorage	[4]Edge
+	valstorage	[9]*Value
 }
 
 // Edge represents a CFG edge.
@@ -93,12 +93,12 @@ type Block struct {
 // means x is chosen if k is true.
 type Edge struct {
 	// block edge goes to (in a Succs list) or from (in a Preds list)
-	b *Block
+	b	*Block
 	// index of reverse edge.  Invariant:
 	//   e := x.Succs[idx]
 	//   e.b.Preds[e.i] = Edge{x,idx}
 	// and similarly for predecessors.
-	i int
+	i	int
 }
 
 func (e Edge) Block() *Block {
@@ -112,13 +112,6 @@ func (e Edge) String() string {
 }
 
 // BlockKind is the kind of SSA block.
-//
-//	  kind          controls        successors
-//	------------------------------------------
-//	  Exit      [return mem]                []
-//	 Plain                []            [next]
-//	    If   [boolean Value]      [then, else]
-//	 Defer             [mem]  [nopanic, panic]  (control opcode should be OpStaticCall to runtime.deferproc)
 type BlockKind int16
 
 // short form print
@@ -196,13 +189,13 @@ func (b *Block) ResetControls() {
 	if b.Controls[1] != nil {
 		b.Controls[1].Uses--
 	}
-	b.Controls = [2]*Value{} // reset both controls to nil
+	b.Controls = [2]*Value{}	// reset both controls to nil
 }
 
 // AddControl appends a control value to the existing list of control values.
 func (b *Block) AddControl(v *Value) {
 	i := b.NumControls()
-	b.Controls[i] = v // panics if array is full
+	b.Controls[i] = v	// panics if array is full
 	v.Uses++
 }
 
@@ -275,8 +268,7 @@ func (b *Block) truncateValues(i int) {
 	b.Values = b.Values[:i]
 }
 
-// AddEdgeTo adds an edge from block b to block c. Used during building of the
-// SSA graph; do not use on an already-completed SSA graph.
+// AddEdgeTo adds an edge from block b to block c.
 func (b *Block) AddEdgeTo(c *Block) {
 	i := len(b.Succs)
 	j := len(c.Preds)
@@ -305,6 +297,8 @@ func (b *Block) removePred(i int) {
 // removeSucc removes the ith output edge from b.
 // It is the responsibility of the caller to remove
 // the corresponding predecessor edge.
+// Note that this potentially reorders successors of b, so it
+// must be used very carefully.
 func (b *Block) removeSucc(i int) {
 	n := len(b.Succs) - 1
 	if i != n {
@@ -331,6 +325,19 @@ func (b *Block) swapSuccessors() {
 	b.Likely *= -1
 }
 
+// Swaps b.Succs[x] and b.Succs[y].
+func (b *Block) swapSuccessorsByIdx(x, y int) {
+	if x == y {
+		return
+	}
+	ex := b.Succs[x]
+	ey := b.Succs[y]
+	b.Succs[x] = ey
+	b.Succs[y] = ex
+	ex.b.Preds[ex.i].i = y
+	ey.b.Preds[ey.i].i = x
+}
+
 // removePhiArg removes the ith arg from phi.
 // It must be called after calling b.removePred(i) to
 // adjust the corresponding phi value of the block:
@@ -341,18 +348,19 @@ func (b *Block) swapSuccessors() {
 //	if v.Op != OpPhi {
 //	    continue
 //	}
-//	b.removeArg(v, i)
+//	b.removePhiArg(v, i)
 //
 // }
 func (b *Block) removePhiArg(phi *Value, i int) {
 	n := len(b.Preds)
 	if numPhiArgs := len(phi.Args); numPhiArgs-1 != n {
-		b.Fatalf("inconsistent state, num predecessors: %d, num phi args: %d", n, numPhiArgs)
+		b.Fatalf("inconsistent state for %v, num predecessors: %d, num phi args: %d", phi, n, numPhiArgs)
 	}
 	phi.Args[i].Uses--
 	phi.Args[i] = phi.Args[n]
 	phi.Args[n] = nil
 	phi.Args = phi.Args[:n]
+	phielimValue(phi)
 }
 
 // LackingPos indicates whether b is a block whose position should be inherited
@@ -384,10 +392,10 @@ func (b *Block) AuxIntString() string {
 		return fmt.Sprintf("%v", int8(b.AuxInt))
 	case "uint8":
 		return fmt.Sprintf("%v", uint8(b.AuxInt))
-	default: // type specified but not implemented - print as int64
-		return fmt.Sprintf("%v", b.AuxInt)
-	case "": // no aux int type
+	case "":	// no aux int type
 		return ""
+	default:	// type specified but not implemented - print as int64
+		return fmt.Sprintf("%v", b.AuxInt)
 	}
 }
 
@@ -407,14 +415,14 @@ func (b *Block) likelyBranch() bool {
 	return true
 }
 
-func (b *Block) Logf(msg string, args ...interface{})   { b.Func.Logf(msg, args...) }
-func (b *Block) Log() bool                              { return b.Func.Log() }
-func (b *Block) Fatalf(msg string, args ...interface{}) { b.Func.Fatalf(msg, args...) }
+func (b *Block) Logf(msg string, args ...interface{})	{ b.Func.Logf(msg, args...) }
+func (b *Block) Log() bool				{ return b.Func.Log() }
+func (b *Block) Fatalf(msg string, args ...interface{})	{ b.Func.Fatalf(msg, args...) }
 
 type BranchPrediction int8
 
 const (
-	BranchUnlikely = BranchPrediction(-1)
-	BranchUnknown  = BranchPrediction(0)
-	BranchLikely   = BranchPrediction(+1)
+	BranchUnlikely	= BranchPrediction(-1)
+	BranchUnknown	= BranchPrediction(0)
+	BranchLikely	= BranchPrediction(+1)
 )

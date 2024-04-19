@@ -6,6 +6,7 @@ package trace
 
 import (
 	"container/heap"
+	tracev2 "github.com/bir3/gocompiler/src/internal/trace/v2"
 	"math"
 	"sort"
 	"strings"
@@ -16,10 +17,10 @@ import (
 // time. Mutator utilization functions are represented as a
 // time-ordered []MutatorUtil.
 type MutatorUtil struct {
-	Time int64
+	Time	int64
 	// Util is the mean mutator utilization starting at Time. This
 	// is in the range [0, 1].
-	Util float64
+	Util	float64
 }
 
 // UtilFlags controls the behavior of MutatorUtilization.
@@ -27,7 +28,8 @@ type UtilFlags int
 
 const (
 	// UtilSTW means utilization should account for STW events.
-	UtilSTW UtilFlags = 1 << iota
+	// This includes non-GC STW events, which are typically user-requested.
+	UtilSTW	UtilFlags	= 1 << iota
 	// UtilBackground means utilization should account for
 	// background mark workers.
 	UtilBackground
@@ -57,11 +59,11 @@ func MutatorUtilization(events []*Event, flags UtilFlags) [][]MutatorUtil {
 
 	type perP struct {
 		// gc > 0 indicates that GC is active on this P.
-		gc int
+		gc	int
 		// series the logical series number for this P. This
 		// is necessary because Ps may be removed and then
 		// re-added, and then the new P needs a new series.
-		series int
+		series	int
 	}
 	ps := []perP{}
 	stw := 0
@@ -93,11 +95,11 @@ func MutatorUtilization(events []*Event, flags UtilFlags) [][]MutatorUtil {
 				}
 				ps = append(ps, perP{series: series})
 			}
-		case EvGCSTWStart:
+		case EvSTWStart:
 			if flags&UtilSTW != 0 {
 				stw++
 			}
-		case EvGCSTWDone:
+		case EvSTWDone:
 			if flags&UtilSTW != 0 {
 				stw--
 			}
@@ -201,6 +203,255 @@ func MutatorUtilization(events []*Event, flags UtilFlags) [][]MutatorUtil {
 	return out
 }
 
+// MutatorUtilizationV2 returns a set of mutator utilization functions
+// for the given v2 trace, passed as an io.Reader. Each function will
+// always end with 0 utilization. The bounds of each function are implicit
+// in the first and last event; outside of these bounds each function is
+// undefined.
+//
+// If the UtilPerProc flag is not given, this always returns a single
+// utilization function. Otherwise, it returns one function per P.
+func MutatorUtilizationV2(events []tracev2.Event, flags UtilFlags) [][]MutatorUtil {
+	// Set up a bunch of analysis state.
+	type perP struct {
+		// gc > 0 indicates that GC is active on this P.
+		gc	int
+		// series the logical series number for this P. This
+		// is necessary because Ps may be removed and then
+		// re-added, and then the new P needs a new series.
+		series	int
+	}
+	type procsCount struct {
+		// time at which procs changed.
+		time	int64
+		// n is the number of procs at that point.
+		n	int
+	}
+	out := [][]MutatorUtil{}
+	stw := 0
+	ps := []perP{}
+	inGC := make(map[tracev2.GoID]bool)
+	states := make(map[tracev2.GoID]tracev2.GoState)
+	bgMark := make(map[tracev2.GoID]bool)
+	procs := []procsCount{}
+	seenSync := false
+
+	// Helpers.
+	handleSTW := func(r tracev2.Range) bool {
+		return flags&UtilSTW != 0 && isGCSTW(r)
+	}
+	handleMarkAssist := func(r tracev2.Range) bool {
+		return flags&UtilAssist != 0 && isGCMarkAssist(r)
+	}
+	handleSweep := func(r tracev2.Range) bool {
+		return flags&UtilSweep != 0 && isGCSweep(r)
+	}
+
+	// Iterate through the trace, tracking mutator utilization.
+	var lastEv *tracev2.Event
+	for i := range events {
+		ev := &events[i]
+		lastEv = ev
+
+		// Process the event.
+		switch ev.Kind() {
+		case tracev2.EventSync:
+			seenSync = true
+		case tracev2.EventMetric:
+			m := ev.Metric()
+			if m.Name != "/sched/gomaxprocs:threads" {
+				break
+			}
+			gomaxprocs := int(m.Value.Uint64())
+			if len(ps) > gomaxprocs {
+				if flags&UtilPerProc != 0 {
+					// End each P's series.
+					for _, p := range ps[gomaxprocs:] {
+						out[p.series] = addUtil(out[p.series], MutatorUtil{int64(ev.Time()), 0})
+					}
+				}
+				ps = ps[:gomaxprocs]
+			}
+			for len(ps) < gomaxprocs {
+				// Start new P's series.
+				series := 0
+				if flags&UtilPerProc != 0 || len(out) == 0 {
+					series = len(out)
+					out = append(out, []MutatorUtil{{int64(ev.Time()), 1}})
+				}
+				ps = append(ps, perP{series: series})
+			}
+			if len(procs) == 0 || gomaxprocs != procs[len(procs)-1].n {
+				procs = append(procs, procsCount{time: int64(ev.Time()), n: gomaxprocs})
+			}
+		}
+		if len(ps) == 0 {
+			// We can't start doing any analysis until we see what GOMAXPROCS is.
+			// It will show up very early in the trace, but we need to be robust to
+			// something else being emitted beforehand.
+			continue
+		}
+
+		switch ev.Kind() {
+		case tracev2.EventRangeActive:
+			if seenSync {
+				// If we've seen a sync, then we can be sure we're not finding out about
+				// something late; we have complete information after that point, and these
+				// active events will just be redundant.
+				break
+			}
+			// This range is active back to the start of the trace. We're failing to account
+			// for this since we just found out about it now. Fix up the mutator utilization.
+			//
+			// N.B. A trace can't start during a STW, so we don't handle it here.
+			r := ev.Range()
+			switch {
+			case handleMarkAssist(r):
+				if !states[ev.Goroutine()].Executing() {
+					// If the goroutine isn't executing, then the fact that it was in mark
+					// assist doesn't actually count.
+					break
+				}
+				// This G has been in a mark assist *and running on its P* since the start
+				// of the trace.
+				fallthrough
+			case handleSweep(r):
+				// This P has been in sweep (or mark assist, from above) in the start of the trace.
+				//
+				// We don't need to do anything if UtilPerProc is set. If we get an event like
+				// this for a running P, it must show up the first time a P is mentioned. Therefore,
+				// this P won't actually have any MutatorUtils on its list yet.
+				//
+				// However, if UtilPerProc isn't set, then we probably have data from other procs
+				// and from previous events. We need to fix that up.
+				if flags&UtilPerProc != 0 {
+					break
+				}
+				// Subtract out 1/gomaxprocs mutator utilization for all time periods
+				// from the beginning of the trace until now.
+				mi, pi := 0, 0
+				for mi < len(out[0]) {
+					if pi < len(procs)-1 && procs[pi+1].time < out[0][mi].Time {
+						pi++
+						continue
+					}
+					out[0][mi].Util -= float64(1) / float64(procs[pi].n)
+					if out[0][mi].Util < 0 {
+						out[0][mi].Util = 0
+					}
+					mi++
+				}
+			}
+			// After accounting for the portion we missed, this just acts like the
+			// beginning of a new range.
+			fallthrough
+		case tracev2.EventRangeBegin:
+			r := ev.Range()
+			if handleSTW(r) {
+				stw++
+			} else if handleSweep(r) {
+				ps[ev.Proc()].gc++
+			} else if handleMarkAssist(r) {
+				ps[ev.Proc()].gc++
+				if g := r.Scope.Goroutine(); g != tracev2.NoGoroutine {
+					inGC[g] = true
+				}
+			}
+		case tracev2.EventRangeEnd:
+			r := ev.Range()
+			if handleSTW(r) {
+				stw--
+			} else if handleSweep(r) {
+				ps[ev.Proc()].gc--
+			} else if handleMarkAssist(r) {
+				ps[ev.Proc()].gc--
+				if g := r.Scope.Goroutine(); g != tracev2.NoGoroutine {
+					delete(inGC, g)
+				}
+			}
+		case tracev2.EventStateTransition:
+			st := ev.StateTransition()
+			if st.Resource.Kind != tracev2.ResourceGoroutine {
+				break
+			}
+			old, new := st.Goroutine()
+			g := st.Resource.Goroutine()
+			if inGC[g] || bgMark[g] {
+				if !old.Executing() && new.Executing() {
+					// Started running while doing GC things.
+					ps[ev.Proc()].gc++
+				} else if old.Executing() && !new.Executing() {
+					// Stopped running while doing GC things.
+					ps[ev.Proc()].gc--
+				}
+			}
+			states[g] = new
+		case tracev2.EventLabel:
+			l := ev.Label()
+			if flags&UtilBackground != 0 && strings.HasPrefix(l.Label, "GC ") && l.Label != "GC (idle)" {
+				// Background mark worker.
+				//
+				// If we're in per-proc mode, we don't
+				// count dedicated workers because
+				// they kick all of the goroutines off
+				// that P, so don't directly
+				// contribute to goroutine latency.
+				if !(flags&UtilPerProc != 0 && l.Label == "GC (dedicated)") {
+					bgMark[ev.Goroutine()] = true
+					ps[ev.Proc()].gc++
+				}
+			}
+		}
+
+		if flags&UtilPerProc == 0 {
+			// Compute the current average utilization.
+			if len(ps) == 0 {
+				continue
+			}
+			gcPs := 0
+			if stw > 0 {
+				gcPs = len(ps)
+			} else {
+				for i := range ps {
+					if ps[i].gc > 0 {
+						gcPs++
+					}
+				}
+			}
+			mu := MutatorUtil{int64(ev.Time()), 1 - float64(gcPs)/float64(len(ps))}
+
+			// Record the utilization change. (Since
+			// len(ps) == len(out), we know len(out) > 0.)
+			out[0] = addUtil(out[0], mu)
+		} else {
+			// Check for per-P utilization changes.
+			for i := range ps {
+				p := &ps[i]
+				util := 1.0
+				if stw > 0 || p.gc > 0 {
+					util = 0.0
+				}
+				out[p.series] = addUtil(out[p.series], MutatorUtil{int64(ev.Time()), util})
+			}
+		}
+	}
+
+	// No events in the stream.
+	if lastEv == nil {
+		return nil
+	}
+
+	// Add final 0 utilization event to any remaining series. This
+	// is important to mark the end of the trace. The exact value
+	// shouldn't matter since no window should extend beyond this,
+	// but using 0 is symmetric with the start of the trace.
+	mu := MutatorUtil{int64(lastEv.Time()), 0}
+	for i := range ps {
+		out[ps[i].series] = addUtil(out[ps[i].series], mu)
+	}
+	return out
+}
+
 func addUtil(util []MutatorUtil, mu MutatorUtil) []MutatorUtil {
 	if len(util) > 0 {
 		if mu.Util == util[len(util)-1].Util {
@@ -239,27 +490,27 @@ type MMUCurve struct {
 }
 
 type mmuSeries struct {
-	util []MutatorUtil
+	util	[]MutatorUtil
 	// sums[j] is the cumulative sum of util[:j].
-	sums []totalUtil
+	sums	[]totalUtil
 	// bands summarizes util in non-overlapping bands of duration
 	// bandDur.
-	bands []mmuBand
+	bands	[]mmuBand
 	// bandDur is the duration of each band.
-	bandDur int64
+	bandDur	int64
 }
 
 type mmuBand struct {
 	// minUtil is the minimum instantaneous mutator utilization in
 	// this band.
-	minUtil float64
+	minUtil	float64
 	// cumUtil is the cumulative total mutator utilization between
 	// time 0 and the left edge of this band.
-	cumUtil totalUtil
+	cumUtil	totalUtil
 
 	// integrator is the integrator for the left edge of this
 	// band.
-	integrator integrator
+	integrator	integrator
 }
 
 // NewMMUCurve returns an MMU curve for the given mutator utilization
@@ -330,12 +581,12 @@ func (s *mmuSeries) bandTime(i int) (start, end int64) {
 
 type bandUtil struct {
 	// Utilization series index
-	series int
+	series	int
 	// Band index
-	i int
+	i	int
 	// Lower bound of mutator utilization for all windows
 	// with a left edge in this band.
-	utilBound float64
+	utilBound	float64
 }
 
 type bandUtilHeap []bandUtil
@@ -364,9 +615,9 @@ func (h *bandUtilHeap) Pop() any {
 
 // UtilWindow is a specific window at Time.
 type UtilWindow struct {
-	Time int64
+	Time	int64
 	// MutatorUtil is the mean mutator utilization in this window.
-	MutatorUtil float64
+	MutatorUtil	float64
 }
 
 type utilHeap []UtilWindow
@@ -399,26 +650,26 @@ func (h *utilHeap) Pop() any {
 // An accumulator takes a windowed mutator utilization function and
 // tracks various statistics for that function.
 type accumulator struct {
-	mmu float64
+	mmu	float64
 
 	// bound is the mutator utilization bound where adding any
 	// mutator utilization above this bound cannot affect the
 	// accumulated statistics.
-	bound float64
+	bound	float64
 
 	// Worst N window tracking
-	nWorst int
-	wHeap  utilHeap
+	nWorst	int
+	wHeap	utilHeap
 
 	// Mutator utilization distribution tracking
-	mud *mud
+	mud	*mud
 	// preciseMass is the distribution mass that must be precise
 	// before accumulation is stopped.
-	preciseMass float64
+	preciseMass	float64
 	// lastTime and lastMU are the previous point added to the
 	// windowed mutator utilization function.
-	lastTime int64
-	lastMU   float64
+	lastTime	int64
+	lastMU		float64
 }
 
 // resetTime declares a discontinuity in the windowed mutator
@@ -769,10 +1020,10 @@ func (c *mmuSeries) bandMMU(bandIdx int, window time.Duration, acc *accumulator)
 // An integrator tracks a position in a utilization function and
 // integrates it.
 type integrator struct {
-	u *mmuSeries
+	u	*mmuSeries
 	// pos is the index in u.util of the current time's non-strict
 	// predecessor.
-	pos int
+	pos	int
 }
 
 // advance returns the integral of the utilization function from 0 to
@@ -803,7 +1054,7 @@ func (in *integrator) advance(time int64) totalUtil {
 				r = h
 			}
 		}
-		pos = l - 1 // Non-strict predecessor.
+		pos = l - 1	// Non-strict predecessor.
 	}
 	in.pos = pos
 	var partial totalUtil
@@ -822,4 +1073,16 @@ func (in *integrator) next(time int64) int64 {
 		}
 	}
 	return 1<<63 - 1
+}
+
+func isGCSTW(r tracev2.Range) bool {
+	return strings.HasPrefix(r.Name, "stop-the-world") && strings.Contains(r.Name, "GC")
+}
+
+func isGCMarkAssist(r tracev2.Range) bool {
+	return r.Name == "GC mark assist"
+}
+
+func isGCSweep(r tracev2.Range) bool {
+	return r.Name == "GC incremental sweep"
 }

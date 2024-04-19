@@ -23,7 +23,7 @@ package cformat
 //				}
 //			}
 //		}
-//		myformatter.EmitPercent(os.Stdout, "")
+//		myformatter.EmitPercent(os.Stdout, "", true, true)
 //		myformatter.EmitTextual(somefile)
 //
 // These apis are linked into tests that are built with "-cover", and
@@ -41,13 +41,13 @@ import (
 
 type Formatter struct {
 	// Maps import path to package state.
-	pm map[string]*pstate
+	pm	map[string]*pstate
 	// Records current package being visited.
-	pkg string
+	pkg	string
 	// Pointer to current package state.
-	p *pstate
+	p	*pstate
 	// Counter mode.
-	cm coverage.CounterMode
+	cm	coverage.CounterMode
 }
 
 // pstate records package-level coverage data state:
@@ -56,31 +56,31 @@ type Formatter struct {
 // - a table storing execution count for the coverable units in each func
 type pstate struct {
 	// slice of unique functions
-	funcs []fnfile
+	funcs	[]fnfile
 	// maps function to index in slice above (index acts as function ID)
-	funcTable map[fnfile]uint32
+	funcTable	map[fnfile]uint32
 
 	// A table storing coverage counts for each coverable unit.
-	unitTable map[extcu]uint32
+	unitTable	map[extcu]uint32
 }
 
 // extcu encapsulates a coverable unit within some function.
 type extcu struct {
-	fnfid uint32 // index into p.funcs slice
+	fnfid	uint32	// index into p.funcs slice
 	coverage.CoverableUnit
 }
 
 // fnfile is a function-name/file-name tuple.
 type fnfile struct {
-	file  string
-	fname string
-	lit   bool
+	file	string
+	fname	string
+	lit	bool
 }
 
 func NewFormatter(cm coverage.CounterMode) *Formatter {
 	return &Formatter{
-		pm: make(map[string]*pstate),
-		cm: cm,
+		pm:	make(map[string]*pstate),
+		cm:	cm,
 	}
 }
 
@@ -200,17 +200,33 @@ func (fm *Formatter) EmitTextual(w io.Writer) error {
 }
 
 // EmitPercent writes out a "percentage covered" string to the writer 'w'.
-func (fm *Formatter) EmitPercent(w io.Writer, covpkgs string, noteEmpty bool) error {
+func (fm *Formatter) EmitPercent(w io.Writer, covpkgs string, noteEmpty bool, aggregate bool) error {
 	pkgs := make([]string, 0, len(fm.pm))
 	for importpath := range fm.pm {
 		pkgs = append(pkgs, importpath)
 	}
+
+	rep := func(cov, tot uint64) error {
+		if tot != 0 {
+			if _, err := fmt.Fprintf(w, "coverage: %.1f%% of statements%s\n",
+				100.0*float64(cov)/float64(tot), covpkgs); err != nil {
+				return err
+			}
+		} else if noteEmpty {
+			if _, err := fmt.Fprintf(w, "coverage: [no statements]\n"); err != nil {
+				return err
+			}
+		}
+		return nil
+	}
+
 	sort.Strings(pkgs)
-	seenPkg := false
+	var totalStmts, coveredStmts uint64
 	for _, importpath := range pkgs {
-		seenPkg = true
 		p := fm.pm[importpath]
-		var totalStmts, coveredStmts uint64
+		if !aggregate {
+			totalStmts, coveredStmts = 0, 0
+		}
 		for unit, count := range p.unitTable {
 			nx := uint64(unit.NxStmts)
 			totalStmts += nx
@@ -218,21 +234,17 @@ func (fm *Formatter) EmitPercent(w io.Writer, covpkgs string, noteEmpty bool) er
 				coveredStmts += nx
 			}
 		}
-		if _, err := fmt.Fprintf(w, "\t%s\t", importpath); err != nil {
-			return err
-		}
-		if totalStmts == 0 {
-			if _, err := fmt.Fprintf(w, "coverage: [no statements]\n"); err != nil {
+		if !aggregate {
+			if _, err := fmt.Fprintf(w, "\t%s\t\t", importpath); err != nil {
 				return err
 			}
-		} else {
-			if _, err := fmt.Fprintf(w, "coverage: %.1f%% of statements%s\n", 100*float64(coveredStmts)/float64(totalStmts), covpkgs); err != nil {
+			if err := rep(coveredStmts, totalStmts); err != nil {
 				return err
 			}
 		}
 	}
-	if noteEmpty && !seenPkg {
-		if _, err := fmt.Fprintf(w, "coverage: [no statements]\n"); err != nil {
+	if aggregate {
+		if err := rep(coveredStmts, totalStmts); err != nil {
 			return err
 		}
 	}

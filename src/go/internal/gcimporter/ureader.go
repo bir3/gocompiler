@@ -8,6 +8,7 @@ import (
 	"github.com/bir3/gocompiler/src/go/token"
 	"github.com/bir3/gocompiler/src/go/types"
 	"github.com/bir3/gocompiler/src/internal/pkgbits"
+	"sort"
 )
 
 // A pkgReader holds the shared state for reading a unified IR package
@@ -15,24 +16,24 @@ import (
 type pkgReader struct {
 	pkgbits.PkgDecoder
 
-	fake fakeFileSet
+	fake	fakeFileSet
 
-	ctxt    *types.Context
-	imports map[string]*types.Package // previously imported packages, indexed by path
+	ctxt	*types.Context
+	imports	map[string]*types.Package	// previously imported packages, indexed by path
 
 	// lazily initialized arrays corresponding to the unified IR
 	// PosBase, Pkg, and Type sections, respectively.
-	posBases []string // position bases (i.e., file names)
-	pkgs     []*types.Package
-	typs     []types.Type
+	posBases	[]string	// position bases (i.e., file names)
+	pkgs		[]*types.Package
+	typs		[]types.Type
 
 	// laterFns holds functions that need to be invoked at the end of
 	// import reading.
-	laterFns []func()
+	laterFns	[]func()
 
 	// ifaces holds a list of constructed Interfaces, which need to have
 	// Complete called after importing is done.
-	ifaces []*types.Interface
+	ifaces	[]*types.Interface
 }
 
 // later adds a function to be invoked at the end of import reading.
@@ -44,25 +45,25 @@ func (pr *pkgReader) later(fn func()) {
 // unified IR export data decoder.
 func readUnifiedPackage(fset *token.FileSet, ctxt *types.Context, imports map[string]*types.Package, input pkgbits.PkgDecoder) *types.Package {
 	pr := pkgReader{
-		PkgDecoder: input,
+		PkgDecoder:	input,
 
 		fake: fakeFileSet{
-			fset:  fset,
-			files: make(map[string]*fileInfo),
+			fset:	fset,
+			files:	make(map[string]*fileInfo),
 		},
 
-		ctxt:    ctxt,
-		imports: imports,
+		ctxt:		ctxt,
+		imports:	imports,
 
-		posBases: make([]string, input.NumElems(pkgbits.RelocPosBase)),
-		pkgs:     make([]*types.Package, input.NumElems(pkgbits.RelocPkg)),
-		typs:     make([]types.Type, input.NumElems(pkgbits.RelocType)),
+		posBases:	make([]string, input.NumElems(pkgbits.RelocPosBase)),
+		pkgs:		make([]*types.Package, input.NumElems(pkgbits.RelocPkg)),
+		typs:		make([]types.Type, input.NumElems(pkgbits.RelocType)),
 	}
 	defer pr.fake.setLines()
 
 	r := pr.newReader(pkgbits.RelocMeta, pkgbits.PublicRootIdx, pkgbits.SyncPublic)
 	pkg := r.pkg()
-	r.Bool() // TODO(mdempsky): Remove; was "has init"
+	r.Bool()	// TODO(mdempsky): Remove; was "has init"
 
 	for i, n := 0, r.Len(); i < n; i++ {
 		// As if r.obj(), but avoiding the Scope.Lookup call,
@@ -83,6 +84,16 @@ func readUnifiedPackage(fset *token.FileSet, ctxt *types.Context, imports map[st
 		iface.Complete()
 	}
 
+	// Imports() of pkg are all of the transitive packages that were loaded.
+	var imps []*types.Package
+	for _, imp := range pr.pkgs {
+		if imp != nil && imp != pkg {
+			imps = append(imps, imp)
+		}
+	}
+	sort.Sort(byPath(imps))
+	pkg.SetImports(imps)
+
 	pkg.MarkComplete()
 	return pkg
 }
@@ -92,9 +103,9 @@ func readUnifiedPackage(fset *token.FileSet, ctxt *types.Context, imports map[st
 type reader struct {
 	pkgbits.Decoder
 
-	p *pkgReader
+	p	*pkgReader
 
-	dict *readerDict
+	dict	*readerDict
 }
 
 // A readerDict holds the state for type parameters that parameterize
@@ -102,28 +113,28 @@ type reader struct {
 type readerDict struct {
 	// bounds is a slice of typeInfos corresponding to the underlying
 	// bounds of the element's type parameters.
-	bounds []typeInfo
+	bounds	[]typeInfo
 
 	// tparams is a slice of the constructed TypeParams for the element.
-	tparams []*types.TypeParam
+	tparams	[]*types.TypeParam
 
-	// devived is a slice of types derived from tparams, which may be
+	// derived is a slice of types derived from tparams, which may be
 	// instantiated while reading the current element.
-	derived      []derivedInfo
-	derivedTypes []types.Type // lazily instantiated from derived
+	derived		[]derivedInfo
+	derivedTypes	[]types.Type	// lazily instantiated from derived
 }
 
 func (pr *pkgReader) newReader(k pkgbits.RelocKind, idx pkgbits.Index, marker pkgbits.SyncMarker) *reader {
 	return &reader{
-		Decoder: pr.NewDecoder(k, idx, marker),
-		p:       pr,
+		Decoder:	pr.NewDecoder(k, idx, marker),
+		p:		pr,
 	}
 }
 
 func (pr *pkgReader) tempReader(k pkgbits.RelocKind, idx pkgbits.Index, marker pkgbits.SyncMarker) *reader {
 	return &reader{
-		Decoder: pr.TempDecoder(k, idx, marker),
-		p:       pr,
+		Decoder:	pr.TempDecoder(k, idx, marker),
+		p:		pr,
 	}
 }
 
@@ -166,9 +177,9 @@ func (pr *pkgReader) posBaseIdx(idx pkgbits.Index) string {
 
 		filename = r.String()
 
-		if r.Bool() { // file base
+		if r.Bool() {	// file base
 			// Was: "b = token.NewTrimmedFileBase(filename, true)"
-		} else { // line base
+		} else {	// line base
 			pos := r.pos()
 			line := r.Uint()
 			col := r.Uint()
@@ -208,7 +219,7 @@ func (r *reader) doPkg() *types.Package {
 	case "":
 		path = r.p.PkgPath()
 	case "builtin":
-		return nil // universe
+		return nil	// universe
 	case "unsafe":
 		return types.Unsafe
 	}
@@ -222,43 +233,7 @@ func (r *reader) doPkg() *types.Package {
 	pkg := types.NewPackage(path, name)
 	r.p.imports[path] = pkg
 
-	imports := make([]*types.Package, r.Len())
-	for i := range imports {
-		imports[i] = r.pkg()
-	}
-
-	// The documentation for (*types.Package).Imports requires
-	// flattening the import graph when reading from export data, as
-	// obviously incorrect as that is.
-	//
-	// TODO(mdempsky): Remove this if go.dev/issue/54096 is accepted.
-	pkg.SetImports(flattenImports(imports))
-
 	return pkg
-}
-
-// flattenImports returns the transitive closure of all imported
-// packages rooted from pkgs.
-func flattenImports(pkgs []*types.Package) []*types.Package {
-	var res []*types.Package
-	seen := make(map[*types.Package]struct{})
-	for _, pkg := range pkgs {
-		if _, ok := seen[pkg]; ok {
-			continue
-		}
-		seen[pkg] = struct{}{}
-		res = append(res, pkg)
-
-		// pkg.Imports() is already flattened.
-		for _, pkg := range pkg.Imports() {
-			if _, ok := seen[pkg]; ok {
-				continue
-			}
-			seen[pkg] = struct{}{}
-			res = append(res, pkg)
-		}
-	}
-	return res
 }
 
 // @@@ Types
@@ -657,13 +632,13 @@ func (r *reader) method() *types.Func {
 	rparams := r.typeParamNames()
 	sig := r.signature(r.param(), rparams, nil)
 
-	_ = r.pos() // TODO(mdempsky): Remove; this is a hacker for linker.go.
+	_ = r.pos()	// TODO(mdempsky): Remove; this is a hacker for linker.go.
 	return types.NewFunc(pos, pkg, name, sig)
 }
 
-func (r *reader) qualifiedIdent() (*types.Package, string) { return r.ident(pkgbits.SyncSym) }
-func (r *reader) localIdent() (*types.Package, string)     { return r.ident(pkgbits.SyncLocalIdent) }
-func (r *reader) selector() (*types.Package, string)       { return r.ident(pkgbits.SyncSelector) }
+func (r *reader) qualifiedIdent() (*types.Package, string)	{ return r.ident(pkgbits.SyncSym) }
+func (r *reader) localIdent() (*types.Package, string)		{ return r.ident(pkgbits.SyncLocalIdent) }
+func (r *reader) selector() (*types.Package, string)		{ return r.ident(pkgbits.SyncSelector) }
 
 func (r *reader) ident(marker pkgbits.SyncMarker) (*types.Package, string) {
 	r.Sync(marker)

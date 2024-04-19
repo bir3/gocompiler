@@ -41,7 +41,7 @@ import (
 	"log"
 	"net/http"
 	"os"
-	"os/exec"
+	"github.com/bir3/gocompiler/exec"
 	"path"
 	"path/filepath"
 	"runtime/debug"
@@ -53,17 +53,17 @@ import (
 
 // A Server serves cached, dynamically-generated version control repositories.
 type Server struct {
-	env    []string
-	logger *log.Logger
+	env	[]string
+	logger	*log.Logger
 
-	scriptDir string
-	workDir   string
-	homeDir   string // $workdir/home
-	engine    *script.Engine
+	scriptDir	string
+	workDir		string
+	homeDir		string	// $workdir/home
+	engine		*script.Engine
 
-	scriptCache sync.Map // script path → *scriptResult
+	scriptCache	sync.Map	// script path → *scriptResult
 
-	vcsHandlers map[string]vcsHandler
+	vcsHandlers	map[string]vcsHandler
 }
 
 // A vcsHandler serves repositories over HTTP for a known version-control tool.
@@ -74,13 +74,13 @@ type vcsHandler interface {
 
 // A scriptResult describes the cached result of executing a vcweb script.
 type scriptResult struct {
-	mu sync.RWMutex
+	mu	sync.RWMutex
 
-	hash     [sha256.Size]byte // hash of the script file, for cache invalidation
-	hashTime time.Time         // timestamp at which the script was run, for diagnostics
+	hash		[sha256.Size]byte	// hash of the script file, for cache invalidation
+	hashTime	time.Time		// timestamp at which the script was run, for diagnostics
 
-	handler http.Handler // HTTP handler configured by the script
-	err     error        // error from executing the script, if any
+	handler	http.Handler	// HTTP handler configured by the script
+	err	error		// error from executing the script, if any
 }
 
 // NewServer returns a Server that generates and serves repositories in workDir
@@ -120,21 +120,21 @@ func NewServer(scriptDir, workDir string, logger *log.Logger) (*Server, error) {
 	env := scriptEnviron(homeDir)
 
 	s := &Server{
-		env:       env,
-		logger:    logger,
-		scriptDir: scriptDir,
-		workDir:   workDir,
-		homeDir:   homeDir,
-		engine:    newScriptEngine(),
+		env:		env,
+		logger:		logger,
+		scriptDir:	scriptDir,
+		workDir:	workDir,
+		homeDir:	homeDir,
+		engine:		newScriptEngine(),
 		vcsHandlers: map[string]vcsHandler{
-			"auth":     new(authHandler),
-			"dir":      new(dirHandler),
-			"bzr":      new(bzrHandler),
-			"fossil":   new(fossilHandler),
-			"git":      new(gitHandler),
-			"hg":       new(hgHandler),
-			"insecure": new(insecureHandler),
-			"svn":      &svnHandler{svnRoot: workDir, logger: logger},
+			"auth":		new(authHandler),
+			"dir":		new(dirHandler),
+			"bzr":		new(bzrHandler),
+			"fossil":	new(fossilHandler),
+			"git":		new(gitHandler),
+			"hg":		new(hgHandler),
+			"insecure":	new(insecureHandler),
+			"svn":		&svnHandler{svnRoot: workDir, logger: logger},
 		},
 	}
 
@@ -258,8 +258,8 @@ func (s *Server) ServeHTTP(w http.ResponseWriter, req *http.Request) {
 // (It typically wraps a "stat" error for the script file.)
 type ScriptNotFoundError struct{ err error }
 
-func (e ScriptNotFoundError) Error() string { return e.err.Error() }
-func (e ScriptNotFoundError) Unwrap() error { return e.err }
+func (e ScriptNotFoundError) Error() string	{ return e.err.Error() }
+func (e ScriptNotFoundError) Unwrap() error	{ return e.err }
 
 // A ServerNotInstalledError indicates that the server binary required for the
 // indicated VCS does not exist.
@@ -344,7 +344,7 @@ func (s *Server) HandleScript(scriptRelPath string, logger *log.Logger, f func(h
 		}
 
 		if r.hash != hash {
-			continue // Raced with an update from another handler; try again.
+			continue	// Raced with an update from another handler; try again.
 		}
 
 		if r.err != nil {
@@ -362,7 +362,7 @@ func (s *Server) overview(w http.ResponseWriter, r *http.Request) {
 	fmt.Fprintf(w, "<title>vcweb</title>\n<pre>\n")
 	fmt.Fprintf(w, "<b>vcweb</b>\n\n")
 	fmt.Fprintf(w, "This server serves various version control repos for testing the go command.\n\n")
-	fmt.Fprintf(w, "For an overview of the script lanugage, see <a href=\"/help\">/help</a>.\n\n")
+	fmt.Fprintf(w, "For an overview of the script language, see <a href=\"/help\">/help</a>.\n\n")
 
 	fmt.Fprintf(w, "<b>cache</b>\n")
 

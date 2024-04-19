@@ -11,15 +11,15 @@ import (
 )
 
 const (
-	wordBits  = 32
-	wordMask  = wordBits - 1
-	wordShift = 5
+	wordBits	= 32
+	wordMask	= wordBits - 1
+	wordShift	= 5
 )
 
 // A BitVec is a bit vector.
 type BitVec struct {
-	N int32    // number of bits in vector
-	B []uint32 // words holding bits
+	N	int32		// number of bits in vector
+	B	[]uint32	// words holding bits
 }
 
 func New(n int32) BitVec {
@@ -28,9 +28,9 @@ func New(n int32) BitVec {
 }
 
 type Bulk struct {
-	words []uint32
-	nbit  int32
-	nword int32
+	words	[]uint32
+	nbit	int32
+	nword	int32
 }
 
 func NewBulk(nbit int32, count int32) Bulk {
@@ -40,9 +40,9 @@ func NewBulk(nbit int32, count int32) Bulk {
 		base.Fatalf("NewBulk too big: nbit=%d count=%d nword=%d size=%d", nbit, count, nword, size)
 	}
 	return Bulk{
-		words: make([]uint32, size),
-		nbit:  nbit,
-		nword: nword,
+		words:	make([]uint32, size),
+		nbit:	nbit,
+		nword:	nword,
 	}
 }
 
@@ -141,7 +141,7 @@ func (bv BitVec) Not() {
 		bv.B[i] = ^x
 	}
 	if bv.N%wordBits != 0 {
-		bv.B[len(bv.B)-1] &= 1<<uint(bv.N%wordBits) - 1 // clear bits past N in the last word
+		bv.B[len(bv.B)-1] &= 1<<uint(bv.N%wordBits) - 1	// clear bits past N in the last word
 	}
 }
 
@@ -150,7 +150,7 @@ func (dst BitVec) Or(src1, src2 BitVec) {
 	if len(src1.B) == 0 {
 		return
 	}
-	_, _ = dst.B[len(src1.B)-1], src2.B[len(src1.B)-1] // hoist bounds checks out of the loop
+	_, _ = dst.B[len(src1.B)-1], src2.B[len(src1.B)-1]	// hoist bounds checks out of the loop
 
 	for i, x := range src1.B {
 		dst.B[i] = x | src2.B[i]
@@ -162,7 +162,7 @@ func (dst BitVec) And(src1, src2 BitVec) {
 	if len(src1.B) == 0 {
 		return
 	}
-	_, _ = dst.B[len(src1.B)-1], src2.B[len(src1.B)-1] // hoist bounds checks out of the loop
+	_, _ = dst.B[len(src1.B)-1], src2.B[len(src1.B)-1]	// hoist bounds checks out of the loop
 
 	for i, x := range src1.B {
 		dst.B[i] = x & src2.B[i]
@@ -174,7 +174,7 @@ func (dst BitVec) AndNot(src1, src2 BitVec) {
 	if len(src1.B) == 0 {
 		return
 	}
-	_, _ = dst.B[len(src1.B)-1], src2.B[len(src1.B)-1] // hoist bounds checks out of the loop
+	_, _ = dst.B[len(src1.B)-1], src2.B[len(src1.B)-1]	// hoist bounds checks out of the loop
 
 	for i, x := range src1.B {
 		dst.B[i] = x &^ src2.B[i]

@@ -17,29 +17,29 @@ import (
 
 // Magic strings for different archive file formats.
 const (
-	armag  = "!<arch>\n"
-	armagt = "!<thin>\n"
-	armagb = "<bigaf>\n"
+	armag	= "!<arch>\n"
+	armagt	= "!<thin>\n"
+	armagb	= "<bigaf>\n"
 )
 
 // Offsets and sizes for fields in a standard archive header.
 const (
-	arNameOff  = 0
-	arNameSize = 16
-	arDateOff  = arNameOff + arNameSize
-	arDateSize = 12
-	arUIDOff   = arDateOff + arDateSize
-	arUIDSize  = 6
-	arGIDOff   = arUIDOff + arUIDSize
-	arGIDSize  = 6
-	arModeOff  = arGIDOff + arGIDSize
-	arModeSize = 8
-	arSizeOff  = arModeOff + arModeSize
-	arSizeSize = 10
-	arFmagOff  = arSizeOff + arSizeSize
-	arFmagSize = 2
+	arNameOff	= 0
+	arNameSize	= 16
+	arDateOff	= arNameOff + arNameSize
+	arDateSize	= 12
+	arUIDOff	= arDateOff + arDateSize
+	arUIDSize	= 6
+	arGIDOff	= arUIDOff + arUIDSize
+	arGIDSize	= 6
+	arModeOff	= arGIDOff + arGIDSize
+	arModeSize	= 8
+	arSizeOff	= arModeOff + arModeSize
+	arSizeSize	= 10
+	arFmagOff	= arSizeOff + arSizeSize
+	arFmagSize	= 2
 
-	arHdrSize = arFmagOff + arFmagSize
+	arHdrSize	= arFmagOff + arFmagSize
 )
 
 // The contents of the fmag field of a standard archive header.

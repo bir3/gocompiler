@@ -17,11 +17,12 @@ import (
 	"strings"
 
 	"github.com/bir3/gocompiler/src/cmd/gocmd/internal/base"
+	"github.com/bir3/gocompiler/src/cmd/gocmd/internal/gover"
 )
 
 var CmdVersion = &base.Command{
-	UsageLine: "go version [-m] [-v] [file ...]",
-	Short:     "print Go version",
+	UsageLine:	"go version [-m] [-v] [file ...]",
+	Short:		"print Go version",
 	Long: `Version prints the build information for Go binary files.
 
 Go version reports the Go version used to build each of the named files.
@@ -45,12 +46,12 @@ See also: go doc runtime/debug.BuildInfo.
 
 func init() {
 	base.AddChdirFlag(&CmdVersion.Flag)
-	CmdVersion.Run = runVersion // break init cycle
+	CmdVersion.Run = runVersion	// break init cycle
 }
 
 var (
-	versionM = CmdVersion.Flag.Bool("m", false, "")
-	versionV = CmdVersion.Flag.Bool("v", false, "")
+	versionM	= CmdVersion.Flag.Bool("m", false, "")
+	versionV	= CmdVersion.Flag.Bool("v", false, "")
 )
 
 func runVersion(ctx context.Context, cmd *base.Command, args []string) {
@@ -73,7 +74,11 @@ func runVersion(ctx context.Context, cmd *base.Command, args []string) {
 			base.SetExitStatus(2)
 			return
 		}
-		fmt.Printf("go version %s %s/%s\n", runtime.Version(), runtime.GOOS, runtime.GOARCH)
+		v := runtime.Version()
+		if gover.TestVersion != "" {
+			v = gover.TestVersion + " (TESTGO_VERSION)"
+		}
+		fmt.Printf("go version %s %s/%s\n", v, runtime.GOOS, runtime.GOARCH)
 		return
 	}
 
@@ -160,7 +165,7 @@ func scanFile(file string, info fs.FileInfo, mustPrint bool) {
 	}
 
 	fmt.Printf("%s: %s\n", file, bi.GoVersion)
-	bi.GoVersion = "" // suppress printing go version again
+	bi.GoVersion = ""	// suppress printing go version again
 	mod := bi.String()
 	if *versionM && len(mod) > 0 {
 		fmt.Printf("\t%s\n", strings.ReplaceAll(mod[:len(mod)-1], "\n", "\n\t"))

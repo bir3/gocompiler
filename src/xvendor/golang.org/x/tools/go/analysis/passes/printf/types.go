@@ -28,7 +28,7 @@ func matchArgType(pass *analysis.Pass, t printfArgType, arg ast.Expr) (reason st
 
 	typ := pass.TypesInfo.Types[arg].Type
 	if typ == nil {
-		return "", true // probably a type check problem
+		return "", true	// probably a type check problem
 	}
 
 	m := &argMatcher{t: t, seen: make(map[types.Type]bool)}
@@ -46,9 +46,9 @@ func matchArgType(pass *analysis.Pass, t printfArgType, arg ast.Expr) (reason st
 //
 // The reason field may be set to report the cause of the mismatch.
 type argMatcher struct {
-	t      printfArgType
-	seen   map[types.Type]bool
-	reason string
+	t	printfArgType
+	seen	map[types.Type]bool
+	reason	string
 }
 
 // match checks if typ matches m's printf arg type. If topLevel is true, typ is
@@ -72,7 +72,7 @@ func (m *argMatcher) match(typ types.Type, topLevel bool) bool {
 		return true
 	}
 
-	if typ, _ := typ.(*typeparams.TypeParam); typ != nil {
+	if typ, _ := typ.(*types.TypeParam); typ != nil {
 		// Avoid infinite recursion through type parameters.
 		if m.seen[typ] {
 			return true
@@ -80,7 +80,7 @@ func (m *argMatcher) match(typ types.Type, topLevel bool) bool {
 		m.seen[typ] = true
 		terms, err := typeparams.StructuralTerms(typ)
 		if err != nil {
-			return true // invalid type (possibly an empty type set)
+			return true	// invalid type (possibly an empty type set)
 		}
 
 		if len(terms) == 0 {
@@ -91,7 +91,7 @@ func (m *argMatcher) match(typ types.Type, topLevel bool) bool {
 			// element of the type set that violates one of the arg type checks
 			// below, so we can safely return false here.
 
-			if m.t == anyType { // anyType must have already been handled.
+			if m.t == anyType {	// anyType must have already been handled.
 				panic("unexpected printfArgType")
 			}
 			return false
@@ -149,7 +149,7 @@ func (m *argMatcher) match(typ types.Type, topLevel bool) bool {
 	case *types.Array:
 		// Same as slice.
 		if types.Identical(typ.Elem().Underlying(), types.Typ[types.Byte]) && m.t&argString != 0 {
-			return true // %s matches []byte
+			return true	// %s matches []byte
 		}
 		// Recur: []int matches %d.
 		return m.match(typ.Elem(), false)
@@ -157,10 +157,10 @@ func (m *argMatcher) match(typ types.Type, topLevel bool) bool {
 	case *types.Slice:
 		// Same as array.
 		if types.Identical(typ.Elem().Underlying(), types.Typ[types.Byte]) && m.t&argString != 0 {
-			return true // %s matches []byte
+			return true	// %s matches []byte
 		}
 		if m.t == argPointer {
-			return true // %p prints a slice's 0th element
+			return true	// %p prints a slice's 0th element
 		}
 		// Recur: []int matches %d. But watch out for
 		//	type T []T
@@ -171,7 +171,7 @@ func (m *argMatcher) match(typ types.Type, topLevel bool) bool {
 		// Ugly, but dealing with an edge case: a known pointer to an invalid type,
 		// probably something from a failed import.
 		if typ.Elem() == types.Typ[types.Invalid] {
-			return true // special case
+			return true	// special case
 		}
 		// If it's actually a pointer with %p, it prints as one.
 		if m.t == argPointer {
@@ -179,15 +179,15 @@ func (m *argMatcher) match(typ types.Type, topLevel bool) bool {
 		}
 
 		if typeparams.IsTypeParam(typ.Elem()) {
-			return true // We don't know whether the logic below applies. Give up.
+			return true	// We don't know whether the logic below applies. Give up.
 		}
 
 		under := typ.Elem().Underlying()
 		switch under.(type) {
-		case *types.Struct: // see below
-		case *types.Array: // see below
-		case *types.Slice: // see below
-		case *types.Map: // see below
+		case *types.Struct:	// see below
+		case *types.Array:	// see below
+		case *types.Slice:	// see below
+		case *types.Map:	// see below
 		default:
 			// Check whether the rest can print pointers.
 			return m.t&argPointer != 0
@@ -266,7 +266,7 @@ func (m *argMatcher) match(typ types.Type, topLevel bool) bool {
 			return false
 
 		case types.Invalid:
-			return true // Probably a type check problem.
+			return true	// Probably a type check problem.
 		}
 		panic("unreachable")
 	}
@@ -282,7 +282,7 @@ func isConvertibleToString(typ types.Type) bool {
 		return false
 	}
 	if types.ConvertibleTo(typ, errorType) {
-		return true // via .Error()
+		return true	// via .Error()
 	}
 
 	// Does it implement fmt.Stringer?

@@ -8,44 +8,14 @@ import (
 	"fmt"
 	"github.com/bir3/gocompiler/src/go/constant"
 	"github.com/bir3/gocompiler/src/go/token"
+	"github.com/bir3/gocompiler/src/internal/types/errors"
 	"strings"
 
 	"github.com/bir3/gocompiler/src/cmd/compile/internal/base"
 	"github.com/bir3/gocompiler/src/cmd/compile/internal/ir"
 	"github.com/bir3/gocompiler/src/cmd/compile/internal/types"
+	"github.com/bir3/gocompiler/src/cmd/internal/src"
 )
-
-// tcAddr typechecks an OADDR node.
-func tcAddr(n *ir.AddrExpr) ir.Node {
-	n.X = Expr(n.X)
-	if n.X.Type() == nil {
-		n.SetType(nil)
-		return n
-	}
-
-	switch n.X.Op() {
-	case ir.OARRAYLIT, ir.OMAPLIT, ir.OSLICELIT, ir.OSTRUCTLIT:
-		n.SetOp(ir.OPTRLIT)
-
-	default:
-		checklvalue(n.X, "take the address of")
-		r := ir.OuterValue(n.X)
-		if r.Op() == ir.ONAME {
-			r := r.(*ir.Name)
-			if ir.Orig(r) != r {
-				base.Fatalf("found non-orig name node %v", r) // TODO(mdempsky): What does this mean?
-			}
-		}
-		n.X = DefaultLit(n.X, nil)
-		if n.X.Type() == nil {
-			n.SetType(nil)
-			return n
-		}
-	}
-
-	n.SetType(types.NewPtr(n.X.Type()))
-	return n
-}
 
 func tcShift(n, l, r ir.Node) (ir.Node, ir.Node, *types.Type) {
 	if l.Type() == nil || r.Type() == nil {
@@ -99,7 +69,7 @@ func tcArith(n ir.Node, op ir.Op, l, r ir.Node) (ir.Node, ir.Node, *types.Type) 
 		// The conversion allocates, so only do it if the concrete type is huge.
 		converted := false
 		if r.Type().Kind() != types.TBLANK {
-			aop, _ = Assignop(l.Type(), r.Type())
+			aop, _ = assignOp(l.Type(), r.Type())
 			if aop != ir.OXXX {
 				if r.Type().IsInterface() && !l.Type().IsInterface() && !types.IsComparable(l.Type()) {
 					base.Errorf("invalid operation: %v (operator %v not defined on %s)", n, op, typekind(l.Type()))
@@ -118,7 +88,7 @@ func tcArith(n ir.Node, op ir.Op, l, r ir.Node) (ir.Node, ir.Node, *types.Type) 
 		}
 
 		if !converted && l.Type().Kind() != types.TBLANK {
-			aop, _ = Assignop(r.Type(), l.Type())
+			aop, _ = assignOp(r.Type(), l.Type())
 			if aop != ir.OXXX {
 				if l.Type().IsInterface() && !r.Type().IsInterface() && !types.IsComparable(r.Type()) {
 					base.Errorf("invalid operation: %v (operator %v not defined on %s)", n, op, typekind(r.Type()))
@@ -200,9 +170,6 @@ func tcCompLit(n *ir.CompLitExpr) (res ir.Node) {
 		base.Pos = lno
 	}()
 
-	// Save original node (including n.Right)
-	n.SetOrig(ir.Copy(n))
-
 	ir.SetPos(n)
 
 	t := n.Type()
@@ -274,7 +241,7 @@ func tcCompLit(n *ir.CompLitExpr) (res ir.Node) {
 				// walkClosure(), because the instantiated
 				// function is compiled as if in the source
 				// package of the generic function.
-				if !(ir.CurFunc != nil && strings.Index(ir.CurFunc.Nname.Sym().Name, "[") >= 0) {
+				if !(ir.CurFunc != nil && strings.Contains(ir.CurFunc.Nname.Sym().Name, "[")) {
 					if s != nil && !types.IsExported(s.Name) && s.Pkg != types.LocalPkg {
 						base.Errorf("implicit assignment of unexported field '%s' in %v literal", s.Name, t)
 					}
@@ -347,10 +314,10 @@ func tcStructLitKey(typ *types.Type, kv *ir.KeyExpr) *ir.StructKeyExpr {
 		return ir.NewStructKeyExpr(kv.Pos(), f, kv.Value)
 	}
 
-	if ci := Lookdot1(nil, sym, typ, typ.Fields(), 2); ci != nil { // Case-insensitive lookup.
+	if ci := Lookdot1(nil, sym, typ, typ.Fields(), 2); ci != nil {	// Case-insensitive lookup.
 		if visible(ci.Sym) {
 			base.Errorf("unknown field '%v' in struct literal of type %v (but does have %v)", sym, typ, ci.Sym)
-		} else if nonexported(sym) && sym.Name == ci.Sym.Name { // Ensure exactness before the suggestion.
+		} else if nonexported(sym) && sym.Name == ci.Sym.Name {	// Ensure exactness before the suggestion.
 			base.Errorf("cannot refer to unexported field '%v' in struct literal of type %v", sym, typ)
 		} else {
 			base.Errorf("unknown field '%v' in struct literal of type %v", sym, typ)
@@ -377,7 +344,7 @@ func tcStructLitKey(typ *types.Type, kv *ir.KeyExpr) *ir.StructKeyExpr {
 
 // tcConv typechecks an OCONV node.
 func tcConv(n *ir.ConvExpr) ir.Node {
-	types.CheckSize(n.Type()) // ensure width is calculated for backend
+	types.CheckSize(n.Type())	// ensure width is calculated for backend
 	n.X = Expr(n.X)
 	n.X = convlit1(n.X, n.Type(), true, nil)
 	t := n.X.Type()
@@ -385,9 +352,12 @@ func tcConv(n *ir.ConvExpr) ir.Node {
 		n.SetType(nil)
 		return n
 	}
-	op, why := Convertop(n.X.Op() == ir.OLITERAL, t, n.Type())
+	op, why := convertOp(n.X.Op() == ir.OLITERAL, t, n.Type())
 	if op == ir.OXXX {
-		base.Fatalf("cannot convert %L to type %v%s", n.X, n.Type(), why)
+		// Due to //go:nointerface, we may be stricter than types2 here (#63333).
+		base.ErrorfAt(n.Pos(), errors.InvalidConversion, "cannot convert %L to type %v%s", n.X, n.Type(), why)
+		n.SetType(nil)
+		return n
 	}
 
 	n.SetOp(op)
@@ -436,6 +406,66 @@ func tcConv(n *ir.ConvExpr) ir.Node {
 	return n
 }
 
+// DotField returns a field selector expression that selects the
+// index'th field of the given expression, which must be of struct or
+// pointer-to-struct type.
+func DotField(pos src.XPos, x ir.Node, index int) *ir.SelectorExpr {
+	op, typ := ir.ODOT, x.Type()
+	if typ.IsPtr() {
+		op, typ = ir.ODOTPTR, typ.Elem()
+	}
+	if !typ.IsStruct() {
+		base.FatalfAt(pos, "DotField of non-struct: %L", x)
+	}
+
+	// TODO(mdempsky): This is the backend's responsibility.
+	types.CalcSize(typ)
+
+	field := typ.Field(index)
+	return dot(pos, field.Type, op, x, field)
+}
+
+func dot(pos src.XPos, typ *types.Type, op ir.Op, x ir.Node, selection *types.Field) *ir.SelectorExpr {
+	n := ir.NewSelectorExpr(pos, op, x, selection.Sym)
+	n.Selection = selection
+	n.SetType(typ)
+	n.SetTypecheck(1)
+	return n
+}
+
+// XDotMethod returns an expression representing the field selection
+// x.sym. If any implicit field selection are necessary, those are
+// inserted too.
+func XDotField(pos src.XPos, x ir.Node, sym *types.Sym) *ir.SelectorExpr {
+	n := Expr(ir.NewSelectorExpr(pos, ir.OXDOT, x, sym)).(*ir.SelectorExpr)
+	if n.Op() != ir.ODOT && n.Op() != ir.ODOTPTR {
+		base.FatalfAt(pos, "unexpected result op: %v (%v)", n.Op(), n)
+	}
+	return n
+}
+
+// XDotMethod returns an expression representing the method value
+// x.sym (i.e., x is a value, not a type). If any implicit field
+// selection are necessary, those are inserted too.
+//
+// If callee is true, the result is an ODOTMETH/ODOTINTER, otherwise
+// an OMETHVALUE.
+func XDotMethod(pos src.XPos, x ir.Node, sym *types.Sym, callee bool) *ir.SelectorExpr {
+	n := ir.NewSelectorExpr(pos, ir.OXDOT, x, sym)
+	if callee {
+		n = Callee(n).(*ir.SelectorExpr)
+		if n.Op() != ir.ODOTMETH && n.Op() != ir.ODOTINTER {
+			base.FatalfAt(pos, "unexpected result op: %v (%v)", n.Op(), n)
+		}
+	} else {
+		n = Expr(n).(*ir.SelectorExpr)
+		if n.Op() != ir.OMETHVALUE {
+			base.FatalfAt(pos, "unexpected result op: %v (%v)", n.Op(), n)
+		}
+	}
+	return n
+}
+
 // tcDot typechecks an OXDOT or ODOT node.
 func tcDot(n *ir.SelectorExpr, top int) ir.Node {
 	if n.Op() == ir.OXDOT {
@@ -447,7 +477,7 @@ func tcDot(n *ir.SelectorExpr, top int) ir.Node {
 		}
 	}
 
-	n.X = typecheck(n.X, ctxExpr|ctxType)
+	n.X = Expr(n.X)
 	n.X = DefaultLit(n.X, nil)
 
 	t := n.X.Type()
@@ -458,7 +488,7 @@ func tcDot(n *ir.SelectorExpr, top int) ir.Node {
 	}
 
 	if n.X.Op() == ir.OTYPE {
-		return typecheckMethodExpr(n)
+		base.FatalfAt(n.Pos(), "use NewMethodExpr to construct OMETHEXPR")
 	}
 
 	if t.IsPtr() && !t.Elem().IsInterface() {
@@ -492,7 +522,7 @@ func tcDot(n *ir.SelectorExpr, top int) ir.Node {
 			base.Errorf("%v undefined (cannot refer to unexported field or method %v)", n, n.Sel)
 
 		default:
-			if mt := Lookdot(n, t, 2); mt != nil && visible(mt.Sym) { // Case-insensitive lookup.
+			if mt := Lookdot(n, t, 2); mt != nil && visible(mt.Sym) {	// Case-insensitive lookup.
 				base.Errorf("%v undefined (type %v has no field or method %v, but does have %v)", n, n.X.Type(), n.Sel, mt.Sym)
 			} else {
 				base.Errorf("%v undefined (type %v has no field or method %v)", n, n.X.Type(), n.Sel)
@@ -507,18 +537,6 @@ func tcDot(n *ir.SelectorExpr, top int) ir.Node {
 		n.SetType(NewMethodType(n.Type(), nil))
 	}
 	return n
-}
-
-func wrongTypeFor(haveSym *types.Sym, haveType *types.Type, wantSym *types.Sym, wantType *types.Type) string {
-	haveT := fmt.Sprintf("%S", haveType)
-	wantT := fmt.Sprintf("%S", wantType)
-	if haveT == wantT {
-		// Add packages instead of reporting "got Foo but wanted Foo", see #54258.
-		haveT = haveType.Pkg().Path + "." + haveT
-		wantT = wantType.Pkg().Path + "." + wantT
-	}
-	return fmt.Sprintf("(wrong type for %v method)\n"+
-		"\t\thave %v%s\n\t\twant %v%s", wantSym, haveSym, haveT, wantSym, wantT)
 }
 
 // tcDotType typechecks an ODOTTYPE node.
@@ -540,20 +558,9 @@ func tcDotType(n *ir.TypeAssertExpr) ir.Node {
 	base.AssertfAt(n.Type() != nil, n.Pos(), "missing type: %v", n)
 
 	if n.Type() != nil && !n.Type().IsInterface() {
-		var missing, have *types.Field
-		var ptr int
-		if !implements(n.Type(), t, &missing, &have, &ptr) {
-			if have != nil && have.Sym == missing.Sym {
-				base.Errorf("impossible type assertion:\n\t%v does not implement %v %s", n.Type(), t,
-					wrongTypeFor(have.Sym, have.Type, missing.Sym, missing.Type))
-			} else if ptr != 0 {
-				base.Errorf("impossible type assertion:\n\t%v does not implement %v (%v method has pointer receiver)", n.Type(), t, missing.Sym)
-			} else if have != nil {
-				base.Errorf("impossible type assertion:\n\t%v does not implement %v (missing %v method)\n"+
-					"\t\thave %v%S\n\t\twant %v%S", n.Type(), t, missing.Sym, have.Sym, have.Type, missing.Sym, missing.Type)
-			} else {
-				base.Errorf("impossible type assertion:\n\t%v does not implement %v (missing %v method)", n.Type(), t, missing.Sym)
-			}
+		why := ImplementsExplain(n.Type(), t)
+		if why != "" {
+			base.Fatalf("impossible type assertion:\n\t%s", why)
 			n.SetType(nil)
 			return n
 		}

@@ -179,7 +179,7 @@ func applyCommandOverrides(cmd string, outputFormat int, cfg config) config {
 	case "weblist":
 		trim = false
 		cfg.Granularity = "addresses"
-		cfg.NoInlines = false // Need inline info to support call expansion
+		cfg.NoInlines = false	// Need inline info to support call expansion
 	case "peek":
 		trim = false
 	case "list":
@@ -292,31 +292,31 @@ func reportOptions(p *profile.Profile, numLabelUnits map[string]string, cfg conf
 	addFilter("taghide", cfg.TagHide)
 
 	ropt := &report.Options{
-		CumSort:      cfg.Sort == "cum",
-		CallTree:     cfg.CallTree,
-		DropNegative: cfg.DropNegative,
+		CumSort:	cfg.Sort == "cum",
+		CallTree:	cfg.CallTree,
+		DropNegative:	cfg.DropNegative,
 
-		CompactLabels: cfg.CompactLabels,
-		Ratio:         1 / cfg.DivideBy,
+		CompactLabels:	cfg.CompactLabels,
+		Ratio:		1 / cfg.DivideBy,
 
-		NodeCount:    cfg.NodeCount,
-		NodeFraction: cfg.NodeFraction,
-		EdgeFraction: cfg.EdgeFraction,
+		NodeCount:	cfg.NodeCount,
+		NodeFraction:	cfg.NodeFraction,
+		EdgeFraction:	cfg.EdgeFraction,
 
-		ActiveFilters: filters,
-		NumLabelUnits: numLabelUnits,
+		ActiveFilters:	filters,
+		NumLabelUnits:	numLabelUnits,
 
-		SampleValue:       value,
-		SampleMeanDivisor: meanDiv,
-		SampleType:        stype,
-		SampleUnit:        sample.Unit,
+		SampleValue:		value,
+		SampleMeanDivisor:	meanDiv,
+		SampleType:		stype,
+		SampleUnit:		sample.Unit,
 
-		OutputUnit: cfg.Unit,
+		OutputUnit:	cfg.Unit,
 
-		SourcePath: cfg.SourcePath,
-		TrimPath:   cfg.TrimPath,
+		SourcePath:	cfg.SourcePath,
+		TrimPath:	cfg.TrimPath,
 
-		IntelSyntax: cfg.IntelSyntax,
+		IntelSyntax:	cfg.IntelSyntax,
 	}
 
 	if len(p.Mapping) > 0 && p.Mapping[0].File != "" {

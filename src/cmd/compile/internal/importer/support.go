@@ -23,12 +23,12 @@ func errorf(format string, args ...interface{}) {
 	panic(fmt.Sprintf(format, args...))
 }
 
-const deltaNewFile = -64 // see cmd/compile/internal/gc/bexport.go
+const deltaNewFile = -64	// see cmd/compile/internal/gc/bexport.go
 
 // Synthesize a token.Pos
 type fakeFileSet struct {
-	fset  *token.FileSet
-	files map[string]*token.File
+	fset	*token.FileSet
+	files	map[string]*token.File
 }
 
 func (s *fakeFileSet) pos(file string, line, column int) token.Pos {
@@ -62,8 +62,8 @@ func (s *fakeFileSet) pos(file string, line, column int) token.Pos {
 }
 
 var (
-	fakeLines     []int
-	fakeLinesOnce sync.Once
+	fakeLines	[]int
+	fakeLinesOnce	sync.Once
 )
 
 func chanDir(d int) types2.ChanDir {
@@ -121,7 +121,7 @@ var predeclared = []types2.Type{
 	types2.Typ[types2.UnsafePointer],
 
 	// invalid type
-	types2.Typ[types2.Invalid], // only appears in packages with errors
+	types2.Typ[types2.Invalid],	// only appears in packages with errors
 
 	// used internally by gc; never used by this package or in .a files
 	// not to be confused with the universe any
@@ -136,17 +136,17 @@ var predeclared = []types2.Type{
 
 type anyType struct{}
 
-func (t anyType) Underlying() types2.Type { return t }
-func (t anyType) String() string          { return "any" }
+func (t anyType) Underlying() types2.Type	{ return t }
+func (t anyType) String() string		{ return "any" }
 
 // See cmd/compile/internal/noder.derivedInfo.
 type derivedInfo struct {
-	idx    pkgbits.Index
-	needed bool
+	idx	pkgbits.Index
+	needed	bool
 }
 
 // See cmd/compile/internal/noder.typeInfo.
 type typeInfo struct {
-	idx     pkgbits.Index
-	derived bool
+	idx	pkgbits.Index
+	derived	bool
 }

@@ -52,79 +52,79 @@ const (
 )
 
 type ElfSect struct {
-	name        string
-	nameoff     uint32
-	type_       elf.SectionType
-	flags       elf.SectionFlag
-	addr        uint64
-	off         uint64
-	size        uint64
-	link        uint32
-	info        uint32
-	align       uint64
-	entsize     uint64
-	base        []byte
-	readOnlyMem bool // Is this section in readonly memory?
-	sym         loader.Sym
+	name		string
+	nameoff		uint32
+	type_		elf.SectionType
+	flags		elf.SectionFlag
+	addr		uint64
+	off		uint64
+	size		uint64
+	link		uint32
+	info		uint32
+	align		uint64
+	entsize		uint64
+	base		[]byte
+	readOnlyMem	bool	// Is this section in readonly memory?
+	sym		loader.Sym
 }
 
 type ElfObj struct {
-	f         *bio.Reader
-	base      int64 // offset in f where ELF begins
-	length    int64 // length of ELF
-	is64      int
-	name      string
-	e         binary.ByteOrder
-	sect      []ElfSect
-	nsect     uint
-	nsymtab   int
-	symtab    *ElfSect
-	symstr    *ElfSect
-	type_     uint32
-	machine   uint32
-	version   uint32
-	entry     uint64
-	phoff     uint64
-	shoff     uint64
-	flags     uint32
-	ehsize    uint32
-	phentsize uint32
-	phnum     uint32
-	shentsize uint32
-	shnum     uint32
-	shstrndx  uint32
+	f		*bio.Reader
+	base		int64	// offset in f where ELF begins
+	length		int64	// length of ELF
+	is64		int
+	name		string
+	e		binary.ByteOrder
+	sect		[]ElfSect
+	nsect		uint
+	nsymtab		int
+	symtab		*ElfSect
+	symstr		*ElfSect
+	type_		uint32
+	machine		uint32
+	version		uint32
+	entry		uint64
+	phoff		uint64
+	shoff		uint64
+	flags		uint32
+	ehsize		uint32
+	phentsize	uint32
+	phnum		uint32
+	shentsize	uint32
+	shnum		uint32
+	shstrndx	uint32
 }
 
 type ElfSym struct {
-	name  string
-	value uint64
-	size  uint64
-	bind  elf.SymBind
-	type_ elf.SymType
-	other uint8
-	shndx elf.SectionIndex
-	sym   loader.Sym
+	name	string
+	value	uint64
+	size	uint64
+	bind	elf.SymBind
+	type_	elf.SymType
+	other	uint8
+	shndx	elf.SectionIndex
+	sym	loader.Sym
 }
 
 const (
-	TagFile               = 1
-	TagCPUName            = 4
-	TagCPURawName         = 5
-	TagCompatibility      = 32
-	TagNoDefaults         = 64
-	TagAlsoCompatibleWith = 65
-	TagABIVFPArgs         = 28
+	TagFile			= 1
+	TagCPUName		= 4
+	TagCPURawName		= 5
+	TagCompatibility	= 32
+	TagNoDefaults		= 64
+	TagAlsoCompatibleWith	= 65
+	TagABIVFPArgs		= 28
 )
 
 type elfAttribute struct {
-	tag  uint64
-	sval string
-	ival uint64
+	tag	uint64
+	sval	string
+	ival	uint64
 }
 
 type elfAttributeList struct {
-	data []byte
-	err  error
+	data	[]byte
+	err	error
 }
 
 func (a *elfAttributeList) string() string {
@@ -158,7 +158,7 @@ func (a *elfAttributeList) armAttr() elfAttribute {
 		attr.ival = a.uleb128()
 		attr.sval = a.string()
 
-	case attr.tag == TagNoDefaults: // Tag_nodefaults has no argument
+	case attr.tag == TagNoDefaults:	// Tag_nodefaults has no argument
 
 	case attr.tag == TagAlsoCompatibleWith:
 		// Not really, but we don't actually care about this tag.
@@ -168,7 +168,7 @@ func (a *elfAttributeList) armAttr() elfAttribute {
 	case attr.tag == TagCPUName || attr.tag == TagCPURawName || (attr.tag >= 32 && attr.tag&1 != 0):
 		attr.sval = a.string()
 
-	default: // Tag with integer argument
+	default:	// Tag with integer argument
 		attr.ival = a.uleb128()
 	}
 	return attr
@@ -222,7 +222,7 @@ func parseArmAttributes(e binary.ByteOrder, data []byte) (found bool, ehdrFlags 
 				attr := attrList.armAttr()
 				if attr.tag == TagABIVFPArgs && attr.ival == 1 {
 					found = true
-					ehdrFlags = 0x5000402 // has entry point, Version5 EABI, hard-float ABI
+					ehdrFlags = 0x5000402	// has entry point, Version5 EABI, hard-float ABI
 				}
 			}
 			if attrList.err != nil {
@@ -540,6 +540,7 @@ func Load(l *loader.Loader, arch *sys.Arch, localSymVersion int, f *bio.Reader, 
 		}
 		if sect.type_ == elf.SHT_PROGBITS {
 			sb.SetData(sect.base[:sect.size])
+			sb.SetExternal(true)
 		}
 
 		sb.SetSize(int64(sect.size))
@@ -583,27 +584,41 @@ func Load(l *loader.Loader, arch *sys.Arch, localSymVersion int, f *bio.Reader, 
 		}
 		sect = &elfobj.sect[elfsym.shndx]
 		if sect.sym == 0 {
-			if strings.HasPrefix(elfsym.name, ".Linfo_string") { // clang does this
+			if elfsym.type_ == 0 {
+				if strings.HasPrefix(sect.name, ".debug_") && elfsym.name == "" {
+					// clang on arm and riscv64.
+					// This reportedly happens with clang 3.7 on ARM.
+					// See issue 13139.
+					continue
+				}
+				if strings.HasPrefix(elfsym.name, ".Ldebug_") || elfsym.name == ".L0 " {
+					// gcc on riscv64.
+					continue
+				}
+				if elfsym.name == ".Lline_table_start0" {
+					// clang on riscv64.
+					continue
+				}
+
+				if strings.HasPrefix(elfsym.name, "$d") && sect.name == ".debug_frame" {
+					// "$d" is a marker, not a real symbol.
+					// This happens with gcc on ARM64.
+					// See https://sourceware.org/bugzilla/show_bug.cgi?id=21809
+					continue
+				}
+			}
+
+			if strings.HasPrefix(elfsym.name, ".Linfo_string") {
+				// clang does this
 				continue
 			}
 
-			if elfsym.name == "" && elfsym.type_ == 0 && sect.name == ".debug_str" {
-				// This reportedly happens with clang 3.7 on ARM.
-				// See issue 13139.
+			if strings.HasPrefix(elfsym.name, ".LASF") || strings.HasPrefix(elfsym.name, ".LLRL") || strings.HasPrefix(elfsym.name, ".LLST") {
+				// gcc on s390x and riscv64 does this.
 				continue
 			}
 
-			if strings.HasPrefix(elfsym.name, "$d") && elfsym.type_ == 0 && sect.name == ".debug_frame" {
-				// "$d" is a marker, not a real symbol.
-				// This happens with gcc on ARM64.
-				// See https://sourceware.org/bugzilla/show_bug.cgi?id=21809
-				continue
-			}
-
-			if strings.HasPrefix(elfsym.name, ".LASF") { // gcc on s390x does this
-				continue
-			}
-			return errorf("%v: sym#%d (%s): ignoring symbol in section %d (type %d)", elfsym.sym, i, elfsym.name, elfsym.shndx, elfsym.type_)
+			return errorf("%v: sym#%d (%q): ignoring symbol in section %d (%q) (type %d)", elfsym.sym, i, elfsym.name, elfsym.shndx, sect.name, elfsym.type_)
 		}
 
 		s := elfsym.sym
@@ -621,7 +636,7 @@ func Load(l *loader.Loader, arch *sys.Arch, localSymVersion int, f *bio.Reader, 
 		sb.SetType(sectsb.Type())
 		sectsb.AddInteriorSym(s)
 		if !l.AttrCgoExportDynamic(s) {
-			sb.SetDynimplib("") // satisfy dynimport
+			sb.SetDynimplib("")	// satisfy dynimport
 		}
 		sb.SetValue(int64(elfsym.value))
 		sb.SetSize(int64(elfsym.size))
@@ -638,11 +653,15 @@ func Load(l *loader.Loader, arch *sys.Arch, localSymVersion int, f *bio.Reader, 
 			case 0:
 				// No local entry. R2 is preserved.
 			case 1:
-				// These require R2 be saved and restored by the caller. This isn't supported today.
-				return errorf("%s: unable to handle local entry type 1", sb.Name())
+				// This is kind of a hack, but pass the hint about this symbol's
+				// usage of R2 (R2 is a caller-save register not a TOC pointer, and
+				// this function does not have a distinct local entry) by setting
+				// its SymLocalentry to 1.
+				l.SetSymLocalentry(s, 1)
 			case 7:
 				return errorf("%s: invalid sym.other 0x%x", sb.Name(), elfsym.other)
 			default:
+				// Convert the word sized offset into bytes.
 				l.SetSymLocalentry(s, 4<<uint(flag-2))
 			}
 		}
@@ -741,13 +760,13 @@ func Load(l *loader.Loader, arch *sys.Arch, localSymVersion int, f *bio.Reader, 
 				}
 			}
 
-			if relocType == 0 { // skip R_*_NONE relocation
+			if relocType == 0 {	// skip R_*_NONE relocation
 				j--
 				n--
 				continue
 			}
 
-			if symIdx == 0 { // absolute relocation, don't bother reading the null symbol
+			if symIdx == 0 {	// absolute relocation, don't bother reading the null symbol
 				rSym = 0
 			} else {
 				var elfsym ElfSym
@@ -794,7 +813,7 @@ func Load(l *loader.Loader, arch *sys.Arch, localSymVersion int, f *bio.Reader, 
 			r.SetAdd(rAdd)
 		}
 
-		sb.SortRelocs() // just in case
+		sb.SortRelocs()	// just in case
 	}
 
 	return textp, ehdrFlags, nil
@@ -962,16 +981,16 @@ func relSize(arch *sys.Arch, pn string, elftype uint32) (uint8, uint8, error) {
 	// performance.
 
 	const (
-		AMD64   = uint32(sys.AMD64)
-		ARM     = uint32(sys.ARM)
-		ARM64   = uint32(sys.ARM64)
-		I386    = uint32(sys.I386)
-		LOONG64 = uint32(sys.Loong64)
-		MIPS    = uint32(sys.MIPS)
-		MIPS64  = uint32(sys.MIPS64)
-		PPC64   = uint32(sys.PPC64)
-		RISCV64 = uint32(sys.RISCV64)
-		S390X   = uint32(sys.S390X)
+		AMD64	= uint32(sys.AMD64)
+		ARM	= uint32(sys.ARM)
+		ARM64	= uint32(sys.ARM64)
+		I386	= uint32(sys.I386)
+		LOONG64	= uint32(sys.Loong64)
+		MIPS	= uint32(sys.MIPS)
+		MIPS64	= uint32(sys.MIPS64)
+		PPC64	= uint32(sys.PPC64)
+		RISCV64	= uint32(sys.RISCV64)
+		S390X	= uint32(sys.S390X)
 	)
 
 	switch uint32(arch.Family) | elftype<<16 {
@@ -999,18 +1018,37 @@ func relSize(arch *sys.Arch, pn string, elftype uint32) (uint8, uint8, error) {
 		MIPS64 | uint32(elf.R_MIPS_CALL16)<<16,
 		MIPS64 | uint32(elf.R_MIPS_GPREL32)<<16,
 		MIPS64 | uint32(elf.R_MIPS_64)<<16,
-		MIPS64 | uint32(elf.R_MIPS_GOT_DISP)<<16:
+		MIPS64 | uint32(elf.R_MIPS_GOT_DISP)<<16,
+		MIPS64 | uint32(elf.R_MIPS_PC32)<<16:
 		return 4, 4, nil
+
+	case LOONG64 | uint32(elf.R_LARCH_ADD8)<<16,
+		LOONG64 | uint32(elf.R_LARCH_SUB8)<<16:
+		return 1, 1, nil
+
+	case LOONG64 | uint32(elf.R_LARCH_ADD16)<<16,
+		LOONG64 | uint32(elf.R_LARCH_SUB16)<<16:
+		return 2, 2, nil
 
 	case LOONG64 | uint32(elf.R_LARCH_SOP_PUSH_PCREL)<<16,
 		LOONG64 | uint32(elf.R_LARCH_SOP_PUSH_GPREL)<<16,
 		LOONG64 | uint32(elf.R_LARCH_SOP_PUSH_ABSOLUTE)<<16,
 		LOONG64 | uint32(elf.R_LARCH_MARK_LA)<<16,
 		LOONG64 | uint32(elf.R_LARCH_SOP_POP_32_S_0_10_10_16_S2)<<16,
-		LOONG64 | uint32(elf.R_LARCH_64)<<16,
 		LOONG64 | uint32(elf.R_LARCH_MARK_PCREL)<<16,
+		LOONG64 | uint32(elf.R_LARCH_ADD24)<<16,
+		LOONG64 | uint32(elf.R_LARCH_ADD32)<<16,
+		LOONG64 | uint32(elf.R_LARCH_SUB24)<<16,
+		LOONG64 | uint32(elf.R_LARCH_SUB32)<<16,
+		LOONG64 | uint32(elf.R_LARCH_B26)<<16,
 		LOONG64 | uint32(elf.R_LARCH_32_PCREL)<<16:
 		return 4, 4, nil
+
+	case LOONG64 | uint32(elf.R_LARCH_64)<<16,
+		LOONG64 | uint32(elf.R_LARCH_ADD64)<<16,
+		LOONG64 | uint32(elf.R_LARCH_SUB64)<<16,
+		LOONG64 | uint32(elf.R_LARCH_64_PCREL)<<16:
+		return 8, 8, nil
 
 	case S390X | uint32(elf.R_390_8)<<16:
 		return 1, 1, nil
@@ -1060,6 +1098,8 @@ func relSize(arch *sys.Arch, pn string, elftype uint32) (uint8, uint8, error) {
 		I386 | uint32(elf.R_386_GOTPC)<<16,
 		I386 | uint32(elf.R_386_GOT32X)<<16,
 		PPC64 | uint32(elf.R_PPC64_REL24)<<16,
+		PPC64 | uint32(elf.R_PPC64_REL24_NOTOC)<<16,
+		PPC64 | uint32(elf.R_PPC64_REL24_P9NOTOC)<<16,
 		PPC64 | uint32(elf.R_PPC_REL32)<<16,
 		S390X | uint32(elf.R_390_32)<<16,
 		S390X | uint32(elf.R_390_PC32)<<16,
@@ -1076,6 +1116,9 @@ func relSize(arch *sys.Arch, pn string, elftype uint32) (uint8, uint8, error) {
 		ARM64 | uint32(elf.R_AARCH64_ABS64)<<16,
 		ARM64 | uint32(elf.R_AARCH64_PREL64)<<16,
 		PPC64 | uint32(elf.R_PPC64_ADDR64)<<16,
+		PPC64 | uint32(elf.R_PPC64_PCREL34)<<16,
+		PPC64 | uint32(elf.R_PPC64_GOT_PCREL34)<<16,
+		PPC64 | uint32(elf.R_PPC64_PLT_PCREL34_NOTOC)<<16,
 		S390X | uint32(elf.R_390_GLOB_DAT)<<16,
 		S390X | uint32(elf.R_390_RELATIVE)<<16,
 		S390X | uint32(elf.R_390_GOTOFF)<<16,

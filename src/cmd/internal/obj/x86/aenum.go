@@ -7,7 +7,7 @@ import "github.com/bir3/gocompiler/src/cmd/internal/obj"
 //go:generate go run ../stringer.go -i $GOFILE -o anames.go -p x86
 
 const (
-	AAAA = obj.ABaseAMD64 + obj.A_ARCHSPECIFIC + iota
+	AAAA	= obj.ABaseAMD64 + obj.A_ARCHSPECIFIC + iota
 	AAAD
 	AAAM
 	AAAS
@@ -369,25 +369,25 @@ const (
 	AIRETL
 	AIRETQ
 	AIRETW
-	AJCC // >= unsigned
-	AJCS // < unsigned
+	AJCC	// >= unsigned
+	AJCS	// < unsigned
 	AJCXZL
 	AJCXZQ
 	AJCXZW
-	AJEQ // == (zero)
-	AJGE // >= signed
-	AJGT // > signed
-	AJHI // > unsigned
-	AJLE // <= signed
-	AJLS // <= unsigned
-	AJLT // < signed
-	AJMI // sign bit set (negative)
-	AJNE // != (nonzero)
-	AJOC // overflow clear
-	AJOS // overflow set
-	AJPC // parity clear
-	AJPL // sign bit clear (positive)
-	AJPS // parity set
+	AJEQ	// == (zero)
+	AJGE	// >= signed
+	AJGT	// > signed
+	AJHI	// > unsigned
+	AJLE	// <= signed
+	AJLS	// <= unsigned
+	AJLT	// < signed
+	AJMI	// sign bit set (negative)
+	AJNE	// != (nonzero)
+	AJOC	// overflow clear
+	AJOS	// overflow set
+	AJPC	// parity clear
+	AJPL	// sign bit clear (positive)
+	AJPS	// parity set
 	AKADDB
 	AKADDD
 	AKADDQ
@@ -747,6 +747,7 @@ const (
 	ARDGSBASEL
 	ARDGSBASEQ
 	ARDMSR
+	ARDPID
 	ARDPKRU
 	ARDPMC
 	ARDRANDL

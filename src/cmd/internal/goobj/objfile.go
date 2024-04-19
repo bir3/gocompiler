@@ -23,7 +23,6 @@ import (
 	"encoding/binary"
 	"errors"
 	"fmt"
-	"github.com/bir3/gocompiler/src/internal/unsafeheader"
 	"unsafe"
 )
 
@@ -134,7 +133,7 @@ import (
 // - If PkgIdx is PkgIdxHashed, SymIdx is the index of the symbol in the
 //   HashedDefs array.
 // - If PkgIdx is PkgIdxNone, SymIdx is the index of the symbol in the
-//   NonPkgDefs array (could natually overflow to NonPkgRefs array).
+//   NonPkgDefs array (could naturally overflow to NonPkgRefs array).
 // - Otherwise, SymIdx is the index of the symbol in some other package's
 //   SymbolDefs array.
 //
@@ -164,27 +163,27 @@ import (
 // Currently a symbol's Gotype, FuncInfo, and associated DWARF symbols
 // are auxiliary symbols.
 
-const stringRefSize = 8 // two uint32s
+const stringRefSize = 8	// two uint32s
 
 type FingerprintType [8]byte
 
-func (fp FingerprintType) IsZero() bool { return fp == FingerprintType{} }
+func (fp FingerprintType) IsZero() bool	{ return fp == FingerprintType{} }
 
 // Package Index.
 const (
-	PkgIdxNone     = (1<<31 - 1) - iota // Non-package symbols
-	PkgIdxHashed64                      // Short hashed (content-addressable) symbols
-	PkgIdxHashed                        // Hashed (content-addressable) symbols
-	PkgIdxBuiltin                       // Predefined runtime symbols (ex: runtime.newobject)
-	PkgIdxSelf                          // Symbols defined in the current package
-	PkgIdxSpecial  = PkgIdxSelf         // Indices above it has special meanings
-	PkgIdxInvalid  = 0
+	PkgIdxNone	= (1<<31 - 1) - iota	// Non-package symbols
+	PkgIdxHashed64				// Short hashed (content-addressable) symbols
+	PkgIdxHashed				// Hashed (content-addressable) symbols
+	PkgIdxBuiltin				// Predefined runtime symbols (ex: runtime.newobject)
+	PkgIdxSelf				// Symbols defined in the current package
+	PkgIdxSpecial	= PkgIdxSelf		// Indices above it has special meanings
+	PkgIdxInvalid	= 0
 	// The index of other referenced packages starts from 1.
 )
 
 // Blocks
 const (
-	BlkAutolib = iota
+	BlkAutolib	= iota
 	BlkPkgIdx
 	BlkFile
 	BlkSymdef
@@ -209,10 +208,10 @@ const (
 // File header.
 // TODO: probably no need to export this.
 type Header struct {
-	Magic       string
-	Fingerprint FingerprintType
-	Flags       uint32
-	Offsets     [NBlk]uint32
+	Magic		string
+	Fingerprint	FingerprintType
+	Flags		uint32
+	Offsets		[NBlk]uint32
 }
 
 const Magic = "\x00go120ld"
@@ -245,13 +244,13 @@ func (h *Header) Read(r *Reader) error {
 }
 
 func (h *Header) Size() int {
-	return len(h.Magic) + 4 + 4*len(h.Offsets)
+	return len(h.Magic) + len(h.Fingerprint) + 4 + 4*len(h.Offsets)
 }
 
 // Autolib
 type ImportedPkg struct {
-	Pkg         string
-	Fingerprint FingerprintType
+	Pkg		string
+	Fingerprint	FingerprintType
 }
 
 const importedPkgSize = stringRefSize + 8
@@ -281,15 +280,15 @@ const SymSize = stringRefSize + 2 + 1 + 1 + 1 + 4 + 4
 const SymABIstatic = ^uint16(0)
 
 const (
-	ObjFlagShared       = 1 << iota // this object is built with -shared
-	_                               // was ObjFlagNeedNameExpansion
-	ObjFlagFromAssembly             // object is from asm src, not go
-	ObjFlagUnlinkable               // unlinkable package (linker will emit an error)
+	ObjFlagShared		= 1 << iota	// this object is built with -shared
+	_					// was ObjFlagNeedNameExpansion
+	ObjFlagFromAssembly			// object is from asm src, not go
+	ObjFlagUnlinkable			// unlinkable package (linker will emit an error)
 )
 
 // Sym.Flag
 const (
-	SymFlagDupok = 1 << iota
+	SymFlagDupok	= 1 << iota
 	SymFlagLocal
 	SymFlagTypelink
 	SymFlagLeaf
@@ -300,9 +299,10 @@ const (
 
 // Sym.Flag2
 const (
-	SymFlagUsedInIface = 1 << iota
+	SymFlagUsedInIface	= 1 << iota
 	SymFlagItab
 	SymFlagDict
+	SymFlagPkgInit
 )
 
 // Returns the length of the name of the symbol.
@@ -316,48 +316,49 @@ func (s *Sym) Name(r *Reader) string {
 	return r.StringAt(off, len)
 }
 
-func (s *Sym) ABI() uint16   { return binary.LittleEndian.Uint16(s[8:]) }
-func (s *Sym) Type() uint8   { return s[10] }
-func (s *Sym) Flag() uint8   { return s[11] }
-func (s *Sym) Flag2() uint8  { return s[12] }
-func (s *Sym) Siz() uint32   { return binary.LittleEndian.Uint32(s[13:]) }
-func (s *Sym) Align() uint32 { return binary.LittleEndian.Uint32(s[17:]) }
+func (s *Sym) ABI() uint16	{ return binary.LittleEndian.Uint16(s[8:]) }
+func (s *Sym) Type() uint8	{ return s[10] }
+func (s *Sym) Flag() uint8	{ return s[11] }
+func (s *Sym) Flag2() uint8	{ return s[12] }
+func (s *Sym) Siz() uint32	{ return binary.LittleEndian.Uint32(s[13:]) }
+func (s *Sym) Align() uint32	{ return binary.LittleEndian.Uint32(s[17:]) }
 
-func (s *Sym) Dupok() bool         { return s.Flag()&SymFlagDupok != 0 }
-func (s *Sym) Local() bool         { return s.Flag()&SymFlagLocal != 0 }
-func (s *Sym) Typelink() bool      { return s.Flag()&SymFlagTypelink != 0 }
-func (s *Sym) Leaf() bool          { return s.Flag()&SymFlagLeaf != 0 }
-func (s *Sym) NoSplit() bool       { return s.Flag()&SymFlagNoSplit != 0 }
-func (s *Sym) ReflectMethod() bool { return s.Flag()&SymFlagReflectMethod != 0 }
-func (s *Sym) IsGoType() bool      { return s.Flag()&SymFlagGoType != 0 }
-func (s *Sym) UsedInIface() bool   { return s.Flag2()&SymFlagUsedInIface != 0 }
-func (s *Sym) IsItab() bool        { return s.Flag2()&SymFlagItab != 0 }
-func (s *Sym) IsDict() bool        { return s.Flag2()&SymFlagDict != 0 }
+func (s *Sym) Dupok() bool		{ return s.Flag()&SymFlagDupok != 0 }
+func (s *Sym) Local() bool		{ return s.Flag()&SymFlagLocal != 0 }
+func (s *Sym) Typelink() bool		{ return s.Flag()&SymFlagTypelink != 0 }
+func (s *Sym) Leaf() bool		{ return s.Flag()&SymFlagLeaf != 0 }
+func (s *Sym) NoSplit() bool		{ return s.Flag()&SymFlagNoSplit != 0 }
+func (s *Sym) ReflectMethod() bool	{ return s.Flag()&SymFlagReflectMethod != 0 }
+func (s *Sym) IsGoType() bool		{ return s.Flag()&SymFlagGoType != 0 }
+func (s *Sym) UsedInIface() bool	{ return s.Flag2()&SymFlagUsedInIface != 0 }
+func (s *Sym) IsItab() bool		{ return s.Flag2()&SymFlagItab != 0 }
+func (s *Sym) IsDict() bool		{ return s.Flag2()&SymFlagDict != 0 }
+func (s *Sym) IsPkgInit() bool		{ return s.Flag2()&SymFlagPkgInit != 0 }
 
 func (s *Sym) SetName(x string, w *Writer) {
 	binary.LittleEndian.PutUint32(s[:], uint32(len(x)))
 	binary.LittleEndian.PutUint32(s[4:], w.stringOff(x))
 }
 
-func (s *Sym) SetABI(x uint16)   { binary.LittleEndian.PutUint16(s[8:], x) }
-func (s *Sym) SetType(x uint8)   { s[10] = x }
-func (s *Sym) SetFlag(x uint8)   { s[11] = x }
-func (s *Sym) SetFlag2(x uint8)  { s[12] = x }
-func (s *Sym) SetSiz(x uint32)   { binary.LittleEndian.PutUint32(s[13:], x) }
-func (s *Sym) SetAlign(x uint32) { binary.LittleEndian.PutUint32(s[17:], x) }
+func (s *Sym) SetABI(x uint16)		{ binary.LittleEndian.PutUint16(s[8:], x) }
+func (s *Sym) SetType(x uint8)		{ s[10] = x }
+func (s *Sym) SetFlag(x uint8)		{ s[11] = x }
+func (s *Sym) SetFlag2(x uint8)		{ s[12] = x }
+func (s *Sym) SetSiz(x uint32)		{ binary.LittleEndian.PutUint32(s[13:], x) }
+func (s *Sym) SetAlign(x uint32)	{ binary.LittleEndian.PutUint32(s[17:], x) }
 
-func (s *Sym) Write(w *Writer) { w.Bytes(s[:]) }
+func (s *Sym) Write(w *Writer)	{ w.Bytes(s[:]) }
 
 // for testing
-func (s *Sym) fromBytes(b []byte) { copy(s[:], b) }
+func (s *Sym) fromBytes(b []byte)	{ copy(s[:], b) }
 
 // Symbol reference.
 type SymRef struct {
-	PkgIdx uint32
-	SymIdx uint32
+	PkgIdx	uint32
+	SymIdx	uint32
 }
 
-func (s SymRef) IsZero() bool { return s == SymRef{} }
+func (s SymRef) IsZero() bool	{ return s == SymRef{} }
 
 // Hash64
 type Hash64Type [Hash64Size]byte
@@ -367,7 +368,7 @@ const Hash64Size = 8
 // Hash
 type HashType [HashSize]byte
 
-const HashSize = 16 // truncated SHA256
+const HashSize = 16	// truncated SHA256
 
 // Relocation.
 //
@@ -384,18 +385,18 @@ type Reloc [RelocSize]byte
 
 const RelocSize = 4 + 1 + 2 + 8 + 8
 
-func (r *Reloc) Off() int32   { return int32(binary.LittleEndian.Uint32(r[:])) }
-func (r *Reloc) Siz() uint8   { return r[4] }
-func (r *Reloc) Type() uint16 { return binary.LittleEndian.Uint16(r[5:]) }
-func (r *Reloc) Add() int64   { return int64(binary.LittleEndian.Uint64(r[7:])) }
+func (r *Reloc) Off() int32	{ return int32(binary.LittleEndian.Uint32(r[:])) }
+func (r *Reloc) Siz() uint8	{ return r[4] }
+func (r *Reloc) Type() uint16	{ return binary.LittleEndian.Uint16(r[5:]) }
+func (r *Reloc) Add() int64	{ return int64(binary.LittleEndian.Uint64(r[7:])) }
 func (r *Reloc) Sym() SymRef {
 	return SymRef{binary.LittleEndian.Uint32(r[15:]), binary.LittleEndian.Uint32(r[19:])}
 }
 
-func (r *Reloc) SetOff(x int32)   { binary.LittleEndian.PutUint32(r[:], uint32(x)) }
-func (r *Reloc) SetSiz(x uint8)   { r[4] = x }
-func (r *Reloc) SetType(x uint16) { binary.LittleEndian.PutUint16(r[5:], x) }
-func (r *Reloc) SetAdd(x int64)   { binary.LittleEndian.PutUint64(r[7:], uint64(x)) }
+func (r *Reloc) SetOff(x int32)		{ binary.LittleEndian.PutUint32(r[:], uint32(x)) }
+func (r *Reloc) SetSiz(x uint8)		{ r[4] = x }
+func (r *Reloc) SetType(x uint16)	{ binary.LittleEndian.PutUint16(r[5:], x) }
+func (r *Reloc) SetAdd(x int64)		{ binary.LittleEndian.PutUint64(r[7:], uint64(x)) }
 func (r *Reloc) SetSym(x SymRef) {
 	binary.LittleEndian.PutUint32(r[15:], x.PkgIdx)
 	binary.LittleEndian.PutUint32(r[19:], x.SymIdx)
@@ -409,10 +410,10 @@ func (r *Reloc) Set(off int32, size uint8, typ uint16, add int64, sym SymRef) {
 	r.SetSym(sym)
 }
 
-func (r *Reloc) Write(w *Writer) { w.Bytes(r[:]) }
+func (r *Reloc) Write(w *Writer)	{ w.Bytes(r[:]) }
 
 // for testing
-func (r *Reloc) fromBytes(b []byte) { copy(r[:], b) }
+func (r *Reloc) fromBytes(b []byte)	{ copy(r[:], b) }
 
 // Aux symbol info.
 //
@@ -428,7 +429,7 @@ const AuxSize = 1 + 8
 
 // Aux Type
 const (
-	AuxGotype = iota
+	AuxGotype	= iota
 	AuxFuncInfo
 	AuxFuncdata
 	AuxDwarfInfo
@@ -440,23 +441,25 @@ const (
 	AuxPcline
 	AuxPcinline
 	AuxPcdata
+	AuxWasmImport
+	AuxSehUnwindInfo
 )
 
-func (a *Aux) Type() uint8 { return a[0] }
+func (a *Aux) Type() uint8	{ return a[0] }
 func (a *Aux) Sym() SymRef {
 	return SymRef{binary.LittleEndian.Uint32(a[1:]), binary.LittleEndian.Uint32(a[5:])}
 }
 
-func (a *Aux) SetType(x uint8) { a[0] = x }
+func (a *Aux) SetType(x uint8)	{ a[0] = x }
 func (a *Aux) SetSym(x SymRef) {
 	binary.LittleEndian.PutUint32(a[1:], x.PkgIdx)
 	binary.LittleEndian.PutUint32(a[5:], x.SymIdx)
 }
 
-func (a *Aux) Write(w *Writer) { w.Bytes(a[:]) }
+func (a *Aux) Write(w *Writer)	{ w.Bytes(a[:]) }
 
 // for testing
-func (a *Aux) fromBytes(b []byte) { copy(a[:], b) }
+func (a *Aux) fromBytes(b []byte)	{ copy(a[:], b) }
 
 // Referenced symbol flags.
 //
@@ -474,17 +477,17 @@ const RefFlagsSize = 8 + 1 + 1
 func (r *RefFlags) Sym() SymRef {
 	return SymRef{binary.LittleEndian.Uint32(r[:]), binary.LittleEndian.Uint32(r[4:])}
 }
-func (r *RefFlags) Flag() uint8  { return r[8] }
-func (r *RefFlags) Flag2() uint8 { return r[9] }
+func (r *RefFlags) Flag() uint8		{ return r[8] }
+func (r *RefFlags) Flag2() uint8	{ return r[9] }
 
 func (r *RefFlags) SetSym(x SymRef) {
 	binary.LittleEndian.PutUint32(r[:], x.PkgIdx)
 	binary.LittleEndian.PutUint32(r[4:], x.SymIdx)
 }
-func (r *RefFlags) SetFlag(x uint8)  { r[8] = x }
-func (r *RefFlags) SetFlag2(x uint8) { r[9] = x }
+func (r *RefFlags) SetFlag(x uint8)	{ r[8] = x }
+func (r *RefFlags) SetFlag2(x uint8)	{ r[9] = x }
 
-func (r *RefFlags) Write(w *Writer) { w.Bytes(r[:]) }
+func (r *RefFlags) Write(w *Writer)	{ w.Bytes(r[:]) }
 
 // Used to construct an artificially large array type when reading an
 // item from the object file relocs section or aux sym section (needs
@@ -521,14 +524,14 @@ func (n *RefName) SetName(x string, w *Writer) {
 	binary.LittleEndian.PutUint32(n[12:], w.stringOff(x))
 }
 
-func (n *RefName) Write(w *Writer) { w.Bytes(n[:]) }
+func (n *RefName) Write(w *Writer)	{ w.Bytes(n[:]) }
 
 type Writer struct {
-	wr        *bio.Writer
-	stringMap map[string]uint32
-	off       uint32 // running offset
+	wr		*bio.Writer
+	stringMap	map[string]uint32
+	off		uint32	// running offset
 
-	b [8]byte // scratch space for writing bytes
+	b	[8]byte	// scratch space for writing bytes
 }
 
 func NewWriter(wr *bio.Writer) *Writer {
@@ -594,11 +597,11 @@ func (w *Writer) Offset() uint32 {
 }
 
 type Reader struct {
-	b        []byte // mmapped bytes, if not nil
-	readonly bool   // whether b is backed with read-only memory
+	b		[]byte	// mmapped bytes, if not nil
+	readonly	bool	// whether b is backed with read-only memory
 
-	start uint32
-	h     Header // keep block offsets
+	start	uint32
+	h	Header	// keep block offsets
 }
 
 func NewReaderFromBytes(b []byte, readonly bool) *Reader {
@@ -649,7 +652,7 @@ func (r *Reader) uint8At(off uint32) uint8 {
 func (r *Reader) StringAt(off uint32, len uint32) string {
 	b := r.b[off : off+len]
 	if r.readonly {
-		return toString(b) // backed by RO memory, ok to make unsafe string
+		return toString(b)	// backed by RO memory, ok to make unsafe string
 	}
 	return string(b)
 }
@@ -658,13 +661,7 @@ func toString(b []byte) string {
 	if len(b) == 0 {
 		return ""
 	}
-
-	var s string
-	hdr := (*unsafeheader.String)(unsafe.Pointer(&s))
-	hdr.Data = unsafe.Pointer(&b[0])
-	hdr.Len = len(b)
-
-	return s
+	return unsafe.String(&b[0], len(b))
 }
 
 func (r *Reader) StringRef(off uint32) string {
@@ -849,6 +846,15 @@ func (r *Reader) Data(i uint32) []byte {
 	return r.BytesAt(base+off, int(end-off))
 }
 
+// DataString returns the i-th symbol's data as a string.
+func (r *Reader) DataString(i uint32) string {
+	dataIdxOff := r.h.Offsets[BlkDataIdx] + i*4
+	base := r.h.Offsets[BlkData]
+	off := r.uint32At(dataIdxOff)
+	end := r.uint32At(dataIdxOff + 4)
+	return r.StringAt(base+off, end-off)
+}
+
 // NRefName returns the number of referenced symbol names.
 func (r *Reader) NRefName() int {
 	return int(r.h.Offsets[BlkRefName+1]-r.h.Offsets[BlkRefName]) / RefNameSize
@@ -871,6 +877,6 @@ func (r *Reader) Flags() uint32 {
 	return r.h.Flags
 }
 
-func (r *Reader) Shared() bool       { return r.Flags()&ObjFlagShared != 0 }
-func (r *Reader) FromAssembly() bool { return r.Flags()&ObjFlagFromAssembly != 0 }
-func (r *Reader) Unlinkable() bool   { return r.Flags()&ObjFlagUnlinkable != 0 }
+func (r *Reader) Shared() bool		{ return r.Flags()&ObjFlagShared != 0 }
+func (r *Reader) FromAssembly() bool	{ return r.Flags()&ObjFlagFromAssembly != 0 }
+func (r *Reader) Unlinkable() bool	{ return r.Flags()&ObjFlagUnlinkable != 0 }

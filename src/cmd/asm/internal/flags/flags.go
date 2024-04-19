@@ -16,29 +16,28 @@ import (
 )
 
 var (
-	Debug            = flag.Bool("debug", false, "dump instructions as they are parsed")
-	OutputFile       = flag.String("o", "", "output file; default foo.o for /a/b/c/foo.s as first argument")
-	TrimPath         = flag.String("trimpath", "", "remove prefix from recorded source file paths")
-	Shared           = flag.Bool("shared", false, "generate code that can be linked into a shared library")
-	Dynlink          = flag.Bool("dynlink", false, "support references to Go symbols defined in other shared libraries")
-	Linkshared       = flag.Bool("linkshared", false, "generate code that will be linked against Go shared libraries")
-	AllErrors        = flag.Bool("e", false, "no limit on number of errors reported")
-	SymABIs          = flag.Bool("gensymabis", false, "write symbol ABI information to output file, don't assemble")
-	Importpath       = flag.String("p", obj.UnlinkablePkg, "set expected package import to path")
-	Spectre          = flag.String("spectre", "", "enable spectre mitigations in `list` (all, ret)")
-	CompilingRuntime = flag.Bool("compiling-runtime", false, "source to be compiled is part of the Go runtime")
+	Debug		= flag.Bool("debug", false, "dump instructions as they are parsed")
+	OutputFile	= flag.String("o", "", "output file; default foo.o for /a/b/c/foo.s as first argument")
+	TrimPath	= flag.String("trimpath", "", "remove prefix from recorded source file paths")
+	Shared		= flag.Bool("shared", false, "generate code that can be linked into a shared library")
+	Dynlink		= flag.Bool("dynlink", false, "support references to Go symbols defined in other shared libraries")
+	Linkshared	= flag.Bool("linkshared", false, "generate code that will be linked against Go shared libraries")
+	AllErrors	= flag.Bool("e", false, "no limit on number of errors reported")
+	SymABIs		= flag.Bool("gensymabis", false, "write symbol ABI information to output file, don't assemble")
+	Importpath	= flag.String("p", obj.UnlinkablePkg, "set expected package import to path")
+	Spectre		= flag.String("spectre", "", "enable spectre mitigations in `list` (all, ret)")
 )
 
 var DebugFlags struct {
-	MayMoreStack string `help:"call named function before all stack growth checks"`
-	PCTab        string `help:"print named pc-value table\nOne of: pctospadj, pctofile, pctoline, pctoinline, pctopcdata"`
+	MayMoreStack	string	`help:"call named function before all stack growth checks"`
+	PCTab		string	`help:"print named pc-value table\nOne of: pctospadj, pctofile, pctoline, pctoinline, pctopcdata"`
 }
 
 var (
-	D        MultiFlag
-	I        MultiFlag
-	PrintOut int
-	DebugV   bool
+	D		MultiFlag
+	I		MultiFlag
+	PrintOut	int
+	DebugV		bool
 )
 
 func init() {
@@ -46,7 +45,7 @@ func init() {
 	flag.Var(&I, "I", "include directory; can be set multiple times")
 	flag.BoolVar(&DebugV, "v", false, "print debug output")
 	flag.Var(flag_objabi.NewDebugFlag(&DebugFlags, nil), "d", "enable debugging settings; try -d help")
-	flag_objabi.AddVersionFlag() // -V
+	flag_objabi.AddVersionFlag()	// -V
 	flag_objabi.Flagcount("S", "print assembly and machine code", &PrintOut)
 }
 

@@ -25,7 +25,7 @@ import (
 
 type intReader struct {
 	*bufio.Reader
-	path string
+	path	string
 }
 
 func (r *intReader) int64() int64 {
@@ -46,17 +46,17 @@ func (r *intReader) uint64() uint64 {
 
 // Keep this in sync with constants in iexport.go.
 const (
-	iexportVersionGo1_11   = 0
-	iexportVersionPosCol   = 1
-	iexportVersionGenerics = 2
-	iexportVersionGo1_18   = 2
+	iexportVersionGo1_11	= 0
+	iexportVersionPosCol	= 1
+	iexportVersionGenerics	= 2
+	iexportVersionGo1_18	= 2
 
-	iexportVersionCurrent = 2
+	iexportVersionCurrent	= 2
 )
 
 type ident struct {
-	pkg  *types.Package
-	name string
+	pkg	*types.Package
+	name	string
 }
 
 const predeclReserved = 32
@@ -65,7 +65,7 @@ type itag uint64
 
 const (
 	// Types
-	definedType itag = iota
+	definedType	itag	= iota
 	pointerType
 	sliceType
 	arrayType
@@ -120,27 +120,27 @@ func iImportData(fset *token.FileSet, imports map[string]*types.Package, dataRea
 	declData := data[sLen:]
 
 	p := iimporter{
-		exportVersion: version,
-		ipath:         path,
-		version:       int(version),
+		exportVersion:	version,
+		ipath:		path,
+		version:	int(version),
 
-		stringData:  stringData,
-		stringCache: make(map[uint64]string),
-		pkgCache:    make(map[uint64]*types.Package),
+		stringData:	stringData,
+		stringCache:	make(map[uint64]string),
+		pkgCache:	make(map[uint64]*types.Package),
 
-		declData: declData,
-		pkgIndex: make(map[*types.Package]map[string]uint64),
-		typCache: make(map[uint64]types.Type),
+		declData:	declData,
+		pkgIndex:	make(map[*types.Package]map[string]uint64),
+		typCache:	make(map[uint64]types.Type),
 		// Separate map for typeparams, keyed by their package and unique
 		// name (name with subscript).
-		tparamIndex: make(map[ident]*types.TypeParam),
+		tparamIndex:	make(map[ident]*types.TypeParam),
 
 		fake: fakeFileSet{
-			fset:  fset,
-			files: make(map[string]*fileInfo),
+			fset:	fset,
+			files:	make(map[string]*fileInfo),
 		},
 	}
-	defer p.fake.setLines() // set lines for files in fset
+	defer p.fake.setLines()	// set lines for files in fset
 
 	for i, pt := range predeclared {
 		p.typCache[uint64(i)] = pt
@@ -151,7 +151,7 @@ func iImportData(fset *token.FileSet, imports map[string]*types.Package, dataRea
 		pkgPathOff := r.uint64()
 		pkgPath := p.stringAt(pkgPathOff)
 		pkgName := p.stringAt(r.uint64())
-		_ = r.uint64() // package height; unused by go/types
+		_ = r.uint64()	// package height; unused by go/types
 
 		if pkgPath == "" {
 			pkgPath = path
@@ -211,29 +211,29 @@ func iImportData(fset *token.FileSet, imports map[string]*types.Package, dataRea
 }
 
 type setConstraintArgs struct {
-	t          *types.TypeParam
-	constraint types.Type
+	t		*types.TypeParam
+	constraint	types.Type
 }
 
 type iimporter struct {
-	exportVersion int64
-	ipath         string
-	version       int
+	exportVersion	int64
+	ipath		string
+	version		int
 
-	stringData  []byte
-	stringCache map[uint64]string
-	pkgCache    map[uint64]*types.Package
+	stringData	[]byte
+	stringCache	map[uint64]string
+	pkgCache	map[uint64]*types.Package
 
-	declData    []byte
-	pkgIndex    map[*types.Package]map[string]uint64
-	typCache    map[uint64]types.Type
-	tparamIndex map[ident]*types.TypeParam
+	declData	[]byte
+	pkgIndex	map[*types.Package]map[string]uint64
+	typCache	map[uint64]types.Type
+	tparamIndex	map[ident]*types.TypeParam
 
-	fake          fakeFileSet
-	interfaceList []*types.Interface
+	fake		fakeFileSet
+	interfaceList	[]*types.Interface
 
 	// Arguments for calls to SetConstraint that are deferred due to recursive types
-	later []setConstraintArgs
+	later	[]setConstraintArgs
 }
 
 func (p *iimporter) doDecl(pkg *types.Package, name string) {
@@ -315,12 +315,12 @@ func canReuse(def *types.Named, rhs types.Type) bool {
 }
 
 type importReader struct {
-	p          *iimporter
-	declReader bytes.Reader
-	currPkg    *types.Package
-	prevFile   string
-	prevLine   int64
-	prevColumn int64
+	p		*iimporter
+	declReader	bytes.Reader
+	currPkg		*types.Package
+	prevFile	string
+	prevLine	int64
+	prevColumn	int64
 }
 
 func (r *importReader) obj(name string) {
@@ -462,7 +462,7 @@ func (r *importReader) value() (typ types.Type, val constant.Value) {
 		val = constant.BinaryOp(re, token.ADD, constant.MakeImag(im))
 
 	default:
-		errorf("unexpected type %v", typ) // panics
+		errorf("unexpected type %v", typ)	// panics
 		panic("unreachable")
 	}
 
@@ -602,8 +602,8 @@ func isInterface(t types.Type) bool {
 	return ok
 }
 
-func (r *importReader) pkg() *types.Package { return r.p.pkgAt(r.uint64()) }
-func (r *importReader) string() string      { return r.p.stringAt(r.uint64()) }
+func (r *importReader) pkg() *types.Package	{ return r.p.pkgAt(r.uint64()) }
+func (r *importReader) string() string		{ return r.p.stringAt(r.uint64()) }
 
 func (r *importReader) doType(base *types.Named) types.Type {
 	switch k := r.kind(); k {

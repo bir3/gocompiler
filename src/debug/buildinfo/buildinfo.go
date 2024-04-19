@@ -19,6 +19,7 @@ import (
 	"encoding/binary"
 	"errors"
 	"fmt"
+	"github.com/bir3/gocompiler/src/internal/saferio"
 	"github.com/bir3/gocompiler/src/internal/xcoff"
 	"io"
 	"io/fs"
@@ -35,17 +36,17 @@ var (
 	// errUnrecognizedFormat is returned when a given executable file doesn't
 	// appear to be in a known format, or it breaks the rules of that format,
 	// or when there are I/O errors reading the file.
-	errUnrecognizedFormat = errors.New("unrecognized file format")
+	errUnrecognizedFormat	= errors.New("unrecognized file format")
 
 	// errNotGoExe is returned when a given executable file is valid but does
 	// not contain Go build information.
-	errNotGoExe = errors.New("not a Go executable")
+	errNotGoExe	= errors.New("not a Go executable")
 
 	// The build info blob left by the linker is identified by
 	// a 16-byte header, consisting of buildInfoMagic (14 bytes),
 	// the binary's pointer size (1 byte),
 	// and whether the binary is big endian (1 byte).
-	buildInfoMagic = []byte("\xff Go buildinf:")
+	buildInfoMagic	= []byte("\xff Go buildinf:")
 )
 
 // ReadFile returns build information embedded in a Go binary
@@ -88,10 +89,10 @@ type exe interface {
 	// ReadData reads and returns up to size bytes starting at virtual address addr.
 	ReadData(addr, size uint64) ([]byte, error)
 
-	// DataStart returns the virtual address of the segment or section that
+	// DataStart returns the virtual address and size of the segment or section that
 	// should contain build information. This is either a specially named section
 	// or the first writable non-zero data segment.
-	DataStart() uint64
+	DataStart() (uint64, uint64)
 }
 
 // readRawBuildInfo extracts the Go toolchain version and module information
@@ -125,6 +126,12 @@ func readRawBuildInfo(r io.ReaderAt) (vers, mod string, err error) {
 			return "", "", errUnrecognizedFormat
 		}
 		x = &machoExe{f}
+	case bytes.HasPrefix(ident, []byte("\xCA\xFE\xBA\xBE")) || bytes.HasPrefix(ident, []byte("\xCA\xFE\xBA\xBF")):
+		f, err := macho.NewFatFile(r)
+		if err != nil || len(f.Arches) == 0 {
+			return "", "", errUnrecognizedFormat
+		}
+		x = &machoExe{f.Arches[0].File}
 	case bytes.HasPrefix(ident, []byte{0x01, 0xDF}) || bytes.HasPrefix(ident, []byte{0x01, 0xF7}):
 		f, err := xcoff.NewFile(r)
 		if err != nil {
@@ -141,19 +148,22 @@ func readRawBuildInfo(r io.ReaderAt) (vers, mod string, err error) {
 		return "", "", errUnrecognizedFormat
 	}
 
-	// Read the first 64kB of dataAddr to find the build info blob.
+	// Read segment or section to find the build info blob.
 	// On some platforms, the blob will be in its own section, and DataStart
 	// returns the address of that section. On others, it's somewhere in the
 	// data segment; the linker puts it near the beginning.
 	// See cmd/link/internal/ld.Link.buildinfo.
-	dataAddr := x.DataStart()
-	data, err := x.ReadData(dataAddr, 64*1024)
+	dataAddr, dataSize := x.DataStart()
+	if dataSize == 0 {
+		return "", "", errNotGoExe
+	}
+	data, err := x.ReadData(dataAddr, dataSize)
 	if err != nil {
 		return "", "", err
 	}
 	const (
-		buildInfoAlign = 16
-		buildInfoSize  = 32
+		buildInfoAlign	= 16
+		buildInfoSize	= 32
 	)
 	for {
 		i := bytes.Index(data, buildInfoMagic)
@@ -227,7 +237,7 @@ func hasPlan9Magic(magic []byte) bool {
 
 func decodeString(data []byte) (s string, rest []byte) {
 	u, n := binary.Uvarint(data)
-	if n <= 0 || u >= uint64(len(data)-n) {
+	if n <= 0 || u > uint64(len(data)-n) {
 		return "", nil
 	}
 	return string(data[n : uint64(n)+u]), data[uint64(n)+u:]
@@ -260,29 +270,24 @@ func (x *elfExe) ReadData(addr, size uint64) ([]byte, error) {
 			if n > size {
 				n = size
 			}
-			data := make([]byte, n)
-			_, err := prog.ReadAt(data, int64(addr-prog.Vaddr))
-			if err != nil {
-				return nil, err
-			}
-			return data, nil
+			return saferio.ReadDataAt(prog, n, int64(addr-prog.Vaddr))
 		}
 	}
 	return nil, errUnrecognizedFormat
 }
 
-func (x *elfExe) DataStart() uint64 {
+func (x *elfExe) DataStart() (uint64, uint64) {
 	for _, s := range x.f.Sections {
 		if s.Name == ".go.buildinfo" {
-			return s.Addr
+			return s.Addr, s.Size
 		}
 	}
 	for _, p := range x.f.Progs {
 		if p.Type == elf.PT_LOAD && p.Flags&(elf.PF_X|elf.PF_W) == elf.PF_W {
-			return p.Vaddr
+			return p.Vaddr, p.Memsz
 		}
 	}
-	return 0
+	return 0, 0
 }
 
 // peExe is the PE (Windows Portable Executable) implementation of the exe interface.
@@ -308,37 +313,32 @@ func (x *peExe) ReadData(addr, size uint64) ([]byte, error) {
 			if n > size {
 				n = size
 			}
-			data := make([]byte, n)
-			_, err := sect.ReadAt(data, int64(addr-uint64(sect.VirtualAddress)))
-			if err != nil {
-				return nil, errUnrecognizedFormat
-			}
-			return data, nil
+			return saferio.ReadDataAt(sect, n, int64(addr-uint64(sect.VirtualAddress)))
 		}
 	}
 	return nil, errUnrecognizedFormat
 }
 
-func (x *peExe) DataStart() uint64 {
+func (x *peExe) DataStart() (uint64, uint64) {
 	// Assume data is first writable section.
 	const (
-		IMAGE_SCN_CNT_CODE               = 0x00000020
-		IMAGE_SCN_CNT_INITIALIZED_DATA   = 0x00000040
-		IMAGE_SCN_CNT_UNINITIALIZED_DATA = 0x00000080
-		IMAGE_SCN_MEM_EXECUTE            = 0x20000000
-		IMAGE_SCN_MEM_READ               = 0x40000000
-		IMAGE_SCN_MEM_WRITE              = 0x80000000
-		IMAGE_SCN_MEM_DISCARDABLE        = 0x2000000
-		IMAGE_SCN_LNK_NRELOC_OVFL        = 0x1000000
-		IMAGE_SCN_ALIGN_32BYTES          = 0x600000
+		IMAGE_SCN_CNT_CODE			= 0x00000020
+		IMAGE_SCN_CNT_INITIALIZED_DATA		= 0x00000040
+		IMAGE_SCN_CNT_UNINITIALIZED_DATA	= 0x00000080
+		IMAGE_SCN_MEM_EXECUTE			= 0x20000000
+		IMAGE_SCN_MEM_READ			= 0x40000000
+		IMAGE_SCN_MEM_WRITE			= 0x80000000
+		IMAGE_SCN_MEM_DISCARDABLE		= 0x2000000
+		IMAGE_SCN_LNK_NRELOC_OVFL		= 0x1000000
+		IMAGE_SCN_ALIGN_32BYTES			= 0x600000
 	)
 	for _, sect := range x.f.Sections {
 		if sect.VirtualAddress != 0 && sect.Size != 0 &&
 			sect.Characteristics&^IMAGE_SCN_ALIGN_32BYTES == IMAGE_SCN_CNT_INITIALIZED_DATA|IMAGE_SCN_MEM_READ|IMAGE_SCN_MEM_WRITE {
-			return uint64(sect.VirtualAddress) + x.imageBase()
+			return uint64(sect.VirtualAddress) + x.imageBase(), uint64(sect.VirtualSize)
 		}
 	}
-	return 0
+	return 0, 0
 }
 
 // machoExe is the Mach-O (Apple macOS/iOS) implementation of the exe interface.
@@ -360,22 +360,17 @@ func (x *machoExe) ReadData(addr, size uint64) ([]byte, error) {
 			if n > size {
 				n = size
 			}
-			data := make([]byte, n)
-			_, err := seg.ReadAt(data, int64(addr-seg.Addr))
-			if err != nil {
-				return nil, err
-			}
-			return data, nil
+			return saferio.ReadDataAt(seg, n, int64(addr-seg.Addr))
 		}
 	}
 	return nil, errUnrecognizedFormat
 }
 
-func (x *machoExe) DataStart() uint64 {
+func (x *machoExe) DataStart() (uint64, uint64) {
 	// Look for section named "__go_buildinfo".
 	for _, sec := range x.f.Sections {
 		if sec.Name == "__go_buildinfo" {
-			return sec.Addr
+			return sec.Addr, sec.Size
 		}
 	}
 	// Try the first non-empty writable segment.
@@ -383,10 +378,10 @@ func (x *machoExe) DataStart() uint64 {
 	for _, load := range x.f.Loads {
 		seg, ok := load.(*macho.Segment)
 		if ok && seg.Addr != 0 && seg.Filesz != 0 && seg.Prot == RW && seg.Maxprot == RW {
-			return seg.Addr
+			return seg.Addr, seg.Memsz
 		}
 	}
-	return 0
+	return 0, 0
 }
 
 // xcoffExe is the XCOFF (AIX eXtended COFF) implementation of the exe interface.
@@ -401,22 +396,17 @@ func (x *xcoffExe) ReadData(addr, size uint64) ([]byte, error) {
 			if n > size {
 				n = size
 			}
-			data := make([]byte, n)
-			_, err := sect.ReadAt(data, int64(addr-sect.VirtualAddress))
-			if err != nil {
-				return nil, err
-			}
-			return data, nil
+			return saferio.ReadDataAt(sect, n, int64(addr-sect.VirtualAddress))
 		}
 	}
 	return nil, errors.New("address not mapped")
 }
 
-func (x *xcoffExe) DataStart() uint64 {
+func (x *xcoffExe) DataStart() (uint64, uint64) {
 	if s := x.f.SectionByType(xcoff.STYP_DATA); s != nil {
-		return s.VirtualAddress
+		return s.VirtualAddress, s.Size
 	}
-	return 0
+	return 0, 0
 }
 
 // plan9objExe is the Plan 9 a.out implementation of the exe interface.
@@ -424,11 +414,11 @@ type plan9objExe struct {
 	f *plan9obj.File
 }
 
-func (x *plan9objExe) DataStart() uint64 {
+func (x *plan9objExe) DataStart() (uint64, uint64) {
 	if s := x.f.Section("data"); s != nil {
-		return uint64(s.Offset)
+		return uint64(s.Offset), uint64(s.Size)
 	}
-	return 0
+	return 0, 0
 }
 
 func (x *plan9objExe) ReadData(addr, size uint64) ([]byte, error) {
@@ -438,14 +428,8 @@ func (x *plan9objExe) ReadData(addr, size uint64) ([]byte, error) {
 			if n > size {
 				n = size
 			}
-			data := make([]byte, n)
-			_, err := sect.ReadAt(data, int64(addr-uint64(sect.Offset)))
-			if err != nil {
-				return nil, err
-			}
-			return data, nil
+			return saferio.ReadDataAt(sect, n, int64(addr-uint64(sect.Offset)))
 		}
 	}
 	return nil, errors.New("address not mapped")
-
 }

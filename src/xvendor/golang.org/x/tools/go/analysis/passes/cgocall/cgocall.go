@@ -19,6 +19,7 @@ import (
 
 	"github.com/bir3/gocompiler/src/xvendor/golang.org/x/tools/go/analysis"
 	"github.com/bir3/gocompiler/src/xvendor/golang.org/x/tools/go/analysis/passes/internal/analysisutil"
+	"github.com/bir3/gocompiler/src/xvendor/golang.org/x/tools/go/ast/astutil"
 )
 
 const debug = false
@@ -33,15 +34,16 @@ Specifically, it warns about attempts to pass a Go chan, map, func,
 or slice to C, either directly, or via a pointer, array, or struct.`
 
 var Analyzer = &analysis.Analyzer{
-	Name:             "cgocall",
-	Doc:              Doc,
-	RunDespiteErrors: true,
-	Run:              run,
+	Name:			"cgocall",
+	Doc:			Doc,
+	URL:			"https://pkg.go.dev/golang.org/x/tools/go/analysis/passes/cgocall",
+	RunDespiteErrors:	true,
+	Run:			run,
 }
 
 func run(pass *analysis.Pass) (interface{}, error) {
 	if !analysisutil.Imports(pass.Pkg, "runtime/cgo") {
-		return nil, nil // doesn't use cgo
+		return nil, nil	// doesn't use cgo
 	}
 
 	cgofiles, info, err := typeCheckCgoSourceFiles(pass.Fset, pass.Pkg, pass.Files, pass.TypesInfo, pass.TypesSizes)
@@ -63,13 +65,13 @@ func checkCgo(fset *token.FileSet, f *ast.File, info *types.Info, reportf func(t
 
 		// Is this a C.f() call?
 		var name string
-		if sel, ok := analysisutil.Unparen(call.Fun).(*ast.SelectorExpr); ok {
+		if sel, ok := astutil.Unparen(call.Fun).(*ast.SelectorExpr); ok {
 			if id, ok := sel.X.(*ast.Ident); ok && id.Name == "C" {
 				name = sel.Sel.Name
 			}
 		}
 		if name == "" {
-			return true // not a call we need to check
+			return true	// not a call we need to check
 		}
 
 		// A call to C.CBytes passes a pointer but is always safe.
@@ -179,7 +181,7 @@ func typeCheckCgoSourceFiles(fset *token.FileSet, pkg *types.Package, files []*a
 		// If f is a cgo-generated file, Position reports
 		// the original file, honoring //line directives.
 		filename := fset.Position(raw.Pos()).Filename
-		f, err := parser.ParseFile(fset, filename, nil, parser.Mode(0))
+		f, err := parser.ParseFile(fset, filename, nil, parser.SkipObjectResolution)
 		if err != nil {
 			return nil, nil, fmt.Errorf("can't parse raw cgo file: %v", err)
 		}
@@ -191,7 +193,7 @@ func typeCheckCgoSourceFiles(fset *token.FileSet, pkg *types.Package, files []*a
 			}
 		}
 		if !found {
-			continue // not a cgo file
+			continue	// not a cgo file
 		}
 
 		// Record the original import map.
@@ -204,13 +206,13 @@ func typeCheckCgoSourceFiles(fset *token.FileSet, pkg *types.Package, files []*a
 		//    import . "·this·"
 		var decls []ast.Decl
 		decls = append(decls, &ast.GenDecl{
-			Tok: token.IMPORT,
+			Tok:	token.IMPORT,
 			Specs: []ast.Spec{
 				&ast.ImportSpec{
-					Name: &ast.Ident{Name: "."},
+					Name:	&ast.Ident{Name: "."},
 					Path: &ast.BasicLit{
-						Kind:  token.STRING,
-						Value: strconv.Quote(thispkg),
+						Kind:	token.STRING,
+						Value:	strconv.Quote(thispkg),
 					},
 				},
 			},
@@ -253,23 +255,24 @@ func typeCheckCgoSourceFiles(fset *token.FileSet, pkg *types.Package, files []*a
 		}
 		f.Decls = decls
 		if debug {
-			format.Node(os.Stderr, fset, f) // debugging
+			format.Node(os.Stderr, fset, f)	// debugging
 		}
 		cgoFiles = append(cgoFiles, f)
 	}
 	if cgoFiles == nil {
-		return nil, nil, nil // nothing to do (can't happen?)
+		return nil, nil, nil	// nothing to do (can't happen?)
 	}
 
 	// Type-check the synthetic files.
 	tc := &types.Config{
-		FakeImportC: true,
+		FakeImportC:	true,
 		Importer: importerFunc(func(path string) (*types.Package, error) {
 			return importMap[path], nil
 		}),
-		Sizes: sizes,
-		Error: func(error) {}, // ignore errors (e.g. unused import)
+		Sizes:	sizes,
+		Error:	func(error) {},	// ignore errors (e.g. unused import)
 	}
+	setGoVersion(tc, pkg)
 
 	// It's tempting to record the new types in the
 	// existing pass.TypesInfo, but we don't own it.
@@ -364,13 +367,13 @@ func isUnsafePointer(info *types.Info, e ast.Expr) bool {
 
 type importerFunc func(path string) (*types.Package, error)
 
-func (f importerFunc) Import(path string) (*types.Package, error) { return f(path) }
+func (f importerFunc) Import(path string) (*types.Package, error)	{ return f(path) }
 
 // TODO(adonovan): make this a library function or method of Info.
 func imported(info *types.Info, spec *ast.ImportSpec) *types.Package {
 	obj, ok := info.Implicits[spec]
 	if !ok {
-		obj = info.Defs[spec.Name] // renaming import
+		obj = info.Defs[spec.Name]	// renaming import
 	}
 	return obj.(*types.PkgName).Imported()
 }

@@ -2,13 +2,13 @@
 // Use of this source code is governed by a BSD-style
 // license that can be found in the LICENSE file.
 
-// Package assign defines an Analyzer that detects useless assignments.
 package assign
 
 // TODO(adonovan): check also for assignments to struct fields inside
 // methods that are on T instead of *T.
 
 import (
+	_ "embed"
 	"fmt"
 	"github.com/bir3/gocompiler/src/go/ast"
 	"github.com/bir3/gocompiler/src/go/token"
@@ -18,20 +18,19 @@ import (
 	"github.com/bir3/gocompiler/src/xvendor/golang.org/x/tools/go/analysis"
 	"github.com/bir3/gocompiler/src/xvendor/golang.org/x/tools/go/analysis/passes/inspect"
 	"github.com/bir3/gocompiler/src/xvendor/golang.org/x/tools/go/analysis/passes/internal/analysisutil"
+	"github.com/bir3/gocompiler/src/xvendor/golang.org/x/tools/go/ast/astutil"
 	"github.com/bir3/gocompiler/src/xvendor/golang.org/x/tools/go/ast/inspector"
 )
 
-const Doc = `check for useless assignments
-
-This checker reports assignments of the form x = x or a[i] = a[i].
-These are almost always useless, and even when they aren't they are
-usually a mistake.`
+//go:embed doc.go
+var doc string
 
 var Analyzer = &analysis.Analyzer{
-	Name:     "assign",
-	Doc:      Doc,
-	Requires: []*analysis.Analyzer{inspect.Analyzer},
-	Run:      run,
+	Name:		"assign",
+	Doc:		analysisutil.MustExtractDoc(doc, "assign"),
+	URL:		"https://pkg.go.dev/golang.org/x/tools/go/analysis/passes/assign",
+	Requires:	[]*analysis.Analyzer{inspect.Analyzer},
+	Run:		run,
 }
 
 func run(pass *analysis.Pass) (interface{}, error) {
@@ -43,7 +42,7 @@ func run(pass *analysis.Pass) (interface{}, error) {
 	inspect.Preorder(nodeFilter, func(n ast.Node) {
 		stmt := n.(*ast.AssignStmt)
 		if stmt.Tok != token.ASSIGN {
-			return // ignore :=
+			return	// ignore :=
 		}
 		if len(stmt.Lhs) != len(stmt.Rhs) {
 			// If LHS and RHS have different cardinality, they can't be the same.
@@ -54,16 +53,16 @@ func run(pass *analysis.Pass) (interface{}, error) {
 			if analysisutil.HasSideEffects(pass.TypesInfo, lhs) ||
 				analysisutil.HasSideEffects(pass.TypesInfo, rhs) ||
 				isMapIndex(pass.TypesInfo, lhs) {
-				continue // expressions may not be equal
+				continue	// expressions may not be equal
 			}
 			if reflect.TypeOf(lhs) != reflect.TypeOf(rhs) {
-				continue // short-circuit the heavy-weight gofmt check
+				continue	// short-circuit the heavy-weight gofmt check
 			}
 			le := analysisutil.Format(pass.Fset, lhs)
 			re := analysisutil.Format(pass.Fset, rhs)
 			if le == re {
 				pass.Report(analysis.Diagnostic{
-					Pos: stmt.Pos(), Message: fmt.Sprintf("self-assignment of %s to %s", re, le),
+					Pos:	stmt.Pos(), Message: fmt.Sprintf("self-assignment of %s to %s", re, le),
 					SuggestedFixes: []analysis.SuggestedFix{
 						{Message: "Remove", TextEdits: []analysis.TextEdit{
 							{Pos: stmt.Pos(), End: stmt.End(), NewText: []byte{}},
@@ -79,7 +78,7 @@ func run(pass *analysis.Pass) (interface{}, error) {
 
 // isMapIndex returns true if e is a map index expression.
 func isMapIndex(info *types.Info, e ast.Expr) bool {
-	if idx, ok := analysisutil.Unparen(e).(*ast.IndexExpr); ok {
+	if idx, ok := astutil.Unparen(e).(*ast.IndexExpr); ok {
 		if typ := info.Types[idx.X].Type; typ != nil {
 			_, ok := typ.Underlying().(*types.Map)
 			return ok

@@ -2,31 +2,29 @@
 // Use of this source code is governed by a BSD-style
 // license that can be found in the LICENSE file.
 
-// The unmarshal package defines an Analyzer that checks for passing
-// non-pointer or non-interface types to unmarshal and decode functions.
 package unmarshal
 
 import (
+	_ "embed"
 	"github.com/bir3/gocompiler/src/go/ast"
 	"github.com/bir3/gocompiler/src/go/types"
 
 	"github.com/bir3/gocompiler/src/xvendor/golang.org/x/tools/go/analysis"
 	"github.com/bir3/gocompiler/src/xvendor/golang.org/x/tools/go/analysis/passes/inspect"
+	"github.com/bir3/gocompiler/src/xvendor/golang.org/x/tools/go/analysis/passes/internal/analysisutil"
 	"github.com/bir3/gocompiler/src/xvendor/golang.org/x/tools/go/ast/inspector"
 	"github.com/bir3/gocompiler/src/xvendor/golang.org/x/tools/go/types/typeutil"
-	"github.com/bir3/gocompiler/src/xvendor/golang.org/x/tools/internal/typeparams"
 )
 
-const Doc = `report passing non-pointer or non-interface values to unmarshal
-
-The unmarshal analysis reports calls to functions such as json.Unmarshal
-in which the argument type is not a pointer or an interface.`
+//go:embed doc.go
+var doc string
 
 var Analyzer = &analysis.Analyzer{
-	Name:     "unmarshal",
-	Doc:      Doc,
-	Requires: []*analysis.Analyzer{inspect.Analyzer},
-	Run:      run,
+	Name:		"unmarshal",
+	Doc:		analysisutil.MustExtractDoc(doc, "unmarshal"),
+	URL:		"https://pkg.go.dev/golang.org/x/tools/go/analysis/passes/unmarshal",
+	Requires:	[]*analysis.Analyzer{inspect.Analyzer},
+	Run:		run,
 }
 
 func run(pass *analysis.Pass) (interface{}, error) {
@@ -37,6 +35,12 @@ func run(pass *analysis.Pass) (interface{}, error) {
 		return nil, nil
 	}
 
+	// Note: (*"encoding/json".Decoder).Decode, (* "encoding/gob".Decoder).Decode
+	// and (* "encoding/xml".Decoder).Decode are methods and can be a typeutil.Callee
+	// without directly importing their packages. So we cannot just skip this package
+	// when !analysisutil.Imports(pass.Pkg, "encoding/...").
+	// TODO(taking): Consider using a prepass to collect typeutil.Callees.
+
 	inspect := pass.ResultOf[inspect.Analyzer].(*inspector.Inspector)
 
 	nodeFilter := []ast.Node{
@@ -46,11 +50,12 @@ func run(pass *analysis.Pass) (interface{}, error) {
 		call := n.(*ast.CallExpr)
 		fn := typeutil.StaticCallee(pass.TypesInfo, call)
 		if fn == nil {
-			return // not a static call
+			return	// not a static call
 		}
 
 		// Classify the callee (without allocating memory).
 		argidx := -1
+
 		recv := fn.Type().(*types.Signature).Recv()
 		if fn.Name() == "Unmarshal" && recv == nil {
 			// "encoding/json".Unmarshal
@@ -58,7 +63,7 @@ func run(pass *analysis.Pass) (interface{}, error) {
 			// "encoding/asn1".Unmarshal
 			switch fn.Pkg().Path() {
 			case "encoding/json", "encoding/xml", "encoding/asn1":
-				argidx = 1 // func([]byte, interface{})
+				argidx = 1	// func([]byte, interface{})
 			}
 		} else if fn.Name() == "Decode" && recv != nil {
 			// (*"encoding/json".Decoder).Decode
@@ -72,21 +77,21 @@ func run(pass *analysis.Pass) (interface{}, error) {
 			if tname.Name() == "Decoder" {
 				switch tname.Pkg().Path() {
 				case "encoding/json", "encoding/xml", "encoding/gob":
-					argidx = 0 // func(interface{})
+					argidx = 0	// func(interface{})
 				}
 			}
 		}
 		if argidx < 0 {
-			return // not a function we are interested in
+			return	// not a function we are interested in
 		}
 
 		if len(call.Args) < argidx+1 {
-			return // not enough arguments, e.g. called with return values of another function
+			return	// not enough arguments, e.g. called with return values of another function
 		}
 
 		t := pass.TypesInfo.Types[call.Args[argidx]].Type
 		switch t.Underlying().(type) {
-		case *types.Pointer, *types.Interface, *typeparams.TypeParam:
+		case *types.Pointer, *types.Interface, *types.TypeParam:
 			return
 		}
 

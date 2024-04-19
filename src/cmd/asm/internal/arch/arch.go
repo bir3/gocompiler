@@ -22,7 +22,7 @@ import (
 
 // Pseudo-registers whose names are the constant name without the leading R.
 const (
-	RFP = -(iota + 1)
+	RFP	= -(iota + 1)
 	RSB
 	RSP
 	RPC
@@ -32,15 +32,15 @@ const (
 type Arch struct {
 	*obj.LinkArch
 	// Map of instruction names to enumeration.
-	Instructions map[string]obj.As
+	Instructions	map[string]obj.As
 	// Map of register names to enumeration.
-	Register map[string]int16
+	Register	map[string]int16
 	// Table of register prefix names. These are things like R for R(0) and SPR for SPR(268).
-	RegisterPrefix map[string]bool
+	RegisterPrefix	map[string]bool
 	// RegisterNumber converts R(10) into arm.REG_R10.
-	RegisterNumber func(string, int16) (int16, bool)
+	RegisterNumber	func(string, int16) (int16, bool)
 	// Instruction is a jump.
-	IsJump func(word string) bool
+	IsJump	func(word string) bool
 }
 
 // nilRegisterNumber is the register number function for architectures
@@ -128,51 +128,51 @@ func archX86(linkArch *obj.LinkArch) *Arch {
 		}
 	}
 	// Annoying aliases.
-	instructions["JA"] = x86.AJHI   /* alternate */
-	instructions["JAE"] = x86.AJCC  /* alternate */
-	instructions["JB"] = x86.AJCS   /* alternate */
-	instructions["JBE"] = x86.AJLS  /* alternate */
-	instructions["JC"] = x86.AJCS   /* alternate */
-	instructions["JCC"] = x86.AJCC  /* carry clear (CF = 0) */
-	instructions["JCS"] = x86.AJCS  /* carry set (CF = 1) */
-	instructions["JE"] = x86.AJEQ   /* alternate */
-	instructions["JEQ"] = x86.AJEQ  /* equal (ZF = 1) */
-	instructions["JG"] = x86.AJGT   /* alternate */
-	instructions["JGE"] = x86.AJGE  /* greater than or equal (signed) (SF = OF) */
-	instructions["JGT"] = x86.AJGT  /* greater than (signed) (ZF = 0 && SF = OF) */
-	instructions["JHI"] = x86.AJHI  /* higher (unsigned) (CF = 0 && ZF = 0) */
-	instructions["JHS"] = x86.AJCC  /* alternate */
-	instructions["JL"] = x86.AJLT   /* alternate */
-	instructions["JLE"] = x86.AJLE  /* less than or equal (signed) (ZF = 1 || SF != OF) */
-	instructions["JLO"] = x86.AJCS  /* alternate */
-	instructions["JLS"] = x86.AJLS  /* lower or same (unsigned) (CF = 1 || ZF = 1) */
-	instructions["JLT"] = x86.AJLT  /* less than (signed) (SF != OF) */
-	instructions["JMI"] = x86.AJMI  /* negative (minus) (SF = 1) */
-	instructions["JNA"] = x86.AJLS  /* alternate */
-	instructions["JNAE"] = x86.AJCS /* alternate */
-	instructions["JNB"] = x86.AJCC  /* alternate */
-	instructions["JNBE"] = x86.AJHI /* alternate */
-	instructions["JNC"] = x86.AJCC  /* alternate */
-	instructions["JNE"] = x86.AJNE  /* not equal (ZF = 0) */
-	instructions["JNG"] = x86.AJLE  /* alternate */
-	instructions["JNGE"] = x86.AJLT /* alternate */
-	instructions["JNL"] = x86.AJGE  /* alternate */
-	instructions["JNLE"] = x86.AJGT /* alternate */
-	instructions["JNO"] = x86.AJOC  /* alternate */
-	instructions["JNP"] = x86.AJPC  /* alternate */
-	instructions["JNS"] = x86.AJPL  /* alternate */
-	instructions["JNZ"] = x86.AJNE  /* alternate */
-	instructions["JO"] = x86.AJOS   /* alternate */
-	instructions["JOC"] = x86.AJOC  /* overflow clear (OF = 0) */
-	instructions["JOS"] = x86.AJOS  /* overflow set (OF = 1) */
-	instructions["JP"] = x86.AJPS   /* alternate */
-	instructions["JPC"] = x86.AJPC  /* parity clear (PF = 0) */
-	instructions["JPE"] = x86.AJPS  /* alternate */
-	instructions["JPL"] = x86.AJPL  /* non-negative (plus) (SF = 0) */
-	instructions["JPO"] = x86.AJPC  /* alternate */
-	instructions["JPS"] = x86.AJPS  /* parity set (PF = 1) */
-	instructions["JS"] = x86.AJMI   /* alternate */
-	instructions["JZ"] = x86.AJEQ   /* alternate */
+	instructions["JA"] = x86.AJHI	/* alternate */
+	instructions["JAE"] = x86.AJCC	/* alternate */
+	instructions["JB"] = x86.AJCS	/* alternate */
+	instructions["JBE"] = x86.AJLS	/* alternate */
+	instructions["JC"] = x86.AJCS	/* alternate */
+	instructions["JCC"] = x86.AJCC	/* carry clear (CF = 0) */
+	instructions["JCS"] = x86.AJCS	/* carry set (CF = 1) */
+	instructions["JE"] = x86.AJEQ	/* alternate */
+	instructions["JEQ"] = x86.AJEQ	/* equal (ZF = 1) */
+	instructions["JG"] = x86.AJGT	/* alternate */
+	instructions["JGE"] = x86.AJGE	/* greater than or equal (signed) (SF = OF) */
+	instructions["JGT"] = x86.AJGT	/* greater than (signed) (ZF = 0 && SF = OF) */
+	instructions["JHI"] = x86.AJHI	/* higher (unsigned) (CF = 0 && ZF = 0) */
+	instructions["JHS"] = x86.AJCC	/* alternate */
+	instructions["JL"] = x86.AJLT	/* alternate */
+	instructions["JLE"] = x86.AJLE	/* less than or equal (signed) (ZF = 1 || SF != OF) */
+	instructions["JLO"] = x86.AJCS	/* alternate */
+	instructions["JLS"] = x86.AJLS	/* lower or same (unsigned) (CF = 1 || ZF = 1) */
+	instructions["JLT"] = x86.AJLT	/* less than (signed) (SF != OF) */
+	instructions["JMI"] = x86.AJMI	/* negative (minus) (SF = 1) */
+	instructions["JNA"] = x86.AJLS	/* alternate */
+	instructions["JNAE"] = x86.AJCS	/* alternate */
+	instructions["JNB"] = x86.AJCC	/* alternate */
+	instructions["JNBE"] = x86.AJHI	/* alternate */
+	instructions["JNC"] = x86.AJCC	/* alternate */
+	instructions["JNE"] = x86.AJNE	/* not equal (ZF = 0) */
+	instructions["JNG"] = x86.AJLE	/* alternate */
+	instructions["JNGE"] = x86.AJLT	/* alternate */
+	instructions["JNL"] = x86.AJGE	/* alternate */
+	instructions["JNLE"] = x86.AJGT	/* alternate */
+	instructions["JNO"] = x86.AJOC	/* alternate */
+	instructions["JNP"] = x86.AJPC	/* alternate */
+	instructions["JNS"] = x86.AJPL	/* alternate */
+	instructions["JNZ"] = x86.AJNE	/* alternate */
+	instructions["JO"] = x86.AJOS	/* alternate */
+	instructions["JOC"] = x86.AJOC	/* overflow clear (OF = 0) */
+	instructions["JOS"] = x86.AJOS	/* overflow set (OF = 1) */
+	instructions["JP"] = x86.AJPS	/* alternate */
+	instructions["JPC"] = x86.AJPC	/* parity clear (PF = 0) */
+	instructions["JPE"] = x86.AJPS	/* alternate */
+	instructions["JPL"] = x86.AJPL	/* non-negative (plus) (SF = 0) */
+	instructions["JPO"] = x86.AJPC	/* alternate */
+	instructions["JPS"] = x86.AJPS	/* parity set (PF = 1) */
+	instructions["JS"] = x86.AJMI	/* alternate */
+	instructions["JZ"] = x86.AJEQ	/* alternate */
 	instructions["MASKMOVDQU"] = x86.AMASKMOVOU
 	instructions["MOVD"] = x86.AMOVQ
 	instructions["MOVDQ2Q"] = x86.AMOVQ
@@ -187,12 +187,12 @@ func archX86(linkArch *obj.LinkArch) *Arch {
 	instructions["MOVBEWW"] = x86.AMOVBEW
 
 	return &Arch{
-		LinkArch:       linkArch,
-		Instructions:   instructions,
-		Register:       register,
-		RegisterPrefix: nil,
-		RegisterNumber: nilRegisterNumber,
-		IsJump:         jumpX86,
+		LinkArch:	linkArch,
+		Instructions:	instructions,
+		Register:	register,
+		RegisterPrefix:	nil,
+		RegisterNumber:	nilRegisterNumber,
+		IsJump:		jumpX86,
 	}
 }
 
@@ -216,8 +216,8 @@ func archArm() *Arch {
 	register["PC"] = RPC
 	register["SP"] = RSP
 	registerPrefix := map[string]bool{
-		"F": true,
-		"R": true,
+		"F":	true,
+		"R":	true,
 	}
 
 	// special operands for DMB/DSB instructions
@@ -248,12 +248,12 @@ func archArm() *Arch {
 	instructions["MCR"] = aMCR
 
 	return &Arch{
-		LinkArch:       &arm.Linkarm,
-		Instructions:   instructions,
-		Register:       register,
-		RegisterPrefix: registerPrefix,
-		RegisterNumber: armRegisterNumber,
-		IsJump:         jumpArm,
+		LinkArch:	&arm.Linkarm,
+		Instructions:	instructions,
+		Register:	register,
+		RegisterPrefix:	registerPrefix,
+		RegisterNumber:	armRegisterNumber,
+		IsJump:		jumpArm,
 	}
 }
 
@@ -291,9 +291,9 @@ func archArm64() *Arch {
 	delete(register, "R28")
 	register["g"] = arm64.REG_R28
 	registerPrefix := map[string]bool{
-		"F": true,
-		"R": true,
-		"V": true,
+		"F":	true,
+		"R":	true,
+		"V":	true,
 	}
 
 	instructions := make(map[string]obj.As)
@@ -310,12 +310,12 @@ func archArm64() *Arch {
 	instructions["BL"] = arm64.ABL
 
 	return &Arch{
-		LinkArch:       &arm64.Linkarm64,
-		Instructions:   instructions,
-		Register:       register,
-		RegisterPrefix: registerPrefix,
-		RegisterNumber: arm64RegisterNumber,
-		IsJump:         jumpArm64,
+		LinkArch:	&arm64.Linkarm64,
+		Instructions:	instructions,
+		Register:	register,
+		RegisterPrefix:	registerPrefix,
+		RegisterNumber:	arm64RegisterNumber,
+		IsJump:		jumpArm64,
 	}
 
 }
@@ -362,10 +362,10 @@ func archPPC64(linkArch *obj.LinkArch) *Arch {
 	delete(register, "R30")
 	register["g"] = ppc64.REG_R30
 	registerPrefix := map[string]bool{
-		"CR":  true,
-		"F":   true,
-		"R":   true,
-		"SPR": true,
+		"CR":	true,
+		"F":	true,
+		"R":	true,
+		"SPR":	true,
 	}
 
 	instructions := make(map[string]obj.As)
@@ -387,12 +387,12 @@ func archPPC64(linkArch *obj.LinkArch) *Arch {
 	instructions["BL"] = ppc64.ABL
 
 	return &Arch{
-		LinkArch:       linkArch,
-		Instructions:   instructions,
-		Register:       register,
-		RegisterPrefix: registerPrefix,
-		RegisterNumber: ppc64RegisterNumber,
-		IsJump:         jumpPPC64,
+		LinkArch:	linkArch,
+		Instructions:	instructions,
+		Register:	register,
+		RegisterPrefix:	registerPrefix,
+		RegisterNumber:	ppc64RegisterNumber,
+		IsJump:		jumpPPC64,
 	}
 }
 
@@ -424,10 +424,10 @@ func archMips(linkArch *obj.LinkArch) *Arch {
 	register["g"] = mips.REG_R30
 
 	registerPrefix := map[string]bool{
-		"F":   true,
-		"FCR": true,
-		"M":   true,
-		"R":   true,
+		"F":	true,
+		"FCR":	true,
+		"M":	true,
+		"R":	true,
 	}
 
 	instructions := make(map[string]obj.As)
@@ -443,12 +443,12 @@ func archMips(linkArch *obj.LinkArch) *Arch {
 	instructions["JAL"] = mips.AJAL
 
 	return &Arch{
-		LinkArch:       linkArch,
-		Instructions:   instructions,
-		Register:       register,
-		RegisterPrefix: registerPrefix,
-		RegisterNumber: mipsRegisterNumber,
-		IsJump:         jumpMIPS,
+		LinkArch:	linkArch,
+		Instructions:	instructions,
+		Register:	register,
+		RegisterPrefix:	registerPrefix,
+		RegisterNumber:	mipsRegisterNumber,
+		IsJump:		jumpMIPS,
 	}
 }
 
@@ -484,11 +484,11 @@ func archMips64(linkArch *obj.LinkArch) *Arch {
 	delete(register, "R28")
 	register["RSB"] = mips.REG_R28
 	registerPrefix := map[string]bool{
-		"F":   true,
-		"FCR": true,
-		"M":   true,
-		"R":   true,
-		"W":   true,
+		"F":	true,
+		"FCR":	true,
+		"M":	true,
+		"R":	true,
+		"W":	true,
 	}
 
 	instructions := make(map[string]obj.As)
@@ -504,12 +504,12 @@ func archMips64(linkArch *obj.LinkArch) *Arch {
 	instructions["JAL"] = mips.AJAL
 
 	return &Arch{
-		LinkArch:       linkArch,
-		Instructions:   instructions,
-		Register:       register,
-		RegisterPrefix: registerPrefix,
-		RegisterNumber: mipsRegisterNumber,
-		IsJump:         jumpMIPS,
+		LinkArch:	linkArch,
+		Instructions:	instructions,
+		Register:	register,
+		RegisterPrefix:	registerPrefix,
+		RegisterNumber:	mipsRegisterNumber,
+		IsJump:		jumpMIPS,
 	}
 }
 
@@ -536,12 +536,11 @@ func archLoong64(linkArch *obj.LinkArch) *Arch {
 	// Avoid unintentionally clobbering g using R22.
 	delete(register, "R22")
 	register["g"] = loong64.REG_R22
-	register["RSB"] = loong64.REG_R31
 	registerPrefix := map[string]bool{
-		"F":    true,
-		"FCSR": true,
-		"FCC":  true,
-		"R":    true,
+		"F":	true,
+		"FCSR":	true,
+		"FCC":	true,
+		"R":	true,
 	}
 
 	instructions := make(map[string]obj.As)
@@ -557,12 +556,12 @@ func archLoong64(linkArch *obj.LinkArch) *Arch {
 	instructions["JAL"] = loong64.AJAL
 
 	return &Arch{
-		LinkArch:       linkArch,
-		Instructions:   instructions,
-		Register:       register,
-		RegisterPrefix: registerPrefix,
-		RegisterNumber: loong64RegisterNumber,
-		IsJump:         jumpLoong64,
+		LinkArch:	linkArch,
+		Instructions:	instructions,
+		Register:	register,
+		RegisterPrefix:	registerPrefix,
+		RegisterNumber:	loong64RegisterNumber,
+		IsJump:		jumpLoong64,
 	}
 }
 
@@ -677,12 +676,12 @@ func archRISCV64(shared bool) *Arch {
 	}
 
 	return &Arch{
-		LinkArch:       &riscv.LinkRISCV64,
-		Instructions:   instructions,
-		Register:       register,
-		RegisterPrefix: nil,
-		RegisterNumber: nilRegisterNumber,
-		IsJump:         jumpRISCV,
+		LinkArch:	&riscv.LinkRISCV64,
+		Instructions:	instructions,
+		Register:	register,
+		RegisterPrefix:	nil,
+		RegisterNumber:	nilRegisterNumber,
+		IsJump:		jumpRISCV,
 	}
 }
 
@@ -711,9 +710,9 @@ func archS390x() *Arch {
 	delete(register, "R13")
 	register["g"] = s390x.REG_R13
 	registerPrefix := map[string]bool{
-		"AR": true,
-		"F":  true,
-		"R":  true,
+		"AR":	true,
+		"F":	true,
+		"R":	true,
 	}
 
 	instructions := make(map[string]obj.As)
@@ -730,12 +729,12 @@ func archS390x() *Arch {
 	instructions["BL"] = s390x.ABL
 
 	return &Arch{
-		LinkArch:       &s390x.Links390x,
-		Instructions:   instructions,
-		Register:       register,
-		RegisterPrefix: registerPrefix,
-		RegisterNumber: s390xRegisterNumber,
-		IsJump:         jumpS390x,
+		LinkArch:	&s390x.Links390x,
+		Instructions:	instructions,
+		Register:	register,
+		RegisterPrefix:	registerPrefix,
+		RegisterNumber:	s390xRegisterNumber,
+		IsJump:		jumpS390x,
 	}
 }
 
@@ -751,11 +750,11 @@ func archWasm() *Arch {
 	}
 
 	return &Arch{
-		LinkArch:       &wasm.Linkwasm,
-		Instructions:   instructions,
-		Register:       wasm.Register,
-		RegisterPrefix: nil,
-		RegisterNumber: nilRegisterNumber,
-		IsJump:         jumpWasm,
+		LinkArch:	&wasm.Linkwasm,
+		Instructions:	instructions,
+		Register:	wasm.Register,
+		RegisterPrefix:	nil,
+		RegisterNumber:	nilRegisterNumber,
+		IsJump:		jumpWasm,
 	}
 }

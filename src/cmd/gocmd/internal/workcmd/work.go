@@ -10,8 +10,8 @@ import (
 )
 
 var CmdWork = &base.Command{
-	UsageLine: "go work",
-	Short:     "workspace maintenance",
+	UsageLine:	"go work",
+	Short:		"workspace maintenance",
 	Long: `Work provides access to operations on workspaces.
 
 Note that support for workspaces is built into many other commands, not
@@ -74,5 +74,6 @@ used.
 		cmdInit,
 		cmdSync,
 		cmdUse,
+		cmdVendor,
 	},
 }

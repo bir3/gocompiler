@@ -36,16 +36,16 @@ func unreachable() {
 // An error_ represents a type-checking error.
 // To report an error_, call Checker.report.
 type error_ struct {
-	desc []errorDesc
-	code Code
-	soft bool // TODO(gri) eventually determine this from an error code
+	desc	[]errorDesc
+	code	Code
+	soft	bool	// TODO(gri) eventually determine this from an error code
 }
 
 // An errorDesc describes part of a type-checking error.
 type errorDesc struct {
-	posn   positioner
-	format string
-	args   []interface{}
+	posn	positioner
+	format	string
+	args	[]interface{}
 }
 
 func (err *error_) empty() bool {
@@ -54,7 +54,7 @@ func (err *error_) empty() bool {
 
 func (err *error_) pos() token.Pos {
 	if err.empty() {
-		return token.NoPos
+		return nopos
 	}
 	return err.desc[0].posn.Pos()
 }
@@ -228,15 +228,25 @@ func (check *Checker) report(errp *error_) {
 		panic("no error code provided")
 	}
 
+	// If we have a URL for error codes, add a link to the first line.
+	if errp.code != 0 && check.conf._ErrorURL != "" {
+		u := fmt.Sprintf(check.conf._ErrorURL, errp.code)
+		if i := strings.Index(msg, "\n"); i >= 0 {
+			msg = msg[:i] + u + msg[i:]
+		} else {
+			msg += u
+		}
+	}
+
 	span := spanOf(errp.desc[0].posn)
 	e := Error{
-		Fset:       check.fset,
-		Pos:        span.pos,
-		Msg:        msg,
-		Soft:       errp.soft,
-		go116code:  errp.code,
-		go116start: span.start,
-		go116end:   span.end,
+		Fset:		check.fset,
+		Pos:		span.pos,
+		Msg:		msg,
+		Soft:		errp.soft,
+		go116code:	errp.code,
+		go116start:	span.start,
+		go116end:	span.end,
 	}
 
 	// Cheap trick: Don't report errors with messages containing
@@ -266,7 +276,7 @@ func (check *Checker) report(errp *error_) {
 		check.firstErr = err
 	}
 
-	if trace {
+	if check.conf._Trace {
 		pos := e.Pos
 		msg := e.Msg
 		check.trace(pos, "ERROR: %s", msg)
@@ -274,26 +284,26 @@ func (check *Checker) report(errp *error_) {
 
 	f := check.conf.Error
 	if f == nil {
-		panic(bailout{}) // report only first error
+		panic(bailout{})	// report only first error
 	}
 	f(err)
 }
 
 const (
-	invalidArg = "invalid argument: "
-	invalidOp  = "invalid operation: "
+	invalidArg	= "invalid argument: "
+	invalidOp	= "invalid operation: "
 )
 
 // newErrorf creates a new error_ for later reporting with check.report.
 func newErrorf(at positioner, code Code, format string, args ...any) *error_ {
 	return &error_{
-		desc: []errorDesc{{at, format, args}},
-		code: code,
+		desc:	[]errorDesc{{at, format, args}},
+		code:	code,
 	}
 }
 
 func (check *Checker) error(at positioner, code Code, msg string) {
-	check.report(newErrorf(at, code, msg))
+	check.report(newErrorf(at, code, "%s", msg))
 }
 
 func (check *Checker) errorf(at positioner, code Code, format string, args ...any) {
@@ -306,10 +316,10 @@ func (check *Checker) softErrorf(at positioner, code Code, format string, args .
 	check.report(err)
 }
 
-func (check *Checker) versionErrorf(at positioner, goVersion string, format string, args ...interface{}) {
+func (check *Checker) versionErrorf(at positioner, v goVersion, format string, args ...interface{}) {
 	msg := check.sprintf(format, args...)
 	var err *error_
-	err = newErrorf(at, UnsupportedFeature, "%s requires %s or later", msg, goVersion)
+	err = newErrorf(at, UnsupportedFeature, "%s requires %s or later", msg, v)
 	check.report(err)
 }
 
@@ -367,7 +377,7 @@ func spanOf(at positioner) posSpan {
 			pos := x.Pos()
 			return posSpan{pos, pos, x.expr.End()}
 		}
-		return posSpan{token.NoPos, token.NoPos, token.NoPos}
+		return posSpan{nopos, nopos, nopos}
 	default:
 		pos := at.Pos()
 		return posSpan{pos, pos, pos}
@@ -379,7 +389,7 @@ func stripAnnotations(s string) string {
 	var buf strings.Builder
 	for _, r := range s {
 		// strip #'s and subscript digits
-		if r < '₀' || '₀'+10 <= r { // '₀' == U+2080
+		if r < '₀' || '₀'+10 <= r {	// '₀' == U+2080
 			buf.WriteRune(r)
 		}
 	}

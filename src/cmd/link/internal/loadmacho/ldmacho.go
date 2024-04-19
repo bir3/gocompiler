@@ -45,155 +45,155 @@ THE SOFTWARE.
 
 // TODO(crawshaw): de-duplicate these symbols with cmd/link/internal/ld
 const (
-	MACHO_X86_64_RELOC_UNSIGNED = 0
-	MACHO_X86_64_RELOC_SIGNED   = 1
-	MACHO_ARM64_RELOC_ADDEND    = 10
+	MACHO_X86_64_RELOC_UNSIGNED	= 0
+	MACHO_X86_64_RELOC_SIGNED	= 1
+	MACHO_ARM64_RELOC_ADDEND	= 10
 )
 
 type ldMachoObj struct {
-	f          *bio.Reader
-	base       int64 // off in f where Mach-O begins
-	length     int64 // length of Mach-O
-	is64       bool
-	name       string
-	e          binary.ByteOrder
-	cputype    uint
-	subcputype uint
-	filetype   uint32
-	flags      uint32
-	cmd        []ldMachoCmd
-	ncmd       uint
+	f		*bio.Reader
+	base		int64	// off in f where Mach-O begins
+	length		int64	// length of Mach-O
+	is64		bool
+	name		string
+	e		binary.ByteOrder
+	cputype		uint
+	subcputype	uint
+	filetype	uint32
+	flags		uint32
+	cmd		[]ldMachoCmd
+	ncmd		uint
 }
 
 type ldMachoCmd struct {
-	type_ int
-	off   uint32
-	size  uint32
-	seg   ldMachoSeg
-	sym   ldMachoSymtab
-	dsym  ldMachoDysymtab
+	type_	int
+	off	uint32
+	size	uint32
+	seg	ldMachoSeg
+	sym	ldMachoSymtab
+	dsym	ldMachoDysymtab
 }
 
 type ldMachoSeg struct {
-	name     string
-	vmaddr   uint64
-	vmsize   uint64
-	fileoff  uint32
-	filesz   uint32
-	maxprot  uint32
-	initprot uint32
-	nsect    uint32
-	flags    uint32
-	sect     []ldMachoSect
+	name		string
+	vmaddr		uint64
+	vmsize		uint64
+	fileoff		uint32
+	filesz		uint32
+	maxprot		uint32
+	initprot	uint32
+	nsect		uint32
+	flags		uint32
+	sect		[]ldMachoSect
 }
 
 type ldMachoSect struct {
-	name    string
-	segname string
-	addr    uint64
-	size    uint64
-	off     uint32
-	align   uint32
-	reloff  uint32
-	nreloc  uint32
-	flags   uint32
-	res1    uint32
-	res2    uint32
-	sym     loader.Sym
-	rel     []ldMachoRel
+	name	string
+	segname	string
+	addr	uint64
+	size	uint64
+	off	uint32
+	align	uint32
+	reloff	uint32
+	nreloc	uint32
+	flags	uint32
+	res1	uint32
+	res2	uint32
+	sym	loader.Sym
+	rel	[]ldMachoRel
 }
 
 type ldMachoRel struct {
-	addr      uint32
-	symnum    uint32
-	pcrel     uint8
-	length    uint8
-	extrn     uint8
-	type_     uint8
-	scattered uint8
-	value     uint32
+	addr		uint32
+	symnum		uint32
+	pcrel		uint8
+	length		uint8
+	extrn		uint8
+	type_		uint8
+	scattered	uint8
+	value		uint32
 }
 
 type ldMachoSymtab struct {
-	symoff  uint32
-	nsym    uint32
-	stroff  uint32
-	strsize uint32
-	str     []byte
-	sym     []ldMachoSym
+	symoff	uint32
+	nsym	uint32
+	stroff	uint32
+	strsize	uint32
+	str	[]byte
+	sym	[]ldMachoSym
 }
 
 type ldMachoSym struct {
-	name    string
-	type_   uint8
-	sectnum uint8
-	desc    uint16
-	kind    int8
-	value   uint64
-	sym     loader.Sym
+	name	string
+	type_	uint8
+	sectnum	uint8
+	desc	uint16
+	kind	int8
+	value	uint64
+	sym	loader.Sym
 }
 
 type ldMachoDysymtab struct {
-	ilocalsym      uint32
-	nlocalsym      uint32
-	iextdefsym     uint32
-	nextdefsym     uint32
-	iundefsym      uint32
-	nundefsym      uint32
-	tocoff         uint32
-	ntoc           uint32
-	modtaboff      uint32
-	nmodtab        uint32
-	extrefsymoff   uint32
-	nextrefsyms    uint32
-	indirectsymoff uint32
-	nindirectsyms  uint32
-	extreloff      uint32
-	nextrel        uint32
-	locreloff      uint32
-	nlocrel        uint32
-	indir          []uint32
+	ilocalsym	uint32
+	nlocalsym	uint32
+	iextdefsym	uint32
+	nextdefsym	uint32
+	iundefsym	uint32
+	nundefsym	uint32
+	tocoff		uint32
+	ntoc		uint32
+	modtaboff	uint32
+	nmodtab		uint32
+	extrefsymoff	uint32
+	nextrefsyms	uint32
+	indirectsymoff	uint32
+	nindirectsyms	uint32
+	extreloff	uint32
+	nextrel		uint32
+	locreloff	uint32
+	nlocrel		uint32
+	indir		[]uint32
 }
 
 // ldMachoSym.type_
 const (
-	N_EXT  = 0x01
-	N_TYPE = 0x1e
-	N_STAB = 0xe0
+	N_EXT	= 0x01
+	N_TYPE	= 0x1e
+	N_STAB	= 0xe0
 )
 
 // ldMachoSym.desc
 const (
-	N_WEAK_REF = 0x40
-	N_WEAK_DEF = 0x80
+	N_WEAK_REF	= 0x40
+	N_WEAK_DEF	= 0x80
 )
 
 const (
-	LdMachoCpuVax         = 1
-	LdMachoCpu68000       = 6
-	LdMachoCpu386         = 7
-	LdMachoCpuAmd64       = 1<<24 | 7
-	LdMachoCpuMips        = 8
-	LdMachoCpu98000       = 10
-	LdMachoCpuHppa        = 11
-	LdMachoCpuArm         = 12
-	LdMachoCpuArm64       = 1<<24 | 12
-	LdMachoCpu88000       = 13
-	LdMachoCpuSparc       = 14
-	LdMachoCpu860         = 15
-	LdMachoCpuAlpha       = 16
-	LdMachoCpuPower       = 18
-	LdMachoCmdSegment     = 1
-	LdMachoCmdSymtab      = 2
-	LdMachoCmdSymseg      = 3
-	LdMachoCmdThread      = 4
-	LdMachoCmdDysymtab    = 11
-	LdMachoCmdSegment64   = 25
-	LdMachoFileObject     = 1
-	LdMachoFileExecutable = 2
-	LdMachoFileFvmlib     = 3
-	LdMachoFileCore       = 4
-	LdMachoFilePreload    = 5
+	LdMachoCpuVax		= 1
+	LdMachoCpu68000		= 6
+	LdMachoCpu386		= 7
+	LdMachoCpuAmd64		= 1<<24 | 7
+	LdMachoCpuMips		= 8
+	LdMachoCpu98000		= 10
+	LdMachoCpuHppa		= 11
+	LdMachoCpuArm		= 12
+	LdMachoCpuArm64		= 1<<24 | 12
+	LdMachoCpu88000		= 13
+	LdMachoCpuSparc		= 14
+	LdMachoCpu860		= 15
+	LdMachoCpuAlpha		= 16
+	LdMachoCpuPower		= 18
+	LdMachoCmdSegment	= 1
+	LdMachoCmdSymtab	= 2
+	LdMachoCmdSymseg	= 3
+	LdMachoCmdThread	= 4
+	LdMachoCmdDysymtab	= 11
+	LdMachoCmdSegment64	= 25
+	LdMachoFileObject	= 1
+	LdMachoFileExecutable	= 2
+	LdMachoFileFvmlib	= 3
+	LdMachoFileCore		= 4
+	LdMachoFilePreload	= 5
 )
 
 func unpackcmd(p []byte, m *ldMachoObj, c *ldMachoCmd, type_ uint, sz uint) int {
@@ -452,21 +452,21 @@ func Load(l *loader.Loader, arch *sys.Arch, localSymVersion int, f *bio.Reader, 
 	}
 
 	if is64 {
-		f.MustSeek(4, 1) // skip reserved word in header
+		f.MustSeek(4, 1)	// skip reserved word in header
 	}
 
 	m := &ldMachoObj{
-		f:          f,
-		e:          e,
-		cputype:    uint(e.Uint32(hdr[1*4:])),
-		subcputype: uint(e.Uint32(hdr[2*4:])),
-		filetype:   e.Uint32(hdr[3*4:]),
-		ncmd:       uint(ncmd),
-		flags:      e.Uint32(hdr[6*4:]),
-		is64:       is64,
-		base:       base,
-		length:     length,
-		name:       pn,
+		f:		f,
+		e:		e,
+		cputype:	uint(e.Uint32(hdr[1*4:])),
+		subcputype:	uint(e.Uint32(hdr[2*4:])),
+		filetype:	e.Uint32(hdr[3*4:]),
+		ncmd:		uint(ncmd),
+		flags:		e.Uint32(hdr[6*4:]),
+		is64:		is64,
+		base:		base,
+		length:		length,
+		name:		pn,
 	}
 
 	switch arch.Family {
@@ -563,7 +563,7 @@ func Load(l *loader.Loader, arch *sys.Arch, localSymVersion int, f *bio.Reader, 
 			return errorf("duplicate %s/%s", sect.segname, sect.name)
 		}
 
-		if sect.flags&0xff == 1 { // S_ZEROFILL
+		if sect.flags&0xff == 1 {	// S_ZEROFILL
 			bld.SetData(make([]byte, sect.size))
 		} else {
 			bld.SetReadOnly(readOnly)
@@ -615,7 +615,7 @@ func Load(l *loader.Loader, arch *sys.Arch, localSymVersion int, f *bio.Reader, 
 			l.SetAttrDuplicateOK(s, true)
 		}
 		machsym.sym = s
-		if machsym.sectnum == 0 { // undefined
+		if machsym.sectnum == 0 {	// undefined
 			continue
 		}
 		if uint32(machsym.sectnum) > c.seg.nsect {
@@ -626,7 +626,7 @@ func Load(l *loader.Loader, arch *sys.Arch, localSymVersion int, f *bio.Reader, 
 		bld := l.MakeSymbolUpdater(s)
 		outer := sect.sym
 		if outer == 0 {
-			continue // ignore reference to invalid section
+			continue	// ignore reference to invalid section
 		}
 
 		if osym := l.OuterSym(s); osym != 0 {
@@ -637,13 +637,13 @@ func Load(l *loader.Loader, arch *sys.Arch, localSymVersion int, f *bio.Reader, 
 		}
 
 		bld.SetType(l.SymType(outer))
-		if l.SymSize(outer) != 0 { // skip empty section (0-sized symbol)
+		if l.SymSize(outer) != 0 {	// skip empty section (0-sized symbol)
 			l.AddInteriorSym(outer, s)
 		}
 
 		bld.SetValue(int64(machsym.value - sect.addr))
 		if !l.AttrCgoExportDynamic(s) {
-			bld.SetDynimplib("") // satisfy dynimport
+			bld.SetDynimplib("")	// satisfy dynimport
 		}
 		if l.SymType(outer) == sym.STEXT {
 			if bld.External() && !bld.DuplicateOK() {
@@ -710,10 +710,10 @@ func Load(l *loader.Loader, arch *sys.Arch, localSymVersion int, f *bio.Reader, 
 		var rAdd int64
 		for j := uint32(0); j < sect.nreloc; j++ {
 			var (
-				rOff  int32
-				rSize uint8
-				rType objabi.RelocType
-				rSym  loader.Sym
+				rOff	int32
+				rSize	uint8
+				rType	objabi.RelocType
+				rSym	loader.Sym
 			)
 			rel := &sect.rel[j]
 			if rel.scattered != 0 {
@@ -724,7 +724,7 @@ func Load(l *loader.Loader, arch *sys.Arch, localSymVersion int, f *bio.Reader, 
 
 			if arch.Family == sys.ARM64 && rel.type_ == MACHO_ARM64_RELOC_ADDEND {
 				// Two relocations. This addend will be applied to the next one.
-				rAdd = int64(rel.symnum) << 40 >> 40 // convert unsigned 24-bit to signed 24-bit
+				rAdd = int64(rel.symnum) << 40 >> 40	// convert unsigned 24-bit to signed 24-bit
 				continue
 			}
 
@@ -788,7 +788,7 @@ func Load(l *loader.Loader, arch *sys.Arch, localSymVersion int, f *bio.Reader, 
 			r.SetSym(rSym)
 			r.SetAdd(rAdd)
 
-			rAdd = 0 // clear rAdd for next iteration
+			rAdd = 0	// clear rAdd for next iteration
 		}
 
 		sb.SortRelocs()

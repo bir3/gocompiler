@@ -99,24 +99,24 @@ import (
 
 var (
 	// main operation modes
-	testFiles  = flag.Bool("t", false, "include in-package test files in a directory")
-	xtestFiles = flag.Bool("x", false, "consider only external test files in a directory")
-	allErrors  = flag.Bool("e", false, "report all errors, not just the first 10")
-	verbose    = flag.Bool("v", false, "verbose mode")
-	compiler   = flag.String("c", "source", "compiler used for installed packages (gc, gccgo, or source)")
+	testFiles	= flag.Bool("t", false, "include in-package test files in a directory")
+	xtestFiles	= flag.Bool("x", false, "consider only external test files in a directory")
+	allErrors	= flag.Bool("e", false, "report all errors, not just the first 10")
+	verbose		= flag.Bool("v", false, "verbose mode")
+	compiler	= flag.String("c", "source", "compiler used for installed packages (gc, gccgo, or source)")
 
 	// additional output control
-	printAST      = flag.Bool("ast", false, "print AST")
-	printTrace    = flag.Bool("trace", false, "print parse trace")
-	parseComments = flag.Bool("comments", false, "parse comments (ignored unless -ast or -trace is provided)")
-	panicOnError  = flag.Bool("panic", false, "panic on first error")
+	printAST	= flag.Bool("ast", false, "print AST")
+	printTrace	= flag.Bool("trace", false, "print parse trace")
+	parseComments	= flag.Bool("comments", false, "parse comments (ignored unless -ast or -trace is provided)")
+	panicOnError	= flag.Bool("panic", false, "panic on first error")
 )
 
 var (
-	fset       = token.NewFileSet()
-	errorCount = 0
-	sequential = false
-	parserMode parser.Mode
+	fset		= token.NewFileSet()
+	errorCount	= 0
+	sequential	= false
+	parserMode	parser.Mode
 )
 
 func initParserMode() {
@@ -185,7 +185,7 @@ func parse(filename string, src any) (*ast.File, error) {
 	if *verbose {
 		fmt.Println(filename)
 	}
-	file, err := parser.ParseFile(fset, filename, src, parserMode) // ok to access fset concurrently
+	file, err := parser.ParseFile(fset, filename, src, parserMode)	// ok to access fset concurrently
 	if *printAST {
 		ast.Print(fset, file)
 	}
@@ -292,15 +292,15 @@ func checkPkgFiles(files []*ast.File) {
 
 	// if checkPkgFiles is called multiple times, set up conf only once
 	conf := types.Config{
-		FakeImportC: true,
+		FakeImportC:	true,
 		Error: func(err error) {
 			if !*allErrors && errorCount >= 10 {
 				panic(bailout{})
 			}
 			report(err)
 		},
-		Importer: importer.ForCompiler(fset, *compiler, nil),
-		Sizes:    types.SizesFor(build.Default.Compiler, build.Default.GOARCH),
+		Importer:	importer.ForCompiler(fset, *compiler, nil),
+		Sizes:		types.SizesFor(build.Default.Compiler, build.Default.GOARCH),
 	}
 
 	defer func() {
@@ -313,7 +313,7 @@ func checkPkgFiles(files []*ast.File) {
 		}
 	}()
 
-	const path = "pkg" // any non-empty string will do for now
+	const path = "pkg"	// any non-empty string will do for now
 	conf.Check(path, fset, files, nil)
 }
 

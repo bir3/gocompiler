@@ -12,7 +12,7 @@ import (
 	"fmt"
 	"log"
 	"os"
-	"os/exec"
+	"github.com/bir3/gocompiler/exec"
 	"path/filepath"
 	"strings"
 
@@ -35,7 +35,7 @@ import (
 // implementation. It is also used by tests.
 //
 // The default behavior (vetTool=="") runs 'go tool vet'.
-var vetTool string // -vettool
+var vetTool string	// -vettool
 
 func init() {
 	work.AddBuildFlags(CmdVet, work.DefaultBuildFlags)
@@ -86,9 +86,9 @@ func vetFlags(args []string) (passToVet, packageNames []string) {
 		base.Exit()
 	}
 	var analysisFlags []struct {
-		Name  string
-		Bool  bool
-		Usage string
+		Name	string
+		Bool	bool
+		Usage	string
 	}
 	if err := json.Unmarshal(out.Bytes(), &analysisFlags); err != nil {
 		fmt.Fprintf(os.Stderr, "go: can't unmarshal JSON from %s -flags: %v", tool, err)

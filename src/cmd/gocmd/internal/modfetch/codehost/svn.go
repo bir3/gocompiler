@@ -6,20 +6,24 @@ package codehost
 
 import (
 	"archive/zip"
+	"context"
 	"encoding/xml"
 	"fmt"
 	"io"
 	"os"
 	"path"
 	"path/filepath"
+	"strconv"
 	"time"
+
+	"github.com/bir3/gocompiler/src/cmd/gocmd/internal/base"
 )
 
 func svnParseStat(rev, out string) (*RevInfo, error) {
 	var log struct {
 		Logentry struct {
-			Revision int64  `xml:"revision,attr"`
-			Date     string `xml:"date"`
+			Revision	int64	`xml:"revision,attr"`
+			Date		string	`xml:"date"`
 		} `xml:"logentry"`
 	}
 	if err := xml.Unmarshal([]byte(out), &log); err != nil {
@@ -32,15 +36,15 @@ func svnParseStat(rev, out string) (*RevInfo, error) {
 	}
 
 	info := &RevInfo{
-		Name:    fmt.Sprintf("%d", log.Logentry.Revision),
-		Short:   fmt.Sprintf("%012d", log.Logentry.Revision),
-		Time:    t.UTC(),
-		Version: rev,
+		Name:		strconv.FormatInt(log.Logentry.Revision, 10),
+		Short:		fmt.Sprintf("%012d", log.Logentry.Revision),
+		Time:		t.UTC(),
+		Version:	rev,
 	}
 	return info, nil
 }
 
-func svnReadZip(dst io.Writer, workDir, rev, subdir, remote string) (err error) {
+func svnReadZip(ctx context.Context, dst io.Writer, workDir, rev, subdir, remote string) (err error) {
 	// The subversion CLI doesn't provide a command to write the repository
 	// directly to an archive, so we need to export it to the local filesystem
 	// instead. Unfortunately, the local filesystem might apply arbitrary
@@ -64,7 +68,11 @@ func svnReadZip(dst io.Writer, workDir, rev, subdir, remote string) (err error) 
 		remotePath += "/" + subdir
 	}
 
-	out, err := Run(workDir, []string{
+	release, err := base.AcquireNet()
+	if err != nil {
+		return err
+	}
+	out, err := Run(ctx, workDir, []string{
 		"svn", "list",
 		"--non-interactive",
 		"--xml",
@@ -73,14 +81,15 @@ func svnReadZip(dst io.Writer, workDir, rev, subdir, remote string) (err error) 
 		"--revision", rev,
 		"--", remotePath,
 	})
+	release()
 	if err != nil {
 		return err
 	}
 
 	type listEntry struct {
-		Kind string `xml:"kind,attr"`
-		Name string `xml:"name"`
-		Size int64  `xml:"size"`
+		Kind	string	`xml:"kind,attr"`
+		Name	string	`xml:"name"`
+		Size	int64	`xml:"size"`
 	}
 	var list struct {
 		Entries []listEntry `xml:"entry"`
@@ -94,9 +103,13 @@ func svnReadZip(dst io.Writer, workDir, rev, subdir, remote string) (err error) 
 	if err := os.RemoveAll(exportDir); err != nil {
 		return err
 	}
-	defer os.RemoveAll(exportDir) // best-effort
+	defer os.RemoveAll(exportDir)	// best-effort
 
-	_, err = Run(workDir, []string{
+	release, err = base.AcquireNet()
+	if err != nil {
+		return err
+	}
+	_, err = Run(ctx, workDir, []string{
 		"svn", "export",
 		"--non-interactive",
 		"--quiet",
@@ -110,6 +123,7 @@ func svnReadZip(dst io.Writer, workDir, rev, subdir, remote string) (err error) 
 		"--", remotePath,
 		exportDir,
 	})
+	release()
 	if err != nil {
 		return err
 	}

@@ -13,11 +13,11 @@ import (
 )
 
 type builder struct {
-	cfg       *CFG
-	mayReturn func(*ast.CallExpr) bool
-	current   *Block
-	lblocks   map[*ast.Object]*lblock // labeled blocks
-	targets   *targets                // linked stack of branch targets
+	cfg		*CFG
+	mayReturn	func(*ast.CallExpr) bool
+	current		*Block
+	lblocks		map[*ast.Object]*lblock	// labeled blocks
+	targets		*targets		// linked stack of branch targets
 }
 
 func (b *builder) stmt(_s ast.Stmt) {
@@ -61,7 +61,7 @@ start:
 		b.jump(label._goto)
 		b.current = label._goto
 		_s = s.Stmt
-		goto start // effectively: tailcall stmt(g, s.Stmt, label)
+		goto start	// effectively: tailcall stmt(g, s.Stmt, label)
 
 	case *ast.ReturnStmt:
 		b.add(s)
@@ -188,7 +188,7 @@ func (b *builder) switchStmt(s *ast.SwitchStmt, label *lblock) {
 	for i, clause := range s.Body.List {
 		body := fallthru
 		if body == nil {
-			body = b.newBlock("switch.body") // first case only
+			body = b.newBlock("switch.body")	// first case only
 		}
 
 		// Preallocate body block for the next case.
@@ -209,15 +209,15 @@ func (b *builder) switchStmt(s *ast.SwitchStmt, label *lblock) {
 		var nextCond *Block
 		for _, cond := range cc.List {
 			nextCond = b.newBlock("switch.next")
-			b.add(cond) // one half of the tag==cond condition
+			b.add(cond)	// one half of the tag==cond condition
 			b.ifelse(body, nextCond)
 			b.current = nextCond
 		}
 		b.current = body
 		b.targets = &targets{
-			tail:         b.targets,
-			_break:       done,
-			_fallthrough: fallthru,
+			tail:		b.targets,
+			_break:		done,
+			_fallthrough:	fallthru,
 		}
 		b.stmtList(cc.Body)
 		b.targets = b.targets.tail
@@ -228,9 +228,9 @@ func (b *builder) switchStmt(s *ast.SwitchStmt, label *lblock) {
 		b.jump(defaultBlock)
 		b.current = defaultBlock
 		b.targets = &targets{
-			tail:         b.targets,
-			_break:       done,
-			_fallthrough: defaultFallthrough,
+			tail:		b.targets,
+			_break:		done,
+			_fallthrough:	defaultFallthrough,
 		}
 		b.stmtList(*defaultBody)
 		b.targets = b.targets.tail
@@ -283,8 +283,8 @@ func (b *builder) typeSwitchStmt(s *ast.TypeSwitchStmt, label *lblock) {
 
 func (b *builder) typeCaseBody(cc *ast.CaseClause, done *Block) {
 	b.targets = &targets{
-		tail:   b.targets,
-		_break: done,
+		tail:	b.targets,
+		_break:	done,
 	}
 	b.stmtList(cc.Body)
 	b.targets = b.targets.tail
@@ -317,13 +317,13 @@ func (b *builder) selectStmt(s *ast.SelectStmt, label *lblock) {
 		b.ifelse(body, next)
 		b.current = body
 		b.targets = &targets{
-			tail:   b.targets,
-			_break: done,
+			tail:	b.targets,
+			_break:	done,
 		}
 		switch comm := clause.Comm.(type) {
-		case *ast.ExprStmt: // <-ch
+		case *ast.ExprStmt:	// <-ch
 			// nop
-		case *ast.AssignStmt: // x := <-states[state].Chan
+		case *ast.AssignStmt:	// x := <-states[state].Chan
 			b.add(comm.Lhs[0])
 		}
 		b.stmtList(clause.Body)
@@ -333,8 +333,8 @@ func (b *builder) selectStmt(s *ast.SelectStmt, label *lblock) {
 	}
 	if defaultBody != nil {
 		b.targets = &targets{
-			tail:   b.targets,
-			_break: done,
+			tail:	b.targets,
+			_break:	done,
 		}
 		b.stmtList(*defaultBody)
 		b.targets = b.targets.tail
@@ -359,12 +359,12 @@ func (b *builder) forStmt(s *ast.ForStmt, label *lblock) {
 		b.stmt(s.Init)
 	}
 	body := b.newBlock("for.body")
-	done := b.newBlock("for.done") // target of 'break'
-	loop := body                   // target of back-edge
+	done := b.newBlock("for.done")	// target of 'break'
+	loop := body			// target of back-edge
 	if s.Cond != nil {
 		loop = b.newBlock("for.loop")
 	}
-	cont := loop // target of 'continue'
+	cont := loop	// target of 'continue'
 	if s.Post != nil {
 		cont = b.newBlock("for.post")
 	}
@@ -380,9 +380,9 @@ func (b *builder) forStmt(s *ast.ForStmt, label *lblock) {
 		b.current = body
 	}
 	b.targets = &targets{
-		tail:      b.targets,
-		_break:    done,
-		_continue: cont,
+		tail:		b.targets,
+		_break:		done,
+		_continue:	cont,
 	}
 	b.stmt(s.Body)
 	b.targets = b.targets.tail
@@ -391,7 +391,7 @@ func (b *builder) forStmt(s *ast.ForStmt, label *lblock) {
 	if s.Post != nil {
 		b.current = cont
 		b.stmt(s.Post)
-		b.jump(loop) // back-edge
+		b.jump(loop)	// back-edge
 	}
 	b.current = done
 }
@@ -428,13 +428,13 @@ func (b *builder) rangeStmt(s *ast.RangeStmt, label *lblock) {
 		label._continue = loop
 	}
 	b.targets = &targets{
-		tail:      b.targets,
-		_break:    done,
-		_continue: loop,
+		tail:		b.targets,
+		_break:		done,
+		_continue:	loop,
 	}
 	b.stmt(s.Body)
 	b.targets = b.targets.tail
-	b.jump(loop) // back-edge
+	b.jump(loop)	// back-edge
 	b.current = done
 }
 
@@ -444,19 +444,19 @@ func (b *builder) rangeStmt(s *ast.RangeStmt, label *lblock) {
 // We push/pop one of these as we enter/leave each construct and for
 // each BranchStmt we scan for the innermost target of the right type.
 type targets struct {
-	tail         *targets // rest of stack
-	_break       *Block
-	_continue    *Block
-	_fallthrough *Block
+	tail		*targets	// rest of stack
+	_break		*Block
+	_continue	*Block
+	_fallthrough	*Block
 }
 
 // Destinations associated with a labeled block.
 // We populate these as labels are encountered in forward gotos or
 // labeled statements.
 type lblock struct {
-	_goto     *Block
-	_break    *Block
-	_continue *Block
+	_goto		*Block
+	_break		*Block
+	_continue	*Block
 }
 
 // labeledBlock returns the branch target associated with the
@@ -480,8 +480,8 @@ func (b *builder) labeledBlock(label *ast.Ident) *lblock {
 func (b *builder) newBlock(comment string) *Block {
 	g := b.cfg
 	block := &Block{
-		Index:   int32(len(g.Blocks)),
-		comment: comment,
+		Index:		int32(len(g.Blocks)),
+		comment:	comment,
 	}
 	block.Succs = block.succs2[:0]
 	g.Blocks = append(g.Blocks, block)

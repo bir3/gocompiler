@@ -60,15 +60,15 @@ var (
 // setting MaxLoopPad = 0. The code is here for reference and
 // for future experiments.
 const (
-	loopAlign  = 16
-	maxLoopPad = 0
+	loopAlign	= 16
+	maxLoopPad	= 0
 )
 
 // Bit flags that are used to express jump target properties.
 const (
 	// branchBackwards marks targets that are located behind.
 	// Used to express jumps to loop headers.
-	branchBackwards = (1 << iota)
+	branchBackwards	= (1 << iota)
 	// branchShort marks branches those target is close,
 	// with offset is in -128..127 range.
 	branchShort
@@ -85,30 +85,30 @@ const (
 type opBytes [31]uint8
 
 type Optab struct {
-	as     obj.As
-	ytab   []ytab
-	prefix uint8
-	op     opBytes
+	as	obj.As
+	ytab	[]ytab
+	prefix	uint8
+	op	opBytes
 }
 
 type movtab struct {
-	as   obj.As
-	ft   uint8
-	f3t  uint8
-	tt   uint8
-	code uint8
-	op   [4]uint8
+	as	obj.As
+	ft	uint8
+	f3t	uint8
+	tt	uint8
+	code	uint8
+	op	[4]uint8
 }
 
 const (
-	Yxxx = iota
+	Yxxx	= iota
 	Ynone
-	Yi0 // $0
-	Yi1 // $1
-	Yu2 // $x, x fits in uint2
-	Yi8 // $x, x fits in int8
-	Yu8 // $x, x fits in uint8
-	Yu7 // $x, x in 0..127 (fits in both int8 and uint8)
+	Yi0	// $0
+	Yi1	// $1
+	Yu2	// $x, x fits in uint2
+	Yi8	// $x, x fits in int8
+	Yu8	// $x, x fits in uint8
+	Yu7	// $x, x in 0..127 (fits in both int8 and uint8)
 	Ys32
 	Yi32
 	Yi64
@@ -119,7 +119,7 @@ const (
 	Ycx
 	Yrb
 	Yrl
-	Yrl32 // Yrl on 32-bit system
+	Yrl32	// Yrl on 32-bit system
 	Yrf
 	Yf0
 	Yrx
@@ -165,29 +165,29 @@ const (
 	Ytr7
 	Ymr
 	Ymm
-	Yxr0          // X0 only. "<XMM0>" notation in Intel manual.
-	YxrEvexMulti4 // [ X<n> - X<n+3> ]; multisource YxrEvex
-	Yxr           // X0..X15
-	YxrEvex       // X0..X31
+	Yxr0		// X0 only. "<XMM0>" notation in Intel manual.
+	YxrEvexMulti4	// [ X<n> - X<n+3> ]; multisource YxrEvex
+	Yxr		// X0..X15
+	YxrEvex		// X0..X31
 	Yxm
-	YxmEvex       // YxrEvex+Ym
-	Yxvm          // VSIB vector array; vm32x/vm64x
-	YxvmEvex      // Yxvm which permits High-16 X register as index.
-	YyrEvexMulti4 // [ Y<n> - Y<n+3> ]; multisource YyrEvex
-	Yyr           // Y0..Y15
-	YyrEvex       // Y0..Y31
+	YxmEvex		// YxrEvex+Ym
+	Yxvm		// VSIB vector array; vm32x/vm64x
+	YxvmEvex	// Yxvm which permits High-16 X register as index.
+	YyrEvexMulti4	// [ Y<n> - Y<n+3> ]; multisource YyrEvex
+	Yyr		// Y0..Y15
+	YyrEvex		// Y0..Y31
 	Yym
-	YymEvex   // YyrEvex+Ym
-	Yyvm      // VSIB vector array; vm32y/vm64y
-	YyvmEvex  // Yyvm which permits High-16 Y register as index.
-	YzrMulti4 // [ Z<n> - Z<n+3> ]; multisource YzrEvex
-	Yzr       // Z0..Z31
-	Yzm       // Yzr+Ym
-	Yzvm      // VSIB vector array; vm32z/vm64z
-	Yk0       // K0
-	Yknot0    // K1..K7; write mask
-	Yk        // K0..K7; used for KOP
-	Ykm       // Yk+Ym; used for KOP
+	YymEvex		// YyrEvex+Ym
+	Yyvm		// VSIB vector array; vm32y/vm64y
+	YyvmEvex	// Yyvm which permits High-16 Y register as index.
+	YzrMulti4	// [ Z<n> - Z<n+3> ]; multisource YzrEvex
+	Yzr		// Z0..Z31
+	Yzm		// Yzr+Ym
+	Yzvm		// VSIB vector array; vm32z/vm64z
+	Yk0		// K0
+	Yknot0		// K1..K7; write mask
+	Yk		// K0..K7; used for KOP
+	Ykm		// Yk+Ym; used for KOP
 	Ytls
 	Ytextsize
 	Yindir
@@ -195,7 +195,7 @@ const (
 )
 
 const (
-	Zxxx = iota
+	Zxxx	= iota
 	Zlit
 	Zlitm_r
 	Zlitr_m
@@ -227,7 +227,7 @@ const (
 	Zm_r_i_xm
 	Zm_r_xm_nr
 	Zr_m_xm_nr
-	Zibm_r // mmx1,mmx2/mem64,imm8
+	Zibm_r	// mmx1,mmx2/mem64,imm8
 	Zibr_m
 	Zmb_r
 	Zaut_r
@@ -280,34 +280,34 @@ const (
 )
 
 const (
-	Px   = 0
-	Px1  = 1    // symbolic; exact value doesn't matter
-	P32  = 0x32 // 32-bit only
-	Pe   = 0x66 // operand escape
-	Pm   = 0x0f // 2byte opcode escape
-	Pq   = 0xff // both escapes: 66 0f
-	Pb   = 0xfe // byte operands
-	Pf2  = 0xf2 // xmm escape 1: f2 0f
-	Pf3  = 0xf3 // xmm escape 2: f3 0f
-	Pef3 = 0xf5 // xmm escape 2 with 16-bit prefix: 66 f3 0f
-	Pq3  = 0x67 // xmm escape 3: 66 48 0f
-	Pq4  = 0x68 // xmm escape 4: 66 0F 38
-	Pq4w = 0x69 // Pq4 with Rex.w 66 0F 38
-	Pq5  = 0x6a // xmm escape 5: F3 0F 38
-	Pq5w = 0x6b // Pq5 with Rex.w F3 0F 38
-	Pfw  = 0xf4 // Pf3 with Rex.w: f3 48 0f
-	Pw   = 0x48 // Rex.w
-	Pw8  = 0x90 // symbolic; exact value doesn't matter
-	Py   = 0x80 // defaults to 64-bit mode
-	Py1  = 0x81 // symbolic; exact value doesn't matter
-	Py3  = 0x83 // symbolic; exact value doesn't matter
-	Pavx = 0x84 // symbolic: exact value doesn't matter
+	Px	= 0
+	Px1	= 1	// symbolic; exact value doesn't matter
+	P32	= 0x32	// 32-bit only
+	Pe	= 0x66	// operand escape
+	Pm	= 0x0f	// 2byte opcode escape
+	Pq	= 0xff	// both escapes: 66 0f
+	Pb	= 0xfe	// byte operands
+	Pf2	= 0xf2	// xmm escape 1: f2 0f
+	Pf3	= 0xf3	// xmm escape 2: f3 0f
+	Pef3	= 0xf5	// xmm escape 2 with 16-bit prefix: 66 f3 0f
+	Pq3	= 0x67	// xmm escape 3: 66 48 0f
+	Pq4	= 0x68	// xmm escape 4: 66 0F 38
+	Pq4w	= 0x69	// Pq4 with Rex.w 66 0F 38
+	Pq5	= 0x6a	// xmm escape 5: F3 0F 38
+	Pq5w	= 0x6b	// Pq5 with Rex.w F3 0F 38
+	Pfw	= 0xf4	// Pf3 with Rex.w: f3 48 0f
+	Pw	= 0x48	// Rex.w
+	Pw8	= 0x90	// symbolic; exact value doesn't matter
+	Py	= 0x80	// defaults to 64-bit mode
+	Py1	= 0x81	// symbolic; exact value doesn't matter
+	Py3	= 0x83	// symbolic; exact value doesn't matter
+	Pavx	= 0x84	// symbolic; exact value doesn't matter
 
-	RxrEvex = 1 << 4 // AVX512 extension to REX.R/VEX.R
-	Rxw     = 1 << 3 // =1, 64-bit operand size
-	Rxr     = 1 << 2 // extend modrm reg
-	Rxx     = 1 << 1 // extend sib index
-	Rxb     = 1 << 0 // extend modrm r/m, sib base, or opcode reg
+	RxrEvex	= 1 << 4	// AVX512 extension to REX.R/VEX.R
+	Rxw	= 1 << 3	// =1, 64-bit operand size
+	Rxr	= 1 << 2	// extend modrm reg
+	Rxx	= 1 << 1	// extend sib index
+	Rxb	= 1 << 0	// extend modrm r/m, sib base, or opcode reg
 )
 
 const (
@@ -321,25 +321,25 @@ const (
 
 	// Using spare bit to make leading [E]VEX encoding byte different from
 	// 0x0f even if all other VEX fields are 0.
-	avxEscape = 1 << 6
+	avxEscape	= 1 << 6
 
 	// P field - 2 bits
-	vex66 = 1 << 0
-	vexF3 = 2 << 0
-	vexF2 = 3 << 0
+	vex66	= 1 << 0
+	vexF3	= 2 << 0
+	vexF2	= 3 << 0
 	// L field - 1 bit
-	vexLZ  = 0 << 2
-	vexLIG = 0 << 2
-	vex128 = 0 << 2
-	vex256 = 1 << 2
+	vexLZ	= 0 << 2
+	vexLIG	= 0 << 2
+	vex128	= 0 << 2
+	vex256	= 1 << 2
 	// W field - 1 bit
-	vexWIG = 0 << 7
-	vexW0  = 0 << 7
-	vexW1  = 1 << 7
+	vexWIG	= 0 << 7
+	vexW0	= 0 << 7
+	vexW1	= 1 << 7
 	// M field - 5 bits, but mostly reserved; we can store up to 3
-	vex0F   = 1 << 3
-	vex0F38 = 2 << 3
-	vex0F3A = 3 << 3
+	vex0F	= 1 << 3
+	vex0F38	= 2 << 3
+	vex0F3A	= 3 << 3
 )
 
 var ycover [Ymax * Ymax]uint8
@@ -461,10 +461,10 @@ var ymovl = []ytab{
 	{Zm_r, 1, argList{Yml, Yrl}},
 	{Zil_rp, 1, argList{Yi32, Yrl}},
 	{Zilo_m, 2, argList{Yi32, Yml}},
-	{Zm_r_xm, 1, argList{Yml, Ymr}}, // MMX MOVD
-	{Zr_m_xm, 1, argList{Ymr, Yml}}, // MMX MOVD
-	{Zm_r_xm, 2, argList{Yml, Yxr}}, // XMM MOVD (32 bit)
-	{Zr_m_xm, 2, argList{Yxr, Yml}}, // XMM MOVD (32 bit)
+	{Zm_r_xm, 1, argList{Yml, Ymr}},	// MMX MOVD
+	{Zr_m_xm, 1, argList{Ymr, Yml}},	// MMX MOVD
+	{Zm_r_xm, 2, argList{Yml, Yxr}},	// XMM MOVD (32 bit)
+	{Zr_m_xm, 2, argList{Yxr, Yml}},	// XMM MOVD (32 bit)
 	{Zaut_r, 2, argList{Yiauto, Yrl}},
 }
 
@@ -475,23 +475,23 @@ var yret = []ytab{
 
 var ymovq = []ytab{
 	// valid in 32-bit mode
-	{Zm_r_xm_nr, 1, argList{Ym, Ymr}},  // 0x6f MMX MOVQ (shorter encoding)
-	{Zr_m_xm_nr, 1, argList{Ymr, Ym}},  // 0x7f MMX MOVQ
-	{Zm_r_xm_nr, 2, argList{Yxr, Ymr}}, // Pf2, 0xd6 MOVDQ2Q
-	{Zm_r_xm_nr, 2, argList{Yxm, Yxr}}, // Pf3, 0x7e MOVQ xmm1/m64 -> xmm2
-	{Zr_m_xm_nr, 2, argList{Yxr, Yxm}}, // Pe, 0xd6 MOVQ xmm1 -> xmm2/m64
+	{Zm_r_xm_nr, 1, argList{Ym, Ymr}},	// 0x6f MMX MOVQ (shorter encoding)
+	{Zr_m_xm_nr, 1, argList{Ymr, Ym}},	// 0x7f MMX MOVQ
+	{Zm_r_xm_nr, 2, argList{Yxr, Ymr}},	// Pf2, 0xd6 MOVDQ2Q
+	{Zm_r_xm_nr, 2, argList{Yxm, Yxr}},	// Pf3, 0x7e MOVQ xmm1/m64 -> xmm2
+	{Zr_m_xm_nr, 2, argList{Yxr, Yxm}},	// Pe, 0xd6 MOVQ xmm1 -> xmm2/m64
 
 	// valid only in 64-bit mode, usually with 64-bit prefix
-	{Zr_m, 1, argList{Yrl, Yml}},      // 0x89
-	{Zm_r, 1, argList{Yml, Yrl}},      // 0x8b
-	{Zilo_m, 2, argList{Ys32, Yrl}},   // 32 bit signed 0xc7,(0)
-	{Ziq_rp, 1, argList{Yi64, Yrl}},   // 0xb8 -- 32/64 bit immediate
-	{Zilo_m, 2, argList{Yi32, Yml}},   // 0xc7,(0)
-	{Zm_r_xm, 1, argList{Ymm, Ymr}},   // 0x6e MMX MOVD
-	{Zr_m_xm, 1, argList{Ymr, Ymm}},   // 0x7e MMX MOVD
-	{Zm_r_xm, 2, argList{Yml, Yxr}},   // Pe, 0x6e MOVD xmm load
-	{Zr_m_xm, 2, argList{Yxr, Yml}},   // Pe, 0x7e MOVD xmm store
-	{Zaut_r, 1, argList{Yiauto, Yrl}}, // 0 built-in LEAQ
+	{Zr_m, 1, argList{Yrl, Yml}},		// 0x89
+	{Zm_r, 1, argList{Yml, Yrl}},		// 0x8b
+	{Zilo_m, 2, argList{Ys32, Yrl}},	// 32 bit signed 0xc7,(0)
+	{Ziq_rp, 1, argList{Yi64, Yrl}},	// 0xb8 -- 32/64 bit immediate
+	{Zilo_m, 2, argList{Yi32, Yml}},	// 0xc7,(0)
+	{Zm_r_xm, 1, argList{Ymm, Ymr}},	// 0x6e MMX MOVD
+	{Zr_m_xm, 1, argList{Ymr, Ymm}},	// 0x7e MMX MOVD
+	{Zm_r_xm, 2, argList{Yml, Yxr}},	// Pe, 0x6e MOVD xmm load
+	{Zr_m_xm, 2, argList{Yxr, Yml}},	// Pe, 0x7e MOVD xmm store
+	{Zaut_r, 1, argList{Yiauto, Yrl}},	// 0 built-in LEAQ
 }
 
 var ymovbe = []ytab{
@@ -669,7 +669,7 @@ var yfxch = []ytab{
 }
 
 var ycompp = []ytab{
-	{Zo_m, 2, argList{Yf0, Yrf}}, // botch is really f0,f1
+	{Zo_m, 2, argList{Yf0, Yrf}},	// botch is really f0,f1
 }
 
 var ystsw = []ytab{
@@ -775,7 +775,7 @@ var ymshufb = []ytab{
 }
 
 // It should never have more than 1 entry,
-// because some optab entries you opcode secuences that
+// because some optab entries have opcode sequences that
 // are longer than 2 bytes (zoffset=2 here),
 // ROUNDPD and ROUNDPS and recently added BLENDPD,
 // to name a few.
@@ -1097,7 +1097,7 @@ var optab =
 	{ADPPS, yxshuf, Pq, opBytes{0x3a, 0x40, 0}},
 	{AEMMS, ynone, Pm, opBytes{0x77}},
 	{AEXTRACTPS, yextractps, Pq, opBytes{0x3a, 0x17, 0}},
-	{AENTER, nil, 0, opBytes{}}, // botch
+	{AENTER, nil, 0, opBytes{}},	// botch
 	{AFXRSTOR, ysvrs_mo, Pm, opBytes{0xae, 01, 0xae, 01}},
 	{AFXSAVE, ysvrs_om, Pm, opBytes{0xae, 00, 0xae, 00}},
 	{AFXRSTOR64, ysvrs_mo, Pw, opBytes{0x0f, 0xae, 01, 0x0f, 0xae, 01}},
@@ -1254,7 +1254,7 @@ var optab =
 	{ANEGW, yscond, Pe, opBytes{0xf7, 03}},
 	{obj.ANOP, ynop, Px, opBytes{0, 0}},
 	{ANOTB, yscond, Pb, opBytes{0xf6, 02}},
-	{ANOTL, yscond, Px, opBytes{0xf7, 02}}, // TODO(rsc): yscond is wrong here.
+	{ANOTL, yscond, Px, opBytes{0xf7, 02}},	// TODO(rsc): yscond is wrong here.
 	{ANOTQ, yscond, Pw, opBytes{0xf7, 02}},
 	{ANOTW, yscond, Pe, opBytes{0xf7, 02}},
 	{AORB, yxorb, Pb, opBytes{0x0c, 0x80, 01, 0x08, 0x0a}},
@@ -1434,7 +1434,7 @@ var optab =
 	{ARORW, yshl, Pe, opBytes{0xd1, 01, 0xc1, 01, 0xd3, 01, 0xd3, 01}},
 	{ARSQRTPS, yxm, Pm, opBytes{0x52}},
 	{ARSQRTSS, yxm, Pf3, opBytes{0x52}},
-	{ASAHF, ynone, Px, opBytes{0x9e, 00, 0x86, 0xe0, 0x50, 0x9d}}, // XCHGB AH,AL; PUSH AX; POPFL
+	{ASAHF, ynone, Px, opBytes{0x9e, 00, 0x86, 0xe0, 0x50, 0x9d}},	// XCHGB AH,AL; PUSH AX; POPFL
 	{ASALB, yshb, Pb, opBytes{0xd0, 04, 0xc0, 04, 0xd2, 04}},
 	{ASALL, yshl, Px, opBytes{0xd1, 04, 0xc1, 04, 0xd3, 04, 0xd3, 04}},
 	{ASALQ, yshl, Pw, opBytes{0xd1, 04, 0xc1, 04, 0xd3, 04, 0xd3, 04}},
@@ -1498,7 +1498,7 @@ var optab =
 	{ASUBSS, yxm, Pf3, opBytes{0x5c}},
 	{ASUBW, yaddl, Pe, opBytes{0x83, 05, 0x2d, 0x81, 05, 0x29, 0x2b}},
 	{ASWAPGS, ynone, Pm, opBytes{0x01, 0xf8}},
-	{ASYSCALL, ynone, Px, opBytes{0x0f, 0x05}}, // fast syscall
+	{ASYSCALL, ynone, Px, opBytes{0x0f, 0x05}},	// fast syscall
 	{ATESTB, yxorb, Pb, opBytes{0xa8, 0xf6, 00, 0x84, 0x84}},
 	{ATESTL, ytestl, Px, opBytes{0xa9, 0xf7, 00, 0x85, 0x85}},
 	{ATESTQ, ytestl, Pw, opBytes{0xa9, 0xf7, 00, 0x85, 0x85}},
@@ -1555,8 +1555,8 @@ var optab =
 	{AFCMOVNU, yfcmv, Px, opBytes{0xdb, 03}},
 	{AFCMOVU, yfcmv, Px, opBytes{0xda, 03}},
 	{AFCMOVUN, yfcmv, Px, opBytes{0xda, 03}},
-	{AFCOMD, yfadd, Px, opBytes{0xdc, 02, 0xd8, 02, 0xdc, 02}},  // botch
-	{AFCOMDP, yfadd, Px, opBytes{0xdc, 03, 0xd8, 03, 0xdc, 03}}, // botch
+	{AFCOMD, yfadd, Px, opBytes{0xdc, 02, 0xd8, 02, 0xdc, 02}},	// botch
+	{AFCOMDP, yfadd, Px, opBytes{0xdc, 03, 0xd8, 03, 0xdc, 03}},	// botch
 	{AFCOMDPP, ycompp, Px, opBytes{0xde, 03}},
 	{AFCOMF, yfmvx, Px, opBytes{0xd8, 02}},
 	{AFCOMFP, yfmvx, Px, opBytes{0xd8, 03}},
@@ -1774,6 +1774,7 @@ var optab =
 	{ALSSW, ym_rl, Pe, opBytes{0x0f, 0xb2}},
 	{ALSSL, ym_rl, Px, opBytes{0x0f, 0xb2}},
 	{ALSSQ, ym_rl, Pw, opBytes{0x0f, 0xb2}},
+	{ARDPID, yrdrand, Pf3, opBytes{0xc7, 07}},
 
 	{ABLENDPD, yxshuf, Pq, opBytes{0x3a, 0x0d, 0}},
 	{ABLENDPS, yxshuf, Pq, opBytes{0x3a, 0x0c, 0}},
@@ -1977,7 +1978,7 @@ func fusedJump(p *obj.Prog) (bool, uint8) {
 type padJumpsCtx int32
 
 func makePjcCtx(ctxt *obj.Link) padJumpsCtx {
-	// Disable jump padding on 32 bit builds by settting
+	// Disable jump padding on 32 bit builds by setting
 	// padJumps to 0.
 	if ctxt.Arch.Family == sys.I386 {
 		return padJumpsCtx(0)
@@ -2031,14 +2032,39 @@ func (pjc padJumpsCtx) reAssemble(p *obj.Prog) bool {
 }
 
 type nopPad struct {
-	p *obj.Prog // Instruction before the pad
-	n int32     // Size of the pad
+	p	*obj.Prog	// Instruction before the pad
+	n	int32		// Size of the pad
+}
+
+// Padding bytes to add to align code as requested.
+// Alignment is restricted to powers of 2 between 8 and 2048 inclusive.
+//
+// pc: current offset in function, in bytes
+// a: requested alignment, in bytes
+// cursym: current function being assembled
+// returns number of bytes of padding needed
+func addpad(pc, a int64, ctxt *obj.Link, cursym *obj.LSym) int {
+	if !((a&(a-1) == 0) && 8 <= a && a <= 2048) {
+		ctxt.Diag("alignment value of an instruction must be a power of two and in the range [8, 2048], got %d\n", a)
+		return 0
+	}
+
+	// By default function alignment is 32 bytes for amd64
+	if cursym.Func().Align < int32(a) {
+		cursym.Func().Align = int32(a)
+	}
+
+	if pc&(a-1) != 0 {
+		return int(a - (pc & (a - 1)))
+	}
+
+	return 0
 }
 
 func span6(ctxt *obj.Link, s *obj.LSym, newprog obj.ProgAlloc) {
 	if ctxt.Retpoline && ctxt.Arch.Family == sys.I386 {
 		ctxt.Diag("-spectre=ret not supported on 386")
-		ctxt.Retpoline = false // don't keep printing
+		ctxt.Retpoline = false	// don't keep printing
 	}
 
 	pjc := makePjcCtx(ctxt)
@@ -2085,22 +2111,22 @@ func span6(ctxt *obj.Link, s *obj.LSym, newprog obj.ProgAlloc) {
 		}
 	}
 
-	var count int64 // rough count of number of instructions
+	var count int64	// rough count of number of instructions
 	for p := s.Func().Text; p != nil; p = p.Link {
 		count++
-		p.Back = branchShort // use short branches first time through
+		p.Back = branchShort	// use short branches first time through
 		if q := p.To.Target(); q != nil && (q.Back&branchShort != 0) {
 			p.Back |= branchBackwards
 			q.Back |= branchLoopHead
 		}
 	}
-	s.GrowCap(count * 5) // preallocate roughly 5 bytes per instruction
+	s.GrowCap(count * 5)	// preallocate roughly 5 bytes per instruction
 
 	var ab AsmBuf
 	var n int
 	var c int32
 	errors := ctxt.Errors
-	var nops []nopPad // Padding for a particular assembly (reuse slice storage if multiple assemblies)
+	var nops []nopPad	// Padding for a particular assembly (reuse slice storage if multiple assemblies)
 	nrelocs0 := len(s.R)
 	for {
 		// This loop continues while there are reasons to re-assemble
@@ -2109,7 +2135,7 @@ func span6(ctxt *obj.Link, s *obj.LSym, newprog obj.ProgAlloc) {
 		for i := range s.R[nrelocs0:] {
 			s.R[nrelocs0+i] = obj.Reloc{}
 		}
-		s.R = s.R[:nrelocs0] // preserve marker relocations generated by the compiler
+		s.R = s.R[:nrelocs0]	// preserve marker relocations generated by the compiler
 		s.P = s.P[:0]
 		c = 0
 		var pPrev *obj.Prog
@@ -2117,6 +2143,19 @@ func span6(ctxt *obj.Link, s *obj.LSym, newprog obj.ProgAlloc) {
 		for p := s.Func().Text; p != nil; p = p.Link {
 			c0 := c
 			c = pjc.padJump(ctxt, s, p, c)
+
+			if p.As == obj.APCALIGN {
+				aln := p.From.Offset
+				v := addpad(int64(c), aln, ctxt, s)
+				if v > 0 {
+					s.Grow(int64(c) + int64(v))
+					fillnop(s.P[c:], int(v))
+				}
+
+				c += int32(v)
+				pPrev = p
+				continue
+			}
 
 			if maxLoopPad > 0 && p.Back&branchLoopHead != 0 && c&(loopAlign-1) != 0 {
 				// pad with NOPs
@@ -2195,7 +2234,7 @@ func span6(ctxt *obj.Link, s *obj.LSym, newprog obj.ProgAlloc) {
 
 	s.Size = int64(c)
 
-	if false { /* debug['a'] > 1 */
+	if false {	/* debug['a'] > 1 */
 		fmt.Printf("span1 %s %d (%d tries)\n %.6x", s.Name, s.Size, n, 0)
 		var i int
 		for i = 0; i < len(s.P); i++ {
@@ -2320,7 +2359,7 @@ func instinit(ctxt *obj.Link) {
 	ycover[Yax*Ymax+Yrb] = 1
 	ycover[Ycx*Ymax+Yrb] = 1
 	ycover[Yrx*Ymax+Yrb] = 1
-	ycover[Yrl*Ymax+Yrb] = 1 // but not Yrl32
+	ycover[Yrl*Ymax+Yrb] = 1	// but not Yrl32
 
 	ycover[Ycl*Ymax+Ycx] = 1
 
@@ -2340,7 +2379,7 @@ func instinit(ctxt *obj.Link) {
 	ycover[Ycx*Ymax+Ymb] = 1
 	ycover[Yrx*Ymax+Ymb] = 1
 	ycover[Yrb*Ymax+Ymb] = 1
-	ycover[Yrl*Ymax+Ymb] = 1 // but not Yrl32
+	ycover[Yrl*Ymax+Ymb] = 1	// but not Yrl32
 	ycover[Ym*Ymax+Ymb] = 1
 
 	ycover[Yax*Ymax+Yml] = 1
@@ -2479,7 +2518,7 @@ func instinit(ctxt *obj.Link) {
 var isAndroid = buildcfg.GOOS == "android"
 
 func prefixof(ctxt *obj.Link, a *obj.Addr) int {
-	if a.Reg < REG_CS && a.Index < REG_CS { // fast path
+	if a.Reg < REG_CS && a.Index < REG_CS {	// fast path
 		return 0
 	}
 	if a.Type == obj.TYPE_MEM && a.Name == obj.NAME_NONE {
@@ -2510,7 +2549,7 @@ func prefixof(ctxt *obj.Link, a *obj.Addr) int {
 				switch ctxt.Headtype {
 				default:
 					if isAndroid {
-						return 0x65 // GS
+						return 0x65	// GS
 					}
 					log.Fatalf("unknown TLS base register for %v", ctxt.Headtype)
 
@@ -2519,7 +2558,7 @@ func prefixof(ctxt *obj.Link, a *obj.Addr) int {
 					objabi.Hfreebsd,
 					objabi.Hnetbsd,
 					objabi.Hopenbsd:
-					return 0x65 // GS
+					return 0x65	// GS
 				}
 			}
 
@@ -2529,13 +2568,13 @@ func prefixof(ctxt *obj.Link, a *obj.Addr) int {
 
 			case objabi.Hlinux:
 				if isAndroid {
-					return 0x64 // FS
+					return 0x64	// FS
 				}
 
 				if ctxt.Flag_shared {
 					log.Fatalf("unknown TLS base register for linux with -shared")
 				} else {
-					return 0x64 // FS
+					return 0x64	// FS
 				}
 
 			case objabi.Hdragonfly,
@@ -2543,28 +2582,12 @@ func prefixof(ctxt *obj.Link, a *obj.Addr) int {
 				objabi.Hnetbsd,
 				objabi.Hopenbsd,
 				objabi.Hsolaris:
-				return 0x64 // FS
+				return 0x64	// FS
 
 			case objabi.Hdarwin:
-				return 0x65 // GS
+				return 0x65	// GS
 			}
 		}
-	}
-
-	if ctxt.Arch.Family == sys.I386 {
-		if a.Index == REG_TLS && ctxt.Flag_shared {
-			// When building for inclusion into a shared library, an instruction of the form
-			//     MOVL off(CX)(TLS*1), AX
-			// becomes
-			//     mov %gs:off(%ecx), %eax
-			// which assumes that the correct TLS offset has been loaded into %ecx (today
-			// there is only one TLS variable -- g -- so this is OK). When not building for
-			// a shared library the instruction it becomes
-			//     mov 0x0(%ecx), %eax
-			// and a R_TLS_LE relocation, and so does not require a prefix.
-			return 0x65 // GS
-		}
-		return 0
 	}
 
 	switch a.Index {
@@ -2582,11 +2605,18 @@ func prefixof(ctxt *obj.Link, a *obj.Addr) int {
 			// When building for inclusion into a shared library, an instruction of the form
 			//     MOV off(CX)(TLS*1), AX
 			// becomes
-			//     mov %fs:off(%rcx), %rax
-			// which assumes that the correct TLS offset has been loaded into %rcx (today
+			//     mov %gs:off(%ecx), %eax // on i386
+			//     mov %fs:off(%rcx), %rax // on amd64
+			// which assumes that the correct TLS offset has been loaded into CX (today
 			// there is only one TLS variable -- g -- so this is OK). When not building for
-			// a shared library the instruction does not require a prefix.
-			return 0x64
+			// a shared library the instruction it becomes
+			//     mov 0x0(%ecx), %eax // on i386
+			//     mov 0x0(%rcx), %rax // on amd64
+			// and a R_TLS_LE relocation, and so does not require a prefix.
+			if ctxt.Arch.Family == sys.I386 {
+				return 0x65	// GS
+			}
+			return 0x64	// FS
 		}
 
 	case REG_FS:
@@ -2829,7 +2859,7 @@ func oclass(ctxt *obj.Link, p *obj.Prog, a *obj.Addr) int {
 			if a.Sym != nil && useAbs(ctxt, a.Sym) {
 				return Yi32
 			}
-			return Yiauto // use pc-relative addressing
+			return Yiauto	// use pc-relative addressing
 
 		case obj.NAME_AUTO,
 			obj.NAME_PARAM:
@@ -2876,10 +2906,10 @@ func oclass(ctxt *obj.Link, p *obj.Prog, a *obj.Addr) int {
 		}
 		l := int32(v)
 		if int64(l) == v {
-			return Ys32 // can sign extend
+			return Ys32	// can sign extend
 		}
 		if v>>32 == 0 {
-			return Yi32 // unsigned
+			return Yi32	// unsigned
 		}
 		return Yi64
 
@@ -2935,7 +2965,7 @@ func oclass(ctxt *obj.Link, p *obj.Prog, a *obj.Addr) int {
 	case REG_DX, REG_BX:
 		return Yrx
 
-	case REG_R8, // not really Yrl
+	case REG_R8,	// not really Yrl
 		REG_R9,
 		REG_R10,
 		REG_R11,
@@ -3187,16 +3217,16 @@ func oclass(ctxt *obj.Link, p *obj.Prog, a *obj.Addr) int {
 // AsmBuf is a simple buffer to assemble variable-length x86 instructions into
 // and hold assembly state.
 type AsmBuf struct {
-	buf      [100]byte
-	off      int
-	rexflag  int
-	vexflag  bool // Per inst: true for VEX-encoded
-	evexflag bool // Per inst: true for EVEX-encoded
-	rep      bool
-	repn     bool
-	lock     bool
+	buf		[100]byte
+	off		int
+	rexflag		int
+	vexflag		bool	// Per inst: true for VEX-encoded
+	evexflag	bool	// Per inst: true for EVEX-encoded
+	rep		bool
+	repn		bool
+	lock		bool
 
-	evex evexBits // Initialized when evexflag is true
+	evex	evexBits	// Initialized when evexflag is true
 }
 
 // Put1 appends one byte to the end of the buffer.
@@ -3285,19 +3315,19 @@ func (ab *AsmBuf) Insert(i int, b byte) {
 }
 
 // Last returns the byte at the end of the buffer.
-func (ab *AsmBuf) Last() byte { return ab.buf[ab.off-1] }
+func (ab *AsmBuf) Last() byte	{ return ab.buf[ab.off-1] }
 
 // Len returns the length of the buffer.
-func (ab *AsmBuf) Len() int { return ab.off }
+func (ab *AsmBuf) Len() int	{ return ab.off }
 
 // Bytes returns the contents of the buffer.
-func (ab *AsmBuf) Bytes() []byte { return ab.buf[:ab.off] }
+func (ab *AsmBuf) Bytes() []byte	{ return ab.buf[:ab.off] }
 
 // Reset empties the buffer.
-func (ab *AsmBuf) Reset() { ab.off = 0 }
+func (ab *AsmBuf) Reset()	{ ab.off = 0 }
 
 // At returns the byte at offset i.
-func (ab *AsmBuf) At(i int) byte { return ab.buf[i] }
+func (ab *AsmBuf) At(i int) byte	{ return ab.buf[i] }
 
 // asmidx emits SIB byte.
 func (ab *AsmBuf) asmidx(ctxt *obj.Link, scale int, index int, base int) {
@@ -3453,7 +3483,7 @@ bas:
 	default:
 		goto bad
 
-	case REG_NONE: // must be mod=00
+	case REG_NONE:	// must be mod=00
 		i |= 5
 
 	case REG_R8,
@@ -3530,7 +3560,7 @@ func vaddr(ctxt *obj.Link, p *obj.Prog, a *obj.Addr, r *obj.Reloc) int64 {
 			r.Type = objabi.R_PCREL
 		}
 
-		r.Off = -1 // caller must fill in
+		r.Off = -1	// caller must fill in
 		r.Sym = s
 		r.Add = a.Offset
 
@@ -3546,7 +3576,7 @@ func vaddr(ctxt *obj.Link, p *obj.Prog, a *obj.Addr, r *obj.Reloc) int64 {
 		if !ctxt.Flag_shared || isAndroid || ctxt.Headtype == objabi.Hdarwin {
 			r.Type = objabi.R_TLS_LE
 			r.Siz = 4
-			r.Off = -1 // caller must fill in
+			r.Off = -1	// caller must fill in
 			r.Add = a.Offset
 		}
 		return 0
@@ -3698,8 +3728,8 @@ func (ab *AsmBuf) asmandsz(ctxt *obj.Link, cursym *obj.LSym, p *obj.Prog, a *obj
 
 		// temporary
 		ab.Put2(
-			byte(0<<6|4<<0|r<<3), // sib present
-			0<<6|4<<3|5<<0,       // DS:d32
+			byte(0<<6|4<<0|r<<3),	// sib present
+			0<<6|4<<3|5<<0,		// DS:d32
 		)
 		goto putrelv
 	}
@@ -3725,7 +3755,7 @@ func (ab *AsmBuf) asmandsz(ctxt *obj.Link, cursym *obj.LSym, p *obj.Prog, a *obj
 
 	if REG_AX <= base && base <= REG_R15 {
 		if a.Index == REG_TLS && !ctxt.Flag_shared && !isAndroid &&
-			!(ctxt.Headtype == objabi.Hwindows && ctxt.Arch.Family == sys.AMD64) {
+			ctxt.Headtype != objabi.Hwindows {
 			rel = obj.Reloc{}
 			rel.Type = objabi.R_TLS_LE
 			rel.Siz = 4
@@ -3792,12 +3822,12 @@ func unbytereg(a *obj.Addr, t *uint8) {
 }
 
 const (
-	movLit uint8 = iota // Like Zlit
+	movLit	uint8	= iota	// Like Zlit
 	movRegMem
 	movMemReg
 	movRegMem2op
 	movMemReg2op
-	movFullPtr // Load full pointer, trash heap (unsupported)
+	movFullPtr	// Load full pointer, trash heap (unsupported)
 	movDoubleShift
 	movTLSReg
 )
@@ -3956,7 +3986,7 @@ func isax(a *obj.Addr) bool {
 }
 
 func subreg(p *obj.Prog, from int, to int) {
-	if false { /* debug['Q'] */
+	if false {	/* debug['Q'] */
 		fmt.Printf("\n%v\ts/%v/%v/\n", p, rconv(from), rconv(to))
 	}
 
@@ -3980,7 +4010,7 @@ func subreg(p *obj.Prog, from int, to int) {
 		p.Tt = 0
 	}
 
-	if false { /* debug['Q'] */
+	if false {	/* debug['Q'] */
 		fmt.Printf("%v\n", p)
 	}
 }
@@ -4010,12 +4040,12 @@ func (ab *AsmBuf) mediaop(ctxt *obj.Link, o *Optab, op int, osize int, z int) in
 }
 
 var bpduff1 = []byte{
-	0x48, 0x89, 0x6c, 0x24, 0xf0, // MOVQ BP, -16(SP)
-	0x48, 0x8d, 0x6c, 0x24, 0xf0, // LEAQ -16(SP), BP
+	0x48, 0x89, 0x6c, 0x24, 0xf0,	// MOVQ BP, -16(SP)
+	0x48, 0x8d, 0x6c, 0x24, 0xf0,	// LEAQ -16(SP), BP
 }
 
 var bpduff2 = []byte{
-	0x48, 0x8b, 0x6d, 0x00, // MOVQ 0(BP), BP
+	0x48, 0x8b, 0x6d, 0x00,	// MOVQ 0(BP), BP
 }
 
 // asmevex emits EVEX pregis and opcode byte.
@@ -4033,10 +4063,10 @@ func (ab *AsmBuf) asmevex(ctxt *obj.Link, p *obj.Prog, rm, v, r, k *obj.Addr) {
 	rexB := byte(1)
 	if r != nil {
 		if regrex[r.Reg]&Rxr != 0 {
-			rexR = 0 // "ModR/M.reg" selector 4th bit.
+			rexR = 0	// "ModR/M.reg" selector 4th bit.
 		}
 		if regrex[r.Reg]&RxrEvex != 0 {
-			evexR = 0 // "ModR/M.reg" selector 5th bit.
+			evexR = 0	// "ModR/M.reg" selector 5th bit.
 		}
 	}
 	if rm != nil {
@@ -4079,6 +4109,16 @@ func (ab *AsmBuf) asmevex(ctxt *obj.Link, p *obj.Prog, rm, v, r, k *obj.Addr) {
 		if !evex.ZeroingEnabled() {
 			ctxt.Diag("unsupported zeroing: %v", p)
 		}
+		if k == nil {
+			// When you request zeroing you must specify a mask register.
+			// See issue 57952.
+			ctxt.Diag("mask register must be specified for .Z instructions: %v", p)
+		} else if k.Reg == REG_K0 {
+			// The mask register must not be K0. That restriction is already
+			// handled by the Yknot0 restriction in the opcode tables, so we
+			// won't ever reach here. But put something sensible here just in case.
+			ctxt.Diag("mask register must not be K0 for .Z instructions: %v", p)
+		}
 		evexZ = 1
 	}
 	switch {
@@ -4108,7 +4148,7 @@ func (ab *AsmBuf) asmevex(ctxt *obj.Link, p *obj.Prog, rm, v, r, k *obj.Addr) {
 	if rm != nil && regrex[rm.Index]&RxrEvex != 0 {
 		evexV = 0
 	} else if v != nil && regrex[v.Reg]&RxrEvex != 0 {
-		evexV = 0 // VSR selector 5th bit.
+		evexV = 0	// VSR selector 5th bit.
 	}
 	if k != nil {
 		evexA = byte(reg[k.Reg])
@@ -4241,6 +4281,11 @@ func (ab *AsmBuf) doasm(ctxt *obj.Link, cursym *obj.LSym, p *obj.Prog) {
 		AVPGATHERQD,
 		AVPGATHERDQ,
 		AVPGATHERQQ:
+		if p.GetFrom3() == nil {
+			// gathers need a 3rd arg. See issue 58822.
+			ctxt.Diag("need a third arg for gather instruction: %v", p)
+			return
+		}
 		// AVX512 gather requires explicit K mask.
 		if p.GetFrom3().Reg >= REG_K0 && p.GetFrom3().Reg <= REG_K7 {
 			if !avx512gatherValid(ctxt, p) {
@@ -4305,56 +4350,56 @@ func (ab *AsmBuf) doasm(ctxt *obj.Link, cursym *obj.LSym, p *obj.Prog) {
 			}
 
 			switch o.prefix {
-			case Px1: // first option valid only in 32-bit mode
+			case Px1:	// first option valid only in 32-bit mode
 				if ctxt.Arch.Family == sys.AMD64 && z == 0 {
 					z += int(yt.zoffset) + xo
 					continue
 				}
-			case Pq: // 16 bit escape and opcode escape
+			case Pq:	// 16 bit escape and opcode escape
 				ab.Put2(Pe, Pm)
 
-			case Pq3: // 16 bit escape and opcode escape + REX.W
+			case Pq3:	// 16 bit escape and opcode escape + REX.W
 				ab.rexflag |= Pw
 				ab.Put2(Pe, Pm)
 
-			case Pq4: // 66 0F 38
+			case Pq4:	// 66 0F 38
 				ab.Put3(0x66, 0x0F, 0x38)
 
-			case Pq4w: // 66 0F 38 + REX.W
+			case Pq4w:	// 66 0F 38 + REX.W
 				ab.rexflag |= Pw
 				ab.Put3(0x66, 0x0F, 0x38)
 
-			case Pq5: // F3 0F 38
+			case Pq5:	// F3 0F 38
 				ab.Put3(0xF3, 0x0F, 0x38)
 
-			case Pq5w: //  F3 0F 38 + REX.W
+			case Pq5w:	//  F3 0F 38 + REX.W
 				ab.rexflag |= Pw
 				ab.Put3(0xF3, 0x0F, 0x38)
 
-			case Pf2, // xmm opcode escape
+			case Pf2,	// xmm opcode escape
 				Pf3:
 				ab.Put2(o.prefix, Pm)
 
 			case Pef3:
 				ab.Put3(Pe, Pf3, Pm)
 
-			case Pfw: // xmm opcode escape + REX.W
+			case Pfw:	// xmm opcode escape + REX.W
 				ab.rexflag |= Pw
 				ab.Put2(Pf3, Pm)
 
-			case Pm: // opcode escape
+			case Pm:	// opcode escape
 				ab.Put1(Pm)
 
-			case Pe: // 16 bit escape
+			case Pe:	// 16 bit escape
 				ab.Put1(Pe)
 
-			case Pw: // 64-bit escape
+			case Pw:	// 64-bit escape
 				if ctxt.Arch.Family != sys.AMD64 {
 					ctxt.Diag("asmins: illegal 64: %v", p)
 				}
 				ab.rexflag |= Pw
 
-			case Pw8: // 64-bit escape if z >= 8
+			case Pw8:	// 64-bit escape if z >= 8
 				if z >= 8 {
 					if ctxt.Arch.Family != sys.AMD64 {
 						ctxt.Diag("asmins: illegal 64: %v", p)
@@ -4362,7 +4407,7 @@ func (ab *AsmBuf) doasm(ctxt *obj.Link, cursym *obj.LSym, p *obj.Prog) {
 					ab.rexflag |= Pw
 				}
 
-			case Pb: // botch
+			case Pb:	// botch
 				if ctxt.Arch.Family != sys.AMD64 && (isbadbyte(&p.From) || isbadbyte(&p.To)) {
 					goto bad
 				}
@@ -4379,22 +4424,22 @@ func (ab *AsmBuf) doasm(ctxt *obj.Link, cursym *obj.LSym, p *obj.Prog) {
 					bytereg(&p.To, &p.Tt)
 				}
 
-			case P32: // 32 bit but illegal if 64-bit mode
+			case P32:	// 32 bit but illegal if 64-bit mode
 				if ctxt.Arch.Family == sys.AMD64 {
 					ctxt.Diag("asmins: illegal in 64-bit mode: %v", p)
 				}
 
-			case Py: // 64-bit only, no prefix
+			case Py:	// 64-bit only, no prefix
 				if ctxt.Arch.Family != sys.AMD64 {
 					ctxt.Diag("asmins: illegal in %d-bit mode: %v", ctxt.Arch.RegSize*8, p)
 				}
 
-			case Py1: // 64-bit only if z < 1, no prefix
+			case Py1:	// 64-bit only if z < 1, no prefix
 				if z < 1 && ctxt.Arch.Family != sys.AMD64 {
 					ctxt.Diag("asmins: illegal in %d-bit mode: %v", ctxt.Arch.RegSize*8, p)
 				}
 
-			case Py3: // 64-bit only if z < 3, no prefix
+			case Py3:	// 64-bit only if z < 3, no prefix
 				if z < 3 && ctxt.Arch.Family != sys.AMD64 {
 					ctxt.Diag("asmins: illegal in %d-bit mode: %v", ctxt.Arch.RegSize*8, p)
 				}
@@ -4480,7 +4525,7 @@ func (ab *AsmBuf) doasm(ctxt *obj.Link, cursym *obj.LSym, p *obj.Prog) {
 				}
 
 			case Zaut_r:
-				ab.Put1(0x8d) // leal
+				ab.Put1(0x8d)	// leal
 				if p.From.Type != obj.TYPE_ADDR {
 					ctxt.Diag("asmins: Zaut sb type ADDR")
 				}
@@ -4734,11 +4779,11 @@ func (ab *AsmBuf) doasm(ctxt *obj.Link, cursym *obj.LSym, p *obj.Prog) {
 					}
 
 					ab.PutInt32(int32(v))
-				} else if l == -1 && uint64(v)&(uint64(1)<<31) != 0 { // sign extend
+				} else if l == -1 && uint64(v)&(uint64(1)<<31) != 0 {	// sign extend
 					ab.Put1(0xc7)
 					ab.asmando(ctxt, cursym, p, &p.To, 0)
 
-					ab.PutInt32(int32(v)) // need all 8
+					ab.PutInt32(int32(v))	// need all 8
 				} else {
 					ab.rexflag |= regrex[p.To.Reg] & Rxb
 					ab.Put1(byte(op + reg[p.To.Reg]))
@@ -5000,7 +5045,7 @@ func (ab *AsmBuf) doasm(ctxt *obj.Link, cursym *obj.LSym, p *obj.Prog) {
 					ab.Put1(t[0])
 					ab.asmando(ctxt, cursym, p, &p.From, int(t[1]))
 
-				case movRegMem2op: // r,m - 2op
+				case movRegMem2op:	// r,m - 2op
 					ab.Put2(t[0], t[1])
 					ab.asmando(ctxt, cursym, p, &p.To, int(t[2]))
 					ab.rexflag |= regrex[p.From.Reg] & (Rxr | 0x40)
@@ -5124,7 +5169,7 @@ func (ab *AsmBuf) doasm(ctxt *obj.Link, cursym *obj.LSym, p *obj.Prog) {
 								pp.From.Offset = 0
 								pp.From.Index = REG_NONE
 								pp.From.Scale = 0
-								ab.Put2(0x65, // GS
+								ab.Put2(0x65,	// GS
 									0x8B)
 								ab.asmand(ctxt, cursym, p, &pp.From, &p.To)
 							}
@@ -5136,19 +5181,6 @@ func (ab *AsmBuf) doasm(ctxt *obj.Link, cursym *obj.LSym, p *obj.Prog) {
 							pp.From.Offset = 0
 							pp.From.Index = REG_NONE
 							ab.Put1(0x8B)
-							ab.asmand(ctxt, cursym, p, &pp.From, &p.To)
-
-						case objabi.Hwindows:
-							// Windows TLS base is always 0x14(FS).
-							pp.From = p.From
-
-							pp.From.Type = obj.TYPE_MEM
-							pp.From.Reg = REG_FS
-							pp.From.Offset = 0x14
-							pp.From.Index = REG_NONE
-							pp.From.Scale = 0
-							ab.Put2(0x64, // FS
-								0x8B)
 							ab.asmand(ctxt, cursym, p, &pp.From, &p.To)
 						}
 						break
@@ -5192,7 +5224,7 @@ func (ab *AsmBuf) doasm(ctxt *obj.Link, cursym *obj.LSym, p *obj.Prog) {
 						ab.Put1(0x8B)
 						ab.asmand(ctxt, cursym, p, &pp.From, &p.To)
 
-					case objabi.Hsolaris: // TODO(rsc): Delete Hsolaris from list. Should not use this code. See progedit in obj6.c.
+					case objabi.Hsolaris:	// TODO(rsc): Delete Hsolaris from list. Should not use this code. See progedit in obj6.c.
 						// TLS base is 0(FS).
 						pp.From = p.From
 
@@ -5203,7 +5235,7 @@ func (ab *AsmBuf) doasm(ctxt *obj.Link, cursym *obj.LSym, p *obj.Prog) {
 						pp.From.Index = REG_NONE
 						pp.From.Scale = 0
 						ab.rexflag |= Pw
-						ab.Put2(0x64, // FS
+						ab.Put2(0x64,	// FS
 							0x8B)
 						ab.asmand(ctxt, cursym, p, &pp.From, &p.To)
 					}
@@ -5233,17 +5265,17 @@ bad:
 			if ctxt.Arch.Family == sys.I386 {
 				breg := byteswapreg(ctxt, &p.To)
 				if breg != REG_AX {
-					ab.Put1(0x87) // xchg lhs,bx
+					ab.Put1(0x87)	// xchg lhs,bx
 					ab.asmando(ctxt, cursym, p, &p.From, reg[breg])
 					subreg(&pp, z, breg)
 					ab.doasm(ctxt, cursym, &pp)
-					ab.Put1(0x87) // xchg lhs,bx
+					ab.Put1(0x87)	// xchg lhs,bx
 					ab.asmando(ctxt, cursym, p, &p.From, reg[breg])
 				} else {
-					ab.Put1(byte(0x90 + reg[z])) // xchg lsh,ax
+					ab.Put1(byte(0x90 + reg[z]))	// xchg lsh,ax
 					subreg(&pp, z, REG_AX)
 					ab.doasm(ctxt, cursym, &pp)
-					ab.Put1(byte(0x90 + reg[z])) // xchg lsh,ax
+					ab.Put1(byte(0x90 + reg[z]))	// xchg lsh,ax
 				}
 				return
 			}
@@ -5251,17 +5283,17 @@ bad:
 			if isax(&p.To) || p.To.Type == obj.TYPE_NONE {
 				// We certainly don't want to exchange
 				// with AX if the op is MUL or DIV.
-				ab.Put1(0x87) // xchg lhs,bx
+				ab.Put1(0x87)	// xchg lhs,bx
 				ab.asmando(ctxt, cursym, p, &p.From, reg[REG_BX])
 				subreg(&pp, z, REG_BX)
 				ab.doasm(ctxt, cursym, &pp)
-				ab.Put1(0x87) // xchg lhs,bx
+				ab.Put1(0x87)	// xchg lhs,bx
 				ab.asmando(ctxt, cursym, p, &p.From, reg[REG_BX])
 			} else {
-				ab.Put1(byte(0x90 + reg[z])) // xchg lsh,ax
+				ab.Put1(byte(0x90 + reg[z]))	// xchg lsh,ax
 				subreg(&pp, z, REG_AX)
 				ab.doasm(ctxt, cursym, &pp)
-				ab.Put1(byte(0x90 + reg[z])) // xchg lsh,ax
+				ab.Put1(byte(0x90 + reg[z]))	// xchg lsh,ax
 			}
 			return
 		}
@@ -5273,33 +5305,33 @@ bad:
 			if ctxt.Arch.Family == sys.I386 {
 				breg := byteswapreg(ctxt, &p.From)
 				if breg != REG_AX {
-					ab.Put1(0x87) //xchg rhs,bx
+					ab.Put1(0x87)	//xchg rhs,bx
 					ab.asmando(ctxt, cursym, p, &p.To, reg[breg])
 					subreg(&pp, z, breg)
 					ab.doasm(ctxt, cursym, &pp)
-					ab.Put1(0x87) // xchg rhs,bx
+					ab.Put1(0x87)	// xchg rhs,bx
 					ab.asmando(ctxt, cursym, p, &p.To, reg[breg])
 				} else {
-					ab.Put1(byte(0x90 + reg[z])) // xchg rsh,ax
+					ab.Put1(byte(0x90 + reg[z]))	// xchg rsh,ax
 					subreg(&pp, z, REG_AX)
 					ab.doasm(ctxt, cursym, &pp)
-					ab.Put1(byte(0x90 + reg[z])) // xchg rsh,ax
+					ab.Put1(byte(0x90 + reg[z]))	// xchg rsh,ax
 				}
 				return
 			}
 
 			if isax(&p.From) {
-				ab.Put1(0x87) // xchg rhs,bx
+				ab.Put1(0x87)	// xchg rhs,bx
 				ab.asmando(ctxt, cursym, p, &p.To, reg[REG_BX])
 				subreg(&pp, z, REG_BX)
 				ab.doasm(ctxt, cursym, &pp)
-				ab.Put1(0x87) // xchg rhs,bx
+				ab.Put1(0x87)	// xchg rhs,bx
 				ab.asmando(ctxt, cursym, p, &p.To, reg[REG_BX])
 			} else {
-				ab.Put1(byte(0x90 + reg[z])) // xchg rsh,ax
+				ab.Put1(byte(0x90 + reg[z]))	// xchg rsh,ax
 				subreg(&pp, z, REG_AX)
 				ab.doasm(ctxt, cursym, &pp)
-				ab.Put1(byte(0x90 + reg[z])) // xchg rsh,ax
+				ab.Put1(byte(0x90 + reg[z]))	// xchg rsh,ax
 			}
 			return
 		}

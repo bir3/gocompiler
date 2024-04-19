@@ -104,7 +104,7 @@ func (s simplifier) Visit(node ast.Node) ast.Visitor {
 }
 
 func (s simplifier) simplifyLiteral(typ reflect.Value, astType, x ast.Expr, px *ast.Expr) {
-	ast.Walk(s, x) // simplify x
+	ast.Walk(s, x)	// simplify x
 
 	// if the element is a composite literal and its literal type
 	// matches the outer literal's element type exactly, the inner
@@ -121,8 +121,8 @@ func (s simplifier) simplifyLiteral(typ reflect.Value, astType, x ast.Expr, px *
 		if addr, ok := x.(*ast.UnaryExpr); ok && addr.Op == token.AND {
 			if inner, ok := addr.X.(*ast.CompositeLit); ok {
 				if match(nil, reflect.ValueOf(ptr.X), reflect.ValueOf(inner.Type)) {
-					inner.Type = nil // drop T
-					*px = inner      // drop &
+					inner.Type = nil	// drop T
+					*px = inner		// drop &
 				}
 			}
 		}

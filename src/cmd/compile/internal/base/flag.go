@@ -5,11 +5,12 @@
 package base
 
 import (
+	"github.com/bir3/gocompiler/src/cmd/internal/cov/covcmd"
 	"encoding/json"
 	"github.com/bir3/gocompiler/src/cmd/compile/flag"
+	"github.com/bir3/gocompiler/src/cmd/compile/flag_objabi"
 	"fmt"
 	"github.com/bir3/gocompiler/src/internal/buildcfg"
-	"github.com/bir3/gocompiler/src/internal/coverage"
 	"github.com/bir3/gocompiler/src/internal/platform"
 	"log"
 	"os"
@@ -18,8 +19,7 @@ import (
 	"strings"
 
 	"github.com/bir3/gocompiler/src/cmd/internal/obj"
-
-	"github.com/bir3/gocompiler/src/cmd/compile/flag_objabi"
+	"github.com/bir3/gocompiler/src/cmd/internal/objabi"
 	"github.com/bir3/gocompiler/src/cmd/internal/sys"
 )
 
@@ -54,94 +54,103 @@ type CountFlag int
 // CountFlag (for a counting flag), and func(string) (for a flag that uses special code for parsing).
 type CmdFlags struct {
 	// Single letters
-	B CountFlag    "help:\"disable bounds checking\""
-	C CountFlag    "help:\"disable printing of columns in error messages\""
-	D string       "help:\"set relative `path` for local imports\""
-	E CountFlag    "help:\"debug symbol export\""
-	I func(string) "help:\"add `directory` to import search path\""
-	K CountFlag    "help:\"debug missing line numbers\""
-	L CountFlag    "help:\"also show actual source file names in error messages for positions affected by //line directives\""
-	N CountFlag    "help:\"disable optimizations\""
-	S CountFlag    "help:\"print assembly listing\""
+	B	CountFlag	"help:\"disable bounds checking\""
+	C	CountFlag	"help:\"disable printing of columns in error messages\""
+	D	string		"help:\"set relative `path` for local imports\""
+	E	CountFlag	"help:\"debug symbol export\""
+	I	func(string)	"help:\"add `directory` to import search path\""
+	K	CountFlag	"help:\"debug missing line numbers\""
+	L	CountFlag	"help:\"also show actual source file names in error messages for positions affected by //line directives\""
+	N	CountFlag	"help:\"disable optimizations\""
+	S	CountFlag	"help:\"print assembly listing\""
 	// V is added by flag_objabi.AddVersionFlag
-	W CountFlag "help:\"debug parse tree after type checking\""
+	W	CountFlag	"help:\"debug parse tree after type checking\""
 
-	LowerC int        "help:\"concurrency during compilation (1 means no concurrency)\""
-	LowerD flag.Value "help:\"enable debugging settings; try -d help\""
-	LowerE CountFlag  "help:\"no limit on number of errors reported\""
-	LowerH CountFlag  "help:\"halt on error\""
-	LowerJ CountFlag  "help:\"debug runtime-initialized variables\""
-	LowerL CountFlag  "help:\"disable inlining\""
-	LowerM CountFlag  "help:\"print optimization decisions\""
-	LowerO string     "help:\"write output to `file`\""
-	LowerP *string    "help:\"set expected package import `path`\"" // &Ctxt.Pkgpath, set below
-	LowerR CountFlag  "help:\"debug generated wrappers\""
-	LowerT bool       "help:\"enable tracing for debugging the compiler\""
-	LowerW CountFlag  "help:\"debug type checking\""
-	LowerV *bool      "help:\"increase debug verbosity\""
+	LowerC	int		"help:\"concurrency during compilation (1 means no concurrency)\""
+	LowerD	flag.Value	"help:\"enable debugging settings; try -d help\""
+	LowerE	CountFlag	"help:\"no limit on number of errors reported\""
+	LowerH	CountFlag	"help:\"halt on error\""
+	LowerJ	CountFlag	"help:\"debug runtime-initialized variables\""
+	LowerL	CountFlag	"help:\"disable inlining\""
+	LowerM	CountFlag	"help:\"print optimization decisions\""
+	LowerO	string		"help:\"write output to `file`\""
+	LowerP	*string		"help:\"set expected package import `path`\""	// &Ctxt.Pkgpath, set below
+	LowerR	CountFlag	"help:\"debug generated wrappers\""
+	LowerT	bool		"help:\"enable tracing for debugging the compiler\""
+	LowerW	CountFlag	"help:\"debug type checking\""
+	LowerV	*bool		"help:\"increase debug verbosity\""
 
 	// Special characters
-	Percent          CountFlag "flag:\"%\" help:\"debug non-static initializers\""
-	CompilingRuntime bool      "flag:\"+\" help:\"compiling runtime\""
+	Percent			CountFlag	"flag:\"%\" help:\"debug non-static initializers\""
+	CompilingRuntime	bool		"flag:\"+\" help:\"compiling runtime\""
 
 	// Longer names
-	AsmHdr             string       "help:\"write assembly header to `file`\""
-	ASan               bool         "help:\"build code compatible with C/C++ address sanitizer\""
-	Bench              string       "help:\"append benchmark times to `file`\""
-	BlockProfile       string       "help:\"write block profile to `file`\""
-	BuildID            string       "help:\"record `id` as the build id in the export metadata\""
-	CPUProfile         string       "help:\"write cpu profile to `file`\""
-	Complete           bool         "help:\"compiling complete package (no C or assembly)\""
-	ClobberDead        bool         "help:\"clobber dead stack slots (for debugging)\""
-	ClobberDeadReg     bool         "help:\"clobber dead registers (for debugging)\""
-	Dwarf              bool         "help:\"generate DWARF symbols\""
-	DwarfBASEntries    *bool        "help:\"use base address selection entries in DWARF\""                        // &Ctxt.UseBASEntries, set below
-	DwarfLocationLists *bool        "help:\"add location lists to DWARF in optimized mode\""                      // &Ctxt.Flag_locationlists, set below
-	Dynlink            *bool        "help:\"support references to Go symbols defined in other shared libraries\"" // &Ctxt.Flag_dynlink, set below
-	EmbedCfg           func(string) "help:\"read go:embed configuration from `file`\""
-	GenDwarfInl        int          "help:\"generate DWARF inline info records\"" // 0=disabled, 1=funcs, 2=funcs+formals/locals
-	GoVersion          string       "help:\"required version of the runtime\""
-	ImportCfg          func(string) "help:\"read import configuration from `file`\""
-	InstallSuffix      string       "help:\"set pkg directory `suffix`\""
-	JSON               string       "help:\"version,file for JSON compiler/optimizer detail output\""
-	Lang               string       "help:\"Go language version source code expects\""
-	LinkObj            string       "help:\"write linker-specific object to `file`\""
-	LinkShared         *bool        "help:\"generate code that will be linked against Go shared libraries\"" // &Ctxt.Flag_linkshared, set below
-	Live               CountFlag    "help:\"debug liveness analysis\""
-	MSan               bool         "help:\"build code compatible with C/C++ memory sanitizer\""
-	MemProfile         string       "help:\"write memory profile to `file`\""
-	MemProfileRate     int          "help:\"set runtime.MemProfileRate to `rate`\""
-	MutexProfile       string       "help:\"write mutex profile to `file`\""
-	NoLocalImports     bool         "help:\"reject local (relative) imports\""
-	CoverageCfg        func(string) "help:\"read coverage configuration from `file`\""
-	Pack               bool         "help:\"write to file.a instead of file.o\""
-	Race               bool         "help:\"enable race detector\""
-	Shared             *bool        "help:\"generate code that can be linked into a shared library\"" // &Ctxt.Flag_shared, set below
-	SmallFrames        bool         "help:\"reduce the size limit for stack allocated objects\""      // small stacks, to diagnose GC latency; see golang.org/issue/27732
-	Spectre            string       "help:\"enable spectre mitigations in `list` (all, index, ret)\""
-	Std                bool         "help:\"compiling standard library\""
-	SymABIs            string       "help:\"read symbol ABIs from `file`\""
-	TraceProfile       string       "help:\"write an execution trace to `file`\""
-	TrimPath           string       "help:\"remove `prefix` from recorded source file paths\""
-	WB                 bool         "help:\"enable write barrier\""            // TODO: remove
-	OldComparable      bool         "help:\"enable old comparable semantics\"" // TODO: remove for Go 1.21
-	PgoProfile         string       "help:\"read profile from `file`\""
+	AsmHdr			string		"help:\"write assembly header to `file`\""
+	ASan			bool		"help:\"build code compatible with C/C++ address sanitizer\""
+	Bench			string		"help:\"append benchmark times to `file`\""
+	BlockProfile		string		"help:\"write block profile to `file`\""
+	BuildID			string		"help:\"record `id` as the build id in the export metadata\""
+	CPUProfile		string		"help:\"write cpu profile to `file`\""
+	Complete		bool		"help:\"compiling complete package (no C or assembly)\""
+	ClobberDead		bool		"help:\"clobber dead stack slots (for debugging)\""
+	ClobberDeadReg		bool		"help:\"clobber dead registers (for debugging)\""
+	Dwarf			bool		"help:\"generate DWARF symbols\""
+	DwarfBASEntries		*bool		"help:\"use base address selection entries in DWARF\""				// &Ctxt.UseBASEntries, set below
+	DwarfLocationLists	*bool		"help:\"add location lists to DWARF in optimized mode\""			// &Ctxt.Flag_locationlists, set below
+	Dynlink			*bool		"help:\"support references to Go symbols defined in other shared libraries\""	// &Ctxt.Flag_dynlink, set below
+	EmbedCfg		func(string)	"help:\"read go:embed configuration from `file`\""
+	Env			func(string)	"help:\"add `definition` of the form key=value to environment\""
+	GenDwarfInl		int		"help:\"generate DWARF inline info records\""	// 0=disabled, 1=funcs, 2=funcs+formals/locals
+	GoVersion		string		"help:\"required version of the runtime\""
+	ImportCfg		func(string)	"help:\"read import configuration from `file`\""
+	InstallSuffix		string		"help:\"set pkg directory `suffix`\""
+	JSON			string		"help:\"version,file for JSON compiler/optimizer detail output\""
+	Lang			string		"help:\"Go language version source code expects\""
+	LinkObj			string		"help:\"write linker-specific object to `file`\""
+	LinkShared		*bool		"help:\"generate code that will be linked against Go shared libraries\""	// &Ctxt.Flag_linkshared, set below
+	Live			CountFlag	"help:\"debug liveness analysis\""
+	MSan			bool		"help:\"build code compatible with C/C++ memory sanitizer\""
+	MemProfile		string		"help:\"write memory profile to `file`\""
+	MemProfileRate		int		"help:\"set runtime.MemProfileRate to `rate`\""
+	MutexProfile		string		"help:\"write mutex profile to `file`\""
+	NoLocalImports		bool		"help:\"reject local (relative) imports\""
+	CoverageCfg		func(string)	"help:\"read coverage configuration from `file`\""
+	Pack			bool		"help:\"write to file.a instead of file.o\""
+	Race			bool		"help:\"enable race detector\""
+	Shared			*bool		"help:\"generate code that can be linked into a shared library\""	// &Ctxt.Flag_shared, set below
+	SmallFrames		bool		"help:\"reduce the size limit for stack allocated objects\""		// small stacks, to diagnose GC latency; see golang.org/issue/27732
+	Spectre			string		"help:\"enable spectre mitigations in `list` (all, index, ret)\""
+	Std			bool		"help:\"compiling standard library\""
+	SymABIs			string		"help:\"read symbol ABIs from `file`\""
+	TraceProfile		string		"help:\"write an execution trace to `file`\""
+	TrimPath		string		"help:\"remove `prefix` from recorded source file paths\""
+	WB			bool		"help:\"enable write barrier\""	// TODO: remove
+	PgoProfile		string		"help:\"read profile from `file`\""
+	ErrorURL		bool		"help:\"print explanatory URL with error message if applicable\""
 
 	// Configuration derived from flags; not a flag itself.
-	Cfg struct {
-		Embed struct { // set by -embedcfg
-			Patterns map[string][]string
-			Files    map[string]string
+	Cfg	struct {
+		Embed	struct {	// set by -embedcfg
+			Patterns	map[string][]string
+			Files		map[string]string
 		}
-		ImportDirs   []string                   // appended to by -I
-		ImportMap    map[string]string          // set by -importcfg
-		PackageFile  map[string]string          // set by -importcfg; nil means not in use
-		CoverageInfo *coverage.CoverFixupConfig // set by -coveragecfg
-		SpectreIndex bool                       // set by -spectre=index or -spectre=all
+		ImportDirs	[]string			// appended to by -I
+		ImportMap	map[string]string		// set by -importcfg
+		PackageFile	map[string]string		// set by -importcfg; nil means not in use
+		CoverageInfo	*covcmd.CoverFixupConfig	// set by -coveragecfg
+		SpectreIndex	bool				// set by -spectre=index or -spectre=all
 		// Whether we are adding any sort of code instrumentation, such as
 		// when the race detector is enabled.
-		Instrumenting bool
+		Instrumenting	bool
 	}
+}
+
+func addEnv(s string) {
+	i := strings.Index(s, "=")
+	if i < 0 {
+		log.Fatal("-env argument must be of the form key=value")
+	}
+	os.Setenv(s[:i], s[i+1:])
 }
 
 // ParseFlags parses the command-line flags into Flag.
@@ -159,6 +168,7 @@ func ParseFlags() {
 	*Flag.DwarfLocationLists = true
 	Flag.Dynlink = &Ctxt.Flag_dynlink
 	Flag.EmbedCfg = readEmbedCfg
+	Flag.Env = addEnv
 	Flag.GenDwarfInl = 2
 	Flag.ImportCfg = readImportCfg
 	Flag.CoverageCfg = readCoverageCfg
@@ -167,18 +177,20 @@ func ParseFlags() {
 	Flag.WB = true
 
 	Debug.ConcurrentOk = true
+	Debug.MaxShapeLen = 500
 	Debug.InlFuncsWithClosures = 1
-	Debug.InlStaticInit = 0
-	if buildcfg.Experiment.Unified {
-		Debug.Unified = 1
-	}
-	Debug.SyncFrames = -1 // disable sync markers by default
+	Debug.InlStaticInit = 1
+	Debug.PGOInline = 1
+	Debug.PGODevirtualize = 2
+	Debug.SyncFrames = -1	// disable sync markers by default
+	Debug.ZeroCopy = 1
+	Debug.RangeFuncCheck = 1
 
-	Debug.Checkptr = -1 // so we can tell whether it is set explicitly
+	Debug.Checkptr = -1	// so we can tell whether it is set explicitly
 
 	Flag.Cfg.ImportMap = make(map[string]string)
 
-	flag_objabi.AddVersionFlag() // -V
+	flag_objabi.AddVersionFlag()	// -V
 	registerFlags()
 	flag_objabi.Flagparse(usage)
 
@@ -189,11 +201,65 @@ func ParseFlags() {
 	}
 
 	if Debug.Gossahash != "" {
-		hashDebug = NewHashDebug("gosshash", Debug.Gossahash, nil)
+		hashDebug = NewHashDebug("gossahash", Debug.Gossahash, nil)
+	}
+
+	// Compute whether we're compiling the runtime from the package path. Test
+	// code can also use the flag to set this explicitly.
+	if Flag.Std && objabi.LookupPkgSpecial(Ctxt.Pkgpath).Runtime {
+		Flag.CompilingRuntime = true
+	}
+
+	// Three inputs govern loop iteration variable rewriting, hash, experiment, flag.
+	// The loop variable rewriting is:
+	// IF non-empty hash, then hash determines behavior (function+line match) (*)
+	// ELSE IF experiment and flag==0, then experiment (set flag=1)
+	// ELSE flag (note that build sets flag per-package), with behaviors:
+	//  -1 => no change to behavior.
+	//   0 => no change to behavior (unless non-empty hash, see above)
+	//   1 => apply change to likely-iteration-variable-escaping loops
+	//   2 => apply change, log results
+	//   11 => apply change EVERYWHERE, do not log results (for debugging/benchmarking)
+	//   12 => apply change EVERYWHERE, log results (for debugging/benchmarking)
+	//
+	// The expected uses of the these inputs are, in believed most-likely to least likely:
+	//  GOEXPERIMENT=loopvar -- apply change to entire application
+	//  -gcflags=some_package=-d=loopvar=1 -- apply change to some_package (**)
+	//  -gcflags=some_package=-d=loopvar=2 -- apply change to some_package, log it
+	//  GOEXPERIMENT=loopvar -gcflags=some_package=-d=loopvar=-1 -- apply change to all but one package
+	//  GOCOMPILEDEBUG=loopvarhash=... -- search for failure cause
+	//
+	//  (*) For debugging purposes, providing loopvar flag >= 11 will expand the hash-eligible set of loops to all.
+	// (**) Loop semantics, changed or not, follow code from a package when it is inlined; that is, the behavior
+	//      of an application compiled with partially modified loop semantics does not depend on inlining.
+
+	if Debug.LoopVarHash != "" {
+		// This first little bit controls the inputs for debug-hash-matching.
+		mostInlineOnly := true
+		if strings.HasPrefix(Debug.LoopVarHash, "IL") {
+			// When hash-searching on a position that is an inline site, default is to use the
+			// most-inlined position only.  This makes the hash faster, plus there's no point
+			// reporting a problem with all the inlining; there's only one copy of the source.
+			// However, if for some reason you wanted it per-site, you can get this.  (The default
+			// hash-search behavior for compiler debugging is at an inline site.)
+			Debug.LoopVarHash = Debug.LoopVarHash[2:]
+			mostInlineOnly = false
+		}
+		// end of testing trickiness
+		LoopVarHash = NewHashDebug("loopvarhash", Debug.LoopVarHash, nil)
+		if Debug.LoopVar < 11 {	// >= 11 means all loops are rewrite-eligible
+			Debug.LoopVar = 1	// 1 means those loops that syntactically escape their dcl vars are eligible.
+		}
+		LoopVarHash.SetInlineSuffixOnly(mostInlineOnly)
+	} else if buildcfg.Experiment.LoopVar && Debug.LoopVar == 0 {
+		Debug.LoopVar = 1
 	}
 
 	if Debug.Fmahash != "" {
 		FmaHash = NewHashDebug("fmahash", Debug.Fmahash, nil)
+	}
+	if Debug.PGOHash != "" {
+		PGOHash = NewHashDebug("pgohash", Debug.PGOHash, nil)
 	}
 
 	if Flag.MSan && !platform.MSanSupported(buildcfg.GOOS, buildcfg.GOARCH) {
@@ -205,10 +271,10 @@ func ParseFlags() {
 	if Flag.Race && !platform.RaceDetectorSupported(buildcfg.GOOS, buildcfg.GOARCH) {
 		log.Fatalf("%s/%s does not support -race", buildcfg.GOOS, buildcfg.GOARCH)
 	}
-	if (*Flag.Shared || *Flag.Dynlink || *Flag.LinkShared) && !Ctxt.Arch.InFamily(sys.AMD64, sys.ARM, sys.ARM64, sys.I386, sys.PPC64, sys.RISCV64, sys.S390X) {
+	if (*Flag.Shared || *Flag.Dynlink || *Flag.LinkShared) && !Ctxt.Arch.InFamily(sys.AMD64, sys.ARM, sys.ARM64, sys.I386, sys.Loong64, sys.MIPS64, sys.PPC64, sys.RISCV64, sys.S390X) {
 		log.Fatalf("%s/%s does not support -shared", buildcfg.GOOS, buildcfg.GOARCH)
 	}
-	parseSpectre(Flag.Spectre) // left as string for RecordFlags
+	parseSpectre(Flag.Spectre)	// left as string for RecordFlags
 
 	Ctxt.Flag_shared = Ctxt.Flag_dynlink || Ctxt.Flag_shared
 	Ctxt.Flag_optimize = Flag.N == 0
@@ -258,14 +324,11 @@ func ParseFlags() {
 	}
 	if Flag.Race || Flag.MSan || Flag.ASan {
 		// -race, -msan and -asan imply -d=checkptr for now.
-		if Debug.Checkptr == -1 { // if not set explicitly
+		if Debug.Checkptr == -1 {	// if not set explicitly
 			Debug.Checkptr = 1
 		}
 	}
 
-	if Flag.CompilingRuntime && Flag.N != 0 {
-		log.Fatal("cannot disable optimizations while compiling runtime")
-	}
 	if Flag.LowerC < 1 {
 		log.Fatalf("-c must be at least 1, got %d", Flag.LowerC)
 	}
@@ -274,6 +337,11 @@ func ParseFlags() {
 	}
 
 	if Flag.CompilingRuntime {
+		// It is not possible to build the runtime with no optimizations,
+		// because the compiler cannot eliminate enough write barriers.
+		Flag.N = 0
+		Ctxt.Flag_optimize = true
+
 		// Runtime can't use -d=checkptr, at least not yet.
 		Debug.Checkptr = 0
 
@@ -281,7 +349,7 @@ func ParseFlags() {
 		Debug.Libfuzzer = 0
 	}
 
-	if Debug.Checkptr == -1 { // if not set explicitly
+	if Debug.Checkptr == -1 {	// if not set explicitly
 		Debug.Checkptr = 0
 	}
 
@@ -293,14 +361,14 @@ func ParseFlags() {
 // See the comment on type CmdFlags for the rules.
 func registerFlags() {
 	var (
-		boolType      = reflect.TypeOf(bool(false))
-		intType       = reflect.TypeOf(int(0))
-		stringType    = reflect.TypeOf(string(""))
-		ptrBoolType   = reflect.TypeOf(new(bool))
-		ptrIntType    = reflect.TypeOf(new(int))
-		ptrStringType = reflect.TypeOf(new(string))
-		countType     = reflect.TypeOf(CountFlag(0))
-		funcType      = reflect.TypeOf((func(string))(nil))
+		boolType	= reflect.TypeOf(bool(false))
+		intType		= reflect.TypeOf(int(0))
+		stringType	= reflect.TypeOf(string(""))
+		ptrBoolType	= reflect.TypeOf(new(bool))
+		ptrIntType	= reflect.TypeOf(new(int))
+		ptrStringType	= reflect.TypeOf(new(string))
+		countType	= reflect.TypeOf(CountFlag(0))
+		funcType	= reflect.TypeOf((func(string))(nil))
 	)
 
 	v := reflect.ValueOf(&Flag).Elem()
@@ -421,32 +489,28 @@ func readImportCfg(file string) {
 	}
 
 	for lineNum, line := range strings.Split(string(data), "\n") {
-		lineNum++ // 1-based
+		lineNum++	// 1-based
 		line = strings.TrimSpace(line)
 		if line == "" || strings.HasPrefix(line, "#") {
 			continue
 		}
 
-		var verb, args string
-		if i := strings.Index(line, " "); i < 0 {
-			verb = line
-		} else {
-			verb, args = line[:i], strings.TrimSpace(line[i+1:])
+		verb, args, found := strings.Cut(line, " ")
+		if found {
+			args = strings.TrimSpace(args)
 		}
-		var before, after string
-		if i := strings.Index(args, "="); i >= 0 {
-			before, after = args[:i], args[i+1:]
-		}
+		before, after, hasEq := strings.Cut(args, "=")
+
 		switch verb {
 		default:
 			log.Fatalf("%s:%d: unknown directive %q", file, lineNum, verb)
 		case "importmap":
-			if before == "" || after == "" {
+			if !hasEq || before == "" || after == "" {
 				log.Fatalf(`%s:%d: invalid importmap: syntax is "importmap old=new"`, file, lineNum)
 			}
 			Flag.Cfg.ImportMap[before] = after
 		case "packagefile":
-			if before == "" || after == "" {
+			if !hasEq || before == "" || after == "" {
 				log.Fatalf(`%s:%d: invalid packagefile: syntax is "packagefile path=filename"`, file, lineNum)
 			}
 			Flag.Cfg.PackageFile[before] = after
@@ -455,7 +519,7 @@ func readImportCfg(file string) {
 }
 
 func readCoverageCfg(file string) {
-	var cfg coverage.CoverFixupConfig
+	var cfg covcmd.CoverFixupConfig
 	data, err := os.ReadFile(file)
 	if err != nil {
 		log.Fatalf("-coveragecfg: %v", err)

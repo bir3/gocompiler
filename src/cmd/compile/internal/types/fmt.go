@@ -8,9 +8,7 @@ import (
 	"bytes"
 	"encoding/binary"
 	"fmt"
-	"github.com/bir3/gocompiler/src/go/constant"
 	"strconv"
-	"strings"
 	"sync"
 
 	"github.com/bir3/gocompiler/src/cmd/compile/internal/base"
@@ -29,31 +27,6 @@ var UnsafePkg *Pkg
 // BlankSym is the blank (_) symbol.
 var BlankSym *Sym
 
-// OrigSym returns the original symbol written by the user.
-func OrigSym(s *Sym) *Sym {
-	if s == nil {
-		return nil
-	}
-
-	if len(s.Name) > 1 && s.Name[0] == '~' {
-		switch s.Name[1] {
-		case 'r': // originally an unnamed result
-			return nil
-		case 'b': // originally the blank identifier _
-			// TODO(mdempsky): Does s.Pkg matter here?
-			return BlankSym
-		}
-		return s
-	}
-
-	if strings.HasPrefix(s.Name, ".anon") {
-		// originally an unnamed or _ name (see subr.go: NewFuncParams)
-		return nil
-	}
-
-	return s
-}
-
 // numImport tracks how often a package with a given name is imported.
 // It is used to provide a better error message (by using the package
 // path to disambiguate) if a package that appears multiple times with
@@ -68,7 +41,7 @@ var NumImport = make(map[string]int)
 type fmtMode int
 
 const (
-	fmtGo fmtMode = iota
+	fmtGo	fmtMode	= iota
 	fmtDebug
 	fmtTypeID
 	fmtTypeIDName
@@ -156,7 +129,7 @@ func pkgqual(pkg *Pkg, verb rune, mode fmtMode) string {
 	}
 	if verb != 'S' {
 		switch mode {
-		case fmtGo: // This is for the user
+		case fmtGo:	// This is for the user
 			if pkg == BuiltinPkg || pkg == LocalPkg {
 				return ""
 			}
@@ -186,27 +159,27 @@ func pkgqual(pkg *Pkg, verb rune, mode fmtMode) string {
 // Type
 
 var BasicTypeNames = []string{
-	TINT:        "int",
-	TUINT:       "uint",
-	TINT8:       "int8",
-	TUINT8:      "uint8",
-	TINT16:      "int16",
-	TUINT16:     "uint16",
-	TINT32:      "int32",
-	TUINT32:     "uint32",
-	TINT64:      "int64",
-	TUINT64:     "uint64",
-	TUINTPTR:    "uintptr",
-	TFLOAT32:    "float32",
-	TFLOAT64:    "float64",
-	TCOMPLEX64:  "complex64",
-	TCOMPLEX128: "complex128",
-	TBOOL:       "bool",
-	TANY:        "any",
-	TSTRING:     "string",
-	TNIL:        "nil",
-	TIDEAL:      "untyped number",
-	TBLANK:      "blank",
+	TINT:		"int",
+	TUINT:		"uint",
+	TINT8:		"int8",
+	TUINT8:		"uint8",
+	TINT16:		"int16",
+	TUINT16:	"uint16",
+	TINT32:		"int32",
+	TUINT32:	"uint32",
+	TINT64:		"int64",
+	TUINT64:	"uint64",
+	TUINTPTR:	"uintptr",
+	TFLOAT32:	"float32",
+	TFLOAT64:	"float64",
+	TCOMPLEX64:	"complex64",
+	TCOMPLEX128:	"complex128",
+	TBOOL:		"bool",
+	TANY:		"any",
+	TSTRING:	"string",
+	TNIL:		"nil",
+	TIDEAL:		"untyped number",
+	TBLANK:		"blank",
 }
 
 var fmtBufferPool = sync.Pool{
@@ -227,10 +200,10 @@ func (t *Type) Format(s fmt.State, verb rune) {
 	mode := fmtGo
 	switch verb {
 	case 'v', 'S', 'L':
-		if verb == 'v' && s.Flag('+') { // %+v is debug format
+		if verb == 'v' && s.Flag('+') {	// %+v is debug format
 			mode = fmtDebug
 		}
-		if verb == 'S' && s.Flag('-') { // %-S is special case for receiver - short typeid format
+		if verb == 'S' && s.Flag('-') {	// %-S is special case for receiver - short typeid format
 			mode = fmtTypeID
 		}
 		fmt.Fprint(s, tconv(t, verb, mode))
@@ -346,14 +319,6 @@ func tconv2(b *bytes.Buffer, t *Type, verb rune, mode fmtMode, visited map[*Type
 			}
 		}
 		sconv2(b, sym, verb, mode)
-
-		// TODO(mdempsky): Investigate including Vargen in fmtTypeIDName
-		// output too. It seems like it should, but that mode is currently
-		// used in string representation used by reflection, which is
-		// user-visible and doesn't expect this.
-		if mode == fmtTypeID && t.vargen != 0 {
-			fmt.Fprintf(b, "·%d", t.vargen)
-		}
 		return
 	}
 
@@ -452,7 +417,7 @@ func tconv2(b *bytes.Buffer, t *Type, verb rune, mode fmtMode, visited map[*Type
 			break
 		}
 		b.WriteString("interface {")
-		for i, f := range t.AllMethods().Slice() {
+		for i, f := range t.AllMethods() {
 			if i != 0 {
 				b.WriteByte(';')
 			}
@@ -472,7 +437,7 @@ func tconv2(b *bytes.Buffer, t *Type, verb rune, mode fmtMode, visited map[*Type
 			}
 			tconv2(b, f.Type, 'S', mode, visited)
 		}
-		if t.AllMethods().Len() != 0 {
+		if len(t.AllMethods()) != 0 {
 			b.WriteByte(' ')
 		}
 		b.WriteByte('}')
@@ -483,15 +448,12 @@ func tconv2(b *bytes.Buffer, t *Type, verb rune, mode fmtMode, visited map[*Type
 		} else {
 			if t.Recv() != nil {
 				b.WriteString("method")
-				tconv2(b, t.Recvs(), 0, mode, visited)
+				formatParams(b, t.Recvs(), mode, visited)
 				b.WriteByte(' ')
 			}
 			b.WriteString("func")
 		}
-		if t.NumTParams() > 0 {
-			tconv2(b, t.TParams(), 0, mode, visited)
-		}
-		tconv2(b, t.Params(), 0, mode, visited)
+		formatParams(b, t.Params(), mode, visited)
 
 		switch t.NumResults() {
 		case 0:
@@ -499,11 +461,11 @@ func tconv2(b *bytes.Buffer, t *Type, verb rune, mode fmtMode, visited map[*Type
 
 		case 1:
 			b.WriteByte(' ')
-			tconv2(b, t.Results().Field(0).Type, 0, mode, visited) // struct->field->field's type
+			tconv2(b, t.Result(0).Type, 0, mode, visited)	// struct->field->field's type
 
 		default:
 			b.WriteByte(' ')
-			tconv2(b, t.Results(), 0, mode, visited)
+			formatParams(b, t.Results(), mode, visited)
 		}
 
 	case TSTRUCT:
@@ -514,10 +476,6 @@ func tconv2(b *bytes.Buffer, t *Type, verb rune, mode fmtMode, visited map[*Type
 			switch t {
 			case mt.Bucket:
 				b.WriteString("map.bucket[")
-			case mt.Hmap:
-				b.WriteString("map.hdr[")
-			case mt.Hiter:
-				b.WriteString("map.iter[")
 			default:
 				base.Fatalf("unknown internal map type")
 			}
@@ -527,39 +485,18 @@ func tconv2(b *bytes.Buffer, t *Type, verb rune, mode fmtMode, visited map[*Type
 			break
 		}
 
-		if funarg := t.StructType().Funarg; funarg != FunargNone {
-			open, close := '(', ')'
-			if funarg == FunargTparams {
-				open, close = '[', ']'
+		b.WriteString("struct {")
+		for i, f := range t.Fields() {
+			if i != 0 {
+				b.WriteByte(';')
 			}
-			b.WriteByte(byte(open))
-			fieldVerb := 'v'
-			switch mode {
-			case fmtTypeID, fmtTypeIDName, fmtGo:
-				// no argument names on function signature, and no "noescape"/"nosplit" tags
-				fieldVerb = 'S'
-			}
-			for i, f := range t.Fields().Slice() {
-				if i != 0 {
-					b.WriteString(", ")
-				}
-				fldconv(b, f, fieldVerb, mode, visited, funarg)
-			}
-			b.WriteByte(byte(close))
-		} else {
-			b.WriteString("struct {")
-			for i, f := range t.Fields().Slice() {
-				if i != 0 {
-					b.WriteByte(';')
-				}
-				b.WriteByte(' ')
-				fldconv(b, f, 'L', mode, visited, funarg)
-			}
-			if t.NumFields() != 0 {
-				b.WriteByte(' ')
-			}
-			b.WriteByte('}')
+			b.WriteByte(' ')
+			fldconv(b, f, 'L', mode, visited, false)
 		}
+		if t.NumFields() != 0 {
+			b.WriteByte(' ')
+		}
+		b.WriteByte('}')
 
 	case TFORW:
 		b.WriteString("undefined")
@@ -570,27 +507,6 @@ func tconv2(b *bytes.Buffer, t *Type, verb rune, mode fmtMode, visited map[*Type
 
 	case TUNSAFEPTR:
 		b.WriteString("unsafe.Pointer")
-
-	case TTYPEPARAM:
-		if t.Sym() != nil {
-			sconv2(b, t.Sym(), 'v', mode)
-		} else {
-			b.WriteString("tp")
-			// Print out the pointer value for now to disambiguate type params
-			fmt.Fprintf(b, "%p", t)
-		}
-
-	case TUNION:
-		for i := 0; i < t.NumTerms(); i++ {
-			if i > 0 {
-				b.WriteString("|")
-			}
-			elem, tilde := t.Term(i)
-			if tilde {
-				b.WriteString("~")
-			}
-			tconv2(b, elem, 0, mode, visited)
-		}
 
 	case Txxx:
 		b.WriteString("Txxx")
@@ -605,7 +521,24 @@ func tconv2(b *bytes.Buffer, t *Type, verb rune, mode fmtMode, visited map[*Type
 	}
 }
 
-func fldconv(b *bytes.Buffer, f *Field, verb rune, mode fmtMode, visited map[*Type]int, funarg Funarg) {
+func formatParams(b *bytes.Buffer, params []*Field, mode fmtMode, visited map[*Type]int) {
+	b.WriteByte('(')
+	fieldVerb := 'v'
+	switch mode {
+	case fmtTypeID, fmtTypeIDName, fmtGo:
+		// no argument names on function signature, and no "noescape"/"nosplit" tags
+		fieldVerb = 'S'
+	}
+	for i, param := range params {
+		if i != 0 {
+			b.WriteString(", ")
+		}
+		fldconv(b, param, fieldVerb, mode, visited, true)
+	}
+	b.WriteByte(')')
+}
+
+func fldconv(b *bytes.Buffer, f *Field, verb rune, mode fmtMode, visited map[*Type]int, isParam bool) {
 	if f == nil {
 		b.WriteString("<T>")
 		return
@@ -615,11 +548,6 @@ func fldconv(b *bytes.Buffer, f *Field, verb rune, mode fmtMode, visited map[*Ty
 	nameSep := " "
 	if verb != 'S' {
 		s := f.Sym
-
-		// Take the name from the original.
-		if mode == fmtGo {
-			s = OrigSym(s)
-		}
 
 		// Using type aliases and embedded fields, it's possible to
 		// construct types that can't be directly represented as a
@@ -662,15 +590,12 @@ func fldconv(b *bytes.Buffer, f *Field, verb rune, mode fmtMode, visited map[*Ty
 		}
 
 		if s != nil {
-			if funarg != FunargNone {
+			if isParam {
 				name = fmt.Sprint(f.Nname)
 			} else if verb == 'L' {
 				name = s.Name
-				if name == ".F" {
-					name = "F" // Hack for toolstash -cmp.
-				}
 				if !IsExported(name) && mode != fmtTypeIDName {
-					name = sconv(s, 0, mode) // qualify non-exported names (used on structs, not on funarg)
+					name = sconv(s, 0, mode)	// qualify non-exported names (used on structs, not on funarg)
 				}
 			} else {
 				name = sconv(s, 0, mode)
@@ -694,7 +619,7 @@ func fldconv(b *bytes.Buffer, f *Field, verb rune, mode fmtMode, visited map[*Ty
 		tconv2(b, f.Type, 0, mode, visited)
 	}
 
-	if verb != 'S' && funarg == FunargNone && f.Note != "" {
+	if verb != 'S' && !isParam && f.Note != "" {
 		b.WriteString(" ")
 		b.WriteString(strconv.Quote(f.Note))
 	}
@@ -713,41 +638,6 @@ func SplitVargenSuffix(name string) (base, suffix string) {
 		return name[:i], name[i:]
 	}
 	return name, ""
-}
-
-// Val
-
-func FmtConst(v constant.Value, sharp bool) string {
-	if !sharp && v.Kind() == constant.Complex {
-		real, imag := constant.Real(v), constant.Imag(v)
-
-		var re string
-		sre := constant.Sign(real)
-		if sre != 0 {
-			re = real.String()
-		}
-
-		var im string
-		sim := constant.Sign(imag)
-		if sim != 0 {
-			im = imag.String()
-		}
-
-		switch {
-		case sre == 0 && sim == 0:
-			return "0"
-		case sre == 0:
-			return im + "i"
-		case sim == 0:
-			return re
-		case sim < 0:
-			return fmt.Sprintf("(%s%si)", re, im)
-		default:
-			return fmt.Sprintf("(%s+%si)", re, im)
-		}
-	}
-
-	return v.String()
 }
 
 // TypeHash computes a hash value for type t to use in type switch statements.

@@ -28,65 +28,65 @@ import (
 // apart from type names, and avoid awkward func parameters like "arch arch".
 
 type arch struct {
-	name               string
-	pkg                string // obj package to import for this arch.
-	genfile            string // source file containing opcode code generation.
-	ops                []opData
-	blocks             []blockData
-	regnames           []string
-	ParamIntRegNames   string
-	ParamFloatRegNames string
-	gpregmask          regMask
-	fpregmask          regMask
-	fp32regmask        regMask
-	fp64regmask        regMask
-	specialregmask     regMask
-	framepointerreg    int8
-	linkreg            int8
-	generic            bool
-	imports            []string
+	name			string
+	pkg			string	// obj package to import for this arch.
+	genfile			string	// source file containing opcode code generation.
+	ops			[]opData
+	blocks			[]blockData
+	regnames		[]string
+	ParamIntRegNames	string
+	ParamFloatRegNames	string
+	gpregmask		regMask
+	fpregmask		regMask
+	fp32regmask		regMask
+	fp64regmask		regMask
+	specialregmask		regMask
+	framepointerreg		int8
+	linkreg			int8
+	generic			bool
+	imports			[]string
 }
 
 type opData struct {
-	name              string
-	reg               regInfo
-	asm               string
-	typ               string // default result type
-	aux               string
-	rematerializeable bool
-	argLength         int32  // number of arguments, if -1, then this operation has a variable number of arguments
-	commutative       bool   // this operation is commutative on its first 2 arguments (e.g. addition)
-	resultInArg0      bool   // (first, if a tuple) output of v and v.Args[0] must be allocated to the same register
-	resultNotInArgs   bool   // outputs must not be allocated to the same registers as inputs
-	clobberFlags      bool   // this op clobbers flags register
-	needIntTemp       bool   // need a temporary free integer register
-	call              bool   // is a function call
-	tailCall          bool   // is a tail call
-	nilCheck          bool   // this op is a nil check on arg0
-	faultOnNilArg0    bool   // this op will fault if arg0 is nil (and aux encodes a small offset)
-	faultOnNilArg1    bool   // this op will fault if arg1 is nil (and aux encodes a small offset)
-	hasSideEffects    bool   // for "reasons", not to be eliminated.  E.g., atomic store, #19182.
-	zeroWidth         bool   // op never translates into any machine code. example: copy, which may sometimes translate to machine code, is not zero-width.
-	unsafePoint       bool   // this op is an unsafe point, i.e. not safe for async preemption
-	symEffect         string // effect this op has on symbol in aux
-	scale             uint8  // amd64/386 indexed load scale
+	name			string
+	reg			regInfo
+	asm			string
+	typ			string	// default result type
+	aux			string
+	rematerializeable	bool
+	argLength		int32	// number of arguments, if -1, then this operation has a variable number of arguments
+	commutative		bool	// this operation is commutative on its first 2 arguments (e.g. addition)
+	resultInArg0		bool	// (first, if a tuple) output of v and v.Args[0] must be allocated to the same register
+	resultNotInArgs		bool	// outputs must not be allocated to the same registers as inputs
+	clobberFlags		bool	// this op clobbers flags register
+	needIntTemp		bool	// need a temporary free integer register
+	call			bool	// is a function call
+	tailCall		bool	// is a tail call
+	nilCheck		bool	// this op is a nil check on arg0
+	faultOnNilArg0		bool	// this op will fault if arg0 is nil (and aux encodes a small offset)
+	faultOnNilArg1		bool	// this op will fault if arg1 is nil (and aux encodes a small offset)
+	hasSideEffects		bool	// for "reasons", not to be eliminated.  E.g., atomic store, #19182.
+	zeroWidth		bool	// op never translates into any machine code. example: copy, which may sometimes translate to machine code, is not zero-width.
+	unsafePoint		bool	// this op is an unsafe point, i.e. not safe for async preemption
+	symEffect		string	// effect this op has on symbol in aux
+	scale			uint8	// amd64/386 indexed load scale
 }
 
 type blockData struct {
-	name     string // the suffix for this block ("EQ", "LT", etc.)
-	controls int    // the number of control values this type of block requires
-	aux      string // the type of the Aux/AuxInt value, if any
+	name		string	// the suffix for this block ("EQ", "LT", etc.)
+	controls	int	// the number of control values this type of block requires
+	aux		string	// the type of the Aux/AuxInt value, if any
 }
 
 type regInfo struct {
 	// inputs[i] encodes the set of registers allowed for the i'th input.
 	// Inputs that don't use registers (flags, memory, etc.) should be 0.
-	inputs []regMask
+	inputs	[]regMask
 	// clobbers encodes the set of registers that are overwritten by
 	// the instruction (other than the output registers).
-	clobbers regMask
+	clobbers	regMask
 	// outputs[i] encodes the set of registers allowed for the i'th output.
-	outputs []regMask
+	outputs	[]regMask
 }
 
 type regMask uint64
@@ -158,7 +158,7 @@ func main() {
 		genAllocators,
 	}
 	for _, a := range archs {
-		a := a // the funcs are ran concurrently at a later time
+		a := a	// the funcs are ran concurrently at a later time
 		tasks = append(tasks, func() {
 			genRules(a)
 			genSplitLoadRules(a)
@@ -182,7 +182,7 @@ func main() {
 			log.Fatal("could not create memory profile: ", err)
 		}
 		defer f.Close()
-		runtime.GC() // get up-to-date statistics
+		runtime.GC()	// get up-to-date statistics
 		if err := pprof.WriteHeapProfile(f); err != nil {
 			log.Fatal("could not write memory profile: ", err)
 		}
@@ -191,7 +191,7 @@ func main() {
 
 func genOp() {
 	w := new(bytes.Buffer)
-	fmt.Fprintf(w, "// Code generated from _gen/*Ops.go; DO NOT EDIT.\n")
+	fmt.Fprintf(w, "// Code generated from _gen/*Ops.go using 'go generate'; DO NOT EDIT.\n")
 	fmt.Fprintln(w)
 	fmt.Fprintln(w, "package ssa")
 
@@ -244,7 +244,7 @@ func genOp() {
 
 	// generate Op* declarations
 	fmt.Fprintln(w, "const (")
-	fmt.Fprintln(w, "OpInvalid Op = iota") // make sure OpInvalid is 0.
+	fmt.Fprintln(w, "OpInvalid Op = iota")	// make sure OpInvalid is 0.
 	for _, a := range archs {
 		fmt.Fprintln(w)
 		for _, v := range a.ops {
@@ -349,7 +349,7 @@ func genOp() {
 			}
 			if a.name == "generic" {
 				fmt.Fprintln(w, "generic:true,")
-				fmt.Fprintln(w, "},") // close op
+				fmt.Fprintln(w, "},")	// close op
 				// generic ops have no reg info or asm
 				continue
 			}
@@ -398,8 +398,8 @@ func genOp() {
 				}
 				fmt.Fprintln(w, "},")
 			}
-			fmt.Fprintln(w, "},") // close reg info
-			fmt.Fprintln(w, "},") // close op
+			fmt.Fprintln(w, "},")	// close reg info
+			fmt.Fprintln(w, "},")	// close op
 		}
 	}
 	fmt.Fprintln(w, "}")
@@ -428,7 +428,7 @@ func genOp() {
 		for i, r := range a.regnames {
 			num[r] = int8(i)
 			pkg := a.pkg[len("cmd/internal/obj/"):]
-			var objname string // name in cmd/internal/obj/$ARCH
+			var objname string	// name in cmd/internal/obj/$ARCH
 			switch r {
 			case "SB":
 				// SB isn't a real register.  cmd/internal/obj expects 0 in this case.
@@ -560,12 +560,12 @@ type intPair struct {
 }
 type byKey []intPair
 
-func (a byKey) Len() int           { return len(a) }
-func (a byKey) Swap(i, j int)      { a[i], a[j] = a[j], a[i] }
-func (a byKey) Less(i, j int) bool { return a[i].key < a[j].key }
+func (a byKey) Len() int		{ return len(a) }
+func (a byKey) Swap(i, j int)		{ a[i], a[j] = a[j], a[i] }
+func (a byKey) Less(i, j int) bool	{ return a[i].key < a[j].key }
 
 type ArchsByName []arch
 
-func (x ArchsByName) Len() int           { return len(x) }
-func (x ArchsByName) Swap(i, j int)      { x[i], x[j] = x[j], x[i] }
-func (x ArchsByName) Less(i, j int) bool { return x[i].name < x[j].name }
+func (x ArchsByName) Len() int			{ return len(x) }
+func (x ArchsByName) Swap(i, j int)		{ x[i], x[j] = x[j], x[i] }
+func (x ArchsByName) Less(i, j int) bool	{ return x[i].name < x[j].name }

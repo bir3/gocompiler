@@ -9,10 +9,9 @@ package build
 import (
 	"path/filepath"
 	"runtime"
-"github.com/bir3/gocompiler/vfs"
 )
 
 // getToolDir returns the default value of ToolDir.
 func getToolDir() string {
-	return filepath.Join(vfs.GOROOT, "pkg/tool/"+runtime.GOOS+"_"+runtime.GOARCH)
+	return filepath.Join(runtime.GOROOT(), "pkg/tool/"+runtime.GOOS+"_"+runtime.GOARCH)
 }

@@ -18,19 +18,19 @@ import (
 )
 
 type parser struct {
-	scanner  *scanner.Scanner
-	version  string                    // format version
-	tok      rune                      // current token
-	lit      string                    // literal string; only valid for Ident, Int, String tokens
-	pkgpath  string                    // package path of imported package
-	pkgname  string                    // name of imported package
-	pkg      *types.Package            // reference to imported package
-	imports  map[string]*types.Package // package path -> package object
-	typeList []types.Type              // type number -> type
-	typeData []string                  // unparsed type data (v3 and later)
-	fixups   []fixupRecord             // fixups to apply at end of parsing
-	initdata InitData                  // package init priority data
-	aliases  map[int]string            // maps saved type number to alias name
+	scanner		*scanner.Scanner
+	version		string				// format version
+	tok		rune				// current token
+	lit		string				// literal string; only valid for Ident, Int, String tokens
+	pkgpath		string				// package path of imported package
+	pkgname		string				// name of imported package
+	pkg		*types.Package			// reference to imported package
+	imports		map[string]*types.Package	// package path -> package object
+	typeList	[]types.Type			// type number -> type
+	typeData	[]string			// unparsed type data (v3 and later)
+	fixups		[]fixupRecord			// fixups to apply at end of parsing
+	initdata	InitData			// package init priority data
+	aliases		map[int]string			// maps saved type number to alias name
 }
 
 // When reading export data it's possible to encounter a defined type
@@ -49,8 +49,8 @@ type parser struct {
 // which point fixups are applied.
 
 type fixupRecord struct {
-	toUpdate *types.Named // type to modify when fixup is processed
-	target   types.Type   // type that was incomplete when fixup was created
+	toUpdate	*types.Named	// type to modify when fixup is processed
+	target		types.Type	// type that was incomplete when fixup was created
 }
 
 func (p *parser) init(filename string, src io.Reader, imports map[string]*types.Package) {
@@ -66,13 +66,13 @@ func (p *parser) initScanner(filename string, src io.Reader) {
 	p.scanner.Error = func(_ *scanner.Scanner, msg string) { p.error(msg) }
 	p.scanner.Mode = scanner.ScanIdents | scanner.ScanInts | scanner.ScanFloats | scanner.ScanStrings
 	p.scanner.Whitespace = 1<<'\t' | 1<<' '
-	p.scanner.Filename = filename // for good error messages
+	p.scanner.Filename = filename	// for good error messages
 	p.next()
 }
 
 type importError struct {
-	pos scanner.Position
-	err error
+	pos	scanner.Position
+	err	error
 }
 
 func (e importError) Error() string {
@@ -530,7 +530,7 @@ func (p *parser) parseNamedType(nlist []any) types.Type {
 			// use the previously imported (canonical) type
 			t := obj.Type()
 			p.update(t, nlist)
-			p.parseType(pkg) // discard
+			p.parseType(pkg)	// discard
 			return t
 		}
 		t := p.parseType(pkg, nlist...)
@@ -882,50 +882,50 @@ const (
 	// From gofrontend/go/export.h
 	// Note that these values are negative in the gofrontend and have been made positive
 	// in the gccgoimporter.
-	gccgoBuiltinINT8       = 1
-	gccgoBuiltinINT16      = 2
-	gccgoBuiltinINT32      = 3
-	gccgoBuiltinINT64      = 4
-	gccgoBuiltinUINT8      = 5
-	gccgoBuiltinUINT16     = 6
-	gccgoBuiltinUINT32     = 7
-	gccgoBuiltinUINT64     = 8
-	gccgoBuiltinFLOAT32    = 9
-	gccgoBuiltinFLOAT64    = 10
-	gccgoBuiltinINT        = 11
-	gccgoBuiltinUINT       = 12
-	gccgoBuiltinUINTPTR    = 13
-	gccgoBuiltinBOOL       = 15
-	gccgoBuiltinSTRING     = 16
-	gccgoBuiltinCOMPLEX64  = 17
-	gccgoBuiltinCOMPLEX128 = 18
-	gccgoBuiltinERROR      = 19
-	gccgoBuiltinBYTE       = 20
-	gccgoBuiltinRUNE       = 21
+	gccgoBuiltinINT8	= 1
+	gccgoBuiltinINT16	= 2
+	gccgoBuiltinINT32	= 3
+	gccgoBuiltinINT64	= 4
+	gccgoBuiltinUINT8	= 5
+	gccgoBuiltinUINT16	= 6
+	gccgoBuiltinUINT32	= 7
+	gccgoBuiltinUINT64	= 8
+	gccgoBuiltinFLOAT32	= 9
+	gccgoBuiltinFLOAT64	= 10
+	gccgoBuiltinINT		= 11
+	gccgoBuiltinUINT	= 12
+	gccgoBuiltinUINTPTR	= 13
+	gccgoBuiltinBOOL	= 15
+	gccgoBuiltinSTRING	= 16
+	gccgoBuiltinCOMPLEX64	= 17
+	gccgoBuiltinCOMPLEX128	= 18
+	gccgoBuiltinERROR	= 19
+	gccgoBuiltinBYTE	= 20
+	gccgoBuiltinRUNE	= 21
 )
 
 func lookupBuiltinType(typ int) types.Type {
 	return [...]types.Type{
-		gccgoBuiltinINT8:       types.Typ[types.Int8],
-		gccgoBuiltinINT16:      types.Typ[types.Int16],
-		gccgoBuiltinINT32:      types.Typ[types.Int32],
-		gccgoBuiltinINT64:      types.Typ[types.Int64],
-		gccgoBuiltinUINT8:      types.Typ[types.Uint8],
-		gccgoBuiltinUINT16:     types.Typ[types.Uint16],
-		gccgoBuiltinUINT32:     types.Typ[types.Uint32],
-		gccgoBuiltinUINT64:     types.Typ[types.Uint64],
-		gccgoBuiltinFLOAT32:    types.Typ[types.Float32],
-		gccgoBuiltinFLOAT64:    types.Typ[types.Float64],
-		gccgoBuiltinINT:        types.Typ[types.Int],
-		gccgoBuiltinUINT:       types.Typ[types.Uint],
-		gccgoBuiltinUINTPTR:    types.Typ[types.Uintptr],
-		gccgoBuiltinBOOL:       types.Typ[types.Bool],
-		gccgoBuiltinSTRING:     types.Typ[types.String],
-		gccgoBuiltinCOMPLEX64:  types.Typ[types.Complex64],
-		gccgoBuiltinCOMPLEX128: types.Typ[types.Complex128],
-		gccgoBuiltinERROR:      types.Universe.Lookup("error").Type(),
-		gccgoBuiltinBYTE:       types.Universe.Lookup("byte").Type(),
-		gccgoBuiltinRUNE:       types.Universe.Lookup("rune").Type(),
+		gccgoBuiltinINT8:	types.Typ[types.Int8],
+		gccgoBuiltinINT16:	types.Typ[types.Int16],
+		gccgoBuiltinINT32:	types.Typ[types.Int32],
+		gccgoBuiltinINT64:	types.Typ[types.Int64],
+		gccgoBuiltinUINT8:	types.Typ[types.Uint8],
+		gccgoBuiltinUINT16:	types.Typ[types.Uint16],
+		gccgoBuiltinUINT32:	types.Typ[types.Uint32],
+		gccgoBuiltinUINT64:	types.Typ[types.Uint64],
+		gccgoBuiltinFLOAT32:	types.Typ[types.Float32],
+		gccgoBuiltinFLOAT64:	types.Typ[types.Float64],
+		gccgoBuiltinINT:	types.Typ[types.Int],
+		gccgoBuiltinUINT:	types.Typ[types.Uint],
+		gccgoBuiltinUINTPTR:	types.Typ[types.Uintptr],
+		gccgoBuiltinBOOL:	types.Typ[types.Bool],
+		gccgoBuiltinSTRING:	types.Typ[types.String],
+		gccgoBuiltinCOMPLEX64:	types.Typ[types.Complex64],
+		gccgoBuiltinCOMPLEX128:	types.Typ[types.Complex128],
+		gccgoBuiltinERROR:	types.Universe.Lookup("error").Type(),
+		gccgoBuiltinBYTE:	types.Universe.Lookup("byte").Type(),
+		gccgoBuiltinRUNE:	types.Universe.Lookup("rune").Type(),
 	}[typ]
 }
 
@@ -1028,8 +1028,8 @@ func (p *parser) parseTypes(pkg *types.Package) {
 	p.typeList = make([]types.Type, maxp1, maxp1)
 
 	type typeOffset struct {
-		offset int
-		length int
+		offset	int
+		length	int
 	}
 	var typeOffsets []typeOffset
 
@@ -1058,12 +1058,12 @@ func (p *parser) parseTypes(pkg *types.Package) {
 	}
 	allTypeData := sb.String()
 
-	p.typeData = []string{""} // type 0, unused
+	p.typeData = []string{""}	// type 0, unused
 	for _, to := range typeOffsets {
 		p.typeData = append(p.typeData, allTypeData[to.offset:to.offset+to.length])
 	}
 
-	for i := 1; i < int(exportedp1); i++ {
+	for i := 1; i < exportedp1; i++ {
 		p.parseSavedType(pkg, i, nil)
 	}
 }

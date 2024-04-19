@@ -7,9 +7,7 @@ package run
 
 import (
 	"context"
-	"fmt"
 	"github.com/bir3/gocompiler/src/go/build"
-	"os"
 	"path"
 	"path/filepath"
 	"strings"
@@ -23,8 +21,8 @@ import (
 )
 
 var CmdRun = &base.Command{
-	UsageLine: "go run [build flags] [-exec xprog] package [arguments...]",
-	Short:     "compile and run Go program",
+	UsageLine:	"go run [build flags] [-exec xprog] package [arguments...]",
+	Short:		"compile and run Go program",
 	Long: `
 Run compiles and runs the named main Go package.
 Typically the package is specified as a list of .go source files from a single
@@ -66,17 +64,13 @@ See also: go build.
 }
 
 func init() {
-	CmdRun.Run = runRun // break init loop
+	CmdRun.Run = runRun	// break init loop
 
 	work.AddBuildFlags(CmdRun, work.DefaultBuildFlags)
 	if cfg.Experiment != nil && cfg.Experiment.CoverageRedesign {
 		work.AddCoverFlags(CmdRun, nil)
 	}
 	CmdRun.Flag.Var((*base.StringsFlag)(&work.ExecCmd), "exec", "")
-}
-
-func printStderr(args ...any) (int, error) {
-	return fmt.Fprint(os.Stderr, args...)
 }
 
 func runRun(ctx context.Context, cmd *base.Command, args []string) {
@@ -97,10 +91,9 @@ func runRun(ctx context.Context, cmd *base.Command, args []string) {
 	b := work.NewBuilder("")
 	defer func() {
 		if err := b.Close(); err != nil {
-			base.Fatalf("go: %v", err)
+			base.Fatal(err)
 		}
 	}()
-	b.Print = printStderr
 
 	i := 0
 	for i < len(args) && strings.HasSuffix(args[i], ".go") {
@@ -125,7 +118,7 @@ func runRun(ctx context.Context, cmd *base.Command, args []string) {
 			var err error
 			pkgs, err = load.PackagesAndErrorsOutsideModule(ctx, pkgOpts, args[:1])
 			if err != nil {
-				base.Fatalf("go: %v", err)
+				base.Fatal(err)
 			}
 		} else {
 			pkgs = load.PackagesAndErrors(ctx, pkgOpts, args[:1])
@@ -154,7 +147,7 @@ func runRun(ctx context.Context, cmd *base.Command, args []string) {
 	}
 
 	p.Internal.OmitDebug = true
-	p.Target = "" // must build - not up to date
+	p.Target = ""	// must build - not up to date
 	if p.Internal.CmdlineFiles {
 		//set executable name if go file is given as cmd-argument
 		var src string
@@ -208,7 +201,7 @@ func shouldUseOutsideModuleMode(args []string) bool {
 func buildRunProgram(b *work.Builder, ctx context.Context, a *work.Action) error {
 	cmdline := str.StringList(work.FindExecCmd(), a.Deps[0].Target, a.Args)
 	if cfg.BuildN || cfg.BuildX {
-		b.Showcmd("", "%s", strings.Join(cmdline, " "))
+		b.Shell(a).ShowCmd("", "%s", strings.Join(cmdline, " "))
 		if cfg.BuildN {
 			return nil
 		}

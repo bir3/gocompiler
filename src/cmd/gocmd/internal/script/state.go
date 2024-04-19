@@ -12,7 +12,7 @@ import (
 	"io"
 	"io/fs"
 	"os"
-	"os/exec"
+	"github.com/bir3/gocompiler/exec"
 	"path/filepath"
 	"regexp"
 	"strings"
@@ -21,26 +21,26 @@ import (
 // A State encapsulates the current state of a running script engine,
 // including the script environment and any running background commands.
 type State struct {
-	engine *Engine // the engine currently executing the script, if any
+	engine	*Engine	// the engine currently executing the script, if any
 
-	ctx    context.Context
-	cancel context.CancelFunc
-	file   string
-	log    bytes.Buffer
+	ctx	context.Context
+	cancel	context.CancelFunc
+	file	string
+	log	bytes.Buffer
 
-	workdir string            // initial working directory
-	pwd     string            // current working directory during execution
-	env     []string          // environment list (for os/exec)
-	envMap  map[string]string // environment mapping (matches env)
-	stdout  string            // standard output from last 'go' command; for 'stdout' command
-	stderr  string            // standard error from last 'go' command; for 'stderr' command
+	workdir	string			// initial working directory
+	pwd	string			// current working directory during execution
+	env	[]string		// environment list (for os/exec)
+	envMap	map[string]string	// environment mapping (matches env)
+	stdout	string			// standard output from last 'go' command; for 'stdout' command
+	stderr	string			// standard error from last 'go' command; for 'stderr' command
 
-	background []backgroundCmd
+	background	[]backgroundCmd
 }
 
 type backgroundCmd struct {
 	*command
-	wait WaitFunc
+	wait	WaitFunc
 }
 
 // NewState returns a new State permanently associated with ctx, with its
@@ -77,12 +77,12 @@ func NewState(ctx context.Context, workdir string, initialEnv []string) (*State,
 	}
 
 	s := &State{
-		ctx:     ctx,
-		cancel:  cancel,
-		workdir: absWork,
-		pwd:     absWork,
-		env:     env,
-		envMap:  envMap,
+		ctx:		ctx,
+		cancel:		cancel,
+		workdir:	absWork,
+		pwd:		absWork,
+		env:		env,
+		envMap:		envMap,
 	}
 	s.Setenv("PWD", absWork)
 	return s, nil
@@ -147,10 +147,14 @@ func (s *State) ExpandEnv(str string, inRegexp bool) string {
 // originally created.
 func (s *State) ExtractFiles(ar *txtar.Archive) error {
 	wd := s.workdir
+
 	// Add trailing separator to terminate wd.
 	// This prevents extracting to outside paths which prefix wd,
 	// e.g. extracting to /home/foobar when wd is /home/foo
-	if !strings.HasSuffix(wd, string(filepath.Separator)) {
+	if wd == "" {
+		panic("s.workdir is unexpectedly empty")
+	}
+	if !os.IsPathSeparator(wd[len(wd)-1]) {
 		wd += string(filepath.Separator)
 	}
 
@@ -173,7 +177,7 @@ func (s *State) ExtractFiles(ar *txtar.Archive) error {
 }
 
 // Getwd returns the directory in which to run the next script command.
-func (s *State) Getwd() string { return s.pwd }
+func (s *State) Getwd() string	{ return s.pwd }
 
 // Logf writes output to the script's log without updating its stdout or stderr
 // buffers. (The output log functions as a kind of meta-stderr.)
@@ -194,7 +198,7 @@ func (s *State) LookupEnv(key string) (string, bool) {
 	return v, ok
 }
 
-// Path returns the absolute path in the host operaating system for a
+// Path returns the absolute path in the host operating system for a
 // script-based (generally slash-separated and relative) path.
 func (s *State) Path(path string) string {
 	if filepath.IsAbs(path) {
@@ -212,11 +216,11 @@ func (s *State) Setenv(key, value string) error {
 
 // Stdout returns the stdout output of the last command run,
 // or the empty string if no command has been run.
-func (s *State) Stdout() string { return s.stdout }
+func (s *State) Stdout() string	{ return s.stdout }
 
 // Stderr returns the stderr output of the last command run,
 // or the empty string if no command has been run.
-func (s *State) Stderr() string { return s.stderr }
+func (s *State) Stderr() string	{ return s.stderr }
 
 // cleanEnv returns a copy of env with any duplicates removed in favor of
 // later values and any required system variables defined.

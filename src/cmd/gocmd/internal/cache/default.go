@@ -12,17 +12,19 @@ import (
 
 	"github.com/bir3/gocompiler/src/cmd/gocmd/internal/base"
 	"github.com/bir3/gocompiler/src/cmd/gocmd/internal/cfg"
+	"github.com/bir3/gocompiler/src/internal/goexperiment"
 )
 
-// Default returns the default cache to use, or nil if no cache should be used.
-func Default() *Cache {
+// Default returns the default cache to use.
+// It never returns nil.
+func Default() Cache {
 	defaultOnce.Do(initDefaultCache)
 	return defaultCache
 }
 
 var (
-	defaultOnce  sync.Once
-	defaultCache *Cache
+	defaultOnce	sync.Once
+	defaultCache	Cache
 )
 
 // cacheREADME is a message stored in a README in the cache directory.
@@ -52,17 +54,22 @@ func initDefaultCache() {
 		os.WriteFile(filepath.Join(dir, "README"), []byte(cacheREADME), 0666)
 	}
 
-	c, err := Open(dir)
+	diskCache, err := Open(dir)
 	if err != nil {
 		base.Fatalf("failed to initialize build cache at %s: %s\n", dir, err)
 	}
-	defaultCache = c
+
+	if v := cfg.Getenv("GOCACHEPROG"); v != "" && goexperiment.CacheProg {
+		defaultCache = startCacheProg(v, diskCache)
+	} else {
+		defaultCache = diskCache
+	}
 }
 
 var (
-	defaultDirOnce sync.Once
-	defaultDir     string
-	defaultDirErr  error
+	defaultDirOnce	sync.Once
+	defaultDir	string
+	defaultDirErr	error
 )
 
 // DefaultDir returns the effective GOCACHE setting.

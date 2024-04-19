@@ -11,14 +11,14 @@ import (
 //go:generate go run ../stringer.go -i $GOFILE -o anames.go -p loong64
 
 const (
-	NSNAME = 8
-	NSYM   = 50
-	NREG   = 32 // number of general registers
-	NFREG  = 32 // number of floating point registers
+	NSNAME	= 8
+	NSYM	= 50
+	NREG	= 32	// number of general registers
+	NFREG	= 32	// number of floating point registers
 )
 
 const (
-	REG_R0 = obj.RBaseLOONG64 + iota // must be a multiple of 32
+	REG_R0	= obj.RBaseLOONG64 + iota	// must be a multiple of 32
 	REG_R1
 	REG_R2
 	REG_R3
@@ -51,7 +51,7 @@ const (
 	REG_R30
 	REG_R31
 
-	REG_F0 // must be a multiple of 32
+	REG_F0	// must be a multiple of 32
 	REG_F1
 	REG_F2
 	REG_F3
@@ -84,10 +84,10 @@ const (
 	REG_F30
 	REG_F31
 
-	REG_FCSR0 // must be a multiple of 32
+	REG_FCSR0	// must be a multiple of 32
 	REG_FCSR1
 	REG_FCSR2
-	REG_FCSR3 // only four registers are needed
+	REG_FCSR3	// only four registers are needed
 	REG_FCSR4
 	REG_FCSR5
 	REG_FCSR6
@@ -117,14 +117,14 @@ const (
 	REG_FCSR30
 	REG_FCSR31
 
-	REG_FCC0 // must be a multiple of 32
+	REG_FCC0	// must be a multiple of 32
 	REG_FCC1
 	REG_FCC2
 	REG_FCC3
 	REG_FCC4
 	REG_FCC5
 	REG_FCC6
-	REG_FCC7 // only eight registers are needed
+	REG_FCC7	// only eight registers are needed
 	REG_FCC8
 	REG_FCC9
 	REG_FCC10
@@ -150,21 +150,21 @@ const (
 	REG_FCC30
 	REG_FCC31
 
-	REG_LAST = REG_FCC31 // the last defined register
+	REG_LAST	= REG_FCC31	// the last defined register
 
-	REG_SPECIAL = REG_FCSR0
+	REG_SPECIAL	= REG_FCSR0
 
-	REGZERO = REG_R0 // set to zero
-	REGLINK = REG_R1
-	REGSP   = REG_R3
-	REGRET  = REG_R19
-	REGARG  = -1      // -1 disables passing the first argument in register
-	REGRT1  = REG_R19 // reserved for runtime, duffzero and duffcopy
-	REGRT2  = REG_R20 // reserved for runtime, duffcopy
-	REGCTXT = REG_R29 // context for closures
-	REGG    = REG_R22 // G in loong64
-	REGTMP  = REG_R30 // used by the assembler
-	FREGRET = REG_F0
+	REGZERO	= REG_R0	// set to zero
+	REGLINK	= REG_R1
+	REGSP	= REG_R3
+	REGRET	= REG_R20	// not use
+	REGARG	= -1		// -1 disables passing the first argument in register
+	REGRT1	= REG_R20	// reserved for runtime, duffzero and duffcopy
+	REGRT2	= REG_R21	// reserved for runtime, duffcopy
+	REGCTXT	= REG_R29	// context for closures
+	REGG	= REG_R22	// G in loong64
+	REGTMP	= REG_R30	// used by the assembler
+	FREGRET	= REG_F0	// not use
 )
 
 var LOONG64DWARFRegisters = map[int16]int16{}
@@ -187,33 +187,33 @@ const (
 
 const (
 	// mark flags
-	LABEL  = 1 << 0
-	LEAF   = 1 << 1
-	SYNC   = 1 << 2
-	BRANCH = 1 << 3
+	LABEL	= 1 << 0
+	LEAF	= 1 << 1
+	SYNC	= 1 << 2
+	BRANCH	= 1 << 3
 )
 
 const (
-	C_NONE = iota
+	C_NONE	= iota
 	C_REG
 	C_FREG
 	C_FCSRREG
 	C_FCCREG
 	C_ZCON
-	C_SCON // 12 bit signed
-	C_UCON // 32 bit signed, low 12 bits 0
+	C_SCON	// 12 bit signed
+	C_UCON	// 32 bit signed, low 12 bits 0
 	C_ADD0CON
 	C_AND0CON
-	C_ADDCON // -0x800 <= v < 0
-	C_ANDCON // 0 < v <= 0xFFF
-	C_LCON   // other 32
-	C_DCON   // other 64 (could subdivide further)
-	C_SACON  // $n(REG) where n <= int12
+	C_ADDCON	// -0x800 <= v < 0
+	C_ANDCON	// 0 < v <= 0xFFF
+	C_LCON		// other 32
+	C_DCON		// other 64 (could subdivide further)
+	C_SACON		// $n(REG) where n <= int12
 	C_SECON
-	C_LACON // $n(REG) where int12 < n <= int32
+	C_LACON	// $n(REG) where int12 < n <= int32
 	C_LECON
-	C_DACON // $n(REG) where int32 < n
-	C_STCON // $tlsvar
+	C_DACON	// $n(REG) where int32 < n
+	C_STCON	// $tlsvar
 	C_SBRA
 	C_LBRA
 	C_SAUTO
@@ -225,14 +225,16 @@ const (
 	C_LOREG
 	C_GOK
 	C_ADDR
-	C_TLS
+	C_TLS_LE
+	C_TLS_IE
+	C_GOTADDR
 	C_TEXTSIZE
 
-	C_NCLASS // must be the last
+	C_NCLASS	// must be the last
 )
 
 const (
-	AABSD = obj.ABaseLoong64 + obj.A_ARCHSPECIFIC + iota
+	AABSD	= obj.ABaseLoong64 + obj.A_ARCHSPECIFIC + iota
 	AABSF
 	AADD
 	AADDD
@@ -257,14 +259,15 @@ const (
 	ACMPEQD
 	ACMPEQF
 
-	ACMPGED // ACMPGED -> fcmp.sle.d
-	ACMPGEF // ACMPGEF -> fcmp.sle.s
-	ACMPGTD // ACMPGTD -> fcmp.slt.d
-	ACMPGTF // ACMPGTF -> fcmp.slt.s
+	ACMPGED	// ACMPGED -> fcmp.sle.d
+	ACMPGEF	// ACMPGEF -> fcmp.sle.s
+	ACMPGTD	// ACMPGTD -> fcmp.slt.d
+	ACMPGTF	// ACMPGTF -> fcmp.slt.s
 
 	ALU12IW
 	ALU32ID
 	ALU52ID
+	APCALAU12I
 	APCADDU12I
 	AJIRL
 	ABGE
@@ -316,7 +319,7 @@ const (
 	ANEGW
 	ANEGV
 
-	ANOOP // hardware nop
+	ANOOP	// hardware nop
 	ANOR
 	AOR
 	AREM
@@ -391,12 +394,17 @@ const (
 	AMOVVF
 	AMOVVD
 
+	// 2.2.10. Other Miscellaneous Instructions
+	ARDTIMELW
+	ARDTIMEHW
+	ARDTIMED
+
 	ALAST
 
 	// aliases
-	AJMP = obj.AJMP
-	AJAL = obj.ACALL
-	ARET = obj.ARET
+	AJMP	= obj.AJMP
+	AJAL	= obj.ACALL
+	ARET	= obj.ARET
 )
 
 func init() {

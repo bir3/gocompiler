@@ -7,10 +7,10 @@ package scripttest
 
 import (
 	"bufio"
+	"github.com/bir3/gocompiler/src/cmd/gocmd/internal/cfg"
 	"github.com/bir3/gocompiler/src/cmd/gocmd/internal/script"
 	"errors"
 	"io"
-	"os/exec"
 	"strings"
 	"testing"
 )
@@ -52,7 +52,7 @@ func Run(t testing.TB, e *script.Engine, s *script.State, filename string, testS
 	t.Helper()
 	err := func() (err error) {
 		log := new(strings.Builder)
-		log.WriteString("\n") // Start output on a new line for consistent indentation.
+		log.WriteString("\n")	// Start output on a new line for consistent indentation.
 
 		// Defer writing to the test log in case the script engine panics during execution,
 		// but write the log before we write the final "skip" or "FAIL" line.
@@ -105,8 +105,8 @@ func Run(t testing.TB, e *script.Engine, s *script.State, filename string, testS
 func Skip() script.Cmd {
 	return script.Command(
 		script.CmdUsage{
-			Summary: "skip the current test",
-			Args:    "[msg]",
+			Summary:	"skip the current test",
+			Args:		"[msg]",
 		},
 		func(_ *script.State, args ...string) (script.WaitFunc, error) {
 			if len(args) > 1 {
@@ -137,7 +137,7 @@ func CachedExec() script.Cond {
 	return script.CachedCondition(
 		"<suffix> names an executable in the test binary's PATH",
 		func(name string) (bool, error) {
-			_, err := exec.LookPath(name)
+			_, err := cfg.LookPath(name)
 			return err == nil, nil
 		})
 }

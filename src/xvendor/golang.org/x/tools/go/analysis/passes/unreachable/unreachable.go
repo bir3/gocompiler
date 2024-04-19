@@ -2,33 +2,32 @@
 // Use of this source code is governed by a BSD-style
 // license that can be found in the LICENSE file.
 
-// Package unreachable defines an Analyzer that checks for unreachable code.
 package unreachable
 
 // TODO(adonovan): use the new cfg package, which is more precise.
 
 import (
+	_ "embed"
 	"github.com/bir3/gocompiler/src/go/ast"
 	"github.com/bir3/gocompiler/src/go/token"
 	"log"
 
 	"github.com/bir3/gocompiler/src/xvendor/golang.org/x/tools/go/analysis"
 	"github.com/bir3/gocompiler/src/xvendor/golang.org/x/tools/go/analysis/passes/inspect"
+	"github.com/bir3/gocompiler/src/xvendor/golang.org/x/tools/go/analysis/passes/internal/analysisutil"
 	"github.com/bir3/gocompiler/src/xvendor/golang.org/x/tools/go/ast/inspector"
 )
 
-const Doc = `check for unreachable code
-
-The unreachable analyzer finds statements that execution can never reach
-because they are preceded by an return statement, a call to panic, an
-infinite loop, or similar constructs.`
+//go:embed doc.go
+var doc string
 
 var Analyzer = &analysis.Analyzer{
-	Name:             "unreachable",
-	Doc:              Doc,
-	Requires:         []*analysis.Analyzer{inspect.Analyzer},
-	RunDespiteErrors: true,
-	Run:              run,
+	Name:			"unreachable",
+	Doc:			analysisutil.MustExtractDoc(doc, "unreachable"),
+	URL:			"https://pkg.go.dev/golang.org/x/tools/go/analysis/passes/unreachable",
+	Requires:		[]*analysis.Analyzer{inspect.Analyzer},
+	RunDespiteErrors:	true,
+	Run:			run,
 }
 
 func run(pass *analysis.Pass) (interface{}, error) {
@@ -50,10 +49,10 @@ func run(pass *analysis.Pass) (interface{}, error) {
 			return
 		}
 		d := &deadState{
-			pass:     pass,
-			hasBreak: make(map[ast.Stmt]bool),
-			hasGoto:  make(map[string]bool),
-			labels:   make(map[string]ast.Stmt),
+			pass:		pass,
+			hasBreak:	make(map[ast.Stmt]bool),
+			hasGoto:	make(map[string]bool),
+			labels:		make(map[string]ast.Stmt),
 		}
 		d.findLabels(body)
 		d.reachable = true
@@ -63,13 +62,13 @@ func run(pass *analysis.Pass) (interface{}, error) {
 }
 
 type deadState struct {
-	pass        *analysis.Pass
-	hasBreak    map[ast.Stmt]bool
-	hasGoto     map[string]bool
-	labels      map[string]ast.Stmt
-	breakTarget ast.Stmt
+	pass		*analysis.Pass
+	hasBreak	map[ast.Stmt]bool
+	hasGoto		map[string]bool
+	labels		map[string]ast.Stmt
+	breakTarget	ast.Stmt
 
-	reachable bool
+	reachable	bool
 }
 
 // findLabels gathers information about the labels defined and used by stmt
@@ -190,18 +189,18 @@ func (d *deadState) findDead(stmt ast.Stmt) {
 			// do not warn about unreachable empty statements
 		default:
 			d.pass.Report(analysis.Diagnostic{
-				Pos:     stmt.Pos(),
-				End:     stmt.End(),
-				Message: "unreachable code",
+				Pos:		stmt.Pos(),
+				End:		stmt.End(),
+				Message:	"unreachable code",
 				SuggestedFixes: []analysis.SuggestedFix{{
-					Message: "Remove",
+					Message:	"Remove",
 					TextEdits: []analysis.TextEdit{{
-						Pos: stmt.Pos(),
-						End: stmt.End(),
+						Pos:	stmt.Pos(),
+						End:	stmt.End(),
 					}},
 				}},
 			})
-			d.reachable = true // silence error about next statement
+			d.reachable = true	// silence error about next statement
 		}
 	}
 

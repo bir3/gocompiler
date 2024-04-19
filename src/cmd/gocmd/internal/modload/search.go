@@ -19,10 +19,12 @@ import (
 
 	"github.com/bir3/gocompiler/src/cmd/gocmd/internal/cfg"
 	"github.com/bir3/gocompiler/src/cmd/gocmd/internal/fsys"
+	"github.com/bir3/gocompiler/src/cmd/gocmd/internal/gover"
 	"github.com/bir3/gocompiler/src/cmd/gocmd/internal/imports"
 	"github.com/bir3/gocompiler/src/cmd/gocmd/internal/modindex"
 	"github.com/bir3/gocompiler/src/cmd/gocmd/internal/par"
 	"github.com/bir3/gocompiler/src/cmd/gocmd/internal/search"
+	"github.com/bir3/gocompiler/src/cmd/gocmd/internal/str"
 	"github.com/bir3/gocompiler/src/cmd/gocmd/internal/trace"
 	"github.com/bir3/gocompiler/src/cmd/internal/pkgpattern"
 
@@ -32,7 +34,7 @@ import (
 type stdFilter int8
 
 const (
-	omitStd = stdFilter(iota)
+	omitStd	= stdFilter(iota)
 	includeStd
 )
 
@@ -54,7 +56,7 @@ func matchPackages(ctx context.Context, m *search.Match, tags map[string]bool, f
 
 	var mu sync.Mutex
 	have := map[string]bool{
-		"builtin": true, // ignore pseudo-package that exists only for documentation
+		"builtin": true,	// ignore pseudo-package that exists only for documentation
 	}
 	addPkg := func(p string) {
 		mu.Lock()
@@ -62,12 +64,12 @@ func matchPackages(ctx context.Context, m *search.Match, tags map[string]bool, f
 		mu.Unlock()
 	}
 	if !cfg.BuildContext.CgoEnabled {
-		have["runtime/cgo"] = true // ignore during walk
+		have["runtime/cgo"] = true	// ignore during walk
 	}
 
 	type pruning int8
 	const (
-		pruneVendor = pruning(1 << iota)
+		pruneVendor	= pruning(1 << iota)
 		pruneGoMod
 	)
 
@@ -77,8 +79,11 @@ func matchPackages(ctx context.Context, m *search.Match, tags map[string]bool, f
 		_, span := trace.StartSpan(ctx, "walkPkgs "+root)
 		defer span.Done()
 
-		root = filepath.Clean(root)
-		err := fsys.Walk(root, func(path string, fi fs.FileInfo, err error) error {
+		// If the root itself is a symlink to a directory,
+		// we want to follow it (see https://go.dev/issue/50807).
+		// Add a trailing separator to force that to happen.
+		root = str.WithFilePathSeparator(filepath.Clean(root))
+		err := fsys.Walk(root, func(pkgDir string, fi fs.FileInfo, err error) error {
 			if err != nil {
 				m.AddError(err)
 				return nil
@@ -88,30 +93,27 @@ func matchPackages(ctx context.Context, m *search.Match, tags map[string]bool, f
 			elem := ""
 
 			// Don't use GOROOT/src but do walk down into it.
-			if path == root {
+			if pkgDir == root {
 				if importPathRoot == "" {
 					return nil
 				}
 			} else {
 				// Avoid .foo, _foo, and testdata subdirectory trees.
-				_, elem = filepath.Split(path)
+				_, elem = filepath.Split(pkgDir)
 				if strings.HasPrefix(elem, ".") || strings.HasPrefix(elem, "_") || elem == "testdata" {
 					want = false
 				}
 			}
 
-			name := importPathRoot + filepath.ToSlash(path[len(root):])
-			if importPathRoot == "" {
-				name = name[1:] // cut leading slash
-			}
+			name := path.Join(importPathRoot, filepath.ToSlash(pkgDir[len(root):]))
 			if !treeCanMatch(name) {
 				want = false
 			}
 
 			if !fi.IsDir() {
 				if fi.Mode()&fs.ModeSymlink != 0 && want && strings.Contains(m.Pattern(), "...") {
-					if target, err := fsys.Stat(path); err == nil && target.IsDir() {
-						fmt.Fprintf(os.Stderr, "warning: ignoring symlink %s\n", path)
+					if target, err := fsys.Stat(pkgDir); err == nil && target.IsDir() {
+						fmt.Fprintf(os.Stderr, "warning: ignoring symlink %s\n", pkgDir)
 					}
 				}
 				return nil
@@ -121,8 +123,8 @@ func matchPackages(ctx context.Context, m *search.Match, tags map[string]bool, f
 				return filepath.SkipDir
 			}
 			// Stop at module boundaries.
-			if (prune&pruneGoMod != 0) && path != root {
-				if fi, err := os.Stat(filepath.Join(path, "go.mod")); err == nil && !fi.IsDir() {
+			if (prune&pruneGoMod != 0) && pkgDir != root {
+				if fi, err := os.Stat(filepath.Join(pkgDir, "go.mod")); err == nil && !fi.IsDir() {
 					return filepath.SkipDir
 				}
 			}
@@ -131,7 +133,7 @@ func matchPackages(ctx context.Context, m *search.Match, tags map[string]bool, f
 				have[name] = true
 				if isMatch(name) {
 					q.Add(func() {
-						if _, _, err := scanDir(root, path, tags); err != imports.ErrNoGo {
+						if _, _, err := scanDir(root, pkgDir, tags); err != imports.ErrNoGo {
 							addPkg(name)
 						}
 					})
@@ -151,7 +153,7 @@ func matchPackages(ctx context.Context, m *search.Match, tags map[string]bool, f
 	// Wait for all in-flight operations to complete before returning.
 	defer func() {
 		<-q.Idle()
-		sort.Strings(m.Pkgs) // sort everything we added for determinism
+		sort.Strings(m.Pkgs)	// sort everything we added for determinism
 	}()
 
 	if filter == includeStd {
@@ -162,26 +164,29 @@ func matchPackages(ctx context.Context, m *search.Match, tags map[string]bool, f
 	}
 
 	if cfg.BuildMod == "vendor" {
-		mod := MainModules.mustGetSingleMainModule()
-		if modRoot := MainModules.ModRoot(mod); modRoot != "" {
-			walkPkgs(modRoot, MainModules.PathPrefix(mod), pruneGoMod|pruneVendor)
-			walkPkgs(filepath.Join(modRoot, "vendor"), "", pruneVendor)
+		for _, mod := range MainModules.Versions() {
+			if modRoot := MainModules.ModRoot(mod); modRoot != "" {
+				walkPkgs(modRoot, MainModules.PathPrefix(mod), pruneGoMod|pruneVendor)
+			}
+		}
+		if HasModRoot() {
+			walkPkgs(VendorDir(), "", pruneVendor)
 		}
 		return
 	}
 
 	for _, mod := range modules {
-		if !treeCanMatch(mod.Path) {
+		if gover.IsToolchain(mod.Path) || !treeCanMatch(mod.Path) {
 			continue
 		}
 
 		var (
-			root, modPrefix string
-			isLocal         bool
+			root, modPrefix	string
+			isLocal		bool
 		)
 		if MainModules.Contains(mod.Path) {
 			if MainModules.ModRoot(mod) == "" {
-				continue // If there is no main module, we can't search in it.
+				continue	// If there is no main module, we can't search in it.
 			}
 			root = MainModules.ModRoot(mod)
 			modPrefix = MainModules.PathPrefix(mod)
@@ -208,8 +213,6 @@ func matchPackages(ctx context.Context, m *search.Match, tags map[string]bool, f
 		}
 		walkPkgs(root, modPrefix, prune)
 	}
-
-	return
 }
 
 // walkFromIndex matches packages in a module using the module index. modroot
@@ -271,7 +274,7 @@ func MatchInModule(ctx context.Context, pattern string, m module.Version, tags m
 		matchPackages(ctx, match, tags, includeStd, nil)
 	}
 
-	LoadModFile(ctx) // Sets Target, needed by fetch and matchPackages.
+	LoadModFile(ctx)	// Sets Target, needed by fetch and matchPackages.
 
 	if !match.IsLiteral() {
 		matchPackages(ctx, match, tags, omitStd, []module.Version{m})

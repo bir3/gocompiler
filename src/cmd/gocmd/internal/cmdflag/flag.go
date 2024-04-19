@@ -24,10 +24,10 @@ var ErrFlagTerminator = errors.New("flag terminator")
 // A FlagNotDefinedError indicates a flag-like argument that does not correspond
 // to any registered flag in a FlagSet.
 type FlagNotDefinedError struct {
-	RawArg   string // the original argument, like --foo or -foo=value
-	Name     string
-	HasValue bool   // is this the -foo=value or --foo=value form?
-	Value    string // only provided if HasValue is true
+	RawArg		string	// the original argument, like --foo or -foo=value
+	Name		string
+	HasValue	bool	// is this the -foo=value or --foo=value form?
+	Value		string	// only provided if HasValue is true
 }
 
 func (e FlagNotDefinedError) Error() string {
@@ -59,7 +59,7 @@ func ParseOne(fs *flag.FlagSet, args []string) (f *flag.Flag, remainingArgs []st
 		if arg == "--" {
 			return nil, args, ErrFlagTerminator
 		}
-		arg = arg[1:] // reduce two minuses to one
+		arg = arg[1:]	// reduce two minuses to one
 	}
 
 	switch arg {
@@ -75,10 +75,10 @@ func ParseOne(fs *flag.FlagSet, args []string) (f *flag.Flag, remainingArgs []st
 	f = fs.Lookup(name)
 	if f == nil {
 		return nil, args, FlagNotDefinedError{
-			RawArg:   raw,
-			Name:     name,
-			HasValue: hasValue,
-			Value:    value,
+			RawArg:		raw,
+			Name:		name,
+			HasValue:	hasValue,
+			Value:		value,
 		}
 	}
 
@@ -89,7 +89,7 @@ func ParseOne(fs *flag.FlagSet, args []string) (f *flag.Flag, remainingArgs []st
 		return f, args, fmt.Errorf(format, a...)
 	}
 
-	if fv, ok := f.Value.(boolFlag); ok && fv.IsBoolFlag() { // special case: doesn't need an arg
+	if fv, ok := f.Value.(boolFlag); ok && fv.IsBoolFlag() {	// special case: doesn't need an arg
 		if hasValue {
 			if err := fs.Set(name, value); err != nil {
 				return failf("invalid boolean value %q for -%s: %v", value, name, err)

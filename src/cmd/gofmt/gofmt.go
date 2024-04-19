@@ -17,10 +17,12 @@ import (
 	"github.com/bir3/gocompiler/src/internal/diff"
 	"io"
 	"io/fs"
+	"math/rand"
 	"os"
 	"path/filepath"
 	"runtime"
 	"runtime/pprof"
+	"strconv"
 	"strings"
 
 	"github.com/bir3/gocompiler/src/xvendor/golang.org/x/sync/semaphore"
@@ -28,27 +30,27 @@ import (
 
 var (
 	// main operation modes
-	list        = flag.Bool("l", false, "list files whose formatting differs from gofmt's")
-	write       = flag.Bool("w", false, "write result to (source) file instead of stdout")
-	rewriteRule = flag.String("r", "", "rewrite rule (e.g., 'a[b:len(a)] -> a[b:]')")
-	simplifyAST = flag.Bool("s", false, "simplify code")
-	doDiff      = flag.Bool("d", false, "display diffs instead of rewriting files")
-	allErrors   = flag.Bool("e", false, "report all errors (not just the first 10 on different lines)")
+	list		= flag.Bool("l", false, "list files whose formatting differs from gofmt's")
+	write		= flag.Bool("w", false, "write result to (source) file instead of stdout")
+	rewriteRule	= flag.String("r", "", "rewrite rule (e.g., 'a[b:len(a)] -> a[b:]')")
+	simplifyAST	= flag.Bool("s", false, "simplify code")
+	doDiff		= flag.Bool("d", false, "display diffs instead of rewriting files")
+	allErrors	= flag.Bool("e", false, "report all errors (not just the first 10 on different lines)")
 
 	// debugging
-	cpuprofile = flag.String("cpuprofile", "", "write cpu profile to this file")
+	cpuprofile	= flag.String("cpuprofile", "", "write cpu profile to this file")
 )
 
 // Keep these in sync with go/format/format.go.
 const (
-	tabWidth    = 8
-	printerMode = printer.UseSpaces | printer.TabIndent | printerNormalizeNumbers
+	tabWidth	= 8
+	printerMode	= printer.UseSpaces | printer.TabIndent | printerNormalizeNumbers
 
 	// printerNormalizeNumbers means to canonicalize number literal prefixes
 	// and exponents while printing. See https://golang.org/doc/go1.13#gofmt.
 	//
 	// This value is defined in go/printer specifically for go/format and cmd/gofmt.
-	printerNormalizeNumbers = 1 << 30
+	printerNormalizeNumbers	= 1 << 30
 )
 
 // fdSem guards the number of concurrently-open file descriptors.
@@ -62,8 +64,8 @@ const (
 var fdSem = make(chan bool, 200)
 
 var (
-	rewrite    func(*token.FileSet, *ast.File) *ast.File
-	parserMode parser.Mode
+	rewrite		func(*token.FileSet, *ast.File) *ast.File
+	parserMode	parser.Mode
 )
 
 func usage() {
@@ -92,9 +94,9 @@ func isGoFile(f fs.DirEntry) bool {
 // A sequencer performs concurrent tasks that may write output, but emits that
 // output in a deterministic order.
 type sequencer struct {
-	maxWeight int64
-	sem       *semaphore.Weighted   // weighted by input bytes (an approximate proxy for memory overhead)
-	prev      <-chan *reporterState // 1-buffered
+	maxWeight	int64
+	sem		*semaphore.Weighted	// weighted by input bytes (an approximate proxy for memory overhead)
+	prev		<-chan *reporterState	// 1-buffered
 }
 
 // newSequencer returns a sequencer that allows concurrent tasks up to maxWeight
@@ -104,9 +106,9 @@ func newSequencer(maxWeight int64, out, err io.Writer) *sequencer {
 	prev := make(chan *reporterState, 1)
 	prev <- &reporterState{out: out, err: err}
 	return &sequencer{
-		maxWeight: maxWeight,
-		sem:       sem,
-		prev:      prev,
+		maxWeight:	maxWeight,
+		sem:		sem,
+		prev:		prev,
 	}
 }
 
@@ -150,7 +152,7 @@ func (s *sequencer) Add(weight int64, f func(*reporter) error) {
 		if err := f(r); err != nil {
 			r.Report(err)
 		}
-		next <- r.getState() // Release the next task.
+		next <- r.getState()	// Release the next task.
 		s.sem.Release(weight)
 	}()
 }
@@ -174,16 +176,16 @@ func (s *sequencer) GetExitCode() int {
 
 // A reporter reports output, warnings, and errors.
 type reporter struct {
-	prev  <-chan *reporterState
-	state *reporterState
+	prev	<-chan *reporterState
+	state	*reporterState
 }
 
 // reporterState carries the state of a reporter instance.
 //
 // Only one reporter at a time may have access to a reporterState.
 type reporterState struct {
-	out, err io.Writer
-	exitCode int
+	out, err	io.Writer
+	exitCode	int
 }
 
 // getState blocks until any prior reporters are finished with the reporter
@@ -233,12 +235,9 @@ func processFile(filename string, info fs.FileInfo, in io.Reader, r *reporter) e
 	}
 
 	fileSet := token.NewFileSet()
-	fragmentOk := false
-	if info == nil {
-		// If we are formatting stdin, we accept a program fragment in lieu of a
-		// complete source file.
-		fragmentOk = true
-	}
+	// If we are formatting stdin, we accept a program fragment in lieu of a
+	// complete source file.
+	fragmentOk := info == nil
 	file, sourceAdj, indentAdj, err := parse(fileSet, filename, src, fragmentOk)
 	if err != nil {
 		return err
@@ -272,21 +271,9 @@ func processFile(filename string, info fs.FileInfo, in io.Reader, r *reporter) e
 			if info == nil {
 				panic("-w should not have been allowed with stdin")
 			}
-			// make a temporary backup before overwriting original
+
 			perm := info.Mode().Perm()
-			bakname, err := backupFile(filename+".", src, perm)
-			if err != nil {
-				return err
-			}
-			fdSem <- true
-			err = os.WriteFile(filename, res, perm)
-			<-fdSem
-			if err != nil {
-				os.Rename(bakname, filename)
-				return err
-			}
-			err = os.Remove(bakname)
-			if err != nil {
+			if err := writeFile(filename, src, res, perm, info.Size()); err != nil {
 				return err
 			}
 		}
@@ -470,32 +457,111 @@ func fileWeight(path string, info fs.FileInfo) int64 {
 	return info.Size()
 }
 
-const chmodSupported = runtime.GOOS != "windows"
+// writeFile updates a file with the new formatted data.
+func writeFile(filename string, orig, formatted []byte, perm fs.FileMode, size int64) error {
+	// Make a temporary backup file before rewriting the original file.
+	bakname, err := backupFile(filename, orig, perm)
+	if err != nil {
+		return err
+	}
+
+	fdSem <- true
+	defer func() { <-fdSem }()
+
+	fout, err := os.OpenFile(filename, os.O_WRONLY, perm)
+	if err != nil {
+		// We couldn't even open the file, so it should
+		// not have changed.
+		os.Remove(bakname)
+		return err
+	}
+	defer fout.Close()	// for error paths
+
+	restoreFail := func(err error) {
+		fmt.Fprintf(os.Stderr, "gofmt: %s: error restoring file to original: %v; backup in %s\n", filename, err, bakname)
+	}
+
+	n, err := fout.Write(formatted)
+	if err == nil && int64(n) < size {
+		err = fout.Truncate(int64(n))
+	}
+
+	if err != nil {
+		// Rewriting the file failed.
+
+		if n == 0 {
+			// Original file unchanged.
+			os.Remove(bakname)
+			return err
+		}
+
+		// Try to restore the original contents.
+
+		no, erro := fout.WriteAt(orig, 0)
+		if erro != nil {
+			// That failed too.
+			restoreFail(erro)
+			return err
+		}
+
+		if no < n {
+			// Original file is shorter. Truncate.
+			if erro = fout.Truncate(int64(no)); erro != nil {
+				restoreFail(erro)
+				return err
+			}
+		}
+
+		if erro := fout.Close(); erro != nil {
+			restoreFail(erro)
+			return err
+		}
+
+		// Original contents restored.
+		os.Remove(bakname)
+		return err
+	}
+
+	if err := fout.Close(); err != nil {
+		restoreFail(err)
+		return err
+	}
+
+	// File updated.
+	os.Remove(bakname)
+	return nil
+}
 
 // backupFile writes data to a new file named filename<number> with permissions perm,
-// with <number randomly chosen such that the file name is unique. backupFile returns
+// with <number> randomly chosen such that the file name is unique. backupFile returns
 // the chosen file name.
 func backupFile(filename string, data []byte, perm fs.FileMode) (string, error) {
 	fdSem <- true
 	defer func() { <-fdSem }()
 
-	// create backup file
-	f, err := os.CreateTemp(filepath.Dir(filename), filepath.Base(filename))
-	if err != nil {
-		return "", err
+	nextRandom := func() string {
+		return strconv.Itoa(rand.Int())
 	}
-	bakname := f.Name()
-	if chmodSupported {
-		err = f.Chmod(perm)
-		if err != nil {
-			f.Close()
-			os.Remove(bakname)
-			return bakname, err
+
+	dir, base := filepath.Split(filename)
+	var (
+		bakname	string
+		f	*os.File
+	)
+	for {
+		bakname = filepath.Join(dir, base+"."+nextRandom())
+		var err error
+		f, err = os.OpenFile(bakname, os.O_RDWR|os.O_CREATE|os.O_EXCL, perm)
+		if err == nil {
+			break
+		}
+		if err != nil && !os.IsExist(err) {
+			return "", err
 		}
 	}
 
 	// write data to backup file
-	_, err = f.Write(data)
+	_, err := f.Write(data)
 	if err1 := f.Close(); err == nil {
 		err = err1
 	}

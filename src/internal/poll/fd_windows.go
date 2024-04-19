@@ -17,8 +17,8 @@ import (
 )
 
 var (
-	initErr error
-	ioSync  uint64
+	initErr	error
+	ioSync	uint64
 )
 
 // This package uses the SetFileCompletionNotificationModes Windows
@@ -27,7 +27,7 @@ var (
 // SetFileCompletionNotificationModes crashes on some systems (see
 // https://support.microsoft.com/kb/2568167 for details).
 
-var useSetFileCompletionNotificationModes bool // determines is SetFileCompletionNotificationModes is present and safe to use
+var useSetFileCompletionNotificationModes bool	// determines is SetFileCompletionNotificationModes is present and safe to use
 
 // checkSetFileCompletionNotificationModes verifies that
 // SetFileCompletionNotificationModes Windows API is present
@@ -66,24 +66,24 @@ func init() {
 type operation struct {
 	// Used by IOCP interface, it must be first field
 	// of the struct, as our code rely on it.
-	o syscall.Overlapped
+	o	syscall.Overlapped
 
 	// fields used by runtime.netpoll
-	runtimeCtx uintptr
-	mode       int32
-	errno      int32
-	qty        uint32
+	runtimeCtx	uintptr
+	mode		int32
+	errno		int32
+	qty		uint32
 
 	// fields used only by net package
-	fd     *FD
-	buf    syscall.WSABuf
-	msg    windows.WSAMsg
-	sa     syscall.Sockaddr
-	rsa    *syscall.RawSockaddrAny
-	rsan   int32
-	handle syscall.Handle
-	flags  uint32
-	bufs   []syscall.WSABuf
+	fd	*FD
+	buf	syscall.WSABuf
+	msg	windows.WSAMsg
+	sa	syscall.Sockaddr
+	rsa	*syscall.RawSockaddrAny
+	rsan	int32
+	handle	syscall.Handle
+	flags	uint32
+	bufs	[]syscall.WSABuf
 }
 
 func (o *operation) InitBuf(buf []byte) {
@@ -204,7 +204,7 @@ func execIO(o *operation, submit func(o *operation) error) (int, error) {
 	fd.pd.waitCanceled(int(o.mode))
 	if o.errno != 0 {
 		err = syscall.Errno(o.errno)
-		if err == syscall.ERROR_OPERATION_ABORTED { // IO Canceled
+		if err == syscall.ERROR_OPERATION_ABORTED {	// IO Canceled
 			err = netpollErr
 		}
 		return 0, err
@@ -219,53 +219,53 @@ func execIO(o *operation, submit func(o *operation) error) (int, error) {
 // a larger type representing a network connection or OS file.
 type FD struct {
 	// Lock sysfd and serialize access to Read and Write methods.
-	fdmu fdMutex
+	fdmu	fdMutex
 
 	// System file descriptor. Immutable until Close.
-	Sysfd syscall.Handle
+	Sysfd	syscall.Handle
 
 	// Read operation.
-	rop operation
+	rop	operation
 	// Write operation.
-	wop operation
+	wop	operation
 
 	// I/O poller.
-	pd pollDesc
+	pd	pollDesc
 
 	// Used to implement pread/pwrite.
-	l sync.Mutex
+	l	sync.Mutex
 
 	// For console I/O.
-	lastbits       []byte   // first few bytes of the last incomplete rune in last write
-	readuint16     []uint16 // buffer to hold uint16s obtained with ReadConsole
-	readbyte       []byte   // buffer to hold decoding of readuint16 from utf16 to utf8
-	readbyteOffset int      // readbyte[readOffset:] is yet to be consumed with file.Read
+	lastbits	[]byte		// first few bytes of the last incomplete rune in last write
+	readuint16	[]uint16	// buffer to hold uint16s obtained with ReadConsole
+	readbyte	[]byte		// buffer to hold decoding of readuint16 from utf16 to utf8
+	readbyteOffset	int		// readbyte[readOffset:] is yet to be consumed with file.Read
 
 	// Semaphore signaled when file is closed.
-	csema uint32
+	csema	uint32
 
-	skipSyncNotif bool
+	skipSyncNotif	bool
 
 	// Whether this is a streaming descriptor, as opposed to a
 	// packet-based descriptor like a UDP socket.
-	IsStream bool
+	IsStream	bool
 
 	// Whether a zero byte read indicates EOF. This is false for a
 	// message based socket connection.
-	ZeroReadIsEOF bool
+	ZeroReadIsEOF	bool
 
 	// Whether this is a file rather than a network socket.
-	isFile bool
+	isFile	bool
 
 	// The kind of this file.
-	kind fileKind
+	kind	fileKind
 }
 
 // fileKind describes the kind of file.
 type fileKind byte
 
 const (
-	kindNet fileKind = iota
+	kindNet	fileKind	= iota
 	kindFile
 	kindConsole
 	kindPipe
@@ -325,9 +325,9 @@ func (fd *FD) Init(net string, pollable bool) (string, error) {
 	if pollable && useSetFileCompletionNotificationModes {
 		// We do not use events, so we can skip them always.
 		flags := uint8(syscall.FILE_SKIP_SET_EVENT_ON_HANDLE)
-		// It's not safe to skip completion notifications for UDP:
-		// https://docs.microsoft.com/en-us/archive/blogs/winserverperformance/designing-applications-for-high-performance-part-iii
-		if net == "tcp" {
+		switch net {
+		case "tcp", "tcp4", "tcp6",
+			"udp", "udp4", "udp6":
 			flags |= syscall.FILE_SKIP_COMPLETION_PORT_ON_SUCCESS
 		}
 		err := syscall.SetFileCompletionNotificationModes(fd.Sysfd, flags)
@@ -397,7 +397,7 @@ func (fd *FD) Close() error {
 // Windows ReadFile and WSARecv use DWORD (uint32) parameter to pass buffer length.
 // This prevents us reading blocks larger than 4GB.
 // See golang.org/issue/26923.
-const maxRW = 1 << 30 // 1GB is large enough and keeps subsequent reads aligned
+const maxRW = 1 << 30	// 1GB is large enough and keeps subsequent reads aligned
 
 // Read implements io.Reader.
 func (fd *FD) Read(buf []byte) (int, error) {
@@ -446,7 +446,7 @@ func (fd *FD) Read(buf []byte) (int, error) {
 	return n, err
 }
 
-var ReadConsole = syscall.ReadConsole // changed for testing
+var ReadConsole = syscall.ReadConsole	// changed for testing
 
 // readConsole reads utf16 characters from console File,
 // encodes them into utf8 and stores them in buffer b.
@@ -508,7 +508,7 @@ func (fd *FD) readConsole(b []byte) (int, error) {
 	var i int
 	for i = 0; i < len(src) && i < len(b); i++ {
 		x := src[i]
-		if x == 0x1A { // Ctrl-Z
+		if x == 0x1A {	// Ctrl-Z
 			if i == 0 {
 				fd.readbyteOffset++
 			}
@@ -522,6 +522,10 @@ func (fd *FD) readConsole(b []byte) (int, error) {
 
 // Pread emulates the Unix pread system call.
 func (fd *FD) Pread(b []byte, off int64) (int, error) {
+	if fd.kind == kindPipe {
+		// Pread does not work with pipes
+		return 0, syscall.ESPIPE
+	}
 	// Call incref, not readLock, because since pread specifies the
 	// offset it is independent from other reads.
 	if err := fd.incref(); err != nil {
@@ -541,8 +545,8 @@ func (fd *FD) Pread(b []byte, off int64) (int, error) {
 	}
 	defer syscall.Seek(fd.Sysfd, curoffset, io.SeekStart)
 	o := syscall.Overlapped{
-		OffsetHigh: uint32(off >> 32),
-		Offset:     uint32(off),
+		OffsetHigh:	uint32(off >> 32),
+		Offset:		uint32(off),
 	}
 	var done uint32
 	e = syscall.ReadFile(fd.Sysfd, b, &done, &o)
@@ -744,6 +748,10 @@ func (fd *FD) writeConsole(b []byte) (int, error) {
 
 // Pwrite emulates the Unix pwrite system call.
 func (fd *FD) Pwrite(buf []byte, off int64) (int, error) {
+	if fd.kind == kindPipe {
+		// Pwrite does not work with pipes
+		return 0, syscall.ESPIPE
+	}
 	// Call incref, not writeLock, because since pwrite specifies the
 	// offset it is independent from other writes.
 	if err := fd.incref(); err != nil {
@@ -767,8 +775,8 @@ func (fd *FD) Pwrite(buf []byte, off int64) (int, error) {
 		}
 		var n uint32
 		o := syscall.Overlapped{
-			OffsetHigh: uint32(off >> 32),
-			Offset:     uint32(off),
+			OffsetHigh:	uint32(off >> 32),
+			Offset:		uint32(off),
 		}
 		e = syscall.WriteFile(fd.Sysfd, b, &n, &o)
 		ntotal += int(n)
@@ -992,6 +1000,9 @@ func (fd *FD) Accept(sysSocket func() (syscall.Handle, error)) (syscall.Handle, 
 
 // Seek wraps syscall.Seek.
 func (fd *FD) Seek(offset int64, whence int) (int64, error) {
+	if fd.kind == kindPipe {
+		return 0, syscall.ESPIPE
+	}
 	if err := fd.incref(); err != nil {
 		return 0, err
 	}
@@ -1026,8 +1037,7 @@ func (fd *FD) Fchmod(mode uint32) error {
 
 	var du windows.FILE_BASIC_INFO
 	du.FileAttributes = attrs
-	l := uint32(unsafe.Sizeof(d))
-	return windows.SetFileInformationByHandle(fd.Sysfd, windows.FileBasicInfo, uintptr(unsafe.Pointer(&du)), l)
+	return windows.SetFileInformationByHandle(fd.Sysfd, windows.FileBasicInfo, unsafe.Pointer(&du), uint32(unsafe.Sizeof(du)))
 }
 
 // Fchdir wraps syscall.Fchdir.

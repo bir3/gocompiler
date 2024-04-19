@@ -25,9 +25,10 @@ import (
 const Doc = "report mismatches between assembly files and Go declarations"
 
 var Analyzer = &analysis.Analyzer{
-	Name: "asmdecl",
-	Doc:  Doc,
-	Run:  run,
+	Name:	"asmdecl",
+	Doc:	Doc,
+	URL:	"https://pkg.go.dev/golang.org/x/tools/go/analysis/passes/asmdecl",
+	Run:	run,
 }
 
 // 'kind' is a kind of assembly variable.
@@ -36,7 +37,7 @@ type asmKind int
 
 // These special kinds are not valid sizes.
 const (
-	asmString asmKind = 100 + iota
+	asmString	asmKind	= 100 + iota
 	asmSlice
 	asmArray
 	asmInterface
@@ -47,56 +48,56 @@ const (
 
 // An asmArch describes assembly parameters for an architecture
 type asmArch struct {
-	name      string
-	bigEndian bool
-	stack     string
-	lr        bool
+	name		string
+	bigEndian	bool
+	stack		string
+	lr		bool
 	// retRegs is a list of registers for return value in register ABI (ABIInternal).
 	// For now, as we only check whether we write to any result, here we only need to
 	// include the first integer register and first floating-point register. Accessing
 	// any of them counts as writing to result.
-	retRegs []string
+	retRegs	[]string
 	// calculated during initialization
-	sizes    types.Sizes
-	intSize  int
-	ptrSize  int
-	maxAlign int
+	sizes		types.Sizes
+	intSize		int
+	ptrSize		int
+	maxAlign	int
 }
 
 // An asmFunc describes the expected variables for a function on a given architecture.
 type asmFunc struct {
-	arch        *asmArch
-	size        int // size of all arguments
-	vars        map[string]*asmVar
-	varByOffset map[int]*asmVar
+	arch		*asmArch
+	size		int	// size of all arguments
+	vars		map[string]*asmVar
+	varByOffset	map[int]*asmVar
 }
 
 // An asmVar describes a single assembly variable.
 type asmVar struct {
-	name  string
-	kind  asmKind
-	typ   string
-	off   int
-	size  int
-	inner []*asmVar
+	name	string
+	kind	asmKind
+	typ	string
+	off	int
+	size	int
+	inner	[]*asmVar
 }
 
 var (
-	asmArch386      = asmArch{name: "386", bigEndian: false, stack: "SP", lr: false}
-	asmArchArm      = asmArch{name: "arm", bigEndian: false, stack: "R13", lr: true}
-	asmArchArm64    = asmArch{name: "arm64", bigEndian: false, stack: "RSP", lr: true, retRegs: []string{"R0", "F0"}}
-	asmArchAmd64    = asmArch{name: "amd64", bigEndian: false, stack: "SP", lr: false, retRegs: []string{"AX", "X0"}}
-	asmArchMips     = asmArch{name: "mips", bigEndian: true, stack: "R29", lr: true}
-	asmArchMipsLE   = asmArch{name: "mipsle", bigEndian: false, stack: "R29", lr: true}
-	asmArchMips64   = asmArch{name: "mips64", bigEndian: true, stack: "R29", lr: true}
-	asmArchMips64LE = asmArch{name: "mips64le", bigEndian: false, stack: "R29", lr: true}
-	asmArchPpc64    = asmArch{name: "ppc64", bigEndian: true, stack: "R1", lr: true, retRegs: []string{"R3", "F1"}}
-	asmArchPpc64LE  = asmArch{name: "ppc64le", bigEndian: false, stack: "R1", lr: true, retRegs: []string{"R3", "F1"}}
-	asmArchRISCV64  = asmArch{name: "riscv64", bigEndian: false, stack: "SP", lr: true, retRegs: []string{"X10", "F10"}}
-	asmArchS390X    = asmArch{name: "s390x", bigEndian: true, stack: "R15", lr: true}
-	asmArchWasm     = asmArch{name: "wasm", bigEndian: false, stack: "SP", lr: false}
+	asmArch386	= asmArch{name: "386", bigEndian: false, stack: "SP", lr: false}
+	asmArchArm	= asmArch{name: "arm", bigEndian: false, stack: "R13", lr: true}
+	asmArchArm64	= asmArch{name: "arm64", bigEndian: false, stack: "RSP", lr: true, retRegs: []string{"R0", "F0"}}
+	asmArchAmd64	= asmArch{name: "amd64", bigEndian: false, stack: "SP", lr: false, retRegs: []string{"AX", "X0"}}
+	asmArchMips	= asmArch{name: "mips", bigEndian: true, stack: "R29", lr: true}
+	asmArchMipsLE	= asmArch{name: "mipsle", bigEndian: false, stack: "R29", lr: true}
+	asmArchMips64	= asmArch{name: "mips64", bigEndian: true, stack: "R29", lr: true}
+	asmArchMips64LE	= asmArch{name: "mips64le", bigEndian: false, stack: "R29", lr: true}
+	asmArchPpc64	= asmArch{name: "ppc64", bigEndian: true, stack: "R1", lr: true, retRegs: []string{"R3", "F1"}}
+	asmArchPpc64LE	= asmArch{name: "ppc64le", bigEndian: false, stack: "R1", lr: true, retRegs: []string{"R3", "F1"}}
+	asmArchRISCV64	= asmArch{name: "riscv64", bigEndian: false, stack: "SP", lr: true, retRegs: []string{"X10", "F10"}}
+	asmArchS390X	= asmArch{name: "s390x", bigEndian: true, stack: "R15", lr: true}
+	asmArchWasm	= asmArch{name: "wasm", bigEndian: false, stack: "SP", lr: false}
 
-	arches = []*asmArch{
+	arches	= []*asmArch{
 		&asmArch386,
 		&asmArchArm,
 		&asmArchArm64,
@@ -134,16 +135,16 @@ func init() {
 }
 
 var (
-	re           = regexp.MustCompile
-	asmPlusBuild = re(`//\s+\+build\s+([^\n]+)`)
-	asmTEXT      = re(`\bTEXT\b(.*)·([^\(]+)\(SB\)(?:\s*,\s*([0-9A-Z|+()]+))?(?:\s*,\s*\$(-?[0-9]+)(?:-([0-9]+))?)?`)
-	asmDATA      = re(`\b(DATA|GLOBL)\b`)
-	asmNamedFP   = re(`\$?([a-zA-Z0-9_\xFF-\x{10FFFF}]+)(?:\+([0-9]+))\(FP\)`)
-	asmUnnamedFP = re(`[^+\-0-9](([0-9]+)\(FP\))`)
-	asmSP        = re(`[^+\-0-9](([0-9]+)\(([A-Z0-9]+)\))`)
-	asmOpcode    = re(`^\s*(?:[A-Z0-9a-z_]+:)?\s*([A-Z]+)\s*([^,]*)(?:,\s*(.*))?`)
-	ppc64Suff    = re(`([BHWD])(ZU|Z|U|BR)?$`)
-	abiSuff      = re(`^(.+)<(ABI.+)>$`)
+	re		= regexp.MustCompile
+	asmPlusBuild	= re(`//\s+\+build\s+([^\n]+)`)
+	asmTEXT		= re(`\bTEXT\b(.*)·([^\(]+)\(SB\)(?:\s*,\s*([0-9A-Z|+()]+))?(?:\s*,\s*\$(-?[0-9]+)(?:-([0-9]+))?)?`)
+	asmDATA		= re(`\b(DATA|GLOBL)\b`)
+	asmNamedFP	= re(`\$?([a-zA-Z0-9_\xFF-\x{10FFFF}]+)(?:\+([0-9]+))\(FP\)`)
+	asmUnnamedFP	= re(`[^+\-0-9](([0-9]+)\(FP\))`)
+	asmSP		= re(`[^+\-0-9](([0-9]+)\(([A-Z0-9]+)\))`)
+	asmOpcode	= re(`^\s*(?:[A-Z0-9a-z_]+:)?\s*([A-Z]+)\s*([^,]*)(?:,\s*(.*))?`)
+	ppc64Suff	= re(`([BHWD])(ZU|Z|U|BR)?$`)
+	abiSuff		= re(`^(.+)<(ABI.+)>$`)
 )
 
 func run(pass *analysis.Pass) (interface{}, error) {
@@ -189,14 +190,14 @@ Files:
 
 		lines := strings.SplitAfter(string(content), "\n")
 		var (
-			fn                 *asmFunc
-			fnName             string
-			abi                string
-			localSize, argSize int
-			wroteSP            bool
-			noframe            bool
-			haveRetArg         bool
-			retLine            []int
+			fn			*asmFunc
+			fnName			string
+			abi			string
+			localSize, argSize	int
+			wroteSP			bool
+			noframe			bool
+			haveRetArg		bool
+			retLine			[]int
 		)
 
 		flushRet := func() {
@@ -456,12 +457,12 @@ func asmKindForType(t types.Type, size int) asmKind {
 // A component is an assembly-addressable component of a composite type,
 // or a composite type itself.
 type component struct {
-	size   int
-	offset int
-	kind   asmKind
-	typ    string
-	suffix string // Such as _base for string base, _0_lo for lo half of first element of [1]uint64 on 32 bit machine.
-	outer  string // The suffix for immediately containing composite type.
+	size	int
+	offset	int
+	kind	asmKind
+	typ	string
+	suffix	string	// Such as _base for string base, _0_lo for lo half of first element of [1]uint64 on 32 bit machine.
+	outer	string	// The suffix for immediately containing composite type.
 }
 
 func newComponent(suffix string, kind asmKind, typ string, offset, size int, outer string) component {
@@ -548,9 +549,9 @@ func appendComponentsRecursive(arch *asmArch, t types.Type, cc []component, suff
 // asmParseDecl parses a function decl for expected assembly variables.
 func asmParseDecl(pass *analysis.Pass, decl *ast.FuncDecl) map[string]*asmFunc {
 	var (
-		arch   *asmArch
-		fn     *asmFunc
-		offset int
+		arch	*asmArch
+		fn	*asmFunc
+		offset	int
 	)
 
 	// addParams adds asmVars for each of the parameters in list.
@@ -596,11 +597,11 @@ func asmParseDecl(pass *analysis.Pass, decl *ast.FuncDecl) map[string]*asmFunc {
 				for _, c := range cc {
 					outer := name + c.outer
 					v := asmVar{
-						name: name + c.suffix,
-						kind: c.kind,
-						typ:  c.typ,
-						off:  offset + c.offset,
-						size: c.size,
+						name:	name + c.suffix,
+						kind:	c.kind,
+						typ:	c.typ,
+						off:	offset + c.offset,
+						size:	c.size,
 					}
 					if vo := fn.vars[outer]; vo != nil {
 						vo.inner = append(vo.inner, &v)
@@ -618,9 +619,9 @@ func asmParseDecl(pass *analysis.Pass, decl *ast.FuncDecl) map[string]*asmFunc {
 	m := make(map[string]*asmFunc)
 	for _, arch = range arches {
 		fn = &asmFunc{
-			arch:        arch,
-			vars:        make(map[string]*asmVar),
-			varByOffset: make(map[int]*asmVar),
+			arch:		arch,
+			vars:		make(map[string]*asmVar),
+			varByOffset:	make(map[int]*asmVar),
 		}
 		offset = 0
 		addParams(decl.Type.Params.List, false)

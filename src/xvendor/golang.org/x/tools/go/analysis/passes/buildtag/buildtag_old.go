@@ -22,12 +22,12 @@ import (
 	"github.com/bir3/gocompiler/src/xvendor/golang.org/x/tools/go/analysis/passes/internal/analysisutil"
 )
 
-const Doc = "check that +build tags are well-formed and correctly located"
+const Doc = "check // +build directives"
 
 var Analyzer = &analysis.Analyzer{
-	Name: "buildtag",
-	Doc:  Doc,
-	Run:  runBuildTag,
+	Name:	"buildtag",
+	Doc:	Doc,
+	Run:	runBuildTag,
 }
 
 func runBuildTag(pass *analysis.Pass) (interface{}, error) {
@@ -169,6 +169,6 @@ func checkArguments(fields []string) error {
 }
 
 var (
-	nl         = []byte("\n")
-	slashSlash = []byte("//")
+	nl		= []byte("\n")
+	slashSlash	= []byte("//")
 )

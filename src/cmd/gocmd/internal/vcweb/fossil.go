@@ -6,20 +6,19 @@ package vcweb
 
 import (
 	"fmt"
-	"io/ioutil"
 	"log"
 	"net/http"
 	"net/http/cgi"
 	"os"
-	"os/exec"
+	"github.com/bir3/gocompiler/exec"
 	"path/filepath"
 	"sync"
 )
 
 type fossilHandler struct {
-	once          sync.Once
-	fossilPath    string
-	fossilPathErr error
+	once		sync.Once
+	fossilPath	string
+	fossilPathErr	error
 }
 
 func (h *fossilHandler) Available() bool {
@@ -39,7 +38,7 @@ func (h *fossilHandler) Handler(dir string, env []string, logger *log.Logger) (h
 
 	cgiPath := db + ".cgi"
 	cgiScript := fmt.Sprintf("#!%s\nrepository: %s\n", h.fossilPath, db)
-	if err := ioutil.WriteFile(cgiPath, []byte(cgiScript), 0755); err != nil {
+	if err := os.WriteFile(cgiPath, []byte(cgiScript), 0755); err != nil {
 		return nil, err
 	}
 
@@ -49,11 +48,11 @@ func (h *fossilHandler) Handler(dir string, env []string, logger *log.Logger) (h
 			return
 		}
 		ch := &cgi.Handler{
-			Env:    env,
-			Logger: logger,
-			Path:   h.fossilPath,
-			Args:   []string{cgiPath},
-			Dir:    dir,
+			Env:	env,
+			Logger:	logger,
+			Path:	h.fossilPath,
+			Args:	[]string{cgiPath},
+			Dir:	dir,
 		}
 		ch.ServeHTTP(w, req)
 	})

@@ -303,7 +303,7 @@ func decomposeUserArrayInto(f *Func, name *LocalSlot, slots []*LocalSlot) []*Loc
 // by name where possible, and appends those new names to slots, which is then
 // returned.
 func decomposeUserStructInto(f *Func, name *LocalSlot, slots []*LocalSlot) []*LocalSlot {
-	fnames := []*LocalSlot{} // slots for struct in name
+	fnames := []*LocalSlot{}	// slots for struct in name
 	t := name.Type
 	n := t.NumFields()
 
@@ -426,7 +426,7 @@ func StructMakeOp(nf int) Op {
 }
 
 type namedVal struct {
-	locIndex, valIndex int // f.NamedValues[f.Names[locIndex]][valIndex] = key
+	locIndex, valIndex int	// f.NamedValues[f.Names[locIndex]][valIndex] = key
 }
 
 // deleteNamedVals removes particular values with debugger names from f's naming data structures,

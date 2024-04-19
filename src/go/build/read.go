@@ -21,13 +21,13 @@ import (
 )
 
 type importReader struct {
-	b    *bufio.Reader
-	buf  []byte
-	peek byte
-	err  error
-	eof  bool
-	nerr int
-	pos  token.Position
+	b	*bufio.Reader
+	buf	[]byte
+	peek	byte
+	err	error
+	eof	bool
+	nerr	int
+	pos	token.Position
 }
 
 var bom = []byte{0xef, 0xbb, 0xbf}
@@ -42,11 +42,11 @@ func newImportReader(name string, r io.Reader) *importReader {
 		b.Discard(3)
 	}
 	return &importReader{
-		b: b,
+		b:	b,
 		pos: token.Position{
-			Filename: name,
-			Line:     1,
-			Column:   1,
+			Filename:	name,
+			Line:		1,
+			Column:		1,
 		},
 	}
 }
@@ -56,8 +56,8 @@ func isIdent(c byte) bool {
 }
 
 var (
-	errSyntax = errors.New("syntax error")
-	errNUL    = errors.New("unexpected NUL in input")
+	errSyntax	= errors.New("syntax error")
+	errNUL		= errors.New("unexpected NUL in input")
 )
 
 // syntaxError records a syntax error, but only if an I/O error has not already been recorded.
@@ -476,6 +476,18 @@ func readGoInfo(f io.Reader, info *fileInfo) error {
 				doc = d.Doc
 			}
 			info.imports = append(info.imports, fileImport{path, spec.Pos(), doc})
+		}
+	}
+
+	// Extract directives.
+	for _, group := range info.parsed.Comments {
+		if group.Pos() >= info.parsed.Package {
+			break
+		}
+		for _, c := range group.List {
+			if strings.HasPrefix(c.Text, "//go:") {
+				info.directives = append(info.directives, Directive{c.Text, info.fset.Position(c.Slash)})
+			}
 		}
 	}
 

@@ -14,7 +14,6 @@ import (
 	"fmt"
 	"github.com/bir3/gocompiler/src/go/token"
 	"io"
-	"io/ioutil"
 	"log"
 	"os"
 	"strconv"
@@ -25,8 +24,8 @@ import (
 
 // flags common to all {single,multi,unit}checkers.
 var (
-	JSON    = false // -json
-	Context = -1    // -c=N: if N>0, display offending line plus N lines of context
+	JSON	= false	// -json
+	Context	= -1	// -c=N: if N>0, display offending line plus N lines of context
 )
 
 // Parse creates a flag for each of the analyzer's flags,
@@ -89,7 +88,7 @@ func Parse(analyzers []*analysis.Analyzer, multi bool) []*analysis.Analyzer {
 		}
 	}
 
-	flag.Parse() // (ExitOnError)
+	flag.Parse()	// (ExitOnError)
 
 	// -flags: print flags so that go vet knows which ones are legitimate.
 	if *printflags {
@@ -161,9 +160,9 @@ func expand(analyzers []*analysis.Analyzer) map[*analysis.Analyzer]bool {
 
 func printFlags() {
 	type jsonFlag struct {
-		Name  string
-		Bool  bool
-		Usage string
+		Name	string
+		Bool	bool
+		Usage	string
 	}
 	var flags []jsonFlag = nil
 	flag.VisitAll(func(f *flag.Flag) {
@@ -201,12 +200,12 @@ func addVersionFlag() {
 // versionFlag minimally complies with the -V protocol required by "go vet".
 type versionFlag struct{}
 
-func (versionFlag) IsBoolFlag() bool { return true }
-func (versionFlag) Get() interface{} { return nil }
-func (versionFlag) String() string   { return "" }
+func (versionFlag) IsBoolFlag() bool	{ return true }
+func (versionFlag) Get() interface{}	{ return nil }
+func (versionFlag) String() string	{ return "" }
 func (versionFlag) Set(s string) error {
 	if s != "full" {
-		log.Fatalf("unsupported flag value: -V=%s", s)
+		log.Fatalf("unsupported flag value: -V=%s (use -V=full)", s)
 	}
 
 	// This replicates the minimal subset of
@@ -218,7 +217,10 @@ func (versionFlag) Set(s string) error {
 	// Formats:
 	//   $progname version devel ... buildID=...
 	//   $progname version go1.9.1
-	progname := os.Args[0]
+	progname, err := os.Executable()
+	if err != nil {
+		return err
+	}
 	f, err := os.Open(progname)
 	if err != nil {
 		log.Fatal(err)
@@ -243,7 +245,7 @@ func (versionFlag) Set(s string) error {
 type triState int
 
 const (
-	unset triState = iota
+	unset	triState	= iota
 	setTrue
 	setFalse
 )
@@ -300,17 +302,17 @@ func (ts triState) IsBoolFlag() bool {
 // new names. The old names will continue to work.
 var vetLegacyFlags = map[string]string{
 	// Analyzer name changes
-	"bool":       "bools",
-	"buildtags":  "buildtag",
-	"methods":    "stdmethods",
-	"rangeloops": "loopclosure",
+	"bool":		"bools",
+	"buildtags":	"buildtag",
+	"methods":	"stdmethods",
+	"rangeloops":	"loopclosure",
 
 	// Analyzer flags
-	"compositewhitelist":  "composites.whitelist",
-	"printfuncs":          "printf.funcs",
-	"shadowstrict":        "shadow.strict",
-	"unusedfuncs":         "unusedresult.funcs",
-	"unusedstringmethods": "unusedresult.stringmethods",
+	"compositewhitelist":	"composites.whitelist",
+	"printfuncs":		"printf.funcs",
+	"shadowstrict":		"shadow.strict",
+	"unusedfuncs":		"unusedresult.funcs",
+	"unusedstringmethods":	"unusedresult.stringmethods",
 }
 
 // ---- output helpers common to all drivers ----
@@ -328,7 +330,7 @@ func PrintPlain(fset *token.FileSet, diag analysis.Diagnostic) {
 		if !end.IsValid() {
 			end = posn
 		}
-		data, _ := ioutil.ReadFile(posn.Filename)
+		data, _ := os.ReadFile(posn.Filename)
 		lines := strings.Split(string(data), "\n")
 		for i := posn.Line - Context; i <= end.Line+Context; i++ {
 			if 1 <= i && i <= len(lines) {
@@ -346,18 +348,18 @@ type JSONTree map[string]map[string]interface{}
 // Start and End are zero-based half-open indices into the original byte
 // sequence of the file, and New is the new text.
 type JSONTextEdit struct {
-	Filename string `json:"filename"`
-	Start    int    `json:"start"`
-	End      int    `json:"end"`
-	New      string `json:"new"`
+	Filename	string	`json:"filename"`
+	Start		int	`json:"start"`
+	End		int	`json:"end"`
+	New		string	`json:"new"`
 }
 
 // A JSONSuggestedFix describes an edit that should be applied as a whole or not
 // at all. It might contain multiple TextEdits/text_edits if the SuggestedFix
 // consists of multiple non-contiguous edits.
 type JSONSuggestedFix struct {
-	Message string         `json:"message"`
-	Edits   []JSONTextEdit `json:"edits"`
+	Message	string		`json:"message"`
+	Edits	[]JSONTextEdit	`json:"edits"`
 }
 
 // A JSONDiagnostic can be used to encode and decode analysis.Diagnostics to and
@@ -365,10 +367,10 @@ type JSONSuggestedFix struct {
 // TODO(matloob): Should the JSON diagnostics contain ranges?
 // If so, how should they be formatted?
 type JSONDiagnostic struct {
-	Category       string             `json:"category,omitempty"`
-	Posn           string             `json:"posn"`
-	Message        string             `json:"message"`
-	SuggestedFixes []JSONSuggestedFix `json:"suggested_fixes,omitempty"`
+	Category	string			`json:"category,omitempty"`
+	Posn		string			`json:"posn"`
+	Message		string			`json:"message"`
+	SuggestedFixes	[]JSONSuggestedFix	`json:"suggested_fixes,omitempty"`
 }
 
 // Add adds the result of analysis 'name' on package 'id'.
@@ -388,22 +390,22 @@ func (tree JSONTree) Add(fset *token.FileSet, id, name string, diags []analysis.
 				var edits []JSONTextEdit
 				for _, edit := range fix.TextEdits {
 					edits = append(edits, JSONTextEdit{
-						Filename: fset.Position(edit.Pos).Filename,
-						Start:    fset.Position(edit.Pos).Offset,
-						End:      fset.Position(edit.End).Offset,
-						New:      string(edit.NewText),
+						Filename:	fset.Position(edit.Pos).Filename,
+						Start:		fset.Position(edit.Pos).Offset,
+						End:		fset.Position(edit.End).Offset,
+						New:		string(edit.NewText),
 					})
 				}
 				fixes = append(fixes, JSONSuggestedFix{
-					Message: fix.Message,
-					Edits:   edits,
+					Message:	fix.Message,
+					Edits:		edits,
 				})
 			}
 			jdiag := JSONDiagnostic{
-				Category:       f.Category,
-				Posn:           fset.Position(f.Pos).String(),
-				Message:        f.Message,
-				SuggestedFixes: fixes,
+				Category:	f.Category,
+				Posn:		fset.Position(f.Pos).String(),
+				Message:	f.Message,
+				SuggestedFixes:	fixes,
 			}
 			diagnostics = append(diagnostics, jdiag)
 		}

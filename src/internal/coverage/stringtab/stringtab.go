@@ -17,10 +17,10 @@ import (
 
 // Writer implements a string table writing utility.
 type Writer struct {
-	stab   map[string]uint32
-	strs   []string
-	tmp    []byte
-	frozen bool
+	stab	map[string]uint32
+	strs	[]string
+	tmp	[]byte
+	frozen	bool
 }
 
 // InitWriter initializes a stringtab.Writer.
@@ -105,8 +105,8 @@ func (stw *Writer) Freeze() {
 // Reader is a helper for reading a string table previously
 // serialized by a Writer.Write call.
 type Reader struct {
-	r    *slicereader.Reader
-	strs []string
+	r	*slicereader.Reader
+	strs	[]string
 }
 
 // NewReader creates a stringtab.Reader to read the contents

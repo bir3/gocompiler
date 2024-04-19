@@ -79,7 +79,7 @@ func hasExportedName(list []*ast.Ident) bool {
 
 // removeAnonymousField removes anonymous fields named name from an interface.
 func removeAnonymousField(name string, ityp *ast.InterfaceType) {
-	list := ityp.Methods.List // we know that ityp.Methods != nil
+	list := ityp.Methods.List	// we know that ityp.Methods != nil
 	j := 0
 	for _, field := range list {
 		keepField := true
@@ -173,14 +173,14 @@ func (r *reader) filterType(parent *namedType, typ ast.Expr) {
 		// nothing to do
 	case *ast.ParenExpr:
 		r.filterType(nil, t.X)
-	case *ast.StarExpr: // possibly an embedded type literal
+	case *ast.StarExpr:	// possibly an embedded type literal
 		r.filterType(nil, t.X)
 	case *ast.UnaryExpr:
-		if t.Op == token.TILDE { // approximation element
+		if t.Op == token.TILDE {	// approximation element
 			r.filterType(nil, t.X)
 		}
 	case *ast.BinaryExpr:
-		if t.Op == token.OR { // union
+		if t.Op == token.OR {	// union
 			r.filterType(nil, t.X)
 			r.filterType(nil, t.Y)
 		}
@@ -258,12 +258,12 @@ func copyConstType(typ ast.Expr, pos token.Pos) ast.Expr {
 		if id, ok := typ.X.(*ast.Ident); ok {
 			// presumably a qualified identifier
 			return &ast.SelectorExpr{
-				Sel: ast.NewIdent(typ.Sel.Name),
-				X:   &ast.Ident{Name: id.Name, NamePos: pos},
+				Sel:	ast.NewIdent(typ.Sel.Name),
+				X:	&ast.Ident{Name: id.Name, NamePos: pos},
 			}
 		}
 	}
-	return nil // shouldn't happen, but be conservative and don't panic
+	return nil	// shouldn't happen, but be conservative and don't panic
 }
 
 func (r *reader) filterSpecList(list []ast.Spec, tok token.Token) []ast.Spec {

@@ -1,5 +1,5 @@
 // cmd/7c/7.out.h  from Vita Nuova.
-// https://code.google.com/p/ken-cc/source/browse/src/cmd/7c/7.out.h
+// https://bitbucket.org/plan9-from-bell-labs/9-cc/src/master/src/cmd/7c/7.out.h
 //
 // 	Copyright © 1994-1999 Lucent Technologies Inc. All rights reserved.
 // 	Portions Copyright © 1995-1997 C H Forsyth (forsyth@terzarima.net)
@@ -33,16 +33,16 @@ package arm64
 import "github.com/bir3/gocompiler/src/cmd/internal/obj"
 
 const (
-	NSNAME = 8
-	NSYM   = 50
-	NREG   = 32 /* number of general registers */
-	NFREG  = 32 /* number of floating point registers */
+	NSNAME	= 8
+	NSYM	= 50
+	NREG	= 32	/* number of general registers */
+	NFREG	= 32	/* number of floating point registers */
 )
 
 // General purpose registers, kept in the low bits of Prog.Reg.
 const (
 	// integer
-	REG_R0 = obj.RBaseARM64 + iota
+	REG_R0	= obj.RBaseARM64 + iota
 	REG_R1
 	REG_R2
 	REG_R3
@@ -143,14 +143,14 @@ const (
 	REG_V30
 	REG_V31
 
-	REG_RSP = REG_V31 + 32 // to differentiate ZR/SP, REG_RSP&0x1f = 31
+	REG_RSP	= REG_V31 + 32	// to differentiate ZR/SP, REG_RSP&0x1f = 31
 )
 
 // bits 0-4 indicates register: Vn
 // bits 5-8 indicates arrangement: <T>
 const (
-	REG_ARNG = obj.RBaseARM64 + 1<<10 + iota<<9 // Vn.<T>
-	REG_ELEM                                    // Vn.<T>[index]
+	REG_ARNG	= obj.RBaseARM64 + 1<<10 + iota<<9	// Vn.<T>
+	REG_ELEM						// Vn.<T>[index]
 	REG_ELEM_END
 )
 
@@ -163,7 +163,7 @@ const REG_LSL = obj.RBaseARM64 + 1<<9
 const REG_EXT = obj.RBaseARM64 + 1<<11
 
 const (
-	REG_UXTB = REG_EXT + iota<<8
+	REG_UXTB	= REG_EXT + iota<<8
 	REG_UXTH
 	REG_UXTW
 	REG_UXTX
@@ -192,131 +192,131 @@ const (
 // compiler allocates register variables F7-F26
 // compiler allocates external registers F26 down
 const (
-	REGMIN = REG_R7  // register variables allocated from here to REGMAX
-	REGRT1 = REG_R16 // ARM64 IP0, external linker may use as a scrach register in trampoline
-	REGRT2 = REG_R17 // ARM64 IP1, external linker may use as a scrach register in trampoline
-	REGPR  = REG_R18 // ARM64 platform register, unused in the Go toolchain
-	REGMAX = REG_R25
+	REGMIN	= REG_R7	// register variables allocated from here to REGMAX
+	REGRT1	= REG_R16	// ARM64 IP0, external linker may use as a scratch register in trampoline
+	REGRT2	= REG_R17	// ARM64 IP1, external linker may use as a scratch register in trampoline
+	REGPR	= REG_R18	// ARM64 platform register, unused in the Go toolchain
+	REGMAX	= REG_R25
 
-	REGCTXT = REG_R26 // environment for closures
-	REGTMP  = REG_R27 // reserved for liblink
-	REGG    = REG_R28 // G
-	REGFP   = REG_R29 // frame pointer
-	REGLINK = REG_R30
+	REGCTXT	= REG_R26	// environment for closures
+	REGTMP	= REG_R27	// reserved for liblink
+	REGG	= REG_R28	// G
+	REGFP	= REG_R29	// frame pointer
+	REGLINK	= REG_R30
 
 	// ARM64 uses R31 as both stack pointer and zero register,
 	// depending on the instruction. To differentiate RSP from ZR,
 	// we use a different numeric value for REGZERO and REGSP.
-	REGZERO = REG_R31
-	REGSP   = REG_RSP
+	REGZERO	= REG_R31
+	REGSP	= REG_RSP
 
-	FREGRET = REG_F0
-	FREGMIN = REG_F7  // first register variable
-	FREGMAX = REG_F26 // last register variable for 7g only
-	FREGEXT = REG_F26 // first external register
+	FREGRET	= REG_F0
+	FREGMIN	= REG_F7	// first register variable
+	FREGMAX	= REG_F26	// last register variable for 7g only
+	FREGEXT	= REG_F26	// first external register
 )
 
 // http://infocenter.arm.com/help/topic/com.arm.doc.ecm0665627/abi_sve_aadwarf_100985_0000_00_en.pdf
 var ARM64DWARFRegisters = map[int16]int16{
-	REG_R0:  0,
-	REG_R1:  1,
-	REG_R2:  2,
-	REG_R3:  3,
-	REG_R4:  4,
-	REG_R5:  5,
-	REG_R6:  6,
-	REG_R7:  7,
-	REG_R8:  8,
-	REG_R9:  9,
-	REG_R10: 10,
-	REG_R11: 11,
-	REG_R12: 12,
-	REG_R13: 13,
-	REG_R14: 14,
-	REG_R15: 15,
-	REG_R16: 16,
-	REG_R17: 17,
-	REG_R18: 18,
-	REG_R19: 19,
-	REG_R20: 20,
-	REG_R21: 21,
-	REG_R22: 22,
-	REG_R23: 23,
-	REG_R24: 24,
-	REG_R25: 25,
-	REG_R26: 26,
-	REG_R27: 27,
-	REG_R28: 28,
-	REG_R29: 29,
-	REG_R30: 30,
+	REG_R0:		0,
+	REG_R1:		1,
+	REG_R2:		2,
+	REG_R3:		3,
+	REG_R4:		4,
+	REG_R5:		5,
+	REG_R6:		6,
+	REG_R7:		7,
+	REG_R8:		8,
+	REG_R9:		9,
+	REG_R10:	10,
+	REG_R11:	11,
+	REG_R12:	12,
+	REG_R13:	13,
+	REG_R14:	14,
+	REG_R15:	15,
+	REG_R16:	16,
+	REG_R17:	17,
+	REG_R18:	18,
+	REG_R19:	19,
+	REG_R20:	20,
+	REG_R21:	21,
+	REG_R22:	22,
+	REG_R23:	23,
+	REG_R24:	24,
+	REG_R25:	25,
+	REG_R26:	26,
+	REG_R27:	27,
+	REG_R28:	28,
+	REG_R29:	29,
+	REG_R30:	30,
 
 	// floating point
-	REG_F0:  64,
-	REG_F1:  65,
-	REG_F2:  66,
-	REG_F3:  67,
-	REG_F4:  68,
-	REG_F5:  69,
-	REG_F6:  70,
-	REG_F7:  71,
-	REG_F8:  72,
-	REG_F9:  73,
-	REG_F10: 74,
-	REG_F11: 75,
-	REG_F12: 76,
-	REG_F13: 77,
-	REG_F14: 78,
-	REG_F15: 79,
-	REG_F16: 80,
-	REG_F17: 81,
-	REG_F18: 82,
-	REG_F19: 83,
-	REG_F20: 84,
-	REG_F21: 85,
-	REG_F22: 86,
-	REG_F23: 87,
-	REG_F24: 88,
-	REG_F25: 89,
-	REG_F26: 90,
-	REG_F27: 91,
-	REG_F28: 92,
-	REG_F29: 93,
-	REG_F30: 94,
-	REG_F31: 95,
+	REG_F0:		64,
+	REG_F1:		65,
+	REG_F2:		66,
+	REG_F3:		67,
+	REG_F4:		68,
+	REG_F5:		69,
+	REG_F6:		70,
+	REG_F7:		71,
+	REG_F8:		72,
+	REG_F9:		73,
+	REG_F10:	74,
+	REG_F11:	75,
+	REG_F12:	76,
+	REG_F13:	77,
+	REG_F14:	78,
+	REG_F15:	79,
+	REG_F16:	80,
+	REG_F17:	81,
+	REG_F18:	82,
+	REG_F19:	83,
+	REG_F20:	84,
+	REG_F21:	85,
+	REG_F22:	86,
+	REG_F23:	87,
+	REG_F24:	88,
+	REG_F25:	89,
+	REG_F26:	90,
+	REG_F27:	91,
+	REG_F28:	92,
+	REG_F29:	93,
+	REG_F30:	94,
+	REG_F31:	95,
 
 	// SIMD
-	REG_V0:  64,
-	REG_V1:  65,
-	REG_V2:  66,
-	REG_V3:  67,
-	REG_V4:  68,
-	REG_V5:  69,
-	REG_V6:  70,
-	REG_V7:  71,
-	REG_V8:  72,
-	REG_V9:  73,
-	REG_V10: 74,
-	REG_V11: 75,
-	REG_V12: 76,
-	REG_V13: 77,
-	REG_V14: 78,
-	REG_V15: 79,
-	REG_V16: 80,
-	REG_V17: 81,
-	REG_V18: 82,
-	REG_V19: 83,
-	REG_V20: 84,
-	REG_V21: 85,
-	REG_V22: 86,
-	REG_V23: 87,
-	REG_V24: 88,
-	REG_V25: 89,
-	REG_V26: 90,
-	REG_V27: 91,
-	REG_V28: 92,
-	REG_V29: 93,
-	REG_V30: 94,
-	REG_V31: 95,
+	REG_V0:		64,
+	REG_V1:		65,
+	REG_V2:		66,
+	REG_V3:		67,
+	REG_V4:		68,
+	REG_V5:		69,
+	REG_V6:		70,
+	REG_V7:		71,
+	REG_V8:		72,
+	REG_V9:		73,
+	REG_V10:	74,
+	REG_V11:	75,
+	REG_V12:	76,
+	REG_V13:	77,
+	REG_V14:	78,
+	REG_V15:	79,
+	REG_V16:	80,
+	REG_V17:	81,
+	REG_V18:	82,
+	REG_V19:	83,
+	REG_V20:	84,
+	REG_V21:	85,
+	REG_V22:	86,
+	REG_V23:	87,
+	REG_V24:	88,
+	REG_V25:	89,
+	REG_V26:	90,
+	REG_V27:	91,
+	REG_V28:	92,
+	REG_V29:	93,
+	REG_V30:	94,
+	REG_V31:	95,
 }
 
 const (
@@ -325,7 +325,7 @@ const (
 
 const (
 	/* mark flags */
-	LABEL = 1 << iota
+	LABEL	= 1 << iota
 	LEAF
 	FLOAT
 	BRANCH
@@ -341,90 +341,91 @@ const (
 	// optab is sorted based on the order of these constants
 	// and the first match is chosen.
 	// The more specific class needs to come earlier.
-	C_NONE   = iota
-	C_REG    // R0..R30
-	C_ZREG   // R0..R30, ZR
-	C_RSP    // R0..R30, RSP
-	C_FREG   // F0..F31
-	C_VREG   // V0..V31
-	C_PAIR   // (Rn, Rm)
-	C_SHIFT  // Rn<<2
-	C_EXTREG // Rn.UXTB[<<3]
-	C_SPR    // REG_NZCV
-	C_COND   // condition code, EQ, NE, etc.
-	C_SPOP   // special operand, PLDL1KEEP, VMALLE1IS, etc.
-	C_ARNG   // Vn.<T>
-	C_ELEM   // Vn.<T>[index]
-	C_LIST   // [V1, V2, V3]
+	C_NONE		= iota + 1	// starting from 1, leave unclassified Addr's class as 0
+	C_REG				// R0..R30
+	C_ZREG				// R0..R30, ZR
+	C_RSP				// R0..R30, RSP
+	C_FREG				// F0..F31
+	C_VREG				// V0..V31
+	C_PAIR				// (Rn, Rm)
+	C_SHIFT				// Rn<<2
+	C_EXTREG			// Rn.UXTB[<<3]
+	C_SPR				// REG_NZCV
+	C_COND				// condition code, EQ, NE, etc.
+	C_SPOP				// special operand, PLDL1KEEP, VMALLE1IS, etc.
+	C_ARNG				// Vn.<T>
+	C_ELEM				// Vn.<T>[index]
+	C_LIST				// [V1, V2, V3]
 
-	C_ZCON     // $0
-	C_ABCON0   // could be C_ADDCON0 or C_BITCON
-	C_ADDCON0  // 12-bit unsigned, unshifted
-	C_ABCON    // could be C_ADDCON or C_BITCON
-	C_AMCON    // could be C_ADDCON or C_MOVCON
-	C_ADDCON   // 12-bit unsigned, shifted left by 0 or 12
-	C_MBCON    // could be C_MOVCON or C_BITCON
-	C_MOVCON   // generated by a 16-bit constant, optionally inverted and/or shifted by multiple of 16
-	C_BITCON   // bitfield and logical immediate masks
-	C_ADDCON2  // 24-bit constant
-	C_LCON     // 32-bit constant
-	C_MOVCON2  // a constant that can be loaded with one MOVZ/MOVN and one MOVK
-	C_MOVCON3  // a constant that can be loaded with one MOVZ/MOVN and two MOVKs
-	C_VCON     // 64-bit constant
-	C_FCON     // floating-point constant
-	C_VCONADDR // 64-bit memory address
+	C_ZCON		// $0
+	C_ABCON0	// could be C_ADDCON0 or C_BITCON
+	C_ADDCON0	// 12-bit unsigned, unshifted
+	C_ABCON		// could be C_ADDCON or C_BITCON
+	C_AMCON		// could be C_ADDCON or C_MOVCON
+	C_ADDCON	// 12-bit unsigned, shifted left by 0 or 12
+	C_MBCON		// could be C_MOVCON or C_BITCON
+	C_MOVCON	// generated by a 16-bit constant, optionally inverted and/or shifted by multiple of 16
+	C_BITCON	// bitfield and logical immediate masks
+	C_ADDCON2	// 24-bit constant
+	C_LCON		// 32-bit constant
+	C_MOVCON2	// a constant that can be loaded with one MOVZ/MOVN and one MOVK
+	C_MOVCON3	// a constant that can be loaded with one MOVZ/MOVN and two MOVKs
+	C_VCON		// 64-bit constant
+	C_FCON		// floating-point constant
+	C_VCONADDR	// 64-bit memory address
 
-	C_AACON  // ADDCON offset in auto constant $a(FP)
-	C_AACON2 // 24-bit offset in auto constant $a(FP)
-	C_LACON  // 32-bit offset in auto constant $a(FP)
-	C_AECON  // ADDCON offset in extern constant $e(SB)
+	C_AACON		// ADDCON offset in auto constant $a(FP)
+	C_AACON2	// 24-bit offset in auto constant $a(FP)
+	C_LACON		// 32-bit offset in auto constant $a(FP)
+	C_AECON		// ADDCON offset in extern constant $e(SB)
 
 	// TODO(aram): only one branch class should be enough
-	C_SBRA // for TYPE_BRANCH
+	C_SBRA	// for TYPE_BRANCH
 	C_LBRA
 
-	C_ZAUTO       // 0(RSP)
-	C_NSAUTO_16   // -256 <= x < 0, 0 mod 16
-	C_NSAUTO_8    // -256 <= x < 0, 0 mod 8
-	C_NSAUTO_4    // -256 <= x < 0, 0 mod 4
-	C_NSAUTO      // -256 <= x < 0
-	C_NPAUTO_16   // -512 <= x < 0, 0 mod 16
-	C_NPAUTO      // -512 <= x < 0, 0 mod 8
-	C_NQAUTO_16   // -1024 <= x < 0, 0 mod 16
-	C_NAUTO4K     // -4095 <= x < 0
-	C_PSAUTO_16   // 0 to 255, 0 mod 16
-	C_PSAUTO_8    // 0 to 255, 0 mod 8
-	C_PSAUTO_4    // 0 to 255, 0 mod 4
-	C_PSAUTO      // 0 to 255
-	C_PPAUTO_16   // 0 to 504, 0 mod 16
-	C_PPAUTO      // 0 to 504, 0 mod 8
-	C_PQAUTO_16   // 0 to 1008, 0 mod 16
-	C_UAUTO4K_16  // 0 to 4095, 0 mod 16
-	C_UAUTO4K_8   // 0 to 4095, 0 mod 8
-	C_UAUTO4K_4   // 0 to 4095, 0 mod 4
-	C_UAUTO4K_2   // 0 to 4095, 0 mod 2
-	C_UAUTO4K     // 0 to 4095
-	C_UAUTO8K_16  // 0 to 8190, 0 mod 16
-	C_UAUTO8K_8   // 0 to 8190, 0 mod 8
-	C_UAUTO8K_4   // 0 to 8190, 0 mod 4
-	C_UAUTO8K     // 0 to 8190, 0 mod 2  + C_PSAUTO
-	C_UAUTO16K_16 // 0 to 16380, 0 mod 16
-	C_UAUTO16K_8  // 0 to 16380, 0 mod 8
-	C_UAUTO16K    // 0 to 16380, 0 mod 4 + C_PSAUTO
-	C_UAUTO32K_16 // 0 to 32760, 0 mod 16 + C_PSAUTO
-	C_UAUTO32K    // 0 to 32760, 0 mod 8 + C_PSAUTO
-	C_UAUTO64K    // 0 to 65520, 0 mod 16 + C_PSAUTO
-	C_LAUTO       // any other 32-bit constant
+	C_ZAUTO		// 0(RSP)
+	C_NSAUTO_16	// -256 <= x < 0, 0 mod 16
+	C_NSAUTO_8	// -256 <= x < 0, 0 mod 8
+	C_NSAUTO_4	// -256 <= x < 0, 0 mod 4
+	C_NSAUTO	// -256 <= x < 0
+	C_NPAUTO_16	// -512 <= x < 0, 0 mod 16
+	C_NPAUTO	// -512 <= x < 0, 0 mod 8
+	C_NQAUTO_16	// -1024 <= x < 0, 0 mod 16
+	C_NAUTO4K	// -4095 <= x < 0
+	C_PSAUTO_16	// 0 to 255, 0 mod 16
+	C_PSAUTO_8	// 0 to 255, 0 mod 8
+	C_PSAUTO_4	// 0 to 255, 0 mod 4
+	C_PSAUTO	// 0 to 255
+	C_PPAUTO_16	// 0 to 504, 0 mod 16
+	C_PPAUTO	// 0 to 504, 0 mod 8
+	C_PQAUTO_16	// 0 to 1008, 0 mod 16
+	C_UAUTO4K_16	// 0 to 4095, 0 mod 16
+	C_UAUTO4K_8	// 0 to 4095, 0 mod 8
+	C_UAUTO4K_4	// 0 to 4095, 0 mod 4
+	C_UAUTO4K_2	// 0 to 4095, 0 mod 2
+	C_UAUTO4K	// 0 to 4095
+	C_UAUTO8K_16	// 0 to 8190, 0 mod 16
+	C_UAUTO8K_8	// 0 to 8190, 0 mod 8
+	C_UAUTO8K_4	// 0 to 8190, 0 mod 4
+	C_UAUTO8K	// 0 to 8190, 0 mod 2  + C_PSAUTO
+	C_UAUTO16K_16	// 0 to 16380, 0 mod 16
+	C_UAUTO16K_8	// 0 to 16380, 0 mod 8
+	C_UAUTO16K	// 0 to 16380, 0 mod 4 + C_PSAUTO
+	C_UAUTO32K_16	// 0 to 32760, 0 mod 16 + C_PSAUTO
+	C_UAUTO32K	// 0 to 32760, 0 mod 8 + C_PSAUTO
+	C_UAUTO64K	// 0 to 65520, 0 mod 16 + C_PSAUTO
+	C_LAUTOPOOL	// any other constant up to 64 bits (needs pool literal)
+	C_LAUTO		// any other constant up to 64 bits
 
-	C_SEXT1  // 0 to 4095, direct
-	C_SEXT2  // 0 to 8190
-	C_SEXT4  // 0 to 16380
-	C_SEXT8  // 0 to 32760
-	C_SEXT16 // 0 to 65520
+	C_SEXT1		// 0 to 4095, direct
+	C_SEXT2		// 0 to 8190
+	C_SEXT4		// 0 to 16380
+	C_SEXT8		// 0 to 32760
+	C_SEXT16	// 0 to 65520
 	C_LEXT
 
-	C_ZOREG     // 0(R)
-	C_NSOREG_16 // must mirror C_NSAUTO_16, etc
+	C_ZOREG		// 0(R)
+	C_NSOREG_16	// must mirror C_NSAUTO_16, etc
 	C_NSOREG_8
 	C_NSOREG_4
 	C_NSOREG
@@ -454,9 +455,10 @@ const (
 	C_UOREG32K_16
 	C_UOREG32K
 	C_UOREG64K
+	C_LOREGPOOL
 	C_LOREG
 
-	C_ADDR // TODO(aram): explain difference from C_VCONADDR
+	C_ADDR	// TODO(aram): explain difference from C_VCONADDR
 
 	// The GOT slot for a symbol in -dynlink mode.
 	C_GOTADDR
@@ -470,22 +472,22 @@ const (
 	// offset from the thread local base.
 	C_TLS_IE
 
-	C_ROFF // register offset (including register extended)
+	C_ROFF	// register offset (including register extended)
 
 	C_GOK
 	C_TEXTSIZE
-	C_NCLASS // must be last
+	C_NCLASS	// must be last
 )
 
 const (
-	C_XPRE  = 1 << 6 // match arm.C_WBIT, so Prog.String know how to print it
-	C_XPOST = 1 << 5 // match arm.C_PBIT, so Prog.String know how to print it
+	C_XPRE	= 1 << 6	// match arm.C_WBIT, so Prog.String know how to print it
+	C_XPOST	= 1 << 5	// match arm.C_PBIT, so Prog.String know how to print it
 )
 
 //go:generate go run ../stringer.go -i $GOFILE -o anames.go -p arm64
 
 const (
-	AADC = obj.ABaseARM64 + obj.A_ARCHSPECIFIC + iota
+	AADC	= obj.ABaseARM64 + obj.A_ARCHSPECIFIC + iota
 	AADCS
 	AADCSW
 	AADCW
@@ -495,6 +497,10 @@ const (
 	AADDW
 	AADR
 	AADRP
+	AAESD
+	AAESE
+	AAESIMC
+	AAESMC
 	AAND
 	AANDS
 	AANDSW
@@ -502,17 +508,47 @@ const (
 	AASR
 	AASRW
 	AAT
+	ABCC
+	ABCS
+	ABEQ
 	ABFI
 	ABFIW
 	ABFM
 	ABFMW
 	ABFXIL
 	ABFXILW
+	ABGE
+	ABGT
+	ABHI
+	ABHS
 	ABIC
 	ABICS
 	ABICSW
 	ABICW
+	ABLE
+	ABLO
+	ABLS
+	ABLT
+	ABMI
+	ABNE
+	ABPL
 	ABRK
+	ABVC
+	ABVS
+	ACASAD
+	ACASALB
+	ACASALD
+	ACASALH
+	ACASALW
+	ACASAW
+	ACASB
+	ACASD
+	ACASH
+	ACASLD
+	ACASLW
+	ACASPD
+	ACASPW
+	ACASW
 	ACBNZ
 	ACBNZW
 	ACBZ
@@ -563,6 +599,7 @@ const (
 	ADMB
 	ADRPS
 	ADSB
+	ADWORD
 	AEON
 	AEONW
 	AEOR
@@ -570,6 +607,85 @@ const (
 	AERET
 	AEXTR
 	AEXTRW
+	AFABSD
+	AFABSS
+	AFADDD
+	AFADDS
+	AFCCMPD
+	AFCCMPED
+	AFCCMPES
+	AFCCMPS
+	AFCMPD
+	AFCMPED
+	AFCMPES
+	AFCMPS
+	AFCSELD
+	AFCSELS
+	AFCVTDH
+	AFCVTDS
+	AFCVTHD
+	AFCVTHS
+	AFCVTSD
+	AFCVTSH
+	AFCVTZSD
+	AFCVTZSDW
+	AFCVTZSS
+	AFCVTZSSW
+	AFCVTZUD
+	AFCVTZUDW
+	AFCVTZUS
+	AFCVTZUSW
+	AFDIVD
+	AFDIVS
+	AFLDPD
+	AFLDPQ
+	AFLDPS
+	AFMADDD
+	AFMADDS
+	AFMAXD
+	AFMAXNMD
+	AFMAXNMS
+	AFMAXS
+	AFMIND
+	AFMINNMD
+	AFMINNMS
+	AFMINS
+	AFMOVD
+	AFMOVQ
+	AFMOVS
+	AFMSUBD
+	AFMSUBS
+	AFMULD
+	AFMULS
+	AFNEGD
+	AFNEGS
+	AFNMADDD
+	AFNMADDS
+	AFNMSUBD
+	AFNMSUBS
+	AFNMULD
+	AFNMULS
+	AFRINTAD
+	AFRINTAS
+	AFRINTID
+	AFRINTIS
+	AFRINTMD
+	AFRINTMS
+	AFRINTND
+	AFRINTNS
+	AFRINTPD
+	AFRINTPS
+	AFRINTXD
+	AFRINTXS
+	AFRINTZD
+	AFRINTZS
+	AFSQRTD
+	AFSQRTS
+	AFSTPD
+	AFSTPQ
+	AFSTPS
+	AFSUBD
+	AFSUBS
 	AHINT
 	AHLT
 	AHVC
@@ -578,19 +694,19 @@ const (
 	ALDADDAB
 	ALDADDAD
 	ALDADDAH
-	ALDADDAW
 	ALDADDALB
 	ALDADDALD
 	ALDADDALH
 	ALDADDALW
+	ALDADDAW
 	ALDADDB
 	ALDADDD
 	ALDADDH
-	ALDADDW
 	ALDADDLB
 	ALDADDLD
 	ALDADDLH
 	ALDADDLW
+	ALDADDW
 	ALDAR
 	ALDARB
 	ALDARH
@@ -604,60 +720,60 @@ const (
 	ALDCLRAB
 	ALDCLRAD
 	ALDCLRAH
-	ALDCLRAW
 	ALDCLRALB
 	ALDCLRALD
 	ALDCLRALH
 	ALDCLRALW
+	ALDCLRAW
 	ALDCLRB
 	ALDCLRD
 	ALDCLRH
-	ALDCLRW
 	ALDCLRLB
 	ALDCLRLD
 	ALDCLRLH
 	ALDCLRLW
+	ALDCLRW
 	ALDEORAB
 	ALDEORAD
 	ALDEORAH
-	ALDEORAW
 	ALDEORALB
 	ALDEORALD
 	ALDEORALH
 	ALDEORALW
+	ALDEORAW
 	ALDEORB
 	ALDEORD
 	ALDEORH
-	ALDEORW
 	ALDEORLB
 	ALDEORLD
 	ALDEORLH
 	ALDEORLW
+	ALDEORW
 	ALDORAB
 	ALDORAD
 	ALDORAH
-	ALDORAW
 	ALDORALB
 	ALDORALD
 	ALDORALH
 	ALDORALW
+	ALDORAW
 	ALDORB
 	ALDORD
 	ALDORH
-	ALDORW
 	ALDORLB
 	ALDORLD
 	ALDORLH
 	ALDORLW
+	ALDORW
 	ALDP
-	ALDPW
 	ALDPSW
+	ALDPW
+	ALDXP
+	ALDXPW
 	ALDXR
 	ALDXRB
 	ALDXRH
 	ALDXRW
-	ALDXP
-	ALDXPW
 	ALSL
 	ALSLW
 	ALSR
@@ -666,10 +782,23 @@ const (
 	AMADDW
 	AMNEG
 	AMNEGW
+	AMOVB
+	AMOVBU
+	AMOVD
+	AMOVH
+	AMOVHU
 	AMOVK
 	AMOVKW
 	AMOVN
 	AMOVNW
+	AMOVP
+	AMOVPD
+	AMOVPQ
+	AMOVPS
+	AMOVPSW
+	AMOVPW
+	AMOVW
+	AMOVWU
 	AMOVZ
 	AMOVZW
 	AMRS
@@ -716,24 +845,34 @@ const (
 	ASBFMW
 	ASBFX
 	ASBFXW
+	ASCVTFD
+	ASCVTFS
+	ASCVTFWD
+	ASCVTFWS
 	ASDIV
 	ASDIVW
 	ASEV
 	ASEVL
+	ASHA1C
+	ASHA1H
+	ASHA1M
+	ASHA1P
+	ASHA1SU0
+	ASHA1SU1
+	ASHA256H
+	ASHA256H2
+	ASHA256SU0
+	ASHA256SU1
+	ASHA512H
+	ASHA512H2
+	ASHA512SU0
+	ASHA512SU1
 	ASMADDL
 	ASMC
 	ASMNEGL
 	ASMSUBL
 	ASMULH
 	ASMULL
-	ASTXR
-	ASTXRB
-	ASTXRH
-	ASTXP
-	ASTXPW
-	ASTXRW
-	ASTLP
-	ASTLPW
 	ASTLR
 	ASTLRB
 	ASTLRH
@@ -746,11 +885,33 @@ const (
 	ASTLXRW
 	ASTP
 	ASTPW
+	ASTXP
+	ASTXPW
+	ASTXR
+	ASTXRB
+	ASTXRH
+	ASTXRW
 	ASUB
 	ASUBS
 	ASUBSW
 	ASUBW
 	ASVC
+	ASWPAB
+	ASWPAD
+	ASWPAH
+	ASWPALB
+	ASWPALD
+	ASWPALH
+	ASWPALW
+	ASWPAW
+	ASWPB
+	ASWPD
+	ASWPH
+	ASWPLB
+	ASWPLD
+	ASWPLH
+	ASWPLW
+	ASWPW
 	ASXTB
 	ASXTBW
 	ASXTH
@@ -769,6 +930,10 @@ const (
 	AUBFMW
 	AUBFX
 	AUBFXW
+	AUCVTFD
+	AUCVTFS
+	AUCVTFWD
+	AUCVTFWS
 	AUDIV
 	AUDIVW
 	AUMADDL
@@ -779,264 +944,97 @@ const (
 	AUREM
 	AUREMW
 	AUXTB
-	AUXTH
-	AUXTW
 	AUXTBW
+	AUXTH
 	AUXTHW
-	AWFE
-	AWFI
-	AYIELD
-	AMOVB
-	AMOVBU
-	AMOVH
-	AMOVHU
-	AMOVW
-	AMOVWU
-	AMOVD
-	AMOVNP
-	AMOVNPW
-	AMOVP
-	AMOVPD
-	AMOVPQ
-	AMOVPS
-	AMOVPSW
-	AMOVPW
-	ASWPAD
-	ASWPAW
-	ASWPAH
-	ASWPAB
-	ASWPALD
-	ASWPALW
-	ASWPALH
-	ASWPALB
-	ASWPD
-	ASWPW
-	ASWPH
-	ASWPB
-	ASWPLD
-	ASWPLW
-	ASWPLH
-	ASWPLB
-	ACASD
-	ACASW
-	ACASH
-	ACASB
-	ACASAD
-	ACASAW
-	ACASLD
-	ACASLW
-	ACASALD
-	ACASALW
-	ACASALH
-	ACASALB
-	ACASPD
-	ACASPW
-	ABEQ
-	ABNE
-	ABCS
-	ABHS
-	ABCC
-	ABLO
-	ABMI
-	ABPL
-	ABVS
-	ABVC
-	ABHI
-	ABLS
-	ABGE
-	ABLT
-	ABGT
-	ABLE
-	AFABSD
-	AFABSS
-	AFADDD
-	AFADDS
-	AFCCMPD
-	AFCCMPED
-	AFCCMPS
-	AFCCMPES
-	AFCMPD
-	AFCMPED
-	AFCMPES
-	AFCMPS
-	AFCVTSD
-	AFCVTDS
-	AFCVTZSD
-	AFCVTZSDW
-	AFCVTZSS
-	AFCVTZSSW
-	AFCVTZUD
-	AFCVTZUDW
-	AFCVTZUS
-	AFCVTZUSW
-	AFDIVD
-	AFDIVS
-	AFLDPD
-	AFLDPQ
-	AFLDPS
-	AFMOVQ
-	AFMOVD
-	AFMOVS
-	AVMOVQ
-	AVMOVD
-	AVMOVS
-	AFMULD
-	AFMULS
-	AFNEGD
-	AFNEGS
-	AFSQRTD
-	AFSQRTS
-	AFSTPD
-	AFSTPQ
-	AFSTPS
-	AFSUBD
-	AFSUBS
-	ASCVTFD
-	ASCVTFS
-	ASCVTFWD
-	ASCVTFWS
-	AUCVTFD
-	AUCVTFS
-	AUCVTFWD
-	AUCVTFWS
-	AWORD
-	ADWORD
-	AFCSELS
-	AFCSELD
-	AFMAXS
-	AFMINS
-	AFMAXD
-	AFMIND
-	AFMAXNMS
-	AFMAXNMD
-	AFNMULS
-	AFNMULD
-	AFRINTNS
-	AFRINTND
-	AFRINTPS
-	AFRINTPD
-	AFRINTMS
-	AFRINTMD
-	AFRINTZS
-	AFRINTZD
-	AFRINTAS
-	AFRINTAD
-	AFRINTXS
-	AFRINTXD
-	AFRINTIS
-	AFRINTID
-	AFMADDS
-	AFMADDD
-	AFMSUBS
-	AFMSUBD
-	AFNMADDS
-	AFNMADDD
-	AFNMSUBS
-	AFNMSUBD
-	AFMINNMS
-	AFMINNMD
-	AFCVTDH
-	AFCVTHS
-	AFCVTHD
-	AFCVTSH
-	AAESD
-	AAESE
-	AAESIMC
-	AAESMC
-	ASHA1C
-	ASHA1H
-	ASHA1M
-	ASHA1P
-	ASHA1SU0
-	ASHA1SU1
-	ASHA256H
-	ASHA256H2
-	ASHA256SU0
-	ASHA256SU1
-	ASHA512H
-	ASHA512H2
-	ASHA512SU0
-	ASHA512SU1
+	AUXTW
 	AVADD
 	AVADDP
+	AVADDV
 	AVAND
-	AVBIF
 	AVBCAX
+	AVBIF
+	AVBIT
+	AVBSL
 	AVCMEQ
+	AVCMTST
 	AVCNT
+	AVDUP
 	AVEOR
 	AVEOR3
-	AVMOV
+	AVEXT
+	AVFMLA
+	AVFMLS
 	AVLD1
-	AVLD2
-	AVLD3
-	AVLD4
 	AVLD1R
+	AVLD2
 	AVLD2R
+	AVLD3
 	AVLD3R
+	AVLD4
 	AVLD4R
+	AVMOV
+	AVMOVD
+	AVMOVI
+	AVMOVQ
+	AVMOVS
 	AVORR
+	AVPMULL
+	AVPMULL2
+	AVRAX1
+	AVRBIT
 	AVREV16
 	AVREV32
 	AVREV64
+	AVSHL
+	AVSLI
+	AVSRI
 	AVST1
 	AVST2
 	AVST3
 	AVST4
-	AVDUP
-	AVADDV
-	AVMOVI
-	AVUADDLV
 	AVSUB
-	AVFMLA
-	AVFMLS
-	AVPMULL
-	AVPMULL2
-	AVEXT
-	AVRBIT
-	AVRAX1
+	AVTBL
+	AVTBX
+	AVTRN1
+	AVTRN2
+	AVUADDLV
+	AVUADDW
+	AVUADDW2
 	AVUMAX
 	AVUMIN
-	AVUSHR
 	AVUSHLL
 	AVUSHLL2
+	AVUSHR
+	AVUSRA
 	AVUXTL
 	AVUXTL2
 	AVUZP1
 	AVUZP2
-	AVSHL
-	AVSRI
-	AVSLI
-	AVBSL
-	AVBIT
-	AVTBL
-	AVTBX
 	AVXAR
 	AVZIP1
 	AVZIP2
-	AVCMTST
-	AVUADDW2
-	AVUADDW
-	AVUSRA
-	AVTRN1
-	AVTRN2
+	AWFE
+	AWFI
+	AWORD
+	AYIELD
 	ALAST
-	AB  = obj.AJMP
-	ABL = obj.ACALL
+	AB	= obj.AJMP
+	ABL	= obj.ACALL
 )
 
 const (
 	// shift types
-	SHIFT_LL  = 0 << 22
-	SHIFT_LR  = 1 << 22
-	SHIFT_AR  = 2 << 22
-	SHIFT_ROR = 3 << 22
+	SHIFT_LL	= 0 << 22
+	SHIFT_LR	= 1 << 22
+	SHIFT_AR	= 2 << 22
+	SHIFT_ROR	= 3 << 22
 )
 
 // Arrangement for ARM64 SIMD instructions
 const (
 	// arrangement types
-	ARNG_8B = iota
+	ARNG_8B	= iota
 	ARNG_16B
 	ARNG_1D
 	ARNG_4H
@@ -1056,8 +1054,8 @@ type SpecialOperand int
 
 const (
 	// PRFM
-	SPOP_PLDL1KEEP SpecialOperand = iota     // must be the first one
-	SPOP_BEGIN     SpecialOperand = iota - 1 // set as the lower bound
+	SPOP_PLDL1KEEP	SpecialOperand	= iota		// must be the first one
+	SPOP_BEGIN	SpecialOperand	= iota - 1	// set as the lower bound
 	SPOP_PLDL1STRM
 	SPOP_PLDL2KEEP
 	SPOP_PLDL2STRM

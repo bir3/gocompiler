@@ -11,113 +11,113 @@ import (
 	"bytes"
 	"compress/gzip"
 	"fmt"
+	"github.com/bir3/gocompiler/src/internal/lazyregexp"
 	"io"
-	"regexp"
 	"strings"
 	"time"
 )
 
 // Profile is an in-memory representation of profile.proto.
 type Profile struct {
-	SampleType        []*ValueType
-	DefaultSampleType string
-	Sample            []*Sample
-	Mapping           []*Mapping
-	Location          []*Location
-	Function          []*Function
-	Comments          []string
+	SampleType		[]*ValueType
+	DefaultSampleType	string
+	Sample			[]*Sample
+	Mapping			[]*Mapping
+	Location		[]*Location
+	Function		[]*Function
+	Comments		[]string
 
-	DropFrames string
-	KeepFrames string
+	DropFrames	string
+	KeepFrames	string
 
-	TimeNanos     int64
-	DurationNanos int64
-	PeriodType    *ValueType
-	Period        int64
+	TimeNanos	int64
+	DurationNanos	int64
+	PeriodType	*ValueType
+	Period		int64
 
-	commentX           []int64
-	dropFramesX        int64
-	keepFramesX        int64
-	stringTable        []string
-	defaultSampleTypeX int64
+	commentX		[]int64
+	dropFramesX		int64
+	keepFramesX		int64
+	stringTable		[]string
+	defaultSampleTypeX	int64
 }
 
 // ValueType corresponds to Profile.ValueType
 type ValueType struct {
-	Type string // cpu, wall, inuse_space, etc
-	Unit string // seconds, nanoseconds, bytes, etc
+	Type	string	// cpu, wall, inuse_space, etc
+	Unit	string	// seconds, nanoseconds, bytes, etc
 
-	typeX int64
-	unitX int64
+	typeX	int64
+	unitX	int64
 }
 
 // Sample corresponds to Profile.Sample
 type Sample struct {
-	Location []*Location
-	Value    []int64
-	Label    map[string][]string
-	NumLabel map[string][]int64
-	NumUnit  map[string][]string
+	Location	[]*Location
+	Value		[]int64
+	Label		map[string][]string
+	NumLabel	map[string][]int64
+	NumUnit		map[string][]string
 
-	locationIDX []uint64
-	labelX      []Label
+	locationIDX	[]uint64
+	labelX		[]Label
 }
 
 // Label corresponds to Profile.Label
 type Label struct {
-	keyX int64
+	keyX	int64
 	// Exactly one of the two following values must be set
-	strX int64
-	numX int64 // Integer value for this label
+	strX	int64
+	numX	int64	// Integer value for this label
 }
 
 // Mapping corresponds to Profile.Mapping
 type Mapping struct {
-	ID              uint64
-	Start           uint64
-	Limit           uint64
-	Offset          uint64
-	File            string
-	BuildID         string
-	HasFunctions    bool
-	HasFilenames    bool
-	HasLineNumbers  bool
-	HasInlineFrames bool
+	ID		uint64
+	Start		uint64
+	Limit		uint64
+	Offset		uint64
+	File		string
+	BuildID		string
+	HasFunctions	bool
+	HasFilenames	bool
+	HasLineNumbers	bool
+	HasInlineFrames	bool
 
-	fileX    int64
-	buildIDX int64
+	fileX		int64
+	buildIDX	int64
 }
 
 // Location corresponds to Profile.Location
 type Location struct {
-	ID       uint64
-	Mapping  *Mapping
-	Address  uint64
-	Line     []Line
-	IsFolded bool
+	ID		uint64
+	Mapping		*Mapping
+	Address		uint64
+	Line		[]Line
+	IsFolded	bool
 
-	mappingIDX uint64
+	mappingIDX	uint64
 }
 
 // Line corresponds to Profile.Line
 type Line struct {
-	Function *Function
-	Line     int64
+	Function	*Function
+	Line		int64
 
-	functionIDX uint64
+	functionIDX	uint64
 }
 
 // Function corresponds to Profile.Function
 type Function struct {
-	ID         uint64
-	Name       string
-	SystemName string
-	Filename   string
-	StartLine  int64
+	ID		uint64
+	Name		string
+	SystemName	string
+	Filename	string
+	StartLine	int64
 
-	nameX       int64
-	systemNameX int64
-	filenameX   int64
+	nameX		int64
+	systemNameX	int64
+	filenameX	int64
 }
 
 // Parse parses a profile and checks for its validity. The input
@@ -141,10 +141,14 @@ func Parse(r io.Reader) (*Profile, error) {
 		}
 		orig = data
 	}
-	if p, err = parseUncompressed(orig); err != nil {
-		if p, err = parseLegacy(orig); err != nil {
-			return nil, fmt.Errorf("parsing profile: %v", err)
-		}
+
+	var lErr error
+	p, pErr := parseUncompressed(orig)
+	if pErr != nil {
+		p, lErr = parseLegacy(orig)
+	}
+	if pErr != nil && lErr != nil {
+		return nil, fmt.Errorf("parsing profile: not a valid proto profile (%w) or legacy profile (%w)", pErr, lErr)
 	}
 
 	if err := p.CheckValid(); err != nil {
@@ -155,12 +159,13 @@ func Parse(r io.Reader) (*Profile, error) {
 
 var errUnrecognized = fmt.Errorf("unrecognized profile format")
 var errMalformed = fmt.Errorf("malformed profile format")
+var ErrNoData = fmt.Errorf("empty input file")
 
 func parseLegacy(data []byte) (*Profile, error) {
 	parsers := []func([]byte) (*Profile, error){
 		parseCPU,
 		parseHeap,
-		parseGoCount, // goroutine, threadcreate
+		parseGoCount,	// goroutine, threadcreate
 		parseThread,
 		parseContention,
 	}
@@ -180,6 +185,10 @@ func parseLegacy(data []byte) (*Profile, error) {
 }
 
 func parseUncompressed(data []byte) (*Profile, error) {
+	if len(data) == 0 {
+		return nil, ErrNoData
+	}
+
 	p := &Profile{}
 	if err := unmarshal(data, p); err != nil {
 		return nil, err
@@ -192,7 +201,7 @@ func parseUncompressed(data []byte) (*Profile, error) {
 	return p, nil
 }
 
-var libRx = regexp.MustCompile(`([.]so$|[.]so[._][0-9]+)`)
+var libRx = lazyregexp.New(`([.]so$|[.]so[._][0-9]+)`)
 
 // setMain scans Mapping entries and guesses which entry is main
 // because legacy profiles don't obey the convention of putting main
@@ -521,7 +530,7 @@ func (p *Profile) HasFileLines() bool {
 
 func compatibleValueTypes(v1, v2 *ValueType) bool {
 	if v1 == nil || v2 == nil {
-		return true // No grounds to disqualify.
+		return true	// No grounds to disqualify.
 	}
 	return v1.Type == v2.Type && v1.Unit == v2.Unit
 }

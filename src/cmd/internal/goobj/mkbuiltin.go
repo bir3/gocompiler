@@ -3,7 +3,6 @@
 // license that can be found in the LICENSE file.
 
 //go:build ignore
-// +build ignore
 
 // Generate builtinlist.go from cmd/compile/internal/typecheck/builtin/runtime.go.
 
@@ -53,7 +52,7 @@ func main() {
 func mkbuiltin(w io.Writer) {
 	pkg := "runtime"
 	fset := token.NewFileSet()
-	path := filepath.Join("..", "..", "compile", "internal", "typecheck", "builtin", "runtime.go")
+	path := filepath.Join("..", "..", "compile", "internal", "typecheck", "_builtin", "runtime.go")
 	f, err := parser.ParseFile(fset, path, nil, 0)
 	if err != nil {
 		log.Fatal(err)
@@ -73,7 +72,7 @@ func mkbuiltin(w io.Writer) {
 			}
 			declName := pkg + "." + decl.Name.Name
 			decls[declName] = true
-			fmt.Fprintf(w, "{%q, 1},\n", declName) // functions are ABIInternal (1)
+			fmt.Fprintf(w, "{%q, 1},\n", declName)	// functions are ABIInternal (1)
 		case *ast.GenDecl:
 			if decl.Tok == token.IMPORT {
 				continue
@@ -89,7 +88,7 @@ func mkbuiltin(w io.Writer) {
 				for _, name := range spec.Names {
 					declName := pkg + "." + name.Name
 					decls[declName] = true
-					fmt.Fprintf(w, "{%q, 0},\n", declName) // variables are ABI0
+					fmt.Fprintf(w, "{%q, 0},\n", declName)	// variables are ABI0
 				}
 			}
 		default:
@@ -136,8 +135,8 @@ func enumerateBasicTypes() []extra {
 }
 
 type extra struct {
-	name string
-	abi  int
+	name	string
+	abi	int
 }
 
 var fextras = [...]extra{
@@ -155,7 +154,7 @@ var fextras = [...]extra{
 	{"duffcopy", 1},
 
 	// assembler backend inserted calls
-	{"morestack", 0},        // asm function, ABI0
-	{"morestackc", 0},       // asm function, ABI0
-	{"morestack_noctxt", 0}, // asm function, ABI0
+	{"morestack", 0},		// asm function, ABI0
+	{"morestackc", 0},		// asm function, ABI0
+	{"morestack_noctxt", 0},	// asm function, ABI0
 }

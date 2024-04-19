@@ -28,8 +28,8 @@ import (
 )
 
 var CmdClean = &base.Command{
-	UsageLine: "go clean [clean flags] [build flags] [packages]",
-	Short:     "remove object files and cached files",
+	UsageLine:	"go clean [clean flags] [build flags] [packages]",
+	Short:		"remove object files and cached files",
 	Long: `
 Clean removes object files from package source directories.
 The go command builds most objects in a temporary directory,
@@ -91,12 +91,12 @@ For more about specifying packages, see 'go help packages'.
 }
 
 var (
-	cleanI         bool // clean -i flag
-	cleanR         bool // clean -r flag
-	cleanCache     bool // clean -cache flag
-	cleanFuzzcache bool // clean -fuzzcache flag
-	cleanModcache  bool // clean -modcache flag
-	cleanTestcache bool // clean -testcache flag
+	cleanI		bool	// clean -i flag
+	cleanR		bool	// clean -r flag
+	cleanCache	bool	// clean -cache flag
+	cleanFuzzcache	bool	// clean -fuzzcache flag
+	cleanModcache	bool	// clean -modcache flag
+	cleanTestcache	bool	// clean -testcache flag
 )
 
 func init() {
@@ -150,8 +150,7 @@ func runClean(ctx context.Context, cmd *base.Command, args []string) {
 		}
 	}
 
-	var b work.Builder
-	b.Print = fmt.Print
+	sh := work.NewShell("", fmt.Print)
 
 	if cleanCache {
 		dir := cache.DefaultDir()
@@ -163,30 +162,16 @@ func runClean(ctx context.Context, cmd *base.Command, args []string) {
 			subdirs, _ := filepath.Glob(filepath.Join(str.QuoteGlob(dir), "[0-9a-f][0-9a-f]"))
 			printedErrors := false
 			if len(subdirs) > 0 {
-				if cfg.BuildN || cfg.BuildX {
-					b.Showcmd("", "rm -r %s", strings.Join(subdirs, " "))
-				}
-				if !cfg.BuildN {
-					for _, d := range subdirs {
-						// Only print the first error - there may be many.
-						// This also mimics what os.RemoveAll(dir) would do.
-						if err := os.RemoveAll(d); err != nil && !printedErrors {
-							printedErrors = true
-							base.Errorf("go: %v", err)
-						}
-					}
+				if err := sh.RemoveAll(subdirs...); err != nil && !printedErrors {
+					printedErrors = true
+					base.Error(err)
 				}
 			}
 
 			logFile := filepath.Join(dir, "log.txt")
-			if cfg.BuildN || cfg.BuildX {
-				b.Showcmd("", "rm -f %s", logFile)
-			}
-			if !cfg.BuildN {
-				if err := os.RemoveAll(logFile); err != nil && !printedErrors {
-					printedErrors = true
-					base.Errorf("go: %v", err)
-				}
+			if err := sh.RemoveAll(logFile); err != nil && !printedErrors {
+				printedErrors = true
+				base.Error(err)
 			}
 		}
 	}
@@ -215,7 +200,7 @@ func runClean(ctx context.Context, cmd *base.Command, args []string) {
 			}
 			if err != nil {
 				if _, statErr := os.Stat(dir); !os.IsNotExist(statErr) {
-					base.Errorf("go: %v", err)
+					base.Error(err)
 				}
 			}
 		}
@@ -226,24 +211,19 @@ func runClean(ctx context.Context, cmd *base.Command, args []string) {
 			base.Fatalf("go: cannot clean -modcache without a module cache")
 		}
 		if cfg.BuildN || cfg.BuildX {
-			b.Showcmd("", "rm -rf %s", cfg.GOMODCACHE)
+			sh.ShowCmd("", "rm -rf %s", cfg.GOMODCACHE)
 		}
 		if !cfg.BuildN {
 			if err := modfetch.RemoveAll(cfg.GOMODCACHE); err != nil {
-				base.Errorf("go: %v", err)
+				base.Error(err)
 			}
 		}
 	}
 
 	if cleanFuzzcache {
 		fuzzDir := cache.Default().FuzzDir()
-		if cfg.BuildN || cfg.BuildX {
-			b.Showcmd("", "rm -rf %s", fuzzDir)
-		}
-		if !cfg.BuildN {
-			if err := os.RemoveAll(fuzzDir); err != nil {
-				base.Errorf("go: %v", err)
-			}
+		if err := sh.RemoveAll(fuzzDir); err != nil {
+			base.Error(err)
 		}
 	}
 }
@@ -253,24 +233,24 @@ var cleaned = map[*load.Package]bool{}
 // TODO: These are dregs left by Makefile-based builds.
 // Eventually, can stop deleting these.
 var cleanDir = map[string]bool{
-	"_test": true,
-	"_obj":  true,
+	"_test":	true,
+	"_obj":		true,
 }
 
 var cleanFile = map[string]bool{
-	"_testmain.go": true,
-	"test.out":     true,
-	"build.out":    true,
-	"a.out":        true,
+	"_testmain.go":	true,
+	"test.out":	true,
+	"build.out":	true,
+	"a.out":	true,
 }
 
 var cleanExt = map[string]bool{
-	".5":  true,
-	".6":  true,
-	".8":  true,
-	".a":  true,
-	".o":  true,
-	".so": true,
+	".5":	true,
+	".6":	true,
+	".8":	true,
+	".a":	true,
+	".o":	true,
+	".so":	true,
 }
 
 func clean(p *load.Package) {
@@ -289,8 +269,7 @@ func clean(p *load.Package) {
 		return
 	}
 
-	var b work.Builder
-	b.Print = fmt.Print
+	sh := work.NewShell("", fmt.Print)
 
 	packageFile := map[string]bool{}
 	if p.Name != "main" {
@@ -353,7 +332,7 @@ func clean(p *load.Package) {
 	}
 
 	if cfg.BuildN || cfg.BuildX {
-		b.Showcmd(p.Dir, "rm -f %s", strings.Join(allRemove, " "))
+		sh.ShowCmd(p.Dir, "rm -f %s", strings.Join(allRemove, " "))
 	}
 
 	toRemove := map[string]bool{}
@@ -365,14 +344,8 @@ func clean(p *load.Package) {
 		if dir.IsDir() {
 			// TODO: Remove once Makefiles are forgotten.
 			if cleanDir[name] {
-				if cfg.BuildN || cfg.BuildX {
-					b.Showcmd(p.Dir, "rm -r %s", name)
-					if cfg.BuildN {
-						continue
-					}
-				}
-				if err := os.RemoveAll(filepath.Join(p.Dir, name)); err != nil {
-					base.Errorf("go: %v", err)
+				if err := sh.RemoveAll(filepath.Join(p.Dir, name)); err != nil {
+					base.Error(err)
 				}
 			}
 			continue
@@ -389,7 +362,7 @@ func clean(p *load.Package) {
 
 	if cleanI && p.Target != "" {
 		if cfg.BuildN || cfg.BuildX {
-			b.Showcmd("", "rm -f %s", p.Target)
+			sh.ShowCmd("", "rm -f %s", p.Target)
 		}
 		if !cfg.BuildN {
 			removeFile(p.Target)
@@ -424,5 +397,5 @@ func removeFile(f string) {
 			return
 		}
 	}
-	base.Errorf("go: %v", err)
+	base.Error(err)
 }

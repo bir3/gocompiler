@@ -97,8 +97,8 @@ func compactScopes(dwarfScopes []dwarf.Scope) []dwarf.Scope {
 }
 
 type varsByScopeAndOffset struct {
-	vars   []*dwarf.Var
-	scopes []ir.ScopeID
+	vars	[]*dwarf.Var
+	scopes	[]ir.ScopeID
 }
 
 func (v varsByScopeAndOffset) Len() int {
@@ -118,8 +118,8 @@ func (v varsByScopeAndOffset) Swap(i, j int) {
 }
 
 type varsByScope struct {
-	vars   []*dwarf.Var
-	scopes []ir.ScopeID
+	vars	[]*dwarf.Var
+	scopes	[]ir.ScopeID
 }
 
 func (v varsByScope) Len() int {

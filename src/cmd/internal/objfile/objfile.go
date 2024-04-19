@@ -26,29 +26,29 @@ type rawFile interface {
 
 // A File is an opened executable file.
 type File struct {
-	r       *os.File
-	entries []*Entry
+	r	*os.File
+	entries	[]*Entry
 }
 
 type Entry struct {
-	name string
-	raw  rawFile
+	name	string
+	raw	rawFile
 }
 
 // A Sym is a symbol defined in an executable file.
 type Sym struct {
-	Name   string  // symbol name
-	Addr   uint64  // virtual address of symbol
-	Size   int64   // size in bytes
-	Code   rune    // nm code (T for text, D for data, and so on)
-	Type   string  // XXX?
-	Relocs []Reloc // in increasing Addr order
+	Name	string	// symbol name
+	Addr	uint64	// virtual address of symbol
+	Size	int64	// size in bytes
+	Code	rune	// nm code (T for text, D for data, and so on)
+	Type	string	// XXX?
+	Relocs	[]Reloc	// in increasing Addr order
 }
 
 type Reloc struct {
-	Addr     uint64 // Address of first byte that reloc applies to.
-	Size     uint64 // Number of bytes
-	Stringer RelocStringer
+	Addr		uint64	// Address of first byte that reloc applies to.
+	Size		uint64	// Number of bytes
+	Stringer	RelocStringer
 }
 
 type RelocStringer interface {
@@ -137,9 +137,9 @@ func (e *Entry) Symbols() ([]Sym, error) {
 
 type byAddr []Sym
 
-func (x byAddr) Less(i, j int) bool { return x[i].Addr < x[j].Addr }
-func (x byAddr) Len() int           { return len(x) }
-func (x byAddr) Swap(i, j int)      { x[i], x[j] = x[j], x[i] }
+func (x byAddr) Less(i, j int) bool	{ return x[i].Addr < x[j].Addr }
+func (x byAddr) Len() int		{ return len(x) }
+func (x byAddr) Swap(i, j int)		{ x[i], x[j] = x[j], x[i] }
 
 func (e *Entry) PCLineTable() (Liner, error) {
 	// If the raw file implements Liner directly, use that.

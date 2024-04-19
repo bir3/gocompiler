@@ -2,46 +2,29 @@
 // Use of this source code is governed by a BSD-style
 // license that can be found in the LICENSE file.
 
-// Package stdmethods defines an Analyzer that checks for misspellings
-// in the signatures of methods similar to well-known interfaces.
 package stdmethods
 
 import (
+	_ "embed"
 	"github.com/bir3/gocompiler/src/go/ast"
 	"github.com/bir3/gocompiler/src/go/types"
 	"strings"
 
 	"github.com/bir3/gocompiler/src/xvendor/golang.org/x/tools/go/analysis"
 	"github.com/bir3/gocompiler/src/xvendor/golang.org/x/tools/go/analysis/passes/inspect"
+	"github.com/bir3/gocompiler/src/xvendor/golang.org/x/tools/go/analysis/passes/internal/analysisutil"
 	"github.com/bir3/gocompiler/src/xvendor/golang.org/x/tools/go/ast/inspector"
 )
 
-const Doc = `check signature of methods of well-known interfaces
-
-Sometimes a type may be intended to satisfy an interface but may fail to
-do so because of a mistake in its method signature.
-For example, the result of this WriteTo method should be (int64, error),
-not error, to satisfy io.WriterTo:
-
-	type myWriterTo struct{...}
-        func (myWriterTo) WriteTo(w io.Writer) error { ... }
-
-This check ensures that each method whose name matches one of several
-well-known interface methods from the standard library has the correct
-signature for that interface.
-
-Checked method names include:
-	Format GobEncode GobDecode MarshalJSON MarshalXML
-	Peek ReadByte ReadFrom ReadRune Scan Seek
-	UnmarshalJSON UnreadByte UnreadRune WriteByte
-	WriteTo
-`
+//go:embed doc.go
+var doc string
 
 var Analyzer = &analysis.Analyzer{
-	Name:     "stdmethods",
-	Doc:      Doc,
-	Requires: []*analysis.Analyzer{inspect.Analyzer},
-	Run:      run,
+	Name:		"stdmethods",
+	Doc:		analysisutil.MustExtractDoc(doc, "stdmethods"),
+	URL:		"https://pkg.go.dev/golang.org/x/tools/go/analysis/passes/stdmethods",
+	Requires:	[]*analysis.Analyzer{inspect.Analyzer},
+	Run:		run,
 }
 
 // canonicalMethods lists the input and output types for Go methods
@@ -61,26 +44,26 @@ var Analyzer = &analysis.Analyzer{
 // we let it go. But if it does have a fmt.ScanState, then the
 // rest has to match.
 var canonicalMethods = map[string]struct{ args, results []string }{
-	"As": {[]string{"any"}, []string{"bool"}}, // errors.As
+	"As":	{[]string{"any"}, []string{"bool"}},	// errors.As
 	// "Flush": {{}, {"error"}}, // http.Flusher and jpeg.writer conflict
-	"Format":        {[]string{"=fmt.State", "rune"}, []string{}},                      // fmt.Formatter
-	"GobDecode":     {[]string{"[]byte"}, []string{"error"}},                           // gob.GobDecoder
-	"GobEncode":     {[]string{}, []string{"[]byte", "error"}},                         // gob.GobEncoder
-	"Is":            {[]string{"error"}, []string{"bool"}},                             // errors.Is
-	"MarshalJSON":   {[]string{}, []string{"[]byte", "error"}},                         // json.Marshaler
-	"MarshalXML":    {[]string{"*xml.Encoder", "xml.StartElement"}, []string{"error"}}, // xml.Marshaler
-	"ReadByte":      {[]string{}, []string{"byte", "error"}},                           // io.ByteReader
-	"ReadFrom":      {[]string{"=io.Reader"}, []string{"int64", "error"}},              // io.ReaderFrom
-	"ReadRune":      {[]string{}, []string{"rune", "int", "error"}},                    // io.RuneReader
-	"Scan":          {[]string{"=fmt.ScanState", "rune"}, []string{"error"}},           // fmt.Scanner
-	"Seek":          {[]string{"=int64", "int"}, []string{"int64", "error"}},           // io.Seeker
-	"UnmarshalJSON": {[]string{"[]byte"}, []string{"error"}},                           // json.Unmarshaler
-	"UnmarshalXML":  {[]string{"*xml.Decoder", "xml.StartElement"}, []string{"error"}}, // xml.Unmarshaler
-	"UnreadByte":    {[]string{}, []string{"error"}},
-	"UnreadRune":    {[]string{}, []string{"error"}},
-	"Unwrap":        {[]string{}, []string{"error"}},                      // errors.Unwrap
-	"WriteByte":     {[]string{"byte"}, []string{"error"}},                // jpeg.writer (matching bufio.Writer)
-	"WriteTo":       {[]string{"=io.Writer"}, []string{"int64", "error"}}, // io.WriterTo
+	"Format":		{[]string{"=fmt.State", "rune"}, []string{}},				// fmt.Formatter
+	"GobDecode":		{[]string{"[]byte"}, []string{"error"}},				// gob.GobDecoder
+	"GobEncode":		{[]string{}, []string{"[]byte", "error"}},				// gob.GobEncoder
+	"Is":			{[]string{"error"}, []string{"bool"}},					// errors.Is
+	"MarshalJSON":		{[]string{}, []string{"[]byte", "error"}},				// json.Marshaler
+	"MarshalXML":		{[]string{"*xml.Encoder", "xml.StartElement"}, []string{"error"}},	// xml.Marshaler
+	"ReadByte":		{[]string{}, []string{"byte", "error"}},				// io.ByteReader
+	"ReadFrom":		{[]string{"=io.Reader"}, []string{"int64", "error"}},			// io.ReaderFrom
+	"ReadRune":		{[]string{}, []string{"rune", "int", "error"}},				// io.RuneReader
+	"Scan":			{[]string{"=fmt.ScanState", "rune"}, []string{"error"}},		// fmt.Scanner
+	"Seek":			{[]string{"=int64", "int"}, []string{"int64", "error"}},		// io.Seeker
+	"UnmarshalJSON":	{[]string{"[]byte"}, []string{"error"}},				// json.Unmarshaler
+	"UnmarshalXML":		{[]string{"*xml.Decoder", "xml.StartElement"}, []string{"error"}},	// xml.Unmarshaler
+	"UnreadByte":		{[]string{}, []string{"error"}},
+	"UnreadRune":		{[]string{}, []string{"error"}},
+	"Unwrap":		{[]string{}, []string{"error"}},			// errors.Unwrap
+	"WriteByte":		{[]string{"byte"}, []string{"error"}},			// jpeg.writer (matching bufio.Writer)
+	"WriteTo":		{[]string{"=io.Writer"}, []string{"int64", "error"}},	// io.WriterTo
 }
 
 func run(pass *analysis.Pass) (interface{}, error) {

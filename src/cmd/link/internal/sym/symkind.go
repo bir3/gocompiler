@@ -41,7 +41,7 @@ type SymKind uint8
 //
 //go:generate stringer -type=SymKind
 const (
-	Sxxx SymKind = iota
+	Sxxx	SymKind	= iota
 	STEXT
 	SELFRXSECT
 	SMACHOPLT
@@ -109,7 +109,7 @@ const (
 	SFILEPATH
 	SDYNIMPORT
 	SHOSTOBJ
-	SUNDEFEXT // Undefined symbol for resolution by external linker
+	SUNDEFEXT	// Undefined symbol for resolution by external linker
 
 	// Sections for debugging information
 	SDWARFSECT
@@ -123,31 +123,36 @@ const (
 	SDWARFRANGE
 	SDWARFLOC
 	SDWARFLINES
+
+	// SEH symbol types
+	SSEHUNWINDINFO
+	SSEHSECT
 )
 
 // AbiSymKindToSymKind maps values read from object files (which are
 // of type cmd/internal/objabi.SymKind) to values of type SymKind.
 var AbiSymKindToSymKind = [...]SymKind{
-	objabi.Sxxx:                    Sxxx,
-	objabi.STEXT:                   STEXT,
-	objabi.SRODATA:                 SRODATA,
-	objabi.SNOPTRDATA:              SNOPTRDATA,
-	objabi.SDATA:                   SDATA,
-	objabi.SBSS:                    SBSS,
-	objabi.SNOPTRBSS:               SNOPTRBSS,
-	objabi.STLSBSS:                 STLSBSS,
-	objabi.SDWARFCUINFO:            SDWARFCUINFO,
-	objabi.SDWARFCONST:             SDWARFCONST,
-	objabi.SDWARFFCN:               SDWARFFCN,
-	objabi.SDWARFABSFCN:            SDWARFABSFCN,
-	objabi.SDWARFTYPE:              SDWARFTYPE,
-	objabi.SDWARFVAR:               SDWARFVAR,
-	objabi.SDWARFRANGE:             SDWARFRANGE,
-	objabi.SDWARFLOC:               SDWARFLOC,
-	objabi.SDWARFLINES:             SDWARFLINES,
-	objabi.SLIBFUZZER_8BIT_COUNTER: SLIBFUZZER_8BIT_COUNTER,
-	objabi.SCOVERAGE_COUNTER:       SCOVERAGE_COUNTER,
-	objabi.SCOVERAGE_AUXVAR:        SCOVERAGE_AUXVAR,
+	objabi.Sxxx:			Sxxx,
+	objabi.STEXT:			STEXT,
+	objabi.SRODATA:			SRODATA,
+	objabi.SNOPTRDATA:		SNOPTRDATA,
+	objabi.SDATA:			SDATA,
+	objabi.SBSS:			SBSS,
+	objabi.SNOPTRBSS:		SNOPTRBSS,
+	objabi.STLSBSS:			STLSBSS,
+	objabi.SDWARFCUINFO:		SDWARFCUINFO,
+	objabi.SDWARFCONST:		SDWARFCONST,
+	objabi.SDWARFFCN:		SDWARFFCN,
+	objabi.SDWARFABSFCN:		SDWARFABSFCN,
+	objabi.SDWARFTYPE:		SDWARFTYPE,
+	objabi.SDWARFVAR:		SDWARFVAR,
+	objabi.SDWARFRANGE:		SDWARFRANGE,
+	objabi.SDWARFLOC:		SDWARFLOC,
+	objabi.SDWARFLINES:		SDWARFLINES,
+	objabi.SLIBFUZZER_8BIT_COUNTER:	SLIBFUZZER_8BIT_COUNTER,
+	objabi.SCOVERAGE_COUNTER:	SCOVERAGE_COUNTER,
+	objabi.SCOVERAGE_AUXVAR:	SCOVERAGE_AUXVAR,
+	objabi.SSEHUNWINDINFO:		SSEHUNWINDINFO,
 }
 
 // ReadOnly are the symbol kinds that form read-only sections. In some
@@ -166,16 +171,20 @@ var ReadOnly = []SymKind{
 // RelROMap describes the transformation of read-only symbols to rel-ro
 // symbols.
 var RelROMap = map[SymKind]SymKind{
-	STYPE:     STYPERELRO,
-	SSTRING:   SSTRINGRELRO,
-	SGOSTRING: SGOSTRINGRELRO,
-	SGOFUNC:   SGOFUNCRELRO,
-	SGCBITS:   SGCBITSRELRO,
-	SRODATA:   SRODATARELRO,
-	SFUNCTAB:  SFUNCTABRELRO,
+	STYPE:		STYPERELRO,
+	SSTRING:	SSTRINGRELRO,
+	SGOSTRING:	SGOSTRINGRELRO,
+	SGOFUNC:	SGOFUNCRELRO,
+	SGCBITS:	SGCBITSRELRO,
+	SRODATA:	SRODATARELRO,
+	SFUNCTAB:	SFUNCTABRELRO,
 }
 
 // IsData returns true if the type is a data type.
 func (t SymKind) IsData() bool {
 	return t == SDATA || t == SNOPTRDATA || t == SBSS || t == SNOPTRBSS
+}
+
+func (t SymKind) IsDWARF() bool {
+	return t >= SDWARFSECT && t <= SDWARFLINES
 }

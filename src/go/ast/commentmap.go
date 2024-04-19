@@ -14,9 +14,9 @@ import (
 
 type byPos []*CommentGroup
 
-func (a byPos) Len() int           { return len(a) }
-func (a byPos) Less(i, j int) bool { return a[i].Pos() < a[j].Pos() }
-func (a byPos) Swap(i, j int)      { a[i], a[j] = a[j], a[i] }
+func (a byPos) Len() int		{ return len(a) }
+func (a byPos) Less(i, j int) bool	{ return a[i].Pos() < a[j].Pos() }
+func (a byPos) Swap(i, j int)		{ a[i], a[j] = a[j], a[i] }
 
 // sortComments sorts the list of comment groups in source order.
 func sortComments(list []*CommentGroup) {
@@ -29,7 +29,7 @@ func sortComments(list []*CommentGroup) {
 }
 
 // A CommentMap maps an AST node to a list of comment groups
-// associated with it. See NewCommentMap for a description of
+// associated with it. See [NewCommentMap] for a description of
 // the association.
 type CommentMap map[Node][]*CommentGroup
 
@@ -45,12 +45,12 @@ func (cmap CommentMap) addComment(n Node, c *CommentGroup) {
 
 type byInterval []Node
 
-func (a byInterval) Len() int { return len(a) }
+func (a byInterval) Len() int	{ return len(a) }
 func (a byInterval) Less(i, j int) bool {
 	pi, pj := a[i].Pos(), a[j].Pos()
 	return pi < pj || pi == pj && a[i].End() > a[j].End()
 }
-func (a byInterval) Swap(i, j int) { a[i], a[j] = a[j], a[i] }
+func (a byInterval) Swap(i, j int)	{ a[i], a[j] = a[j], a[i] }
 
 // nodeList returns the list of nodes of the AST n in source order.
 func nodeList(n Node) []Node {
@@ -74,11 +74,11 @@ func nodeList(n Node) []Node {
 
 // A commentListReader helps iterating through a list of comment groups.
 type commentListReader struct {
-	fset     *token.FileSet
-	list     []*CommentGroup
-	index    int
-	comment  *CommentGroup  // comment group at current index
-	pos, end token.Position // source interval of comment group at current index
+	fset		*token.FileSet
+	list		[]*CommentGroup
+	index		int
+	comment		*CommentGroup	// comment group at current index
+	pos, end	token.Position	// source interval of comment group at current index
 }
 
 func (r *commentListReader) eol() bool {
@@ -135,35 +135,35 @@ func (s *nodeStack) pop(pos token.Pos) (top Node) {
 // assignment rather than just the last operand in the assignment.
 func NewCommentMap(fset *token.FileSet, node Node, comments []*CommentGroup) CommentMap {
 	if len(comments) == 0 {
-		return nil // no comments to map
+		return nil	// no comments to map
 	}
 
 	cmap := make(CommentMap)
 
 	// set up comment reader r
 	tmp := make([]*CommentGroup, len(comments))
-	copy(tmp, comments) // don't change incoming comments
+	copy(tmp, comments)	// don't change incoming comments
 	sortComments(tmp)
-	r := commentListReader{fset: fset, list: tmp} // !r.eol() because len(comments) > 0
+	r := commentListReader{fset: fset, list: tmp}	// !r.eol() because len(comments) > 0
 	r.next()
 
 	// create node list in lexical order
 	nodes := nodeList(node)
-	nodes = append(nodes, nil) // append sentinel
+	nodes = append(nodes, nil)	// append sentinel
 
 	// set up iteration variables
 	var (
-		p     Node           // previous node
-		pend  token.Position // end of p
-		pg    Node           // previous node group (enclosing nodes of "importance")
-		pgend token.Position // end of pg
-		stack nodeStack      // stack of node groups
+		p	Node		// previous node
+		pend	token.Position	// end of p
+		pg	Node		// previous node group (enclosing nodes of "importance")
+		pgend	token.Position	// end of pg
+		stack	nodeStack	// stack of node groups
 	)
 
 	for _, q := range nodes {
 		var qpos token.Position
 		if q != nil {
-			qpos = fset.Position(q.Pos()) // current node position
+			qpos = fset.Position(q.Pos())	// current node position
 		} else {
 			// set fake sentinel position to infinity so that
 			// all comments get processed before the sentinel

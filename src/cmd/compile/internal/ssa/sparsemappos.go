@@ -10,14 +10,14 @@ import "github.com/bir3/gocompiler/src/cmd/internal/src"
 // in turn, from Briggs and Torczon
 
 type sparseEntryPos struct {
-	key ID
-	val int32
-	pos src.XPos
+	key	ID
+	val	int32
+	pos	src.XPos
 }
 
 type sparseMapPos struct {
-	dense  []sparseEntryPos
-	sparse []int32
+	dense	[]sparseEntryPos
+	sparse	[]int32
 }
 
 // newSparseMapPos returns a sparseMapPos that can map

@@ -11,8 +11,6 @@ import (
 	"github.com/bir3/gocompiler/src/go/ast"
 	"github.com/bir3/gocompiler/src/go/token"
 	"sort"
-
-	"github.com/bir3/gocompiler/src/xvendor/golang.org/x/tools/internal/typeparams"
 )
 
 // PathEnclosingInterval returns the node that encloses the source
@@ -92,15 +90,15 @@ func PathEnclosingInterval(root *ast.File, start, end token.Pos) (path []ast.Nod
 			augPos := childPos
 			augEnd := childEnd
 			if i > 0 {
-				augPos = children[i-1].End() // start of preceding whitespace
+				augPos = children[i-1].End()	// start of preceding whitespace
 			}
 			if i < l-1 {
 				nextChildPos := children[i+1].Pos()
 				// Does [start, end) lie between child and next child?
 				if start >= augEnd && end <= nextChildPos {
-					return false // inexact match
+					return false	// inexact match
 				}
-				augEnd = nextChildPos // end of following whitespace
+				augEnd = nextChildPos	// end of following whitespace
 			}
 
 			// fmt.Printf("\tchild %d: [%d..%d)\tcontains interval [%d..%d)?\n",
@@ -128,10 +126,10 @@ func PathEnclosingInterval(root *ast.File, start, end token.Pos) (path []ast.Nod
 		// case where a node (e.g. ExprStmt) and its sole
 		// child have equal intervals.)
 		if start == nodePos && end == nodeEnd {
-			return true // exact match
+			return true	// exact match
 		}
 
-		return false // inexact: overlaps multiple children
+		return false	// inexact: overlaps multiple children
 	}
 
 	// Ensure [start,end) is nondecreasing.
@@ -141,7 +139,7 @@ func PathEnclosingInterval(root *ast.File, start, end token.Pos) (path []ast.Nod
 
 	if start < root.End() && end > root.Pos() {
 		if start == end {
-			end = start + 1 // empty interval => interval of size 1
+			end = start + 1	// empty interval => interval of size 1
 		}
 		exact = visit(root)
 
@@ -163,8 +161,8 @@ func PathEnclosingInterval(root *ast.File, start, end token.Pos) (path []ast.Nod
 // They are used transiently by PathEnclosingInterval but never escape
 // this package.
 type tokenNode struct {
-	pos token.Pos
-	end token.Pos
+	pos	token.Pos
+	end	token.Pos
 }
 
 func (n tokenNode) Pos() token.Pos {
@@ -187,13 +185,13 @@ func childrenOf(n ast.Node) []ast.Node {
 
 	// First add nodes for all true subtrees.
 	ast.Inspect(n, func(node ast.Node) bool {
-		if node == n { // push n
-			return true // recur
+		if node == n {	// push n
+			return true	// recur
 		}
-		if node != nil { // push child
+		if node != nil {	// push child
 			children = append(children, node)
 		}
-		return false // no recursion
+		return false	// no recursion
 	})
 
 	// Then add fake Nodes for bare tokens.
@@ -294,8 +292,8 @@ func childrenOf(n ast.Node) []ast.Node {
 
 	case *ast.FieldList:
 		children = append(children,
-			tok(n.Opening, len("(")), // or len("[")
-			tok(n.Closing, len(")"))) // or len("]")
+			tok(n.Opening, len("(")),	// or len("[")
+			tok(n.Closing, len(")")))	// or len("]")
 
 	case *ast.File:
 		// TODO test: Doc
@@ -316,13 +314,13 @@ func childrenOf(n ast.Node) []ast.Node {
 		// As a workaround, we inline the case for FuncType
 		// here and order things correctly.
 		//
-		children = nil // discard ast.Walk(FuncDecl) info subtrees
+		children = nil	// discard ast.Walk(FuncDecl) info subtrees
 		children = append(children, tok(n.Type.Func, len("func")))
 		if n.Recv != nil {
 			children = append(children, n.Recv)
 		}
 		children = append(children, n.Name)
-		if tparams := typeparams.ForFuncType(n.Type); tparams != nil {
+		if tparams := n.Type.TypeParams; tparams != nil {
 			children = append(children, tparams)
 		}
 		if n.Type.Params != nil {
@@ -377,7 +375,7 @@ func childrenOf(n ast.Node) []ast.Node {
 			tok(n.Lbrack, len("[")),
 			tok(n.Rbrack, len("]")))
 
-	case *typeparams.IndexListExpr:
+	case *ast.IndexListExpr:
 		children = append(children,
 			tok(n.Lbrack, len("[")),
 			tok(n.Rbrack, len("]")))
@@ -588,7 +586,7 @@ func NodeDescription(n ast.Node) string {
 		return "decrement statement"
 	case *ast.IndexExpr:
 		return "index expression"
-	case *typeparams.IndexListExpr:
+	case *ast.IndexListExpr:
 		return "index list expression"
 	case *ast.InterfaceType:
 		return "interface type"
@@ -615,7 +613,7 @@ func NodeDescription(n ast.Node) string {
 	case *ast.SliceExpr:
 		return "slice expression"
 	case *ast.StarExpr:
-		return "*-operation" // load/store expr or pointer type
+		return "*-operation"	// load/store expr or pointer type
 	case *ast.StructType:
 		return "struct type"
 	case *ast.SwitchStmt:

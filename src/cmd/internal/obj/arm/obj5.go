@@ -34,6 +34,7 @@ import (
 	"github.com/bir3/gocompiler/src/cmd/internal/obj"
 	"github.com/bir3/gocompiler/src/cmd/internal/objabi"
 	"github.com/bir3/gocompiler/src/cmd/internal/sys"
+	"github.com/bir3/gocompiler/src/internal/abi"
 	"github.com/bir3/gocompiler/src/internal/buildcfg"
 	"log"
 )
@@ -65,7 +66,7 @@ func progedit(ctxt *obj.Link, p *obj.Prog, newprog obj.ProgAlloc) {
 				ctxt.Diag("%v: TLS MRC instruction must write to R0 as it might get translated into a BL instruction", p.Line())
 			}
 
-			if buildcfg.GOARM < 7 {
+			if buildcfg.GOARM.Version < 7 {
 				// Replace it with BL runtime.read_tls_fallback(SB) for ARM CPUs that lack the tls extension.
 				if progedit_tlsfallback == nil {
 					progedit_tlsfallback = ctxt.Lookup("runtime.read_tls_fallback")
@@ -243,9 +244,9 @@ func (c *ctxt5) rewriteToUseGot(p *obj.Prog) {
 
 // Prog.mark
 const (
-	FOLL  = 1 << 0
-	LABEL = 1 << 1
-	LEAF  = 1 << 2
+	FOLL	= 1 << 0
+	LABEL	= 1 << 1
+	LEAF	= 1 << 2
 )
 
 func preprocess(ctxt *obj.Link, cursym *obj.LSym, newprog obj.ProgAlloc) {
@@ -334,7 +335,7 @@ func preprocess(ctxt *obj.Link, cursym *obj.LSym, newprog obj.ProgAlloc) {
 			}
 
 			if !p.From.Sym.NoSplit() {
-				p = c.stacksplit(p, autosize) // emit split check
+				p = c.stacksplit(p, autosize)	// emit split check
 			}
 
 			// MOVW.W		R14,$-autosize(SP)
@@ -374,7 +375,7 @@ func preprocess(ctxt *obj.Link, cursym *obj.LSym, newprog obj.ProgAlloc) {
 				p.As = AMOVW
 				p.From.Type = obj.TYPE_MEM
 				p.From.Reg = REGG
-				p.From.Offset = 4 * int64(ctxt.Arch.PtrSize) // G.panic
+				p.From.Offset = 4 * int64(ctxt.Arch.PtrSize)	// G.panic
 				p.To.Type = obj.TYPE_REG
 				p.To.Reg = REG_R1
 
@@ -403,7 +404,7 @@ func preprocess(ctxt *obj.Link, cursym *obj.LSym, newprog obj.ProgAlloc) {
 				mov.As = AMOVW
 				mov.From.Type = obj.TYPE_MEM
 				mov.From.Reg = REG_R1
-				mov.From.Offset = 0 // Panic.argp
+				mov.From.Offset = 0	// Panic.argp
 				mov.To.Type = obj.TYPE_REG
 				mov.To.Reg = REG_R2
 
@@ -448,7 +449,7 @@ func preprocess(ctxt *obj.Link, cursym *obj.LSym, newprog obj.ProgAlloc) {
 				p.From.Reg = REG_R4
 				p.To.Type = obj.TYPE_MEM
 				p.To.Reg = REG_R1
-				p.To.Offset = 0 // Panic.argp
+				p.To.Offset = 0	// Panic.argp
 
 				// B end
 				p = obj.Appendp(p, newprog)
@@ -466,7 +467,7 @@ func preprocess(ctxt *obj.Link, cursym *obj.LSym, newprog obj.ProgAlloc) {
 				if autosize == 0 {
 					p.As = AB
 					p.From = obj.Addr{}
-					if p.To.Sym != nil { // retjmp
+					if p.To.Sym != nil {	// retjmp
 						p.To.Type = obj.TYPE_BRANCH
 					} else {
 						p.To.Type = obj.TYPE_MEM
@@ -490,7 +491,7 @@ func preprocess(ctxt *obj.Link, cursym *obj.LSym, newprog obj.ProgAlloc) {
 			// this ARET, they come from a branch
 			// with the same stackframe, so no spadj.
 
-			if p.To.Sym != nil { // retjmp
+			if p.To.Sym != nil {	// retjmp
 				p.To.Reg = REGLINK
 				q2 = obj.Appendp(p, newprog)
 				q2.As = AB
@@ -537,7 +538,7 @@ func preprocess(ctxt *obj.Link, cursym *obj.LSym, newprog obj.ProgAlloc) {
 			p.Pos = q1.Pos
 			p.From.Type = obj.TYPE_MEM
 			p.From.Reg = REGG
-			p.From.Offset = 6 * 4 // offset of g.m
+			p.From.Offset = 6 * 4	// offset of g.m
 			p.Reg = 0
 			p.To.Type = obj.TYPE_REG
 			p.To.Reg = REGTMP
@@ -550,7 +551,7 @@ func preprocess(ctxt *obj.Link, cursym *obj.LSym, newprog obj.ProgAlloc) {
 			p.From.Reg = q1.From.Reg
 			p.To.Type = obj.TYPE_MEM
 			p.To.Reg = REGTMP
-			p.To.Offset = 8 * 4 // offset of m.divmod
+			p.To.Offset = 8 * 4	// offset of m.divmod
 
 			/* MOV b, R8 */
 			p = obj.Appendp(p, newprog)
@@ -618,8 +619,8 @@ func preprocess(ctxt *obj.Link, cursym *obj.LSym, newprog obj.ProgAlloc) {
 
 		if p.To.Type == obj.TYPE_REG && p.To.Reg == REGSP && p.Spadj == 0 {
 			f := c.cursym.Func()
-			if f.FuncFlag&objabi.FuncFlag_SPWRITE == 0 {
-				c.cursym.Func().FuncFlag |= objabi.FuncFlag_SPWRITE
+			if f.FuncFlag&abi.FuncFlagSPWrite == 0 {
+				c.cursym.Func().FuncFlag |= abi.FuncFlagSPWrite
 				if ctxt.Debugvlog || !ctxt.IsAsm {
 					ctxt.Logf("auto-SPWRITE: %s %v\n", c.cursym.Name, p)
 					if !ctxt.IsAsm {
@@ -695,9 +696,9 @@ func (c *ctxt5) stacksplit(p *obj.Prog, framesize int32) *obj.Prog {
 	p.As = AMOVW
 	p.From.Type = obj.TYPE_MEM
 	p.From.Reg = REGG
-	p.From.Offset = 2 * int64(c.ctxt.Arch.PtrSize) // G.stackguard0
+	p.From.Offset = 2 * int64(c.ctxt.Arch.PtrSize)	// G.stackguard0
 	if c.cursym.CFunc() {
-		p.From.Offset = 3 * int64(c.ctxt.Arch.PtrSize) // G.stackguard1
+		p.From.Offset = 3 * int64(c.ctxt.Arch.PtrSize)	// G.stackguard1
 	}
 	p.To.Type = obj.TYPE_REG
 	p.To.Reg = REG_R1
@@ -708,7 +709,7 @@ func (c *ctxt5) stacksplit(p *obj.Prog, framesize int32) *obj.Prog {
 	// unnecessarily. See issue #35470.
 	p = c.ctxt.StartUnsafePoint(p, c.newprog)
 
-	if framesize <= objabi.StackSmall {
+	if framesize <= abi.StackSmall {
 		// small stack: SP < stackguard
 		//	CMP	stackguard, SP
 		p = obj.Appendp(p, c.newprog)
@@ -717,7 +718,7 @@ func (c *ctxt5) stacksplit(p *obj.Prog, framesize int32) *obj.Prog {
 		p.From.Type = obj.TYPE_REG
 		p.From.Reg = REG_R1
 		p.Reg = REGSP
-	} else if framesize <= objabi.StackBig {
+	} else if framesize <= abi.StackBig {
 		// large stack: SP-framesize < stackguard-StackSmall
 		//	MOVW $-(framesize-StackSmall)(SP), R2
 		//	CMP stackguard, R2
@@ -726,7 +727,7 @@ func (c *ctxt5) stacksplit(p *obj.Prog, framesize int32) *obj.Prog {
 		p.As = AMOVW
 		p.From.Type = obj.TYPE_ADDR
 		p.From.Reg = REGSP
-		p.From.Offset = -(int64(framesize) - objabi.StackSmall)
+		p.From.Offset = -(int64(framesize) - abi.StackSmall)
 		p.To.Type = obj.TYPE_REG
 		p.To.Reg = REG_R2
 
@@ -753,7 +754,7 @@ func (c *ctxt5) stacksplit(p *obj.Prog, framesize int32) *obj.Prog {
 		p.As = ASUB
 		p.Scond = C_SBIT
 		p.From.Type = obj.TYPE_CONST
-		p.From.Offset = int64(framesize) - objabi.StackSmall
+		p.From.Offset = int64(framesize) - abi.StackSmall
 		p.Reg = REGSP
 		p.To.Type = obj.TYPE_REG
 		p.To.Reg = REG_R2
@@ -823,16 +824,16 @@ func (c *ctxt5) stacksplit(p *obj.Prog, framesize int32) *obj.Prog {
 }
 
 var unaryDst = map[obj.As]bool{
-	ASWI:  true,
-	AWORD: true,
+	ASWI:	true,
+	AWORD:	true,
 }
 
 var Linkarm = obj.LinkArch{
-	Arch:           sys.ArchARM,
-	Init:           buildop,
-	Preprocess:     preprocess,
-	Assemble:       span5,
-	Progedit:       progedit,
-	UnaryDst:       unaryDst,
-	DWARFRegisters: ARMDWARFRegisters,
+	Arch:		sys.ArchARM,
+	Init:		buildop,
+	Preprocess:	preprocess,
+	Assemble:	span5,
+	Progedit:	progedit,
+	UnaryDst:	unaryDst,
+	DWARFRegisters:	ARMDWARFRegisters,
 }

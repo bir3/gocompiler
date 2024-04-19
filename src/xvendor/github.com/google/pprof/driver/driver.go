@@ -49,14 +49,14 @@ func (o *Options) internalOptions() *plugin.Options {
 		}
 	}
 	return &plugin.Options{
-		Writer:        o.Writer,
-		Flagset:       o.Flagset,
-		Fetch:         o.Fetch,
-		Sym:           sym,
-		Obj:           obj,
-		UI:            o.UI,
-		HTTPServer:    httpServer,
-		HTTPTransport: o.HTTPTransport,
+		Writer:		o.Writer,
+		Flagset:	o.Flagset,
+		Fetch:		o.Fetch,
+		Sym:		sym,
+		Obj:		obj,
+		UI:		o.UI,
+		HTTPServer:	httpServer,
+		HTTPTransport:	o.HTTPTransport,
 	}
 }
 
@@ -66,14 +66,14 @@ type HTTPServerArgs plugin.HTTPServerArgs
 
 // Options groups all the optional plugins into pprof.
 type Options struct {
-	Writer        Writer
-	Flagset       FlagSet
-	Fetch         Fetcher
-	Sym           Symbolizer
-	Obj           ObjTool
-	UI            UI
-	HTTPServer    func(*HTTPServerArgs) error
-	HTTPTransport http.RoundTripper
+	Writer		Writer
+	Flagset		FlagSet
+	Fetch		Fetcher
+	Sym		Symbolizer
+	Obj		ObjTool
+	UI		UI
+	HTTPServer	func(*HTTPServerArgs) error
+	HTTPTransport	http.RoundTripper
 }
 
 // Writer provides a mechanism to write data under a certain name,
@@ -129,8 +129,8 @@ type Symbolizer interface {
 // MappingSources map each profile.Mapping to the source of the profile.
 // The key is either Mapping.File or Mapping.BuildId.
 type MappingSources map[string][]struct {
-	Source string // URL of the source the mapping was collected from
-	Start  uint64 // delta applied to addresses from this source (to represent Merge adjustments)
+	Source	string	// URL of the source the mapping was collected from
+	Start	uint64	// delta applied to addresses from this source (to represent Merge adjustments)
 }
 
 // An ObjTool inspects shared libraries and executable files.
@@ -149,11 +149,11 @@ type ObjTool interface {
 
 // An Inst is a single instruction in an assembly listing.
 type Inst struct {
-	Addr     uint64 // virtual address of instruction
-	Text     string // instruction text
-	Function string // function name
-	File     string // source file
-	Line     int    // source line
+	Addr		uint64	// virtual address of instruction
+	Text		string	// instruction text
+	Function	string	// function name
+	File		string	// source file
+	Line		int	// source line
 }
 
 // An ObjFile is a single object file: a shared library or executable.
@@ -186,17 +186,17 @@ type ObjFile interface {
 
 // A Frame describes a single line in a source file.
 type Frame struct {
-	Func string // name of function
-	File string // source file name
-	Line int    // line in file
+	Func	string	// name of function
+	File	string	// source file name
+	Line	int	// line in file
 }
 
 // A Sym describes a single symbol in an object file.
 type Sym struct {
-	Name  []string // names of symbol (many if symbol was dedup'ed)
-	File  string   // object file containing symbol
-	Start uint64   // start virtual address
-	End   uint64   // virtual address of last byte in sym (Start+size-1)
+	Name	[]string	// names of symbol (many if symbol was dedup'ed)
+	File	string		// object file containing symbol
+	Start	uint64		// start virtual address
+	End	uint64		// virtual address of last byte in sym (Start+size-1)
 }
 
 // A UI manages user interactions.

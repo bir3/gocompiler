@@ -49,14 +49,14 @@ func FDumpAny(w io.Writer, root interface{}, filter string, depth int) {
 	}
 
 	if filter == "" {
-		filter = ".*" // default
+		filter = ".*"	// default
 	}
 
 	p := dumper{
-		output:  w,
-		fieldrx: regexp.MustCompile(filter),
-		ptrmap:  make(map[uintptr]int),
-		last:    '\n', // force printing of line number on first line
+		output:		w,
+		fieldrx:	regexp.MustCompile(filter),
+		ptrmap:		make(map[uintptr]int),
+		last:		'\n',	// force printing of line number on first line
 	}
 
 	p.dump(reflect.ValueOf(root), depth)
@@ -64,15 +64,15 @@ func FDumpAny(w io.Writer, root interface{}, filter string, depth int) {
 }
 
 type dumper struct {
-	output  io.Writer
-	fieldrx *regexp.Regexp  // field name filter
-	ptrmap  map[uintptr]int // ptr -> dump line number
-	lastadr string          // last address string printed (for shortening)
+	output	io.Writer
+	fieldrx	*regexp.Regexp	// field name filter
+	ptrmap	map[uintptr]int	// ptr -> dump line number
+	lastadr	string		// last address string printed (for shortening)
 
 	// output
-	indent int  // current indentation level
-	last   byte // last byte processed by Write
-	line   int  // current line number
+	indent	int	// current indentation level
+	last	byte	// last byte processed by Write
+	line	int	// current line number
 }
 
 var indentBytes = []byte(".  ")
@@ -147,7 +147,7 @@ func (p *dumper) dump(x reflect.Value, depth int) {
 
 	switch x.Kind() {
 	case reflect.String:
-		p.printf("%q", x.Interface()) // print strings in quotes
+		p.printf("%q", x.Interface())	// print strings in quotes
 
 	case reflect.Interface:
 		if x.IsNil() {
@@ -169,7 +169,7 @@ func (p *dumper) dump(x reflect.Value, depth int) {
 			return
 		}
 		p.ptrmap[ptr] = p.line
-		p.dump(x.Elem(), depth) // don't count pointer indirection towards depth
+		p.dump(x.Elem(), depth)	// don't count pointer indirection towards depth
 
 	case reflect.Slice:
 		if x.IsNil() {
@@ -209,22 +209,22 @@ func (p *dumper) dump(x reflect.Value, depth int) {
 			if name := typ.Field(i).Name; types.IsExported(name) {
 				if !p.fieldrx.MatchString(name) {
 					omitted = true
-					continue // field name not selected by filter
+					continue	// field name not selected by filter
 				}
 
 				// special cases
 				if isNode && name == "Op" {
 					omitted = true
-					continue // Op field already printed for Nodes
+					continue	// Op field already printed for Nodes
 				}
 				x := x.Field(i)
-				if isZeroVal(x) {
+				if x.IsZero() {
 					omitted = true
-					continue // exclude zero-valued fields
+					continue	// exclude zero-valued fields
 				}
 				if n, ok := x.Interface().(Nodes); ok && len(n) == 0 {
 					omitted = true
-					continue // exclude empty Nodes slices
+					continue	// exclude empty Nodes slices
 				}
 
 				if first {
@@ -246,22 +246,6 @@ func (p *dumper) dump(x reflect.Value, depth int) {
 	default:
 		p.printf("%v", x.Interface())
 	}
-}
-
-func isZeroVal(x reflect.Value) bool {
-	switch x.Kind() {
-	case reflect.Bool:
-		return !x.Bool()
-	case reflect.Int, reflect.Int8, reflect.Int16, reflect.Int32, reflect.Int64:
-		return x.Int() == 0
-	case reflect.Uint, reflect.Uint8, reflect.Uint16, reflect.Uint32, reflect.Uint64, reflect.Uintptr:
-		return x.Uint() == 0
-	case reflect.String:
-		return x.String() == ""
-	case reflect.Interface, reflect.Ptr, reflect.Slice:
-		return x.IsNil()
-	}
-	return false
 }
 
 func commonPrefixLen(a, b string) (i int) {

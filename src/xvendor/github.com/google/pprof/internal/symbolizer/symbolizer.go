@@ -34,9 +34,9 @@ import (
 
 // Symbolizer implements the plugin.Symbolize interface.
 type Symbolizer struct {
-	Obj       plugin.ObjTool
-	UI        plugin.UI
-	Transport http.RoundTripper
+	Obj		plugin.ObjTool
+	UI		plugin.UI
+	Transport	http.RoundTripper
 }
 
 // test taps for dependency injection
@@ -89,7 +89,7 @@ func (s *Symbolizer) Symbolize(mode string, sources plugin.MappingSources, p *pr
 			return postURL(source, post, s.Transport)
 		}
 		if err = symbolzSymbolize(p, force, sources, post, s.UI); err != nil {
-			return err // Ran out of options.
+			return err	// Ran out of options.
 		}
 	}
 
@@ -167,9 +167,9 @@ func doLocalSymbolize(prof *profile.Profile, fast, force bool, obj plugin.ObjToo
 				m.HasLineNumbers = true
 			}
 			f := &profile.Function{
-				Name:       frame.Func,
-				SystemName: frame.Func,
-				Filename:   frame.File,
+				Name:		frame.Func,
+				SystemName:	frame.Func,
+				Filename:	frame.File,
 			}
 			if fp := functions[*f]; fp != nil {
 				f = fp
@@ -179,8 +179,8 @@ func doLocalSymbolize(prof *profile.Profile, fast, force bool, obj plugin.ObjToo
 				mt.prof.Function = append(mt.prof.Function, f)
 			}
 			l.Line[i] = profile.Line{
-				Function: f,
-				Line:     int64(frame.Line),
+				Function:	f,
+				Line:		int64(frame.Line),
 			}
 		}
 
@@ -213,13 +213,13 @@ func Demangle(prof *profile.Profile, force bool, demanglerMode string) {
 
 func demanglerModeToOptions(demanglerMode string) []demangle.Option {
 	switch demanglerMode {
-	case "": // demangled, simplified: no parameters, no templates, no return type
-		return []demangle.Option{demangle.NoParams, demangle.NoTemplateParams}
-	case "templates": // demangled, simplified: no parameters, no return type
-		return []demangle.Option{demangle.NoParams}
+	case "":	// demangled, simplified: no parameters, no templates, no return type
+		return []demangle.Option{demangle.NoParams, demangle.NoEnclosingParams, demangle.NoTemplateParams}
+	case "templates":	// demangled, simplified: no parameters, no return type
+		return []demangle.Option{demangle.NoParams, demangle.NoEnclosingParams}
 	case "full":
 		return []demangle.Option{demangle.NoClones}
-	case "none": // no demangling
+	case "none":	// no demangling
 		return []demangle.Option{}
 	}
 
@@ -228,7 +228,7 @@ func demanglerModeToOptions(demanglerMode string) []demangle.Option {
 
 func demangleSingleFunction(fn *profile.Function, options []demangle.Option) {
 	if fn.Name != "" && fn.SystemName != fn.Name {
-		return // Already demangled.
+		return	// Already demangled.
 	}
 	// Copy the options because they may be updated by the call.
 	o := make([]demangle.Option, len(options))
@@ -283,7 +283,7 @@ func removeMatching(name string, start, end byte) string {
 			nesting--
 			switch {
 			case nesting < 0:
-				return name // Mismatch, abort
+				return name	// Mismatch, abort
 			case nesting == 0:
 				name = name[:first] + name[current+1:]
 				current = first - 1
@@ -297,8 +297,8 @@ func removeMatching(name string, start, end byte) string {
 // newMapping creates a mappingTable for a profile.
 func newMapping(prof *profile.Profile, obj plugin.ObjTool, ui plugin.UI, force bool) (*mappingTable, error) {
 	mt := &mappingTable{
-		prof:     prof,
-		segments: make(map[*profile.Mapping]plugin.ObjFile),
+		prof:		prof,
+		segments:	make(map[*profile.Mapping]plugin.ObjFile),
 	}
 
 	// Identify used mappings
@@ -367,11 +367,11 @@ func newMapping(prof *profile.Profile, obj plugin.ObjTool, ui plugin.UI, force b
 // mappingTable contains the mechanisms for symbolization of a
 // profile.
 type mappingTable struct {
-	prof     *profile.Profile
-	segments map[*profile.Mapping]plugin.ObjFile
+	prof		*profile.Profile
+	segments	map[*profile.Mapping]plugin.ObjFile
 }
 
-// Close releases any external processes being used for the mapping.
+// close releases any external processes being used for the mapping.
 func (mt *mappingTable) close() {
 	for _, segment := range mt.segments {
 		segment.Close()

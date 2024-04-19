@@ -16,7 +16,7 @@ import (
 	"log"
 	"net/http"
 	"os"
-	"os/exec"
+	"github.com/bir3/gocompiler/exec"
 	"path/filepath"
 	"runtime"
 	"strconv"
@@ -33,7 +33,7 @@ func newScriptEngine() *script.Engine {
 	conds := script.DefaultConds()
 
 	interrupt := func(cmd *exec.Cmd) error { return cmd.Process.Signal(os.Interrupt) }
-	gracePeriod := 30 * time.Second // arbitrary
+	gracePeriod := 30 * time.Second	// arbitrary
 
 	cmds := script.DefaultCmds()
 	cmds["at"] = scriptAt()
@@ -48,8 +48,8 @@ func newScriptEngine() *script.Engine {
 	cmds["unquote"] = scriptUnquote()
 
 	return &script.Engine{
-		Cmds:  cmds,
-		Conds: conds,
+		Cmds:	cmds,
+		Conds:	conds,
 	}
 }
 
@@ -101,8 +101,8 @@ func (s *Server) loadScript(ctx context.Context, logger *log.Logger, scriptPath 
 // newState returns a new script.State for executing scripts in workDir.
 func (s *Server) newState(ctx context.Context, workDir string) (*script.State, error) {
 	ctx = &scriptCtx{
-		Context: ctx,
-		server:  s,
+		Context:	ctx,
+		server:		s,
 	}
 
 	st, err := script.NewState(ctx, workDir, s.env)
@@ -126,13 +126,13 @@ func scriptEnviron(homeDir string) []string {
 	for _, k := range []string{
 		pathEnvName(),
 		tempEnvName(),
-		"SYSTEMROOT",        // must be preserved on Windows to find DLLs; golang.org/issue/25210
-		"WINDIR",            // must be preserved on Windows to be able to run PowerShell command; golang.org/issue/30711
-		"ComSpec",           // must be preserved on Windows to be able to run Batch files; golang.org/issue/56555
-		"DYLD_LIBRARY_PATH", // must be preserved on macOS systems to find shared libraries
-		"LD_LIBRARY_PATH",   // must be preserved on Unix systems to find shared libraries
-		"LIBRARY_PATH",      // allow override of non-standard static library paths
-		"PYTHONPATH",        // may be needed by hg to find imported modules
+		"SYSTEMROOT",		// must be preserved on Windows to find DLLs; golang.org/issue/25210
+		"WINDIR",		// must be preserved on Windows to be able to run PowerShell command; golang.org/issue/30711
+		"ComSpec",		// must be preserved on Windows to be able to run Batch files; golang.org/issue/56555
+		"DYLD_LIBRARY_PATH",	// must be preserved on macOS systems to find shared libraries
+		"LD_LIBRARY_PATH",	// must be preserved on Unix systems to find shared libraries
+		"LIBRARY_PATH",		// allow override of non-standard static library paths
+		"PYTHONPATH",		// may be needed by hg to find imported modules
 	} {
 		if v, ok := os.LookupEnv(k); ok {
 			env = append(env, k+"="+v)
@@ -171,7 +171,7 @@ func tempEnvName() string {
 	case "windows":
 		return "TMP"
 	case "plan9":
-		return "TMPDIR" // actually plan 9 doesn't have one at all but this is fine
+		return "TMPDIR"	// actually plan 9 doesn't have one at all but this is fine
 	default:
 		return "TMPDIR"
 	}
@@ -192,10 +192,10 @@ func pathEnvName() string {
 // commands.
 type scriptCtx struct {
 	context.Context
-	server      *Server
-	commitTime  time.Time
-	handlerName string
-	handler     http.Handler
+	server		*Server
+	commitTime	time.Time
+	handlerName	string
+	handler		http.Handler
 }
 
 // scriptCtxKey is the key associating the *scriptCtx in a script's Context..
@@ -219,8 +219,8 @@ func getScriptCtx(st *script.State) (*scriptCtx, error) {
 func scriptAt() script.Cmd {
 	return script.Command(
 		script.CmdUsage{
-			Summary: "set the current commit time for all version control systems",
-			Args:    "time",
+			Summary:	"set the current commit time for all version control systems",
+			Args:		"time",
 			Detail: []string{
 				"The argument must be an absolute timestamp in RFC3339 format.",
 			},
@@ -247,8 +247,8 @@ func scriptAt() script.Cmd {
 func scriptHandle() script.Cmd {
 	return script.Command(
 		script.CmdUsage{
-			Summary: "set the HTTP handler that will serve the script's output",
-			Args:    "handler [dir]",
+			Summary:	"set the HTTP handler that will serve the script's output",
+			Args:		"handler [dir]",
 			Detail: []string{
 				"The handler will be passed the script's current working directory and environment as arguments.",
 				"Valid handlers include 'dir' (for general http.Dir serving), 'bzr', 'fossil', 'git', and 'hg'",
@@ -290,8 +290,8 @@ func scriptHandle() script.Cmd {
 func scriptModzip() script.Cmd {
 	return script.Command(
 		script.CmdUsage{
-			Summary: "create a Go module zip file from a directory",
-			Args:    "zipfile path@version dir",
+			Summary:	"create a Go module zip file from a directory",
+			Args:		"zipfile path@version dir",
 		},
 		func(st *script.State, args ...string) (wait script.WaitFunc, err error) {
 			if len(args) != 3 {
@@ -324,8 +324,8 @@ func scriptModzip() script.Cmd {
 func scriptUnquote() script.Cmd {
 	return script.Command(
 		script.CmdUsage{
-			Summary: "unquote the argument as a Go string",
-			Args:    "string",
+			Summary:	"unquote the argument as a Go string",
+			Args:		"string",
 		},
 		func(st *script.State, args ...string) (script.WaitFunc, error) {
 			if len(args) != 1 {

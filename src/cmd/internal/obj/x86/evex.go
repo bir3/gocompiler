@@ -13,33 +13,33 @@ import (
 
 // evexBits stores EVEX prefix info that is used during instruction encoding.
 type evexBits struct {
-	b1 byte // [W1mmLLpp]
-	b2 byte // [NNNbbZRS]
+	b1	byte	// [W1mmLLpp]
+	b2	byte	// [NNNbbZRS]
 
 	// Associated instruction opcode.
-	opcode byte
+	opcode	byte
 }
 
 // newEVEXBits creates evexBits object from enc bytes at z position.
 func newEVEXBits(z int, enc *opBytes) evexBits {
 	return evexBits{
-		b1:     enc[z+0],
-		b2:     enc[z+1],
-		opcode: enc[z+2],
+		b1:	enc[z+0],
+		b2:	enc[z+1],
+		opcode:	enc[z+2],
 	}
 }
 
 // P returns EVEX.pp value.
-func (evex evexBits) P() byte { return (evex.b1 & evexP) >> 0 }
+func (evex evexBits) P() byte	{ return (evex.b1 & evexP) >> 0 }
 
 // L returns EVEX.L'L value.
-func (evex evexBits) L() byte { return (evex.b1 & evexL) >> 2 }
+func (evex evexBits) L() byte	{ return (evex.b1 & evexL) >> 2 }
 
 // M returns EVEX.mm value.
-func (evex evexBits) M() byte { return (evex.b1 & evexM) >> 4 }
+func (evex evexBits) M() byte	{ return (evex.b1 & evexM) >> 4 }
 
 // W returns EVEX.W value.
-func (evex evexBits) W() byte { return (evex.b1 & evexW) >> 7 }
+func (evex evexBits) W() byte	{ return (evex.b1 & evexW) >> 7 }
 
 // BroadcastEnabled reports whether BCST suffix is permitted.
 func (evex evexBits) BroadcastEnabled() bool {
@@ -100,53 +100,53 @@ func (evex evexBits) DispMultiplier(bcst bool) int32 {
 // EVEX is described by using 2-byte sequence.
 // See evexBits for more details.
 const (
-	evexW   = 0x80 // b1[W... ....]
-	evexWIG = 0 << 7
-	evexW0  = 0 << 7
-	evexW1  = 1 << 7
+	evexW	= 0x80	// b1[W... ....]
+	evexWIG	= 0 << 7
+	evexW0	= 0 << 7
+	evexW1	= 1 << 7
 
-	evexM    = 0x30 // b2[..mm ...]
-	evex0F   = 1 << 4
-	evex0F38 = 2 << 4
-	evex0F3A = 3 << 4
+	evexM		= 0x30	// b2[..mm ...]
+	evex0F		= 1 << 4
+	evex0F38	= 2 << 4
+	evex0F3A	= 3 << 4
 
-	evexL   = 0x0C // b1[.... LL..]
-	evexLIG = 0 << 2
-	evex128 = 0 << 2
-	evex256 = 1 << 2
-	evex512 = 2 << 2
+	evexL	= 0x0C	// b1[.... LL..]
+	evexLIG	= 0 << 2
+	evex128	= 0 << 2
+	evex256	= 1 << 2
+	evex512	= 2 << 2
 
-	evexP  = 0x03 // b1[.... ..pp]
-	evex66 = 1 << 0
-	evexF3 = 2 << 0
-	evexF2 = 3 << 0
+	evexP	= 0x03	// b1[.... ..pp]
+	evex66	= 1 << 0
+	evexF3	= 2 << 0
+	evexF2	= 3 << 0
 
 	// Precalculated Disp8 N value.
 	// N acts like a multiplier for 8bit displacement.
 	// Note that some N are not used, but their bits are reserved.
-	evexN    = 0xE0 // b2[NNN. ....]
-	evexN1   = 0 << 5
-	evexN2   = 1 << 5
-	evexN4   = 2 << 5
-	evexN8   = 3 << 5
-	evexN16  = 4 << 5
-	evexN32  = 5 << 5
-	evexN64  = 6 << 5
-	evexN128 = 7 << 5
+	evexN		= 0xE0	// b2[NNN. ....]
+	evexN1		= 0 << 5
+	evexN2		= 1 << 5
+	evexN4		= 2 << 5
+	evexN8		= 3 << 5
+	evexN16		= 4 << 5
+	evexN32		= 5 << 5
+	evexN64		= 6 << 5
+	evexN128	= 7 << 5
 
 	// Disp8 for broadcasts.
-	evexBcst   = 0x18 // b2[...b b...]
-	evexBcstN4 = 1 << 3
-	evexBcstN8 = 2 << 3
+	evexBcst	= 0x18	// b2[...b b...]
+	evexBcstN4	= 1 << 3
+	evexBcstN8	= 2 << 3
 
 	// Flags that permit certain AVX512 features.
 	// It's semantically illegal to combine evexZeroing and evexSae.
-	evexZeroing         = 0x4 // b2[.... .Z..]
-	evexZeroingEnabled  = 1 << 2
-	evexRounding        = 0x2 // b2[.... ..R.]
-	evexRoundingEnabled = 1 << 1
-	evexSae             = 0x1 // b2[.... ...S]
-	evexSaeEnabled      = 1 << 0
+	evexZeroing		= 0x4	// b2[.... .Z..]
+	evexZeroingEnabled	= 1 << 2
+	evexRounding		= 0x2	// b2[.... ..R.]
+	evexRoundingEnabled	= 1 << 1
+	evexSae			= 0x1	// b2[.... ...S]
+	evexSaeEnabled		= 1 << 0
 )
 
 // compressedDisp8 calculates EVEX compressed displacement, if applicable.
@@ -174,20 +174,20 @@ func evexZcase(zcase uint8) bool {
 //	"BCST" => {broadcast: true}
 //	"SAE.Z" => {sae: true, zeroing: true}
 type evexSuffix struct {
-	rounding  byte
-	sae       bool
-	zeroing   bool
-	broadcast bool
+	rounding	byte
+	sae		bool
+	zeroing		bool
+	broadcast	bool
 }
 
 // Rounding control values.
 // Match exact value for EVEX.L'L field (with exception of rcUnset).
 const (
-	rcRNSAE = 0 // Round towards nearest
-	rcRDSAE = 1 // Round towards -Inf
-	rcRUSAE = 2 // Round towards +Inf
-	rcRZSAE = 3 // Round towards zero
-	rcUnset = 4
+	rcRNSAE	= 0	// Round towards nearest
+	rcRDSAE	= 1	// Round towards -Inf
+	rcRUSAE	= 2	// Round towards +Inf
+	rcRZSAE	= 3	// Round towards zero
+	rcUnset	= 4
 )
 
 // newEVEXSuffix returns proper zero value for evexSuffix.
@@ -279,11 +279,11 @@ func ParseSuffix(p *obj.Prog, cond string) error {
 //   - unknown suffixes
 //   - misplaced suffix (e.g. wrong Z suffix position)
 func inferSuffixError(cond string) error {
-	suffixSet := make(map[string]bool)  // Set for duplicates detection.
-	unknownSet := make(map[string]bool) // Set of unknown suffixes.
+	suffixSet := make(map[string]bool)	// Set for duplicates detection.
+	unknownSet := make(map[string]bool)	// Set of unknown suffixes.
 	hasBcst := false
 	hasRoundSae := false
-	var msg []string // Error message parts
+	var msg []string	// Error message parts
 
 	suffixes := strings.Split(cond, ".")
 	for i, suffix := range suffixes {
@@ -323,7 +323,7 @@ func inferSuffixError(cond string) error {
 // It "maps" uint8 suffix bits to their string representation.
 // With the exception of first and last elements, order is not important.
 var opSuffixTable = [...]string{
-	"", // Map empty suffix to empty string.
+	"",	// Map empty suffix to empty string.
 
 	"Z",
 

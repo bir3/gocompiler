@@ -3,13 +3,12 @@
 // license that can be found in the LICENSE file.
 
 //go:build !wasm && !windows
-// +build !wasm,!windows
 
 package ld
 
 import (
 	"os"
-	"os/exec"
+	"github.com/bir3/gocompiler/exec"
 	"path/filepath"
 	"syscall"
 )

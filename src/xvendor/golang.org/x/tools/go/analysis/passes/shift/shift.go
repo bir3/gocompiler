@@ -27,10 +27,11 @@ import (
 const Doc = "check for shifts that equal or exceed the width of the integer"
 
 var Analyzer = &analysis.Analyzer{
-	Name:     "shift",
-	Doc:      Doc,
-	Requires: []*analysis.Analyzer{inspect.Analyzer},
-	Run:      run,
+	Name:		"shift",
+	Doc:		Doc,
+	URL:		"https://pkg.go.dev/golang.org/x/tools/go/analysis/passes/shift",
+	Requires:	[]*analysis.Analyzer{inspect.Analyzer},
+	Run:		run,
 }
 
 func run(pass *analysis.Pass) (interface{}, error) {
@@ -98,10 +99,10 @@ func checkLongShift(pass *analysis.Pass, node ast.Node, x, y ast.Expr) {
 	}
 	var structuralTypes []types.Type
 	switch t := t.(type) {
-	case *typeparams.TypeParam:
+	case *types.TypeParam:
 		terms, err := typeparams.StructuralTerms(t)
 		if err != nil {
-			return // invalid type
+			return	// invalid type
 		}
 		for _, term := range terms {
 			structuralTypes = append(structuralTypes, term.Type())

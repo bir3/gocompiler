@@ -10,32 +10,31 @@ import "github.com/bir3/gocompiler/src/cmd/internal/obj"
 
 const (
 	/* mark flags */
-	DONE          = 1 << iota
-	PRESERVEFLAGS // not allowed to clobber flags
+	DONE		= 1 << iota
+	PRESERVEFLAGS	// not allowed to clobber flags
 )
 
 /*
  *	wasm
  */
 const (
-	ACallImport = obj.ABaseWasm + obj.A_ARCHSPECIFIC + iota
-	AGet
+	AGet	= obj.ABaseWasm + obj.A_ARCHSPECIFIC + iota
 	ASet
 	ATee
-	ANot // alias for I32Eqz
+	ANot	// alias for I32Eqz
 
 	// The following are low-level WebAssembly instructions.
 	// Their order matters, since it matches the opcode encoding.
 	// Gaps in the encoding are indicated by comments.
 
-	AUnreachable // opcode 0x00
+	AUnreachable	// opcode 0x00
 	ANop
 	ABlock
 	ALoop
 	AIf
 	AElse
 
-	AEnd // opcode 0x0B
+	AEnd	// opcode 0x0B
 	ABr
 	ABrIf
 	ABrTable
@@ -45,16 +44,16 @@ const (
 	ACall
 	ACallIndirect
 
-	ADrop // opcode 0x1A
+	ADrop	// opcode 0x1A
 	ASelect
 
-	ALocalGet // opcode 0x20
+	ALocalGet	// opcode 0x20
 	ALocalSet
 	ALocalTee
 	AGlobalGet
 	AGlobalSet
 
-	AI32Load // opcode 0x28
+	AI32Load	// opcode 0x28
 	AI64Load
 	AF32Load
 	AF64Load
@@ -222,7 +221,7 @@ const (
 	AI64Extend16S
 	AI64Extend32S
 
-	AI32TruncSatF32S // opcode 0xFC 0x00
+	AI32TruncSatF32S	// opcode 0xFC 0x00
 	AI32TruncSatF32U
 	AI32TruncSatF64S
 	AI32TruncSatF64U
@@ -242,7 +241,7 @@ const (
 	ATableSize
 	ATableFill
 
-	ALast // Sentinel: End of low-level WebAssembly instructions.
+	ALast	// Sentinel: End of low-level WebAssembly instructions.
 
 	ARESUMEPOINT
 	// ACALLNORESUME is a call which is not followed by a resume point.
@@ -267,7 +266,7 @@ const (
 
 const (
 	// globals
-	REG_SP = obj.RBaseWasm + iota // SP is currently 32-bit, until 64-bit memory operations are available
+	REG_SP	= obj.RBaseWasm + iota	// SP is currently 32-bit, until 64-bit memory operations are available
 	REG_CTXT
 	REG_g
 	// RET* are used by runtime.return0 and runtime.reflectcall. These functions pass return values in registers.
@@ -331,12 +330,12 @@ const (
 	REG_F30
 	REG_F31
 
-	REG_PC_B // also first parameter, i32
+	REG_PC_B	// also first parameter, i32
 
 	MAXREG
 
-	MINREG  = REG_SP
-	REGSP   = REG_SP
-	REGCTXT = REG_CTXT
-	REGG    = REG_g
+	MINREG	= REG_SP
+	REGSP	= REG_SP
+	REGCTXT	= REG_CTXT
+	REGG	= REG_g
 )

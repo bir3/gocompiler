@@ -35,7 +35,7 @@ import (
 
 // Output formats.
 const (
-	Callgrind = iota
+	Callgrind	= iota
 	Comments
 	Dis
 	Dot
@@ -53,34 +53,34 @@ const (
 // Options are the formatting and filtering options used to generate a
 // profile.
 type Options struct {
-	OutputFormat int
+	OutputFormat	int
 
-	CumSort       bool
-	CallTree      bool
-	DropNegative  bool
-	CompactLabels bool
-	Ratio         float64
-	Title         string
-	ProfileLabels []string
-	ActiveFilters []string
-	NumLabelUnits map[string]string
+	CumSort		bool
+	CallTree	bool
+	DropNegative	bool
+	CompactLabels	bool
+	Ratio		float64
+	Title		string
+	ProfileLabels	[]string
+	ActiveFilters	[]string
+	NumLabelUnits	map[string]string
 
-	NodeCount    int
-	NodeFraction float64
-	EdgeFraction float64
+	NodeCount	int
+	NodeFraction	float64
+	EdgeFraction	float64
 
-	SampleValue       func(s []int64) int64
-	SampleMeanDivisor func(s []int64) int64
-	SampleType        string
-	SampleUnit        string // Unit for the sample data from the profile.
+	SampleValue		func(s []int64) int64
+	SampleMeanDivisor	func(s []int64) int64
+	SampleType		string
+	SampleUnit		string	// Unit for the sample data from the profile.
 
-	OutputUnit string // Units for data formatting in report.
+	OutputUnit	string	// Units for data formatting in report.
 
-	Symbol     *regexp.Regexp // Symbols to include on disassembly report.
-	SourcePath string         // Search path for source files.
-	TrimPath   string         // Paths to trim from source file paths.
+	Symbol		*regexp.Regexp	// Symbols to include on disassembly report.
+	SourcePath	string		// Search path for source files.
+	TrimPath	string		// Paths to trim from source file paths.
 
-	IntelSyntax bool // Whether or not to print assembly in Intel syntax.
+	IntelSyntax	bool	// Whether or not to print assembly in Intel syntax.
 }
 
 // Generate generates a report as directed by the Report.
@@ -275,12 +275,12 @@ func (rpt *Report) newGraph(nodes graph.NodeSet) *graph.Graph {
 	}
 
 	gopt := &graph.Options{
-		SampleValue:       o.SampleValue,
-		SampleMeanDivisor: o.SampleMeanDivisor,
-		FormatTag:         formatTag,
-		CallTree:          o.CallTree && (o.OutputFormat == Dot || o.OutputFormat == Callgrind),
-		DropNegative:      o.DropNegative,
-		KeptNodes:         nodes,
+		SampleValue:		o.SampleValue,
+		SampleMeanDivisor:	o.SampleMeanDivisor,
+		FormatTag:		formatTag,
+		CallTree:		o.CallTree && (o.OutputFormat == Dot || o.OutputFormat == Callgrind),
+		DropNegative:		o.DropNegative,
+		KeptNodes:		nodes,
 	}
 
 	// Only keep binary names for disassembly-based reports, otherwise
@@ -321,10 +321,10 @@ func printTopProto(w io.Writer, rpt *Report) error {
 			{Type: "cum", Unit: o.OutputUnit},
 			{Type: "flat", Unit: o.OutputUnit},
 		},
-		TimeNanos:     p.TimeNanos,
-		DurationNanos: p.DurationNanos,
-		PeriodType:    p.PeriodType,
-		Period:        p.Period,
+		TimeNanos:	p.TimeNanos,
+		DurationNanos:	p.DurationNanos,
+		PeriodType:	p.PeriodType,
+		Period:		p.Period,
 	}
 	functionMap := make(functionMap)
 	for i, n := range g.Nodes {
@@ -334,12 +334,12 @@ func printTopProto(w io.Writer, rpt *Report) error {
 		}
 		flat, cum := n.FlatValue(), n.CumValue()
 		l := &profile.Location{
-			ID:      uint64(i + 1),
-			Address: n.Info.Address,
+			ID:		uint64(i + 1),
+			Address:	n.Info.Address,
 			Line: []profile.Line{
 				{
-					Line:     int64(n.Info.Lineno),
-					Function: f,
+					Line:		int64(n.Info.Lineno),
+					Function:	f,
 				},
 			},
 		}
@@ -347,8 +347,8 @@ func printTopProto(w io.Writer, rpt *Report) error {
 		fv, _ := measurement.Scale(flat, o.SampleUnit, o.OutputUnit)
 		cv, _ := measurement.Scale(cum, o.SampleUnit, o.OutputUnit)
 		s := &profile.Sample{
-			Location: []*profile.Location{l},
-			Value:    []int64{int64(cv), int64(fv)},
+			Location:	[]*profile.Location{l},
+			Value:		[]int64{int64(cv), int64(fv)},
 		}
 		out.Location = append(out.Location, l)
 		out.Sample = append(out.Sample, s)
@@ -371,11 +371,11 @@ func (fm functionMap) findOrAdd(ni graph.NodeInfo) (*profile.Function, bool) {
 	}
 
 	f := &profile.Function{
-		ID:         uint64(len(fm) + 1),
-		Name:       ni.Name,
-		SystemName: ni.OrigName,
-		Filename:   ni.File,
-		StartLine:  int64(ni.StartLine),
+		ID:		uint64(len(fm) + 1),
+		Name:		ni.Name,
+		SystemName:	ni.OrigName,
+		Filename:	ni.File,
+		StartLine:	int64(ni.StartLine),
 	}
 	fm[fName] = f
 	return f, true
@@ -433,7 +433,16 @@ func PrintAssembly(w io.Writer, rpt *Report, obj plugin.ObjTool, maxFuncs int) e
 	}
 
 	if len(syms) == 0 {
-		return fmt.Errorf("no matches found for regexp: %s", o.Symbol)
+		// The symbol regexp case
+		if address == nil {
+			return fmt.Errorf("no matches found for regexp %s", o.Symbol)
+		}
+
+		// The address case
+		if len(symbols) == 0 {
+			return fmt.Errorf("no matches found for address 0x%x", *address)
+		}
+		return fmt.Errorf("address 0x%x found in binary, but the corresponding symbols do not have samples in the profile", *address)
 	}
 
 	// Correlate the symbols from the binary with the profile samples.
@@ -505,22 +514,26 @@ func PrintAssembly(w io.Writer, rpt *Report, obj plugin.ObjTool, maxFuncs int) e
 	return nil
 }
 
-// symbolsFromBinaries examines the binaries listed on the profile
-// that have associated samples, and identifies symbols matching rx.
+// symbolsFromBinaries examines the binaries listed on the profile that have
+// associated samples, and returns the identified symbols matching rx.
 func symbolsFromBinaries(prof *profile.Profile, g *graph.Graph, rx *regexp.Regexp, address *uint64, obj plugin.ObjTool) []*objSymbol {
-	hasSamples := make(map[string]bool)
-	// Only examine mappings that have samples that match the
-	// regexp. This is an optimization to speed up pprof.
+	// fileHasSamplesAndMatched is for optimization to speed up pprof: when later
+	// walking through the profile mappings, it will only examine the ones that have
+	// samples and are matched to the regexp.
+	fileHasSamplesAndMatched := make(map[string]bool)
 	for _, n := range g.Nodes {
 		if name := n.Info.PrintableName(); rx.MatchString(name) && n.Info.Objfile != "" {
-			hasSamples[n.Info.Objfile] = true
+			fileHasSamplesAndMatched[n.Info.Objfile] = true
 		}
 	}
 
 	// Walk all mappings looking for matching functions with samples.
 	var objSyms []*objSymbol
 	for _, m := range prof.Mapping {
-		if !hasSamples[m.File] {
+		// Skip the mapping if its file does not have samples or is not matched to
+		// the regexp (unless the regexp is an address and the mapping's range covers
+		// the address)
+		if !fileHasSamplesAndMatched[m.File] {
 			if address == nil || !(m.Start <= *address && *address <= m.Limit) {
 				continue
 			}
@@ -545,8 +558,8 @@ func symbolsFromBinaries(prof *profile.Profile, g *graph.Graph, rx *regexp.Regex
 		for _, ms := range msyms {
 			objSyms = append(objSyms,
 				&objSymbol{
-					sym:  ms,
-					file: f,
+					sym:	ms,
+					file:	f,
 				},
 			)
 		}
@@ -559,19 +572,19 @@ func symbolsFromBinaries(prof *profile.Profile, g *graph.Graph, rx *regexp.Regex
 // the SymbolInfo from the disasm package and the base that must be
 // added to correspond to sample addresses
 type objSymbol struct {
-	sym  *plugin.Sym
-	file plugin.ObjFile
+	sym	*plugin.Sym
+	file	plugin.ObjFile
 }
 
 // orderSyms is a wrapper type to sort []*objSymbol by a supplied comparator.
 type orderSyms struct {
-	v    []*objSymbol
-	less func(a, b *objSymbol) bool
+	v	[]*objSymbol
+	less	func(a, b *objSymbol) bool
 }
 
-func (o orderSyms) Len() int           { return len(o.v) }
-func (o orderSyms) Less(i, j int) bool { return o.less(o.v[i], o.v[j]) }
-func (o orderSyms) Swap(i, j int)      { o.v[i], o.v[j] = o.v[j], o.v[i] }
+func (o orderSyms) Len() int		{ return len(o.v) }
+func (o orderSyms) Less(i, j int) bool	{ return o.less(o.v[i], o.v[j]) }
+func (o orderSyms) Swap(i, j int)	{ o.v[i], o.v[j] = o.v[j], o.v[i] }
 
 // nodesPerSymbol classifies nodes into a group of symbols.
 func nodesPerSymbol(ns graph.Nodes, symbols []*objSymbol) map[*objSymbol]graph.Nodes {
@@ -588,20 +601,20 @@ func nodesPerSymbol(ns graph.Nodes, symbols []*objSymbol) map[*objSymbol]graph.N
 }
 
 type assemblyInstruction struct {
-	address         uint64
-	instruction     string
-	function        string
-	file            string
-	line            int
-	flat, cum       int64
-	flatDiv, cumDiv int64
-	startsBlock     bool
-	inlineCalls     []callID
+	address		uint64
+	instruction	string
+	function	string
+	file		string
+	line		int
+	flat, cum	int64
+	flatDiv, cumDiv	int64
+	startsBlock	bool
+	inlineCalls	[]callID
 }
 
 type callID struct {
-	file string
-	line int
+	file	string
+	line	int
 }
 
 func (a *assemblyInstruction) flatValue() int64 {
@@ -634,10 +647,10 @@ func annotateAssembly(insts []plugin.Inst, samples graph.Nodes, file plugin.ObjF
 	asm := make([]assemblyInstruction, 0, len(insts))
 	for ix, in := range insts[:len(insts)-1] {
 		n := assemblyInstruction{
-			address:     in.Addr,
-			instruction: in.Text,
-			function:    in.Function,
-			line:        in.Line,
+			address:	in.Addr,
+			instruction:	in.Text,
+			function:	in.Function,
+			line:		in.Line,
 		}
 		if in.File != "" {
 			n.file = filepath.Base(in.File)
@@ -757,10 +770,10 @@ func printComments(w io.Writer, rpt *Report) error {
 
 // TextItem holds a single text report entry.
 type TextItem struct {
-	Name                  string
-	InlineLabel           string // Not empty if inlined
-	Flat, Cum             int64  // Raw values
-	FlatFormat, CumFormat string // Formatted values
+	Name			string
+	InlineLabel		string	// Not empty if inlined
+	Flat, Cum		int64	// Raw values
+	FlatFormat, CumFormat	string	// Formatted values
 }
 
 // TextItems returns a list of text items from the report and a list
@@ -795,12 +808,12 @@ func TextItems(rpt *Report) ([]TextItem, []string) {
 
 		flatSum += flat
 		items = append(items, TextItem{
-			Name:        name,
-			InlineLabel: inl,
-			Flat:        flat,
-			Cum:         cum,
-			FlatFormat:  rpt.formatValue(flat),
-			CumFormat:   rpt.formatValue(cum),
+			Name:		name,
+			InlineLabel:	inl,
+			Flat:		flat,
+			Cum:		cum,
+			FlatFormat:	rpt.formatValue(flat),
+			CumFormat:	rpt.formatValue(cum),
 		})
 	}
 	return items, labels
@@ -841,7 +854,7 @@ func printTraces(w io.Writer, rpt *Report) error {
 	for _, sample := range prof.Sample {
 		type stk struct {
 			*graph.NodeInfo
-			inline bool
+			inline	bool
 		}
 		var stack []stk
 		for _, loc := range sample.Location {
@@ -1118,10 +1131,10 @@ func GetDOT(rpt *Report) (*graph.Graph, *graph.DotConfig) {
 	labels := reportLabels(rpt, g, origCount, droppedNodes, droppedEdges, true)
 
 	c := &graph.DotConfig{
-		Title:       rpt.options.Title,
-		Labels:      labels,
-		FormatValue: rpt.formatValue,
-		Total:       rpt.total,
+		Title:		rpt.options.Title,
+		Labels:		labels,
+		FormatValue:	rpt.formatValue,
+		Total:		rpt.total,
 	}
 	return g, c
 }
@@ -1304,14 +1317,14 @@ func computeTotal(prof *profile.Profile, value, meanDiv func(v []int64) int64) i
 // Report contains the data and associated routines to extract a
 // report from a profile.
 type Report struct {
-	prof        *profile.Profile
-	total       int64
-	options     *Options
-	formatValue func(int64) string
+	prof		*profile.Profile
+	total		int64
+	options		*Options
+	formatValue	func(int64) string
 }
 
 // Total returns the total number of samples in a report.
-func (rpt *Report) Total() int64 { return rpt.total }
+func (rpt *Report) Total() int64	{ return rpt.total }
 
 func abs64(i int64) int64 {
 	if i < 0 {

@@ -76,7 +76,7 @@ func filterFuncs(a []*Func, f Filter) []*Func {
 func filterTypes(a []*Type, f Filter) []*Type {
 	w := 0
 	for _, td := range a {
-		n := 0 // number of matches
+		n := 0	// number of matches
 		if matchDecl(td.Decl, f) {
 			n = 1
 		} else {
@@ -102,5 +102,5 @@ func (p *Package) Filter(f Filter) {
 	p.Vars = filterValues(p.Vars, f)
 	p.Types = filterTypes(p.Types, f)
 	p.Funcs = filterFuncs(p.Funcs, f)
-	p.Doc = "" // don't show top-level package doc
+	p.Doc = ""	// don't show top-level package doc
 }

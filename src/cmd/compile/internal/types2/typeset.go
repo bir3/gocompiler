@@ -24,19 +24,19 @@ import (
 // If the term list describes the set of all types and comparable is true,
 // only comparable types are meant; in all other cases comparable is false.
 type _TypeSet struct {
-	methods    []*Func  // all methods of the interface; sorted by unique ID
-	terms      termlist // type terms of the type set
-	comparable bool     // invariant: !comparable || terms.isAll()
+	methods		[]*Func		// all methods of the interface; sorted by unique ID
+	terms		termlist	// type terms of the type set
+	comparable	bool		// invariant: !comparable || terms.isAll()
 }
 
 // IsEmpty reports whether type set s is the empty set.
-func (s *_TypeSet) IsEmpty() bool { return s.terms.isEmpty() }
+func (s *_TypeSet) IsEmpty() bool	{ return s.terms.isEmpty() }
 
 // IsAll reports whether type set s is the set of all types (corresponding to the empty interface).
-func (s *_TypeSet) IsAll() bool { return s.IsMethodSet() && len(s.methods) == 0 }
+func (s *_TypeSet) IsAll() bool	{ return s.IsMethodSet() && len(s.methods) == 0 }
 
 // IsMethodSet reports whether the interface t is fully described by its method set.
-func (s *_TypeSet) IsMethodSet() bool { return !s.comparable && s.terms.isAll() }
+func (s *_TypeSet) IsMethodSet() bool	{ return !s.comparable && s.terms.isAll() }
 
 // IsComparable reports whether each type in the set is comparable.
 func (s *_TypeSet) IsComparable(seen map[Type]bool) bool {
@@ -49,11 +49,11 @@ func (s *_TypeSet) IsComparable(seen map[Type]bool) bool {
 }
 
 // NumMethods returns the number of methods available.
-func (s *_TypeSet) NumMethods() int { return len(s.methods) }
+func (s *_TypeSet) NumMethods() int	{ return len(s.methods) }
 
 // Method returns the i'th method of type set s for 0 <= i < s.NumMethods().
 // The methods are ordered by their unique ID.
-func (s *_TypeSet) Method(i int) *Func { return s.methods[i] }
+func (s *_TypeSet) Method(i int) *Func	{ return s.methods[i] }
 
 // LookupMethod returns the index of and method with matching package and name, or (-1, nil).
 func (s *_TypeSet) LookupMethod(pkg *Package, name string, foldCase bool) (int, *Func) {
@@ -99,10 +99,10 @@ func (s *_TypeSet) String() string {
 // Implementation
 
 // hasTerms reports whether the type set has specific type terms.
-func (s *_TypeSet) hasTerms() bool { return !s.terms.isEmpty() && !s.terms.isAll() }
+func (s *_TypeSet) hasTerms() bool	{ return !s.terms.isEmpty() && !s.terms.isAll() }
 
 // subsetOf reports whether s1 ⊆ s2.
-func (s1 *_TypeSet) subsetOf(s2 *_TypeSet) bool { return s1.terms.subsetOf(s2.terms) }
+func (s1 *_TypeSet) subsetOf(s2 *_TypeSet) bool	{ return s1.terms.subsetOf(s2.terms) }
 
 // TODO(gri) TypeSet.is and TypeSet.underIs should probably also go into termlist.go
 
@@ -186,7 +186,7 @@ func computeInterfaceTypeSet(check *Checker, pos syntax.Pos, ityp *Interface) *_
 	// have valid interfaces. Mark the interface as complete to avoid
 	// infinite recursion if the validType check occurs later for some
 	// reason.
-	ityp.tset = &_TypeSet{terms: allTermlist} // TODO(gri) is this sufficient?
+	ityp.tset = &_TypeSet{terms: allTermlist}	// TODO(gri) is this sufficient?
 
 	var unionSets map[*Union]*_TypeSet
 	if check != nil {
@@ -203,7 +203,7 @@ func computeInterfaceTypeSet(check *Checker, pos syntax.Pos, ityp *Interface) *_
 	// the method m in an interface that embeds interface I. On the other hand,
 	// if a method is embedded via multiple overlapping embedded interfaces, we
 	// don't provide a guarantee which "original m" got chosen for the embedding
-	// interface. See also issue #34421.
+	// interface. See also go.dev/issue/34421.
 	//
 	// If we don't care to provide this identity guarantee anymore, instead of
 	// reusing the original method in embeddings, we can clone the method's Func
@@ -213,7 +213,7 @@ func computeInterfaceTypeSet(check *Checker, pos syntax.Pos, ityp *Interface) *_
 
 	var seen objset
 	var allMethods []*Func
-	mpos := make(map[*Func]syntax.Pos) // method specification or method embedding position, for good error messages
+	mpos := make(map[*Func]syntax.Pos)	// method specification or method embedding position, for good error messages
 	addMethod := func(pos syntax.Pos, m *Func, explicit bool) {
 		switch other := seen.insert(m); {
 		case other == nil:
@@ -229,13 +229,13 @@ func computeInterfaceTypeSet(check *Checker, pos syntax.Pos, ityp *Interface) *_
 			}
 		default:
 			// We have a duplicate method name in an embedded (not explicitly declared) method.
-			// Check method signatures after all types are computed (issue #33656).
+			// Check method signatures after all types are computed (go.dev/issue/33656).
 			// If we're pre-go1.14 (overlapping embeddings are not permitted), report that
 			// error here as well (even though we could do it eagerly) because it's the same
 			// error message.
 			if check != nil {
 				check.later(func() {
-					if !check.allowVersion(m.pkg, 1, 14) || !Identical(m.typ, other.Type()) {
+					if !check.allowVersion(m.pkg, pos, go1_14) || !Identical(m.typ, other.Type()) {
 						var err error_
 						err.code = DuplicateDecl
 						err.errorf(pos, "duplicate method %s", m.name)
@@ -258,7 +258,7 @@ func computeInterfaceTypeSet(check *Checker, pos syntax.Pos, ityp *Interface) *_
 		// The embedding position is nil for imported interfaces
 		// and also for interface copies after substitution (but
 		// in that case we don't need to report errors again).
-		var pos syntax.Pos // embedding position
+		var pos syntax.Pos	// embedding position
 		if ityp.embedPos != nil {
 			pos = (*ityp.embedPos)[i]
 		}
@@ -270,33 +270,30 @@ func computeInterfaceTypeSet(check *Checker, pos syntax.Pos, ityp *Interface) *_
 			assert(!isTypeParam(typ))
 			tset := computeInterfaceTypeSet(check, pos, u)
 			// If typ is local, an error was already reported where typ is specified/defined.
-			if check != nil && check.isImportedConstraint(typ) && !check.allowVersion(check.pkg, 1, 18) {
-				check.versionErrorf(pos, "go1.18", "embedding constraint interface %s", typ)
+			if check != nil && check.isImportedConstraint(typ) && !check.verifyVersionf(pos, go1_18, "embedding constraint interface %s", typ) {
 				continue
 			}
 			comparable = tset.comparable
 			for _, m := range tset.methods {
-				addMethod(pos, m, false) // use embedding position pos rather than m.pos
+				addMethod(pos, m, false)	// use embedding position pos rather than m.pos
 			}
 			terms = tset.terms
 		case *Union:
-			if check != nil && !check.allowVersion(check.pkg, 1, 18) {
-				check.versionErrorf(pos, "go1.18", "embedding interface element %s", u)
+			if check != nil && !check.verifyVersionf(pos, go1_18, "embedding interface element %s", u) {
 				continue
 			}
 			tset := computeUnionTypeSet(check, unionSets, pos, u)
 			if tset == &invalidTypeSet {
-				continue // ignore invalid unions
+				continue	// ignore invalid unions
 			}
 			assert(!tset.comparable)
 			assert(len(tset.methods) == 0)
 			terms = tset.terms
 		default:
-			if u == Typ[Invalid] {
+			if !isValid(u) {
 				continue
 			}
-			if check != nil && !check.allowVersion(check.pkg, 1, 18) {
-				check.versionErrorf(pos, "go1.18", "embedding non-interface type %s", typ)
+			if check != nil && !check.verifyVersionf(pos, go1_18, "embedding non-interface type %s", typ) {
 				continue
 			}
 			terms = termlist{{false, typ}}
@@ -307,7 +304,6 @@ func computeInterfaceTypeSet(check *Checker, pos syntax.Pos, ityp *Interface) *_
 		// separately. Here we only need to intersect the term lists and comparable bits.
 		allTerms, allComparable = intersectTermLists(allTerms, allComparable, terms, comparable)
 	}
-	ityp.embedPos = nil // not needed anymore (errors have been reported)
 
 	ityp.tset.comparable = allComparable
 	if len(allMethods) != 0 {
@@ -345,7 +341,7 @@ func intersectTermLists(xterms termlist, xcomp bool, yterms termlist, ycomp bool
 			comp = false
 		}
 	}
-	assert(!comp || terms.isAll()) // comparable invariant
+	assert(!comp || terms.isAll())	// comparable invariant
 	return terms, comp
 }
 
@@ -365,9 +361,9 @@ func assertSortedMethods(list []*Func) {
 // byUniqueMethodName method lists can be sorted by their unique method names.
 type byUniqueMethodName []*Func
 
-func (a byUniqueMethodName) Len() int           { return len(a) }
-func (a byUniqueMethodName) Less(i, j int) bool { return a[i].less(&a[j].object) }
-func (a byUniqueMethodName) Swap(i, j int)      { a[i], a[j] = a[j], a[i] }
+func (a byUniqueMethodName) Len() int		{ return len(a) }
+func (a byUniqueMethodName) Less(i, j int) bool	{ return a[i].less(&a[j].object) }
+func (a byUniqueMethodName) Swap(i, j int)	{ a[i], a[j] = a[j], a[i] }
 
 // invalidTypeSet is a singleton type set to signal an invalid type set
 // due to an error. It's also a valid empty type set, so consumers of
@@ -392,13 +388,13 @@ func computeUnionTypeSet(check *Checker, unionSets map[*Union]*_TypeSet, pos syn
 			// For now we don't permit type parameters as constraints.
 			assert(!isTypeParam(t.typ))
 			terms = computeInterfaceTypeSet(check, pos, ui).terms
-		} else if u == Typ[Invalid] {
+		} else if !isValid(u) {
 			continue
 		} else {
 			if t.tilde && !Identical(t.typ, u) {
 				// There is no underlying type which is t.typ.
 				// The corresponding type set is empty.
-				t = nil // ∅ term
+				t = nil	// ∅ term
 			}
 			terms = termlist{(*term)(t)}
 		}

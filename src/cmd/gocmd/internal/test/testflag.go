@@ -50,6 +50,7 @@ func init() {
 	cf.StringVar(&testCPUProfile, "cpuprofile", "", "")
 	cf.Bool("failfast", false, "")
 	cf.StringVar(&testFuzz, "fuzz", "", "")
+	cf.Bool("fullpath", false, "")
 	cf.StringVar(&testList, "list", "", "")
 	cf.StringVar(&testMemProfile, "memprofile", "", "")
 	cf.String("memprofilerate", "", "")
@@ -60,15 +61,17 @@ func init() {
 	cf.String("run", "", "")
 	cf.Bool("short", false, "")
 	cf.String("skip", "", "")
-	cf.DurationVar(&testTimeout, "timeout", 10*time.Minute, "")
+	cf.DurationVar(&testTimeout, "timeout", 10*time.Minute, "")	// known to cmd/dist
 	cf.String("fuzztime", "", "")
 	cf.String("fuzzminimizetime", "", "")
 	cf.StringVar(&testTrace, "trace", "", "")
 	cf.Var(&testV, "v", "")
 	cf.Var(&testShuffle, "shuffle", "")
 
-	for name := range passFlagToTest {
-		cf.Var(cf.Lookup(name).Value, "test."+name, "")
+	for name, ok := range passFlagToTest {
+		if ok {
+			cf.Var(cf.Lookup(name).Value, "test."+name, "")
+		}
 	}
 }
 
@@ -106,9 +109,9 @@ func (f *outputdirFlag) getAbs() string {
 // pass no flags to the vet binary, and by default, it runs all
 // analyzers.
 type vetFlag struct {
-	explicit bool
-	off      bool
-	flags    []string // passed to vet when invoked automatically during 'go test'
+	explicit	bool
+	off		bool
+	flags		[]string	// passed to vet when invoked automatically during 'go test'
 }
 
 func (f *vetFlag) String() string {
@@ -153,8 +156,8 @@ func (f *vetFlag) Set(value string) error {
 		case "off":
 			single = arg
 			*f = vetFlag{
-				explicit: true,
-				off:      true,
+				explicit:	true,
+				off:		true,
 			}
 			continue
 		default:
@@ -174,8 +177,8 @@ func (f *vetFlag) Set(value string) error {
 }
 
 type shuffleFlag struct {
-	on   bool
-	seed *int64
+	on	bool
+	seed	*int64
 }
 
 func (f *shuffleFlag) String() string {
@@ -238,7 +241,7 @@ func testFlags(args []string) (packageNames, passToTest []string) {
 		f, remainingArgs, err := cmdflag.ParseOne(&CmdTest.Flag, args)
 
 		wasAfterFlagWithoutValue := afterFlagWithoutValue
-		afterFlagWithoutValue = false // provisionally
+		afterFlagWithoutValue = false	// provisionally
 
 		if errors.Is(err, flag.ErrHelp) {
 			exitWithUsage()
@@ -278,7 +281,7 @@ func testFlags(args []string) (packageNames, passToTest []string) {
 
 			inPkgList = true
 			packageNames = append(packageNames, nf.RawArg)
-			args = remainingArgs // Consume the package name.
+			args = remainingArgs	// Consume the package name.
 			continue
 		}
 

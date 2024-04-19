@@ -7,11 +7,11 @@ package modindex
 import (
 	"github.com/bir3/gocompiler/src/cmd/gocmd/internal/base"
 	"github.com/bir3/gocompiler/src/cmd/gocmd/internal/fsys"
-	"github.com/bir3/gocompiler/src/cmd/gocmd/internal/par"
 	"github.com/bir3/gocompiler/src/cmd/gocmd/internal/str"
 	"encoding/json"
 	"errors"
 	"fmt"
+	"github.com/bir3/gocompiler/src/go/build"
 	"github.com/bir3/gocompiler/src/go/doc"
 	"github.com/bir3/gocompiler/src/go/scanner"
 	"github.com/bir3/gocompiler/src/go/token"
@@ -23,12 +23,12 @@ import (
 // moduleWalkErr returns filepath.SkipDir if the directory isn't relevant
 // when indexing a module or generating a filehash, ErrNotIndexed,
 // if the module shouldn't be indexed, and nil otherwise.
-func moduleWalkErr(modroot string, path string, info fs.FileInfo, err error) error {
+func moduleWalkErr(root string, path string, info fs.FileInfo, err error) error {
 	if err != nil {
 		return ErrNotIndexed
 	}
 	// stop at module boundaries
-	if info.IsDir() && path != modroot {
+	if info.IsDir() && path != root {
 		if fi, err := fsys.Stat(filepath.Join(path, "go.mod")); err == nil && !fi.IsDir() {
 			return filepath.SkipDir
 		}
@@ -52,18 +52,23 @@ func moduleWalkErr(modroot string, path string, info fs.FileInfo, err error) err
 func indexModule(modroot string) ([]byte, error) {
 	fsys.Trace("indexModule", modroot)
 	var packages []*rawPackage
-	err := fsys.Walk(modroot, func(path string, info fs.FileInfo, err error) error {
-		if err := moduleWalkErr(modroot, path, info, err); err != nil {
+
+	// If the root itself is a symlink to a directory,
+	// we want to follow it (see https://go.dev/issue/50807).
+	// Add a trailing separator to force that to happen.
+	root := str.WithFilePathSeparator(modroot)
+	err := fsys.Walk(root, func(path string, info fs.FileInfo, err error) error {
+		if err := moduleWalkErr(root, path, info, err); err != nil {
 			return err
 		}
 
 		if !info.IsDir() {
 			return nil
 		}
-		if !str.HasFilePathPrefix(path, modroot) {
+		if !strings.HasPrefix(path, root) {
 			panic(fmt.Errorf("path %v in walk doesn't have modroot %v as prefix", path, modroot))
 		}
-		rel := str.TrimFilePathPrefix(path, modroot)
+		rel := path[len(root):]
 		packages = append(packages, importRaw(modroot, rel))
 		return nil
 	})
@@ -85,16 +90,16 @@ func indexPackage(modroot, pkgdir string) []byte {
 // rawPackage holds the information from each package that's needed to
 // fill a build.Package once the context is available.
 type rawPackage struct {
-	error string
-	dir   string // directory containing package sources, relative to the module root
+	error	string
+	dir	string	// directory containing package sources, relative to the module root
 
 	// Source files
-	sourceFiles []*rawFile
+	sourceFiles	[]*rawFile
 }
 
 type parseError struct {
-	ErrorList   *scanner.ErrorList
-	ErrorString string
+	ErrorList	*scanner.ErrorList
+	ErrorString	string
 }
 
 // parseErrorToString converts the error from parsing the file into a string
@@ -114,7 +119,7 @@ func parseErrorToString(err error) string {
 	}
 	s, err := json.Marshal(p)
 	if err != nil {
-		panic(err) // This should be impossible because scanner.Error contains only strings and ints.
+		panic(err)	// This should be impossible because scanner.Error contains only strings and ints.
 	}
 	return string(s)
 }
@@ -142,32 +147,31 @@ func parseErrorFromString(s string) error {
 // rawFile is the struct representation of the file holding all
 // information in its fields.
 type rawFile struct {
-	error      string
-	parseError string
+	error		string
+	parseError	string
 
-	name                 string
-	synopsis             string // doc.Synopsis of package comment... Compute synopsis on all of these?
-	pkgName              string
-	ignoreFile           bool   // starts with _ or . or should otherwise always be ignored
-	binaryOnly           bool   // cannot be rebuilt from source (has //go:binary-only-package comment)
-	cgoDirectives        string // the #cgo directive lines in the comment on import "C"
-	goBuildConstraint    string
-	plusBuildConstraints []string
-	imports              []rawImport
-	embeds               []embed
+	name			string
+	synopsis		string	// doc.Synopsis of package comment... Compute synopsis on all of these?
+	pkgName			string
+	ignoreFile		bool	// starts with _ or . or should otherwise always be ignored
+	binaryOnly		bool	// cannot be rebuilt from source (has //go:binary-only-package comment)
+	cgoDirectives		string	// the #cgo directive lines in the comment on import "C"
+	goBuildConstraint	string
+	plusBuildConstraints	[]string
+	imports			[]rawImport
+	embeds			[]embed
+	directives		[]build.Directive
 }
 
 type rawImport struct {
-	path     string
-	position token.Position
+	path		string
+	position	token.Position
 }
 
 type embed struct {
-	pattern  string
-	position token.Position
+	pattern		string
+	position	token.Position
 }
-
-var pkgcache par.Cache // for packages not in modcache
 
 // importRaw fills the rawPackage from the package files in srcDir.
 // dir is the package's path relative to the modroot.
@@ -181,7 +185,7 @@ func importRaw(modroot, reldir string) *rawPackage {
 	// We still haven't checked
 	// that p.dir directory exists. This is the right time to do that check.
 	// We can't do it earlier, because we want to gather partial information for the
-	// non-nil *Package returned when an error occurs.
+	// non-nil *build.Package returned when an error occurs.
 	// We need to do this before we return early on FindOnly flag.
 	if !isDir(absdir) {
 		// package was not found
@@ -225,10 +229,11 @@ func importRaw(modroot, reldir string) *rawPackage {
 			continue
 		}
 		rf := &rawFile{
-			name:                 name,
-			goBuildConstraint:    info.goBuildConstraint,
-			plusBuildConstraints: info.plusBuildConstraints,
-			binaryOnly:           info.binaryOnly,
+			name:			name,
+			goBuildConstraint:	info.goBuildConstraint,
+			plusBuildConstraints:	info.plusBuildConstraints,
+			binaryOnly:		info.binaryOnly,
+			directives:		info.directives,
 		}
 		if info.parsed != nil {
 			rf.pkgName = info.parsed.Name.Name

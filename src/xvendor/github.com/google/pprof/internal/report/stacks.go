@@ -29,33 +29,33 @@ import (
 // Slices in StackSet and the types it contains are always non-nil,
 // which makes Javascript code that uses the JSON encoding less error-prone.
 type StackSet struct {
-	Total   int64         // Total value of the profile.
-	Scale   float64       // Multiplier to generate displayed value
-	Type    string        // Profile type. E.g., "cpu".
-	Unit    string        // One of "B", "s", "GCU", or "" (if unknown)
-	Stacks  []Stack       // List of stored stacks
-	Sources []StackSource // Mapping from source index to info
+	Total	int64		// Total value of the profile.
+	Scale	float64		// Multiplier to generate displayed value
+	Type	string		// Profile type. E.g., "cpu".
+	Unit	string		// One of "B", "s", "GCU", or "" (if unknown)
+	Stacks	[]Stack		// List of stored stacks
+	Sources	[]StackSource	// Mapping from source index to info
 }
 
 // Stack holds a single stack instance.
 type Stack struct {
-	Value   int64 // Total value for all samples of this stack.
-	Sources []int // Indices in StackSet.Sources (callers before callees).
+	Value	int64	// Total value for all samples of this stack.
+	Sources	[]int	// Indices in StackSet.Sources (callers before callees).
 }
 
 // StackSource holds function/location info for a stack entry.
 type StackSource struct {
-	FullName   string
-	FileName   string
-	UniqueName string // Disambiguates functions with same names
-	Inlined    bool   // If true this source was inlined into its caller
+	FullName	string
+	FileName	string
+	UniqueName	string	// Disambiguates functions with same names
+	Inlined		bool	// If true this source was inlined into its caller
 
 	// Alternative names to display (with decreasing lengths) to make text fit.
 	// Guaranteed to be non-empty.
-	Display []string
+	Display	[]string
 
 	// Regular expression (anchored) that matches exactly FullName.
-	RE string
+	RE	string
 
 	// Places holds the list of stack slots where this source occurs.
 	// In particular, if [a,b] is an element in Places,
@@ -65,20 +65,20 @@ type StackSource struct {
 	// StackSource. In case of recursion, Places will contain the outer-most
 	// entry in the recursive stack. E.g., if stack S has source X at positions
 	// 4,6,9,10, the Places entry for X will contain [S,4].
-	Places []StackSlot
+	Places	[]StackSlot
 
 	// Combined count of stacks where this source is the leaf.
-	Self int64
+	Self	int64
 
 	// Color number to use for this source.
 	// Colors with high numbers than supported may be treated as zero.
-	Color int
+	Color	int
 }
 
 // StackSlot identifies a particular StackSlot.
 type StackSlot struct {
-	Stack int // Index in StackSet.Stacks
-	Pos   int // Index in Stack.Sources
+	Stack	int	// Index in StackSet.Stacks
+	Pos	int	// Index in Stack.Sources
 }
 
 // Stacks returns a StackSet for the profile in rpt.
@@ -92,12 +92,12 @@ func (rpt *Report) Stacks() StackSet {
 		scale *= rpt.options.Ratio
 	}
 	s := &StackSet{
-		Total:   rpt.total,
-		Scale:   scale,
-		Type:    rpt.options.SampleType,
-		Unit:    unit,
-		Stacks:  []Stack{},       // Ensure non-nil
-		Sources: []StackSource{}, // Ensure non-nil
+		Total:		rpt.total,
+		Scale:		scale,
+		Type:		rpt.options.SampleType,
+		Unit:		unit,
+		Stacks:		[]Stack{},		// Ensure non-nil
+		Sources:	[]StackSource{},	// Ensure non-nil
 	}
 	s.makeInitialStacks(rpt)
 	s.fillPlaces()
@@ -107,10 +107,10 @@ func (rpt *Report) Stacks() StackSet {
 
 func (s *StackSet) makeInitialStacks(rpt *Report) {
 	type key struct {
-		line    profile.Line
-		inlined bool
+		line	profile.Line
+		inlined	bool
 	}
-	srcs := map[key]int{} // Sources identified so far.
+	srcs := map[key]int{}	// Sources identified so far.
 	seenFunctions := map[string]bool{}
 	unknownIndex := 1
 	getSrc := func(line profile.Line, inlined bool) int {
@@ -118,7 +118,7 @@ func (s *StackSet) makeInitialStacks(rpt *Report) {
 		if i, ok := srcs[k]; ok {
 			return i
 		}
-		x := StackSource{Places: []StackSlot{}} // Ensure Places is non-nil
+		x := StackSource{Places: []StackSlot{}}	// Ensure Places is non-nil
 		if fn := line.Function; fn != nil {
 			x.FullName = fn.Name
 			x.FileName = fn.Filename
@@ -144,14 +144,14 @@ func (s *StackSet) makeInitialStacks(rpt *Report) {
 
 	// Synthesized root location that will be placed at the beginning of each stack.
 	s.Sources = []StackSource{{
-		FullName: "root",
-		Display:  []string{"root"},
-		Places:   []StackSlot{},
+		FullName:	"root",
+		Display:	[]string{"root"},
+		Places:		[]StackSlot{},
 	}}
 
 	for _, sample := range rpt.prof.Sample {
 		value := rpt.options.SampleValue(sample.Value)
-		stack := Stack{Value: value, Sources: []int{0}} // Start with the root
+		stack := Stack{Value: value, Sources: []int{0}}	// Start with the root
 
 		// Note: we need to reverse the order in the produced stack.
 		for i := len(sample.Location) - 1; i >= 0; i-- {

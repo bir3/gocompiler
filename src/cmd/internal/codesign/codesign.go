@@ -36,8 +36,8 @@ import (
 // points to the data.
 
 const (
-	pageSizeBits = 12
-	pageSize     = 1 << pageSizeBits
+	pageSizeBits	= 12
+	pageSize	= 1 << pageSizeBits
 )
 
 const LC_CODE_SIGNATURE = 0x1d
@@ -46,35 +46,35 @@ const LC_CODE_SIGNATURE = 0x1d
 // https://opensource.apple.com/source/xnu/xnu-4903.270.47/osfmk/kern/cs_blobs.h
 
 const (
-	CSMAGIC_REQUIREMENT        = 0xfade0c00 // single Requirement blob
-	CSMAGIC_REQUIREMENTS       = 0xfade0c01 // Requirements vector (internal requirements)
-	CSMAGIC_CODEDIRECTORY      = 0xfade0c02 // CodeDirectory blob
-	CSMAGIC_EMBEDDED_SIGNATURE = 0xfade0cc0 // embedded form of signature data
-	CSMAGIC_DETACHED_SIGNATURE = 0xfade0cc1 // multi-arch collection of embedded signatures
+	CSMAGIC_REQUIREMENT		= 0xfade0c00	// single Requirement blob
+	CSMAGIC_REQUIREMENTS		= 0xfade0c01	// Requirements vector (internal requirements)
+	CSMAGIC_CODEDIRECTORY		= 0xfade0c02	// CodeDirectory blob
+	CSMAGIC_EMBEDDED_SIGNATURE	= 0xfade0cc0	// embedded form of signature data
+	CSMAGIC_DETACHED_SIGNATURE	= 0xfade0cc1	// multi-arch collection of embedded signatures
 
-	CSSLOT_CODEDIRECTORY = 0 // slot index for CodeDirectory
+	CSSLOT_CODEDIRECTORY	= 0	// slot index for CodeDirectory
 )
 
 const (
-	CS_HASHTYPE_SHA1             = 1
-	CS_HASHTYPE_SHA256           = 2
-	CS_HASHTYPE_SHA256_TRUNCATED = 3
-	CS_HASHTYPE_SHA384           = 4
+	CS_HASHTYPE_SHA1		= 1
+	CS_HASHTYPE_SHA256		= 2
+	CS_HASHTYPE_SHA256_TRUNCATED	= 3
+	CS_HASHTYPE_SHA384		= 4
 )
 
 const (
-	CS_EXECSEG_MAIN_BINARY     = 0x1   // executable segment denotes main binary
-	CS_EXECSEG_ALLOW_UNSIGNED  = 0x10  // allow unsigned pages (for debugging)
-	CS_EXECSEG_DEBUGGER        = 0x20  // main binary is debugger
-	CS_EXECSEG_JIT             = 0x40  // JIT enabled
-	CS_EXECSEG_SKIP_LV         = 0x80  // skip library validation
-	CS_EXECSEG_CAN_LOAD_CDHASH = 0x100 // can bless cdhash for execution
-	CS_EXECSEG_CAN_EXEC_CDHASH = 0x200 // can execute blessed cdhash
+	CS_EXECSEG_MAIN_BINARY		= 0x1	// executable segment denotes main binary
+	CS_EXECSEG_ALLOW_UNSIGNED	= 0x10	// allow unsigned pages (for debugging)
+	CS_EXECSEG_DEBUGGER		= 0x20	// main binary is debugger
+	CS_EXECSEG_JIT			= 0x40	// JIT enabled
+	CS_EXECSEG_SKIP_LV		= 0x80	// skip library validation
+	CS_EXECSEG_CAN_LOAD_CDHASH	= 0x100	// can bless cdhash for execution
+	CS_EXECSEG_CAN_EXEC_CDHASH	= 0x200	// can execute blessed cdhash
 )
 
 type Blob struct {
-	typ    uint32 // type of entry
-	offset uint32 // offset of entry
+	typ	uint32	// type of entry
+	offset	uint32	// offset of entry
 	// data follows
 }
 
@@ -87,9 +87,9 @@ func (b *Blob) put(out []byte) []byte {
 const blobSize = 2 * 4
 
 type SuperBlob struct {
-	magic  uint32 // magic number
-	length uint32 // total length of SuperBlob
-	count  uint32 // number of index entries following
+	magic	uint32	// magic number
+	length	uint32	// total length of SuperBlob
+	count	uint32	// number of index entries following
 	// blobs []Blob
 }
 
@@ -103,27 +103,27 @@ func (s *SuperBlob) put(out []byte) []byte {
 const superBlobSize = 3 * 4
 
 type CodeDirectory struct {
-	magic         uint32 // magic number (CSMAGIC_CODEDIRECTORY)
-	length        uint32 // total length of CodeDirectory blob
-	version       uint32 // compatibility version
-	flags         uint32 // setup and mode flags
-	hashOffset    uint32 // offset of hash slot element at index zero
-	identOffset   uint32 // offset of identifier string
-	nSpecialSlots uint32 // number of special hash slots
-	nCodeSlots    uint32 // number of ordinary (code) hash slots
-	codeLimit     uint32 // limit to main image signature range
-	hashSize      uint8  // size of each hash in bytes
-	hashType      uint8  // type of hash (cdHashType* constants)
-	_pad1         uint8  // unused (must be zero)
-	pageSize      uint8  // log2(page size in bytes); 0 => infinite
-	_pad2         uint32 // unused (must be zero)
-	scatterOffset uint32
-	teamOffset    uint32
-	_pad3         uint32
-	codeLimit64   uint64
-	execSegBase   uint64
-	execSegLimit  uint64
-	execSegFlags  uint64
+	magic		uint32	// magic number (CSMAGIC_CODEDIRECTORY)
+	length		uint32	// total length of CodeDirectory blob
+	version		uint32	// compatibility version
+	flags		uint32	// setup and mode flags
+	hashOffset	uint32	// offset of hash slot element at index zero
+	identOffset	uint32	// offset of identifier string
+	nSpecialSlots	uint32	// number of special hash slots
+	nCodeSlots	uint32	// number of ordinary (code) hash slots
+	codeLimit	uint32	// limit to main image signature range
+	hashSize	uint8	// size of each hash in bytes
+	hashType	uint8	// type of hash (cdHashType* constants)
+	_pad1		uint8	// unused (must be zero)
+	pageSize	uint8	// log2(page size in bytes); 0 => infinite
+	_pad2		uint32	// unused (must be zero)
+	scatterOffset	uint32
+	teamOffset	uint32
+	_pad3		uint32
+	codeLimit64	uint64
+	execSegBase	uint64
+	execSegLimit	uint64
+	execSegFlags	uint64
 	// data follows
 }
 
@@ -156,10 +156,10 @@ const codeDirectorySize = 13*4 + 4 + 4*8
 
 // CodeSigCmd is Mach-O LC_CODE_SIGNATURE load command.
 type CodeSigCmd struct {
-	Cmd      uint32 // LC_CODE_SIGNATURE
-	Cmdsize  uint32 // sizeof this command (16)
-	Dataoff  uint32 // file offset of data in __LINKEDIT segment
-	Datasize uint32 // file size of data in __LINKEDIT segment
+	Cmd		uint32	// LC_CODE_SIGNATURE
+	Cmdsize		uint32	// sizeof this command (16)
+	Dataoff		uint32	// file offset of data in __LINKEDIT segment
+	Datasize	uint32	// file size of data in __LINKEDIT segment
 }
 
 func FindCodeSigCmd(f *macho.File) (CodeSigCmd, bool) {
@@ -179,10 +179,10 @@ func FindCodeSigCmd(f *macho.File) (CodeSigCmd, bool) {
 	return CodeSigCmd{}, false
 }
 
-func put32be(b []byte, x uint32) []byte { binary.BigEndian.PutUint32(b, x); return b[4:] }
-func put64be(b []byte, x uint64) []byte { binary.BigEndian.PutUint64(b, x); return b[8:] }
-func put8(b []byte, x uint8) []byte     { b[0] = x; return b[1:] }
-func puts(b, s []byte) []byte           { n := copy(b, s); return b[n:] }
+func put32be(b []byte, x uint32) []byte	{ binary.BigEndian.PutUint32(b, x); return b[4:] }
+func put64be(b []byte, x uint64) []byte	{ binary.BigEndian.PutUint64(b, x); return b[8:] }
+func put8(b []byte, x uint8) []byte	{ b[0] = x; return b[1:] }
+func puts(b, s []byte) []byte		{ n := copy(b, s); return b[n:] }
 
 // Size computes the size of the code signature.
 // id is the identifier used for signing (a field in CodeDirectory blob, which
@@ -210,28 +210,28 @@ func Sign(out []byte, data io.Reader, id string, codeSize, textOff, textSize int
 
 	// emit blob headers
 	sb := SuperBlob{
-		magic:  CSMAGIC_EMBEDDED_SIGNATURE,
-		length: uint32(sz),
-		count:  1,
+		magic:	CSMAGIC_EMBEDDED_SIGNATURE,
+		length:	uint32(sz),
+		count:	1,
 	}
 	blob := Blob{
-		typ:    CSSLOT_CODEDIRECTORY,
-		offset: superBlobSize + blobSize,
+		typ:	CSSLOT_CODEDIRECTORY,
+		offset:	superBlobSize + blobSize,
 	}
 	cdir := CodeDirectory{
-		magic:        CSMAGIC_CODEDIRECTORY,
-		length:       uint32(sz) - (superBlobSize + blobSize),
-		version:      0x20400,
-		flags:        0x20002, // adhoc | linkerSigned
-		hashOffset:   uint32(hashOff),
-		identOffset:  uint32(idOff),
-		nCodeSlots:   uint32(nhashes),
-		codeLimit:    uint32(codeSize),
-		hashSize:     notsha256.Size,
-		hashType:     CS_HASHTYPE_SHA256,
-		pageSize:     uint8(pageSizeBits),
-		execSegBase:  uint64(textOff),
-		execSegLimit: uint64(textSize),
+		magic:		CSMAGIC_CODEDIRECTORY,
+		length:		uint32(sz) - (superBlobSize + blobSize),
+		version:	0x20400,
+		flags:		0x20002,	// adhoc | linkerSigned
+		hashOffset:	uint32(hashOff),
+		identOffset:	uint32(idOff),
+		nCodeSlots:	uint32(nhashes),
+		codeLimit:	uint32(codeSize),
+		hashSize:	notsha256.Size,
+		hashType:	CS_HASHTYPE_SHA256,
+		pageSize:	uint8(pageSizeBits),
+		execSegBase:	uint64(textOff),
+		execSegLimit:	uint64(textSize),
 	}
 	if isMain {
 		cdir.execSegFlags = CS_EXECSEG_MAIN_BINARY
@@ -269,7 +269,7 @@ func Sign(out []byte, data io.Reader, id string, codeSize, textOff, textSize int
 		h.Write(buf[:n])
 		b := h.Sum(nil)
 		for i := range b {
-			b[i] ^= 0xFF // convert notsha256 to sha256
+			b[i] ^= 0xFF	// convert notsha256 to sha256
 		}
 		outp = puts(outp, b[:])
 	}

@@ -6,7 +6,6 @@
 package quoted
 
 import (
-	"github.com/bir3/gocompiler/src/cmd/asm/flag"
 	"fmt"
 	"strings"
 	"unicode"
@@ -106,7 +105,6 @@ func Join(args []string) (string, error) {
 // It is useful for flags like cmd/link's -extldflags.
 type Flag []string
 
-var _ flag.Value = (*Flag)(nil)
 
 func (f *Flag) Set(v string) error {
 	fs, err := Split(v)

@@ -39,7 +39,7 @@ func zerorange(pp *objw.Progs, p *obj.Prog, off, cnt int64, _ *uint32) *obj.Prog
 
 	// Generate a loop of large clears.
 	if cnt > clearLoopCutoff {
-		ireg := int16(s390x.REGRT2) // register holds number of remaining loop iterations
+		ireg := int16(s390x.REGRT2)	// register holds number of remaining loop iterations
 		p = pp.Append(p, s390x.AMOVD, obj.TYPE_CONST, 0, cnt/256, obj.TYPE_REG, ireg, 0)
 		p = pp.Append(p, s390x.ACLEAR, obj.TYPE_CONST, 0, 256, obj.TYPE_MEM, reg, off)
 		pl := p

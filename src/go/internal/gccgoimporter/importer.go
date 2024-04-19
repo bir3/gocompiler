@@ -3,7 +3,7 @@
 // license that can be found in the LICENSE file.
 
 // Package gccgoimporter implements Import for gccgo-generated object files.
-package gccgoimporter // import "go/internal/gccgoimporter"
+package gccgoimporter	// import "go/internal/gccgoimporter"
 
 import (
 	"bytes"
@@ -19,9 +19,9 @@ import (
 
 // A PackageInit describes an imported package that needs initialization.
 type PackageInit struct {
-	Name     string // short package name
-	InitFunc string // name of init function
-	Priority int    // priority of init function, see InitData.Priority
+	Name		string	// short package name
+	InitFunc	string	// name of init function
+	Priority	int	// priority of init function, see InitData.Priority
 }
 
 // The gccgo-specific init data for a package.
@@ -29,12 +29,12 @@ type InitData struct {
 	// Initialization priority of this package relative to other packages.
 	// This is based on the maximum depth of the package's dependency graph;
 	// it is guaranteed to be greater than that of its dependencies.
-	Priority int
+	Priority	int
 
 	// The list of packages which this package depends on to be initialized,
 	// including itself if needed. This is the subset of the transitive closure of
 	// the package's dependencies that need initialization.
-	Inits []PackageInit
+	Inits	[]PackageInit
 }
 
 // Locate the file from which to read export data.
@@ -62,12 +62,12 @@ func findExportFile(searchpaths []string, pkgpath string) (string, error) {
 }
 
 const (
-	gccgov1Magic    = "v1;\n"
-	gccgov2Magic    = "v2;\n"
-	gccgov3Magic    = "v3;\n"
-	goimporterMagic = "\n$$ "
-	archiveMagic    = "!<ar"
-	aixbigafMagic   = "<big"
+	gccgov1Magic	= "v1;\n"
+	gccgov2Magic	= "v2;\n"
+	gccgov3Magic	= "v3;\n"
+	goimporterMagic	= "\n$$ "
+	archiveMagic	= "!<ar"
+	aixbigafMagic	= "<big"
 )
 
 // Opens the export data file at the given path. If this is an ELF file,

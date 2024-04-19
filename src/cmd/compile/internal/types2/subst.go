@@ -62,28 +62,28 @@ func (check *Checker) subst(pos syntax.Pos, typ Type, smap substMap, expanding *
 	// common cases
 	switch t := typ.(type) {
 	case *Basic:
-		return typ // nothing to do
+		return typ	// nothing to do
 	case *TypeParam:
 		return smap.lookup(t)
 	}
 
 	// general case
 	subst := subster{
-		pos:       pos,
-		smap:      smap,
-		check:     check,
-		expanding: expanding,
-		ctxt:      ctxt,
+		pos:		pos,
+		smap:		smap,
+		check:		check,
+		expanding:	expanding,
+		ctxt:		ctxt,
 	}
 	return subst.typ(typ)
 }
 
 type subster struct {
-	pos       syntax.Pos
-	smap      substMap
-	check     *Checker // nil if called via Instantiate
-	expanding *Named   // if non-nil, the instance that is being expanded
-	ctxt      *Context
+	pos		syntax.Pos
+	smap		substMap
+	check		*Checker	// nil if called via Instantiate
+	expanding	*Named		// if non-nil, the instance that is being expanded
+	ctxt		*Context
 }
 
 func (subst *subster) typ(typ Type) Type {
@@ -94,6 +94,18 @@ func (subst *subster) typ(typ Type) Type {
 
 	case *Basic:
 		// nothing to do
+
+	case *Alias:
+		rhs := subst.typ(t.fromRHS)
+		if rhs != t.fromRHS {
+			// This branch cannot be reached because the RHS of an alias
+			// may only contain type parameters of an enclosing function.
+			// Such function bodies are never "instantiated" and thus
+			// substitution is not called on locally declared alias types.
+			// TODO(gri) adjust once parameterized aliases are supported
+			panic("unreachable for unparameterized aliases")
+			// return subst.check.newAlias(t.obj, rhs)
+		}
 
 	case *Array:
 		elem := subst.typOrNil(t.elem)
@@ -143,14 +155,14 @@ func (subst *subster) typ(typ Type) Type {
 		results := subst.tuple(t.results)
 		if params != t.params || results != t.results {
 			return &Signature{
-				rparams: t.rparams,
+				rparams:	t.rparams,
 				// TODO(gri) why can't we nil out tparams here, rather than in instantiate?
-				tparams: t.tparams,
+				tparams:	t.tparams,
 				// instantiated signatures have a nil scope
-				recv:     recv,
-				params:   params,
-				results:  results,
-				variadic: t.variadic,
+				recv:		recv,
+				params:		params,
+				results:	results,
+				variadic:	t.variadic,
 			}
 		}
 
@@ -169,7 +181,9 @@ func (subst *subster) typ(typ Type) Type {
 		if mcopied || ecopied {
 			iface := subst.check.newInterface()
 			iface.embeddeds = embeddeds
+			iface.embedPos = t.embedPos
 			iface.implicit = t.implicit
+			assert(t.complete)	// otherwise we are copying incomplete data
 			iface.complete = t.complete
 			// If we've changed the interface type, we may need to replace its
 			// receiver if the receiver type is the original interface. Receivers of
@@ -185,6 +199,11 @@ func (subst *subster) typ(typ Type) Type {
 			// need to create new interface methods to hold the instantiated
 			// receiver. This is handled by Named.expandUnderlying.
 			iface.methods, _ = replaceRecvType(methods, t, iface)
+
+			// If check != nil, check.newInterface will have saved the interface for later completion.
+			if subst.check == nil {	// golang/go#61561: all newly created interfaces must be completed
+				iface.typeSet()
+			}
 			return iface
 		}
 
@@ -223,12 +242,12 @@ func (subst *subster) typ(typ Type) Type {
 		n := orig.TypeParams().Len()
 		if n == 0 {
 			dump(">>> %s is not parameterized", t)
-			return t // type is not parameterized
+			return t	// type is not parameterized
 		}
 
 		var newTArgs []Type
 		if t.TypeArgs().Len() != n {
-			return Typ[Invalid] // error reported elsewhere
+			return Typ[Invalid]	// error reported elsewhere
 		}
 
 		// already instantiated
@@ -251,7 +270,7 @@ func (subst *subster) typ(typ Type) Type {
 
 		if newTArgs == nil {
 			dump(">>> nothing to substitute in %s", t)
-			return t // nothing to substitute
+			return t	// nothing to substitute
 		}
 
 		// Create a new instance and populate the context to avoid endless

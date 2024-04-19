@@ -15,16 +15,16 @@ import (
 // while constructing a build list. BuildListError prints the chain
 // of requirements to the module where the error occurred.
 type BuildListError struct {
-	Err   error
-	stack []buildListErrorElem
+	Err	error
+	stack	[]buildListErrorElem
 }
 
 type buildListErrorElem struct {
-	m module.Version
+	m	module.Version
 
 	// nextReason is the reason this module depends on the next module in the
 	// stack. Typically either "requires", or "updating to".
-	nextReason string
+	nextReason	string
 }
 
 // NewBuildListError returns a new BuildListError wrapping an error that
@@ -43,16 +43,16 @@ func NewBuildListError(err error, path []module.Version, isVersionChange func(fr
 			reason = "updating to"
 		}
 		stack = append(stack, buildListErrorElem{
-			m:          path[0],
-			nextReason: reason,
+			m:		path[0],
+			nextReason:	reason,
 		})
 		path = path[1:]
 	}
 	stack = append(stack, buildListErrorElem{m: path[0]})
 
 	return &BuildListError{
-		Err:   err,
-		stack: stack,
+		Err:	err,
+		stack:	stack,
 	}
 }
 
@@ -101,3 +101,5 @@ func (e *BuildListError) Error() string {
 	}
 	return b.String()
 }
+
+func (e *BuildListError) Unwrap() error	{ return e.Err }

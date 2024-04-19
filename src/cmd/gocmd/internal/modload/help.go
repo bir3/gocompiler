@@ -7,8 +7,8 @@ package modload
 import "github.com/bir3/gocompiler/src/cmd/gocmd/internal/base"
 
 var HelpModules = &base.Command{
-	UsageLine: "modules",
-	Short:     "modules, module versions, and more",
+	UsageLine:	"modules",
+	Short:		"modules, module versions, and more",
 	Long: `
 Modules are how Go manages dependencies.
 
@@ -35,8 +35,8 @@ and https://golang.org/ref/mod#private-module-privacy for more information.
 }
 
 var HelpGoMod = &base.Command{
-	UsageLine: "go.mod",
-	Short:     "the go.mod file",
+	UsageLine:	"go.mod",
+	Short:		"the go.mod file",
 	Long: `
 A module version is defined by a tree of source files, with a go.mod
 file in its root. When the go command is run, it looks in the current

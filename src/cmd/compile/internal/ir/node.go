@@ -52,7 +52,6 @@ type Node interface {
 	//  0 means the node is not typechecked
 	//  1 means the node is completely typechecked
 	//  2 means typechecking of the node is in progress
-	//  3 means the node has its type from types2, but may need transformation
 	Typecheck() uint8
 	SetTypecheck(x uint8)
 	NonNil() bool
@@ -109,101 +108,99 @@ type Op uint8
 
 // Node ops.
 const (
-	OXXX Op = iota
+	OXXX	Op	= iota
 
 	// names
-	ONAME // var or func name
+	ONAME	// var or func name
 	// Unnamed arg or return value: f(int, string) (int, error) { etc }
 	// Also used for a qualified package identifier that hasn't been resolved yet.
 	ONONAME
-	OTYPE    // type name
-	OLITERAL // literal
-	ONIL     // nil
+	OTYPE		// type name
+	OLITERAL	// literal
+	ONIL		// nil
 
 	// expressions
-	OADD          // X + Y
-	OSUB          // X - Y
-	OOR           // X | Y
-	OXOR          // X ^ Y
-	OADDSTR       // +{List} (string addition, list elements are strings)
-	OADDR         // &X
-	OANDAND       // X && Y
-	OAPPEND       // append(Args); after walk, X may contain elem type descriptor
-	OBYTES2STR    // Type(X) (Type is string, X is a []byte)
-	OBYTES2STRTMP // Type(X) (Type is string, X is a []byte, ephemeral)
-	ORUNES2STR    // Type(X) (Type is string, X is a []rune)
-	OSTR2BYTES    // Type(X) (Type is []byte, X is a string)
-	OSTR2BYTESTMP // Type(X) (Type is []byte, X is a string, ephemeral)
-	OSTR2RUNES    // Type(X) (Type is []rune, X is a string)
-	OSLICE2ARR    // Type(X) (Type is [N]T, X is a []T)
-	OSLICE2ARRPTR // Type(X) (Type is *[N]T, X is a []T)
+	OADD		// X + Y
+	OSUB		// X - Y
+	OOR		// X | Y
+	OXOR		// X ^ Y
+	OADDSTR		// +{List} (string addition, list elements are strings)
+	OADDR		// &X
+	OANDAND		// X && Y
+	OAPPEND		// append(Args); after walk, X may contain elem type descriptor
+	OBYTES2STR	// Type(X) (Type is string, X is a []byte)
+	OBYTES2STRTMP	// Type(X) (Type is string, X is a []byte, ephemeral)
+	ORUNES2STR	// Type(X) (Type is string, X is a []rune)
+	OSTR2BYTES	// Type(X) (Type is []byte, X is a string)
+	OSTR2BYTESTMP	// Type(X) (Type is []byte, X is a string, ephemeral)
+	OSTR2RUNES	// Type(X) (Type is []rune, X is a string)
+	OSLICE2ARR	// Type(X) (Type is [N]T, X is a []T)
+	OSLICE2ARRPTR	// Type(X) (Type is *[N]T, X is a []T)
 	// X = Y or (if Def=true) X := Y
 	// If Def, then Init includes a DCL node for X.
 	OAS
 	// Lhs = Rhs (x, y, z = a, b, c) or (if Def=true) Lhs := Rhs
 	// If Def, then Init includes DCL nodes for Lhs
 	OAS2
-	OAS2DOTTYPE // Lhs = Rhs (x, ok = I.(int))
-	OAS2FUNC    // Lhs = Rhs (x, y = f())
-	OAS2MAPR    // Lhs = Rhs (x, ok = m["foo"])
-	OAS2RECV    // Lhs = Rhs (x, ok = <-c)
-	OASOP       // X AsOp= Y (x += y)
-	OCALL       // X(Args) (function call, method call or type conversion)
+	OAS2DOTTYPE	// Lhs = Rhs (x, ok = I.(int))
+	OAS2FUNC	// Lhs = Rhs (x, y = f())
+	OAS2MAPR	// Lhs = Rhs (x, ok = m["foo"])
+	OAS2RECV	// Lhs = Rhs (x, ok = <-c)
+	OASOP		// X AsOp= Y (x += y)
+	OCALL		// X(Args) (function call, method call or type conversion)
 
 	// OCALLFUNC, OCALLMETH, and OCALLINTER have the same structure.
 	// Prior to walk, they are: X(Args), where Args is all regular arguments.
 	// After walk, if any argument whose evaluation might requires temporary variable,
 	// that temporary variable will be pushed to Init, Args will contains an updated
 	// set of arguments.
-	OCALLFUNC  // X(Args) (function call f(args))
-	OCALLMETH  // X(Args) (direct method call x.Method(args))
-	OCALLINTER // X(Args) (interface method call x.Method(args))
-	OCAP       // cap(X)
-	OCLOSE     // close(X)
-	OCLOSURE   // func Type { Func.Closure.Body } (func literal)
-	OCOMPLIT   // Type{List} (composite literal, not yet lowered to specific form)
-	OMAPLIT    // Type{List} (composite literal, Type is map)
-	OSTRUCTLIT // Type{List} (composite literal, Type is struct)
-	OARRAYLIT  // Type{List} (composite literal, Type is array)
-	OSLICELIT  // Type{List} (composite literal, Type is slice), Len is slice length.
-	OPTRLIT    // &X (X is composite literal)
-	OCONV      // Type(X) (type conversion)
-	OCONVIFACE // Type(X) (type conversion, to interface)
-	OCONVIDATA // Builds a data word to store X in an interface. Equivalent to IDATA(CONVIFACE(X)). Is an ir.ConvExpr.
-	OCONVNOP   // Type(X) (type conversion, no effect)
-	OCOPY      // copy(X, Y)
-	ODCL       // var X (declares X of type X.Type)
+	OCALLFUNC	// X(Args) (function call f(args))
+	OCALLMETH	// X(Args) (direct method call x.Method(args))
+	OCALLINTER	// X(Args) (interface method call x.Method(args))
+	OCAP		// cap(X)
+	OCLEAR		// clear(X)
+	OCLOSE		// close(X)
+	OCLOSURE	// func Type { Func.Closure.Body } (func literal)
+	OCOMPLIT	// Type{List} (composite literal, not yet lowered to specific form)
+	OMAPLIT		// Type{List} (composite literal, Type is map)
+	OSTRUCTLIT	// Type{List} (composite literal, Type is struct)
+	OARRAYLIT	// Type{List} (composite literal, Type is array)
+	OSLICELIT	// Type{List} (composite literal, Type is slice), Len is slice length.
+	OPTRLIT		// &X (X is composite literal)
+	OCONV		// Type(X) (type conversion)
+	OCONVIFACE	// Type(X) (type conversion, to interface)
+	OCONVNOP	// Type(X) (type conversion, no effect)
+	OCOPY		// copy(X, Y)
+	ODCL		// var X (declares X of type X.Type)
 
 	// Used during parsing but don't last.
-	ODCLFUNC  // func f() or func (r) f()
-	ODCLCONST // const pi = 3.14
-	ODCLTYPE  // type Int int or type Int = int
+	ODCLFUNC	// func f() or func (r) f()
 
-	ODELETE        // delete(Args)
-	ODOT           // X.Sel (X is of struct type)
-	ODOTPTR        // X.Sel (X is of pointer to struct type)
-	ODOTMETH       // X.Sel (X is non-interface, Sel is method name)
-	ODOTINTER      // X.Sel (X is interface, Sel is method name)
-	OXDOT          // X.Sel (before rewrite to one of the preceding)
-	ODOTTYPE       // X.Ntype or X.Type (.Ntype during parsing, .Type once resolved); after walk, Itab contains address of interface type descriptor and Itab.X contains address of concrete type descriptor
-	ODOTTYPE2      // X.Ntype or X.Type (.Ntype during parsing, .Type once resolved; on rhs of OAS2DOTTYPE); after walk, Itab contains address of interface type descriptor
-	OEQ            // X == Y
-	ONE            // X != Y
-	OLT            // X < Y
-	OLE            // X <= Y
-	OGE            // X >= Y
-	OGT            // X > Y
-	ODEREF         // *X
-	OINDEX         // X[Index] (index of array or slice)
-	OINDEXMAP      // X[Index] (index of map)
-	OKEY           // Key:Value (key:value in struct/array/map literal)
-	OSTRUCTKEY     // Field:Value (key:value in struct literal, after type checking)
-	OLEN           // len(X)
-	OMAKE          // make(Args) (before type checking converts to one of the following)
-	OMAKECHAN      // make(Type[, Len]) (type is chan)
-	OMAKEMAP       // make(Type[, Len]) (type is map)
-	OMAKESLICE     // make(Type[, Len[, Cap]]) (type is slice)
-	OMAKESLICECOPY // makeslicecopy(Type, Len, Cap) (type is slice; Len is length and Cap is the copied from slice)
+	ODELETE		// delete(Args)
+	ODOT		// X.Sel (X is of struct type)
+	ODOTPTR		// X.Sel (X is of pointer to struct type)
+	ODOTMETH	// X.Sel (X is non-interface, Sel is method name)
+	ODOTINTER	// X.Sel (X is interface, Sel is method name)
+	OXDOT		// X.Sel (before rewrite to one of the preceding)
+	ODOTTYPE	// X.Ntype or X.Type (.Ntype during parsing, .Type once resolved); after walk, Itab contains address of interface type descriptor and Itab.X contains address of concrete type descriptor
+	ODOTTYPE2	// X.Ntype or X.Type (.Ntype during parsing, .Type once resolved; on rhs of OAS2DOTTYPE); after walk, Itab contains address of interface type descriptor
+	OEQ		// X == Y
+	ONE		// X != Y
+	OLT		// X < Y
+	OLE		// X <= Y
+	OGE		// X >= Y
+	OGT		// X > Y
+	ODEREF		// *X
+	OINDEX		// X[Index] (index of array or slice)
+	OINDEXMAP	// X[Index] (index of map)
+	OKEY		// Key:Value (key:value in struct/array/map literal)
+	OSTRUCTKEY	// Field:Value (key:value in struct literal, after type checking)
+	OLEN		// len(X)
+	OMAKE		// make(Args) (before type checking converts to one of the following)
+	OMAKECHAN	// make(Type[, Len]) (type is chan)
+	OMAKEMAP	// make(Type[, Len]) (type is map)
+	OMAKESLICE	// make(Type[, Len[, Cap]]) (type is slice)
+	OMAKESLICECOPY	// makeslicecopy(Type, Len, Cap) (type is slice; Len is length and Cap is the copied from slice)
 	// OMAKESLICECOPY is created by the order pass and corresponds to:
 	//  s = make(Type, Len); copy(s, Cap)
 	//
@@ -211,53 +208,52 @@ const (
 	//
 	// This node is created so the walk pass can optimize this pattern which would
 	// otherwise be hard to detect after the order pass.
-	OMUL              // X * Y
-	ODIV              // X / Y
-	OMOD              // X % Y
-	OLSH              // X << Y
-	ORSH              // X >> Y
-	OAND              // X & Y
-	OANDNOT           // X &^ Y
-	ONEW              // new(X); corresponds to calls to new in source code
-	ONOT              // !X
-	OBITNOT           // ^X
-	OPLUS             // +X
-	ONEG              // -X
-	OOROR             // X || Y
-	OPANIC            // panic(X)
-	OPRINT            // print(List)
-	OPRINTN           // println(List)
-	OPAREN            // (X)
-	OSEND             // Chan <- Value
-	OSLICE            // X[Low : High] (X is untypechecked or slice)
-	OSLICEARR         // X[Low : High] (X is pointer to array)
-	OSLICESTR         // X[Low : High] (X is string)
-	OSLICE3           // X[Low : High : Max] (X is untypedchecked or slice)
-	OSLICE3ARR        // X[Low : High : Max] (X is pointer to array)
-	OSLICEHEADER      // sliceheader{Ptr, Len, Cap} (Ptr is unsafe.Pointer, Len is length, Cap is capacity)
-	OSTRINGHEADER     // stringheader{Ptr, Len} (Ptr is unsafe.Pointer, Len is length)
-	ORECOVER          // recover()
-	ORECOVERFP        // recover(Args) w/ explicit FP argument
-	ORECV             // <-X
-	ORUNESTR          // Type(X) (Type is string, X is rune)
-	OSELRECV2         // like OAS2: Lhs = Rhs where len(Lhs)=2, len(Rhs)=1, Rhs[0].Op = ORECV (appears as .Var of OCASE)
-	OREAL             // real(X)
-	OIMAG             // imag(X)
-	OCOMPLEX          // complex(X, Y)
-	OALIGNOF          // unsafe.Alignof(X)
-	OOFFSETOF         // unsafe.Offsetof(X)
-	OSIZEOF           // unsafe.Sizeof(X)
-	OUNSAFEADD        // unsafe.Add(X, Y)
-	OUNSAFESLICE      // unsafe.Slice(X, Y)
-	OUNSAFESLICEDATA  // unsafe.SliceData(X)
-	OUNSAFESTRING     // unsafe.String(X, Y)
-	OUNSAFESTRINGDATA // unsafe.StringData(X)
-	OMETHEXPR         // X(Args) (method expression T.Method(args), first argument is the method receiver)
-	OMETHVALUE        // X.Sel   (method expression t.Method, not called)
+	OMUL			// X * Y
+	ODIV			// X / Y
+	OMOD			// X % Y
+	OLSH			// X << Y
+	ORSH			// X >> Y
+	OAND			// X & Y
+	OANDNOT			// X &^ Y
+	ONEW			// new(X); corresponds to calls to new in source code
+	ONOT			// !X
+	OBITNOT			// ^X
+	OPLUS			// +X
+	ONEG			// -X
+	OOROR			// X || Y
+	OPANIC			// panic(X)
+	OPRINT			// print(List)
+	OPRINTLN		// println(List)
+	OPAREN			// (X)
+	OSEND			// Chan <- Value
+	OSLICE			// X[Low : High] (X is untypechecked or slice)
+	OSLICEARR		// X[Low : High] (X is pointer to array)
+	OSLICESTR		// X[Low : High] (X is string)
+	OSLICE3			// X[Low : High : Max] (X is untypedchecked or slice)
+	OSLICE3ARR		// X[Low : High : Max] (X is pointer to array)
+	OSLICEHEADER		// sliceheader{Ptr, Len, Cap} (Ptr is unsafe.Pointer, Len is length, Cap is capacity)
+	OSTRINGHEADER		// stringheader{Ptr, Len} (Ptr is unsafe.Pointer, Len is length)
+	ORECOVER		// recover()
+	ORECOVERFP		// recover(Args) w/ explicit FP argument
+	ORECV			// <-X
+	ORUNESTR		// Type(X) (Type is string, X is rune)
+	OSELRECV2		// like OAS2: Lhs = Rhs where len(Lhs)=2, len(Rhs)=1, Rhs[0].Op = ORECV (appears as .Var of OCASE)
+	OMIN			// min(List)
+	OMAX			// max(List)
+	OREAL			// real(X)
+	OIMAG			// imag(X)
+	OCOMPLEX		// complex(X, Y)
+	OUNSAFEADD		// unsafe.Add(X, Y)
+	OUNSAFESLICE		// unsafe.Slice(X, Y)
+	OUNSAFESLICEDATA	// unsafe.SliceData(X)
+	OUNSAFESTRING		// unsafe.String(X, Y)
+	OUNSAFESTRINGDATA	// unsafe.StringData(X)
+	OMETHEXPR		// X(Args) (method expression T.Method(args), first argument is the method receiver)
+	OMETHVALUE		// X.Sel   (method expression t.Method, not called)
 
 	// statements
-	OBLOCK // { List } (block of code)
-	OBREAK // break [Label]
+	OBLOCK	// { List } (block of code)
+	OBREAK	// break [Label]
 	// OCASE:  case List: Body (List==nil means default)
 	//   For OTYPESW, List is a OTYPE node for the specified type (or OLITERAL
 	//   for nil) or an ODYNAMICTYPE indicating a runtime type for generics.
@@ -265,50 +261,50 @@ const (
 	//   ONAME for the version of the type-switch variable with the specified
 	//   type.
 	OCASE
-	OCONTINUE // continue [Label]
-	ODEFER    // defer Call
-	OFALL     // fallthrough
-	OFOR      // for Init; Cond; Post { Body }
-	OGOTO     // goto Label
-	OIF       // if Init; Cond { Then } else { Else }
-	OLABEL    // Label:
-	OGO       // go Call
-	ORANGE    // for Key, Value = range X { Body }
-	ORETURN   // return Results
-	OSELECT   // select { Cases }
-	OSWITCH   // switch Init; Expr { Cases }
+	OCONTINUE	// continue [Label]
+	ODEFER		// defer Call
+	OFALL		// fallthrough
+	OFOR		// for Init; Cond; Post { Body }
+	OGOTO		// goto Label
+	OIF		// if Init; Cond { Then } else { Else }
+	OLABEL		// Label:
+	OGO		// go Call
+	ORANGE		// for Key, Value = range X { Body }
+	ORETURN		// return Results
+	OSELECT		// select { Cases }
+	OSWITCH		// switch Init; Expr { Cases }
 	// OTYPESW:  X := Y.(type) (appears as .Tag of OSWITCH)
 	//   X is nil if there is no type-switch variable
 	OTYPESW
-	OFUNCINST // instantiation of a generic function
 
 	// misc
 	// intermediate representation of an inlined call.  Uses Init (assignments
 	// for the captured variables, parameters, retvars, & INLMARK op),
 	// Body (body of the inlined function), and ReturnVars (list of
 	// return values)
-	OINLCALL       // intermediary representation of an inlined call.
-	OEFACE         // itable and data words of an empty-interface value.
-	OITAB          // itable word of an interface value.
-	OIDATA         // data word of an interface value in X
-	OSPTR          // base pointer of a slice or string. Bounded==1 means known non-nil.
-	OCFUNC         // reference to c function pointer (not go func value)
-	OCHECKNIL      // emit code to ensure pointer/interface not nil
-	ORESULT        // result of a function call; Xoffset is stack offset
-	OINLMARK       // start of an inlined body, with file/line of caller. Xoffset is an index into the inline tree.
-	OLINKSYMOFFSET // offset within a name
-	OJUMPTABLE     // A jump table structure for implementing dense expression switches
+	OINLCALL		// intermediary representation of an inlined call.
+	OMAKEFACE		// construct an interface value from rtype/itab and data pointers
+	OITAB			// rtype/itab pointer of an interface value
+	OIDATA			// data pointer of an interface value
+	OSPTR			// base pointer of a slice or string. Bounded==1 means known non-nil.
+	OCFUNC			// reference to c function pointer (not go func value)
+	OCHECKNIL		// emit code to ensure pointer/interface not nil
+	ORESULT			// result of a function call; Xoffset is stack offset
+	OINLMARK		// start of an inlined body, with file/line of caller. Xoffset is an index into the inline tree.
+	OLINKSYMOFFSET		// offset within a name
+	OJUMPTABLE		// A jump table structure for implementing dense expression switches
+	OINTERFACESWITCH	// A type switch with interface cases
 
 	// opcodes for generics
-	ODYNAMICDOTTYPE  // x = i.(T) where T is a type parameter (or derived from a type parameter)
-	ODYNAMICDOTTYPE2 // x, ok = i.(T) where T is a type parameter (or derived from a type parameter)
-	ODYNAMICTYPE     // a type node for type switches (represents a dynamic target type for a type switch)
+	ODYNAMICDOTTYPE		// x = i.(T) where T is a type parameter (or derived from a type parameter)
+	ODYNAMICDOTTYPE2	// x, ok = i.(T) where T is a type parameter (or derived from a type parameter)
+	ODYNAMICTYPE		// a type node for type switches (represents a dynamic target type for a type switch)
 
 	// arch-specific opcodes
-	OTAILCALL    // tail call to another function
-	OGETG        // runtime.getg() (read g pointer)
-	OGETCALLERPC // runtime.getcallerpc() (continuation PC in caller frame)
-	OGETCALLERSP // runtime.getcallersp() (stack pointer in caller frame)
+	OTAILCALL	// tail call to another function
+	OGETG		// runtime.getg() (read g pointer)
+	OGETCALLERPC	// runtime.getcallerpc() (continuation PC in caller frame)
+	OGETCALLERSP	// runtime.getcallersp() (stack pointer in caller frame)
 
 	OEND
 )
@@ -323,10 +319,17 @@ func (op Op) IsCmp() bool {
 	return false
 }
 
-// Nodes is a pointer to a slice of *Node.
-// For fields that are not used in most nodes, this is used instead of
-// a slice to save space.
+// Nodes is a slice of Node.
 type Nodes []Node
+
+// ToNodes returns s as a slice of Nodes.
+func ToNodes[T Node](s []T) Nodes {
+	res := make(Nodes, len(s))
+	for i, n := range s {
+		res[i] = n
+	}
+	return res
+}
 
 // Append appends entries to Nodes.
 func (n *Nodes) Append(a ...Node) {
@@ -365,8 +368,8 @@ func (n Nodes) Copy() Nodes {
 // NameQueue is a FIFO queue of *Name. The zero value of NameQueue is
 // a ready-to-use empty queue.
 type NameQueue struct {
-	ring       []*Name
-	head, tail int
+	ring		[]*Name
+	head, tail	int
 }
 
 // Empty reports whether q contains no Names.
@@ -439,38 +442,31 @@ type PragmaFlag uint16
 
 const (
 	// Func pragmas.
-	Nointerface      PragmaFlag = 1 << iota
-	Noescape                    // func parameters don't escape
-	Norace                      // func must not have race detector annotations
-	Nosplit                     // func should not execute on separate stack
-	Noinline                    // func should not be inlined
-	NoCheckPtr                  // func should not be instrumented by checkptr
-	CgoUnsafeArgs               // treat a pointer to one arg as a pointer to them all
-	UintptrKeepAlive            // pointers converted to uintptr must be kept alive
-	UintptrEscapes              // pointers converted to uintptr escape
+	Nointerface		PragmaFlag	= 1 << iota
+	Noescape				// func parameters don't escape
+	Norace					// func must not have race detector annotations
+	Nosplit					// func should not execute on separate stack
+	Noinline				// func should not be inlined
+	NoCheckPtr				// func should not be instrumented by checkptr
+	CgoUnsafeArgs				// treat a pointer to one arg as a pointer to them all
+	UintptrKeepAlive			// pointers converted to uintptr must be kept alive
+	UintptrEscapes				// pointers converted to uintptr escape
 
 	// Runtime-only func pragmas.
 	// See ../../../../runtime/HACKING.md for detailed descriptions.
-	Systemstack        // func must run on system stack
-	Nowritebarrier     // emit compiler error instead of write barrier
-	Nowritebarrierrec  // error on write barrier in this or recursive callees
-	Yeswritebarrierrec // cancels Nowritebarrierrec in this function and callees
+	Systemstack		// func must run on system stack
+	Nowritebarrier		// emit compiler error instead of write barrier
+	Nowritebarrierrec	// error on write barrier in this or recursive callees
+	Yeswritebarrierrec	// cancels Nowritebarrierrec in this function and callees
 
 	// Go command pragmas
 	GoBuildPragma
 
-	RegisterParams // TODO(register args) remove after register abi is working
+	RegisterParams	// TODO(register args) remove after register abi is working
 
 )
 
-func AsNode(n types.Object) Node {
-	if n == nil {
-		return nil
-	}
-	return n.(Node)
-}
-
-var BlankNode Node
+var BlankNode *Name
 
 func IsConst(n Node, ct constant.Kind) bool {
 	return ConstType(n) == ct
@@ -478,9 +474,7 @@ func IsConst(n Node, ct constant.Kind) bool {
 
 // IsNil reports whether n represents the universal untyped zero value "nil".
 func IsNil(n Node) bool {
-	// Check n.Orig because constant propagation may produce typed nil constants,
-	// which don't exist in the Go spec.
-	return n != nil && Orig(n).Op() == ONIL
+	return n != nil && n.Op() == ONIL
 }
 
 func IsBlank(n Node) bool {
@@ -494,11 +488,6 @@ func IsBlank(n Node) bool {
 // n must be a function or a method.
 func IsMethod(n Node) bool {
 	return n.Type().Recv() != nil
-}
-
-func HasNamedResults(fn *Func) bool {
-	typ := fn.Type()
-	return typ.NumResults() > 0 && types.OrigSym(typ.Results().Field(0).Sym) != nil
 }
 
 // HasUniquePos reports whether n has a unique position that can be
@@ -590,8 +579,8 @@ func OuterValue(n Node) Node {
 }
 
 const (
-	EscUnknown = iota
-	EscNone    // Does not escape to heap, result, or parameters.
-	EscHeap    // Reachable from the heap
-	EscNever   // By construction will not escape.
+	EscUnknown	= iota
+	EscNone		// Does not escape to heap, result, or parameters.
+	EscHeap		// Reachable from the heap
+	EscNever	// By construction will not escape.
 )

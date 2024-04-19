@@ -158,9 +158,9 @@ func symbolizeMapping(source string, offset int64, syms func(string, string) ([]
 			fn := functions[name]
 			if fn == nil {
 				fn = &profile.Function{
-					ID:         uint64(len(p.Function) + 1),
-					Name:       name,
-					SystemName: name,
+					ID:		uint64(len(p.Function) + 1),
+					Name:		name,
+					SystemName:	name,
 				}
 				functions[name] = fn
 				p.Function = append(p.Function, fn)

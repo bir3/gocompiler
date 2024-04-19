@@ -12,6 +12,7 @@ import (
 	"sync"
 
 	"github.com/bir3/gocompiler/src/cmd/gocmd/internal/base"
+	"github.com/bir3/gocompiler/src/cmd/gocmd/internal/gover"
 	"github.com/bir3/gocompiler/src/cmd/gocmd/internal/modload"
 	"github.com/bir3/gocompiler/src/cmd/gocmd/internal/search"
 	"github.com/bir3/gocompiler/src/cmd/gocmd/internal/str"
@@ -24,10 +25,10 @@ import (
 // to which that argument may resolve..
 type query struct {
 	// raw is the original argument, to be printed in error messages.
-	raw string
+	raw	string
 
 	// rawVersion is the portion of raw corresponding to version, if any
-	rawVersion string
+	rawVersion	string
 
 	// pattern is the part of the argument before "@" (or the whole argument
 	// if there is no "@"), which may match either packages (preferred) or
@@ -35,34 +36,34 @@ type query struct {
 	//
 	// The pattern may also be "-u", for the synthetic query representing the -u
 	// (“upgrade”)flag.
-	pattern string
+	pattern	string
 
 	// patternIsLocal indicates whether pattern is restricted to match only paths
 	// local to the main module, such as absolute filesystem paths or paths
 	// beginning with './'.
 	//
 	// A local pattern must resolve to one or more packages in the main module.
-	patternIsLocal bool
+	patternIsLocal	bool
 
 	// version is the part of the argument after "@", or an implied
 	// "upgrade" or "patch" if there is no "@". version specifies the
 	// module version to get.
-	version string
+	version	string
 
 	// matchWildcard, if non-nil, reports whether pattern, which must be a
 	// wildcard (with the substring "..."), matches the given package or module
 	// path.
-	matchWildcard func(path string) bool
+	matchWildcard	func(path string) bool
 
-	// canMatchWildcard, if non-nil, reports whether the module with the given
+	// canMatchWildcardInModule, if non-nil, reports whether the module with the given
 	// path could lexically contain a package matching pattern, which must be a
 	// wildcard.
-	canMatchWildcardInModule func(mPath string) bool
+	canMatchWildcardInModule	func(mPath string) bool
 
 	// conflict is the first query identified as incompatible with this one.
 	// conflict forces one or more of the modules matching this query to a
 	// version that does not match version.
-	conflict *query
+	conflict	*query
 
 	// candidates is a list of sets of alternatives for a path that matches (or
 	// contains packages that match) the pattern. The query can be resolved by
@@ -81,12 +82,12 @@ type query struct {
 	//
 	// The special query for the "-u" flag results in one set for each
 	// otherwise-unconstrained package that has available upgrades.
-	candidates   []pathSet
-	candidatesMu sync.Mutex
+	candidates	[]pathSet
+	candidatesMu	sync.Mutex
 
 	// pathSeen ensures that only one pathSet is added to the query per
 	// unique path.
-	pathSeen sync.Map
+	pathSeen	sync.Map
 
 	// resolved contains the set of modules whose versions have been determined by
 	// this query, in the order in which they were determined.
@@ -94,11 +95,11 @@ type query struct {
 	// The resolver examines the candidate sets for each query, resolving one
 	// module per candidate set in a way that attempts to avoid obvious conflicts
 	// between the versions resolved by different queries.
-	resolved []module.Version
+	resolved	[]module.Version
 
 	// matchesPackages is true if the resolved modules provide at least one
-	// package mathcing q.pattern.
-	matchesPackages bool
+	// package matching q.pattern.
+	matchesPackages	bool
 }
 
 // A pathSet describes the possible options for resolving a specific path
@@ -111,13 +112,13 @@ type pathSet struct {
 	//
 	// Each path must occur only once in a query's candidate sets, and the path is
 	// added implicitly to each pathSet returned to pathOnce.
-	path string
+	path	string
 
 	// pkgMods is a set of zero or more modules, each of which contains the
 	// package with the indicated path. Due to the requirement that imports be
 	// unambiguous, only one such module can be in the build list, and all others
 	// must be excluded.
-	pkgMods []module.Version
+	pkgMods	[]module.Version
 
 	// mod is either the zero Version, or a module that does not contain any
 	// packages matching the query but for which the module path itself
@@ -127,13 +128,13 @@ type pathSet struct {
 	// prefer to match a query to a package rather than just a module. Also,
 	// unlike the modules in pkgMods, this module does not inherently exclude
 	// any other module in pkgMods.
-	mod module.Version
+	mod	module.Version
 
-	err error
+	err	error
 }
 
 // errSet returns a pathSet containing the given error.
-func errSet(err error) pathSet { return pathSet{err: err} }
+func errSet(err error) pathSet	{ return pathSet{err: err} }
 
 // newQuery returns a new query parsed from the raw argument,
 // which must be either path or path@version.
@@ -155,11 +156,11 @@ func newQuery(raw string) (*query, error) {
 	}
 
 	q := &query{
-		raw:            raw,
-		rawVersion:     rawVers,
-		pattern:        pattern,
-		patternIsLocal: filepath.IsAbs(pattern) || search.IsRelativePath(pattern),
-		version:        version,
+		raw:		raw,
+		rawVersion:	rawVers,
+		pattern:	pattern,
+		patternIsLocal:	filepath.IsAbs(pattern) || search.IsRelativePath(pattern),
+		version:	version,
 	}
 	if strings.Contains(q.pattern, "...") {
 		q.matchWildcard = pkgpattern.MatchPattern(q.pattern)
@@ -190,8 +191,8 @@ func (q *query) validate() error {
 			// request that we remove all module requirements, leaving only the main
 			// module and standard library. Perhaps we should implement that someday.
 			return &modload.QueryUpgradesAllError{
-				MainModules: modload.MainModules.Versions(),
-				Query:       q.version,
+				MainModules:	modload.MainModules.Versions(),
+				Query:		q.version,
 			}
 		}
 	}
@@ -206,7 +207,7 @@ func (q *query) validate() error {
 }
 
 // String returns the original argument from which q was parsed.
-func (q *query) String() string { return q.raw }
+func (q *query) String() string	{ return q.raw }
 
 // ResolvedString returns a string describing m as a resolved match for q.
 func (q *query) ResolvedString(m module.Version) string {
@@ -229,7 +230,7 @@ func (q *query) isWildcard() bool {
 
 // matchesPath reports whether the given path matches q.pattern.
 func (q *query) matchesPath(path string) bool {
-	if q.matchWildcard != nil {
+	if q.matchWildcard != nil && !gover.IsToolchain(path) {
 		return q.matchWildcard(path)
 	}
 	return path == q.pattern
@@ -238,6 +239,9 @@ func (q *query) matchesPath(path string) bool {
 // canMatchInModule reports whether the given module path can potentially
 // contain q.pattern.
 func (q *query) canMatchInModule(mPath string) bool {
+	if gover.IsToolchain(mPath) {
+		return false
+	}
 	if q.canMatchWildcardInModule != nil {
 		return q.canMatchWildcardInModule(mPath)
 	}
@@ -308,24 +312,24 @@ func reportConflict(pq *query, m module.Version, conflict versionReason) {
 	pq.conflict = conflict.reason
 
 	proposed := versionReason{
-		version: m.Version,
-		reason:  pq,
+		version:	m.Version,
+		reason:		pq,
 	}
 	if pq.isWildcard() && !conflict.reason.isWildcard() {
 		// Prefer to report the specific path first and the wildcard second.
 		proposed, conflict = conflict, proposed
 	}
 	reportError(pq, &conflictError{
-		mPath:    m.Path,
-		proposed: proposed,
-		conflict: conflict,
+		mPath:		m.Path,
+		proposed:	proposed,
+		conflict:	conflict,
 	})
 }
 
 type conflictError struct {
-	mPath    string
-	proposed versionReason
-	conflict versionReason
+	mPath		string
+	proposed	versionReason
+	conflict	versionReason
 }
 
 func (e *conflictError) Error() string {

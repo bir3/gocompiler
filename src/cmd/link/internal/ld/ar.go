@@ -44,8 +44,8 @@ import (
 )
 
 const (
-	SARMAG  = 8
-	SAR_HDR = 16 + 44
+	SARMAG	= 8
+	SAR_HDR	= 16 + 44
 )
 
 const (
@@ -53,13 +53,13 @@ const (
 )
 
 type ArHdr struct {
-	name string
-	date string
-	uid  string
-	gid  string
-	mode string
-	size string
-	fmag string
+	name	string
+	date	string
+	uid	string
+	gid	string
+	mode	string
+	size	string
+	fmag	string
 }
 
 // pruneUndefsForWindows trims the list "undefs" of currently

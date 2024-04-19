@@ -19,7 +19,7 @@ import (
 // ldSection is an XCOFF section with its symbols.
 type ldSection struct {
 	xcoff.Section
-	sym loader.Sym
+	sym	loader.Sym
 }
 
 // TODO(brainman): maybe just add ReadAt method to bio.Reader instead of creating xcoffBiobuf
@@ -155,7 +155,6 @@ func Load(l *loader.Loader, arch *sys.Arch, localSymVersion int, input *bio.Read
 		}
 	}
 	return textp, nil
-
 }
 
 // Convert symbol xcoff type to sym.SymKind

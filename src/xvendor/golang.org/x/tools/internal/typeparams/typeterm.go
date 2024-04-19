@@ -10,14 +10,13 @@ import "github.com/bir3/gocompiler/src/go/types"
 
 // A term describes elementary type sets:
 //
-//   ∅:  (*term)(nil)     == ∅                      // set of no types (empty set)
-//   𝓤:  &term{}          == 𝓤                      // set of all types (𝓤niverse)
-//   T:  &term{false, T}  == {T}                    // set of type T
-//  ~t:  &term{true, t}   == {t' | under(t') == t}  // set of types with underlying type t
-//
+//	 ∅:  (*term)(nil)     == ∅                      // set of no types (empty set)
+//	 𝓤:  &term{}          == 𝓤                      // set of all types (𝓤niverse)
+//	 T:  &term{false, T}  == {T}                    // set of type T
+//	~t:  &term{true, t}   == {t' | under(t') == t}  // set of types with underlying type t
 type term struct {
-	tilde bool // valid if typ != nil
-	typ   types.Type
+	tilde	bool	// valid if typ != nil
+	typ	types.Type
 }
 
 func (x *term) String() string {
@@ -52,20 +51,20 @@ func (x *term) union(y *term) (_, _ *term) {
 	// easy cases
 	switch {
 	case x == nil && y == nil:
-		return nil, nil // ∅ ∪ ∅ == ∅
+		return nil, nil	// ∅ ∪ ∅ == ∅
 	case x == nil:
-		return y, nil // ∅ ∪ y == y
+		return y, nil	// ∅ ∪ y == y
 	case y == nil:
-		return x, nil // x ∪ ∅ == x
+		return x, nil	// x ∪ ∅ == x
 	case x.typ == nil:
-		return x, nil // 𝓤 ∪ y == 𝓤
+		return x, nil	// 𝓤 ∪ y == 𝓤
 	case y.typ == nil:
-		return y, nil // x ∪ 𝓤 == 𝓤
+		return y, nil	// x ∪ 𝓤 == 𝓤
 	}
 	// ∅ ⊂ x, y ⊂ 𝓤
 
 	if x.disjoint(y) {
-		return x, y // x ∪ y == (x, y) if x ∩ y == ∅
+		return x, y	// x ∪ y == (x, y) if x ∩ y == ∅
 	}
 	// x.typ == y.typ
 
@@ -84,16 +83,16 @@ func (x *term) intersect(y *term) *term {
 	// easy cases
 	switch {
 	case x == nil || y == nil:
-		return nil // ∅ ∩ y == ∅ and ∩ ∅ == ∅
+		return nil	// ∅ ∩ y == ∅ and ∩ ∅ == ∅
 	case x.typ == nil:
-		return y // 𝓤 ∩ y == y
+		return y	// 𝓤 ∩ y == y
 	case y.typ == nil:
-		return x // x ∩ 𝓤 == x
+		return x	// x ∩ 𝓤 == x
 	}
 	// ∅ ⊂ x, y ⊂ 𝓤
 
 	if x.disjoint(y) {
-		return nil // x ∩ y == ∅ if x ∩ y == ∅
+		return nil	// x ∩ y == ∅ if x ∩ y == ∅
 	}
 	// x.typ == y.typ
 
@@ -112,9 +111,9 @@ func (x *term) includes(t types.Type) bool {
 	// easy cases
 	switch {
 	case x == nil:
-		return false // t ∈ ∅ == false
+		return false	// t ∈ ∅ == false
 	case x.typ == nil:
-		return true // t ∈ 𝓤 == true
+		return true	// t ∈ 𝓤 == true
 	}
 	// ∅ ⊂ x ⊂ 𝓤
 
@@ -130,18 +129,18 @@ func (x *term) subsetOf(y *term) bool {
 	// easy cases
 	switch {
 	case x == nil:
-		return true // ∅ ⊆ y == true
+		return true	// ∅ ⊆ y == true
 	case y == nil:
-		return false // x ⊆ ∅ == false since x != ∅
+		return false	// x ⊆ ∅ == false since x != ∅
 	case y.typ == nil:
-		return true // x ⊆ 𝓤 == true
+		return true	// x ⊆ 𝓤 == true
 	case x.typ == nil:
-		return false // 𝓤 ⊆ y == false since y != 𝓤
+		return false	// 𝓤 ⊆ y == false since y != 𝓤
 	}
 	// ∅ ⊂ x, y ⊂ 𝓤
 
 	if x.disjoint(y) {
-		return false // x ⊆ y == false if x ∩ y == ∅
+		return false	// x ⊆ y == false if x ∩ y == ∅
 	}
 	// x.typ == y.typ
 

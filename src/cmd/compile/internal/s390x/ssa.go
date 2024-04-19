@@ -8,6 +8,7 @@ import (
 	"math"
 
 	"github.com/bir3/gocompiler/src/cmd/compile/internal/base"
+	"github.com/bir3/gocompiler/src/cmd/compile/internal/ir"
 	"github.com/bir3/gocompiler/src/cmd/compile/internal/logopt"
 	"github.com/bir3/gocompiler/src/cmd/compile/internal/ssa"
 	"github.com/bir3/gocompiler/src/cmd/compile/internal/ssagen"
@@ -26,7 +27,7 @@ func ssaMarkMoves(s *ssagen.State, b *ssa.Block) {
 		v := b.Values[i]
 		if flive && v.Op == ssa.OpS390XMOVDconst {
 			// The "mark" is any non-nil Aux value.
-			v.Aux = v
+			v.Aux = ssa.AuxMark
 		}
 		if v.Type.IsFlags() {
 			flive = false
@@ -183,7 +184,7 @@ func ssaGenValue(s *ssagen.State, v *ssa.Value) {
 		i := v.Aux.(s390x.RotateParams)
 		p := s.Prog(v.Op.Asm())
 		p.From = obj.Addr{Type: obj.TYPE_CONST, Offset: int64(i.Start)}
-		p.SetRestArgs([]obj.Addr{
+		p.AddRestSourceArgs([]obj.Addr{
 			{Type: obj.TYPE_CONST, Offset: int64(i.End)},
 			{Type: obj.TYPE_CONST, Offset: int64(i.Amount)},
 			{Type: obj.TYPE_REG, Reg: r2},
@@ -195,7 +196,7 @@ func ssaGenValue(s *ssagen.State, v *ssa.Value) {
 		i := v.Aux.(s390x.RotateParams)
 		p := s.Prog(v.Op.Asm())
 		p.From = obj.Addr{Type: obj.TYPE_CONST, Offset: int64(i.Start)}
-		p.SetRestArgs([]obj.Addr{
+		p.AddRestSourceArgs([]obj.Addr{
 			{Type: obj.TYPE_CONST, Offset: int64(i.End)},
 			{Type: obj.TYPE_CONST, Offset: int64(i.Amount)},
 			{Type: obj.TYPE_REG, Reg: r2},
@@ -566,13 +567,14 @@ func ssaGenValue(s *ssagen.State, v *ssa.Value) {
 		p := s.Prog(obj.ACALL)
 		p.To.Type = obj.TYPE_MEM
 		p.To.Name = obj.NAME_EXTERN
-		p.To.Sym = v.Aux.(*obj.LSym)
+		// AuxInt encodes how many buffer entries we need.
+		p.To.Sym = ir.Syms.GCWriteBarrier[v.AuxInt-1]
 	case ssa.OpS390XLoweredPanicBoundsA, ssa.OpS390XLoweredPanicBoundsB, ssa.OpS390XLoweredPanicBoundsC:
 		p := s.Prog(obj.ACALL)
 		p.To.Type = obj.TYPE_MEM
 		p.To.Name = obj.NAME_EXTERN
 		p.To.Sym = ssagen.BoundsCheckFunc[v.AuxInt]
-		s.UseArgs(16) // space used in callee args area by assembly stubs
+		s.UseArgs(16)	// space used in callee args area by assembly stubs
 	case ssa.OpS390XFLOGR, ssa.OpS390XPOPCNT,
 		ssa.OpS390XNEG, ssa.OpS390XNEGW,
 		ssa.OpS390XMOVWBR, ssa.OpS390XMOVDBR:
@@ -617,7 +619,7 @@ func ssaGenValue(s *ssagen.State, v *ssa.Value) {
 		if logopt.Enabled() {
 			logopt.LogOpt(v.Pos, "nilcheck", "genssa", v.Block.Func.Name)
 		}
-		if base.Debug.Nil != 0 && v.Pos.Line() > 1 { // v.Pos.Line()==1 in generated wrappers
+		if base.Debug.Nil != 0 && v.Pos.Line() > 1 {	// v.Pos.Line()==1 in generated wrappers
 			base.WarnfAt(v.Pos, "generated nil check")
 		}
 	case ssa.OpS390XMVC:
@@ -625,10 +627,10 @@ func ssaGenValue(s *ssagen.State, v *ssa.Value) {
 		p := s.Prog(s390x.AMVC)
 		p.From.Type = obj.TYPE_CONST
 		p.From.Offset = vo.Val64()
-		p.SetFrom3(obj.Addr{
-			Type:   obj.TYPE_MEM,
-			Reg:    v.Args[1].Reg(),
-			Offset: vo.Off64(),
+		p.AddRestSource(obj.Addr{
+			Type:	obj.TYPE_MEM,
+			Reg:	v.Args[1].Reg(),
+			Offset:	vo.Off64(),
 		})
 		p.To.Type = obj.TYPE_MEM
 		p.To.Reg = v.Args[0].Reg()
@@ -662,7 +664,7 @@ func ssaGenValue(s *ssagen.State, v *ssa.Value) {
 		mvc := s.Prog(s390x.AMVC)
 		mvc.From.Type = obj.TYPE_CONST
 		mvc.From.Offset = 256
-		mvc.SetFrom3(obj.Addr{Type: obj.TYPE_MEM, Reg: v.Args[1].Reg()})
+		mvc.AddRestSource(obj.Addr{Type: obj.TYPE_MEM, Reg: v.Args[1].Reg()})
 		mvc.To.Type = obj.TYPE_MEM
 		mvc.To.Reg = v.Args[0].Reg()
 
@@ -689,7 +691,7 @@ func ssaGenValue(s *ssagen.State, v *ssa.Value) {
 			mvc := s.Prog(s390x.AMVC)
 			mvc.From.Type = obj.TYPE_CONST
 			mvc.From.Offset = v.AuxInt
-			mvc.SetFrom3(obj.Addr{Type: obj.TYPE_MEM, Reg: v.Args[1].Reg()})
+			mvc.AddRestSource(obj.Addr{Type: obj.TYPE_MEM, Reg: v.Args[1].Reg()})
 			mvc.To.Type = obj.TYPE_MEM
 			mvc.To.Reg = v.Args[0].Reg()
 		}
@@ -757,7 +759,7 @@ func ssaGenValue(s *ssagen.State, v *ssa.Value) {
 		op.To.Type = obj.TYPE_MEM
 		op.To.Reg = v.Args[0].Reg()
 	case ssa.OpS390XLANfloor, ssa.OpS390XLAOfloor:
-		r := v.Args[0].Reg() // clobbered, assumed R1 in comments
+		r := v.Args[0].Reg()	// clobbered, assumed R1 in comments
 
 		// Round ptr down to nearest multiple of 4.
 		// ANDW $~3, R1
@@ -794,8 +796,8 @@ func ssaGenValue(s *ssagen.State, v *ssa.Value) {
 		// CS{,G} arg1, arg2, arg0
 		cs := s.Prog(v.Op.Asm())
 		cs.From.Type = obj.TYPE_REG
-		cs.From.Reg = v.Args[1].Reg() // old
-		cs.Reg = v.Args[2].Reg()      // new
+		cs.From.Reg = v.Args[1].Reg()	// old
+		cs.Reg = v.Args[2].Reg()	// new
 		cs.To.Type = obj.TYPE_MEM
 		cs.To.Reg = v.Args[0].Reg()
 		ssagen.AddAux(&cs.To, v)
@@ -838,8 +840,8 @@ func ssaGenValue(s *ssagen.State, v *ssa.Value) {
 		// CS{,G} ret, arg1, arg0
 		cs := s.Prog(v.Op.Asm())
 		cs.From.Type = obj.TYPE_REG
-		cs.From.Reg = v.Reg0()   // old
-		cs.Reg = v.Args[1].Reg() // new
+		cs.From.Reg = v.Reg0()		// old
+		cs.Reg = v.Args[1].Reg()	// new
 		cs.To.Type = obj.TYPE_MEM
 		cs.To.Reg = v.Args[0].Reg()
 		ssagen.AddAux(&cs.To, v)
@@ -898,9 +900,9 @@ func ssaGenBlock(s *ssagen.State, b, next *ssa.Block) {
 		// 1 if we should jump to deferreturn call
 		p := s.Br(s390x.ACIJ, b.Succs[1].Block())
 		p.From.Type = obj.TYPE_CONST
-		p.From.Offset = int64(s390x.NotEqual & s390x.NotUnordered) // unordered is not possible
+		p.From.Offset = int64(s390x.NotEqual & s390x.NotUnordered)	// unordered is not possible
 		p.Reg = s390x.REG_R3
-		p.SetFrom3Const(0)
+		p.AddRestSourceConst(0)
 		if b.Succs[0].Block() != next {
 			s.Br(s390x.ABR, b.Succs[0].Block())
 		}
@@ -935,19 +937,19 @@ func ssaGenBlock(s *ssagen.State, b, next *ssa.Block) {
 	case ssa.BlockS390XCGRJ, ssa.BlockS390XCRJ,
 		ssa.BlockS390XCLGRJ, ssa.BlockS390XCLRJ:
 		p.From.Type = obj.TYPE_CONST
-		p.From.Offset = int64(mask & s390x.NotUnordered) // unordered is not possible
+		p.From.Offset = int64(mask & s390x.NotUnordered)	// unordered is not possible
 		p.Reg = b.Controls[0].Reg()
-		p.SetFrom3Reg(b.Controls[1].Reg())
+		p.AddRestSourceReg(b.Controls[1].Reg())
 	case ssa.BlockS390XCGIJ, ssa.BlockS390XCIJ:
 		p.From.Type = obj.TYPE_CONST
-		p.From.Offset = int64(mask & s390x.NotUnordered) // unordered is not possible
+		p.From.Offset = int64(mask & s390x.NotUnordered)	// unordered is not possible
 		p.Reg = b.Controls[0].Reg()
-		p.SetFrom3Const(int64(int8(b.AuxInt)))
+		p.AddRestSourceConst(int64(int8(b.AuxInt)))
 	case ssa.BlockS390XCLGIJ, ssa.BlockS390XCLIJ:
 		p.From.Type = obj.TYPE_CONST
-		p.From.Offset = int64(mask & s390x.NotUnordered) // unordered is not possible
+		p.From.Offset = int64(mask & s390x.NotUnordered)	// unordered is not possible
 		p.Reg = b.Controls[0].Reg()
-		p.SetFrom3Const(int64(uint8(b.AuxInt)))
+		p.AddRestSourceConst(int64(uint8(b.AuxInt)))
 	default:
 		b.Fatalf("branch not implemented: %s", b.LongString())
 	}

@@ -22,15 +22,15 @@ import (
 )
 
 type CoverageMetaDataBuilder struct {
-	stab    stringtab.Writer
-	funcs   []funcDesc
-	tmp     []byte // temp work slice
-	h       hash.Hash
-	pkgpath uint32
-	pkgname uint32
-	modpath uint32
-	debug   bool
-	werr    error
+	stab	stringtab.Writer
+	funcs	[]funcDesc
+	tmp	[]byte	// temp work slice
+	h	hash.Hash
+	pkgpath	uint32
+	pkgname	uint32
+	modpath	uint32
+	debug	bool
+	werr	error
 }
 
 func NewCoverageMetaDataBuilder(pkgpath string, pkgname string, modulepath string) (*CoverageMetaDataBuilder, error) {
@@ -38,8 +38,8 @@ func NewCoverageMetaDataBuilder(pkgpath string, pkgname string, modulepath strin
 		return nil, fmt.Errorf("invalid empty package path")
 	}
 	x := &CoverageMetaDataBuilder{
-		tmp: make([]byte, 0, 256),
-		h:   md5.New(),
+		tmp:	make([]byte, 0, 256),
+		h:	md5.New(),
 	}
 	x.stab.InitWriter()
 	x.stab.Lookup("")
@@ -135,12 +135,12 @@ func (b *CoverageMetaDataBuilder) Emit(w io.WriteSeeker) ([16]byte, error) {
 	copy(digest[:], b.h.Sum(nil))
 	mh := coverage.MetaSymbolHeader{
 		// hash and length initially zero, will be back-patched
-		PkgPath:    uint32(b.pkgpath),
-		PkgName:    uint32(b.pkgname),
-		ModulePath: uint32(b.modpath),
-		NumFiles:   uint32(b.stab.Nentries()),
-		NumFuncs:   uint32(len(b.funcs)),
-		MetaHash:   digest,
+		PkgPath:	uint32(b.pkgpath),
+		PkgName:	uint32(b.pkgname),
+		ModulePath:	uint32(b.modpath),
+		NumFiles:	uint32(b.stab.Nentries()),
+		NumFuncs:	uint32(len(b.funcs)),
+		MetaHash:	digest,
 	}
 	if b.debug {
 		fmt.Fprintf(os.Stderr, "=-= writing header: %+v\n", mh)

@@ -29,141 +29,141 @@ const (
 	// Total amount of space to reserve at the start of the file
 	// for File Header, Auxiliary Header, and Section Headers.
 	// May waste some.
-	XCOFFHDRRESERVE = FILHSZ_64 + AOUTHSZ_EXEC64 + SCNHSZ_64*23
+	XCOFFHDRRESERVE	= FILHSZ_64 + AOUTHSZ_EXEC64 + SCNHSZ_64*23
 
 	// base on dump -o, then rounded from 32B to 64B to
 	// match worst case elf text section alignment on ppc64.
-	XCOFFSECTALIGN int64 = 64
+	XCOFFSECTALIGN	int64	= 64
 
 	// XCOFF binaries should normally have all its sections position-independent.
 	// However, this is not yet possible for .text because of some R_ADDR relocations
 	// inside RODATA symbols.
-	// .data and .bss are position-independent so their address start inside a unreachable
+	// .data and .bss are position-independent so their address start inside an unreachable
 	// segment during execution to force segfault if something is wrong.
-	XCOFFTEXTBASE = 0x100000000 // Start of text address
-	XCOFFDATABASE = 0x200000000 // Start of data address
+	XCOFFTEXTBASE	= 0x100000000	// Start of text address
+	XCOFFDATABASE	= 0x200000000	// Start of data address
 )
 
 // File Header
 type XcoffFileHdr64 struct {
-	Fmagic   uint16 // Target machine
-	Fnscns   uint16 // Number of sections
-	Ftimedat int32  // Time and date of file creation
-	Fsymptr  uint64 // Byte offset to symbol table start
-	Fopthdr  uint16 // Number of bytes in optional header
-	Fflags   uint16 // Flags
-	Fnsyms   int32  // Number of entries in symbol table
+	Fmagic		uint16	// Target machine
+	Fnscns		uint16	// Number of sections
+	Ftimedat	int32	// Time and date of file creation
+	Fsymptr		uint64	// Byte offset to symbol table start
+	Fopthdr		uint16	// Number of bytes in optional header
+	Fflags		uint16	// Flags
+	Fnsyms		int32	// Number of entries in symbol table
 }
 
 const (
-	U64_TOCMAGIC = 0767 // AIX 64-bit XCOFF
+	U64_TOCMAGIC = 0767	// AIX 64-bit XCOFF
 )
 
 // Flags that describe the type of the object file.
 const (
-	F_RELFLG    = 0x0001
-	F_EXEC      = 0x0002
-	F_LNNO      = 0x0004
-	F_FDPR_PROF = 0x0010
-	F_FDPR_OPTI = 0x0020
-	F_DSA       = 0x0040
-	F_VARPG     = 0x0100
-	F_DYNLOAD   = 0x1000
-	F_SHROBJ    = 0x2000
-	F_LOADONLY  = 0x4000
+	F_RELFLG	= 0x0001
+	F_EXEC		= 0x0002
+	F_LNNO		= 0x0004
+	F_FDPR_PROF	= 0x0010
+	F_FDPR_OPTI	= 0x0020
+	F_DSA		= 0x0040
+	F_VARPG		= 0x0100
+	F_DYNLOAD	= 0x1000
+	F_SHROBJ	= 0x2000
+	F_LOADONLY	= 0x4000
 )
 
 // Auxiliary Header
 type XcoffAoutHdr64 struct {
-	Omagic      int16    // Flags - Ignored If Vstamp Is 1
-	Ovstamp     int16    // Version
-	Odebugger   uint32   // Reserved For Debugger
-	Otextstart  uint64   // Virtual Address Of Text
-	Odatastart  uint64   // Virtual Address Of Data
-	Otoc        uint64   // Toc Address
-	Osnentry    int16    // Section Number For Entry Point
-	Osntext     int16    // Section Number For Text
-	Osndata     int16    // Section Number For Data
-	Osntoc      int16    // Section Number For Toc
-	Osnloader   int16    // Section Number For Loader
-	Osnbss      int16    // Section Number For Bss
-	Oalgntext   int16    // Max Text Alignment
-	Oalgndata   int16    // Max Data Alignment
-	Omodtype    [2]byte  // Module Type Field
-	Ocpuflag    uint8    // Bit Flags - Cputypes Of Objects
-	Ocputype    uint8    // Reserved for CPU type
-	Otextpsize  uint8    // Requested text page size
-	Odatapsize  uint8    // Requested data page size
-	Ostackpsize uint8    // Requested stack page size
-	Oflags      uint8    // Flags And TLS Alignment
-	Otsize      uint64   // Text Size In Bytes
-	Odsize      uint64   // Data Size In Bytes
-	Obsize      uint64   // Bss Size In Bytes
-	Oentry      uint64   // Entry Point Address
-	Omaxstack   uint64   // Max Stack Size Allowed
-	Omaxdata    uint64   // Max Data Size Allowed
-	Osntdata    int16    // Section Number For Tdata Section
-	Osntbss     int16    // Section Number For Tbss Section
-	Ox64flags   uint16   // Additional Flags For 64-Bit Objects
-	Oresv3a     int16    // Reserved
-	Oresv3      [2]int32 // Reserved
+	Omagic		int16		// Flags - Ignored If Vstamp Is 1
+	Ovstamp		int16		// Version
+	Odebugger	uint32		// Reserved For Debugger
+	Otextstart	uint64		// Virtual Address Of Text
+	Odatastart	uint64		// Virtual Address Of Data
+	Otoc		uint64		// Toc Address
+	Osnentry	int16		// Section Number For Entry Point
+	Osntext		int16		// Section Number For Text
+	Osndata		int16		// Section Number For Data
+	Osntoc		int16		// Section Number For Toc
+	Osnloader	int16		// Section Number For Loader
+	Osnbss		int16		// Section Number For Bss
+	Oalgntext	int16		// Max Text Alignment
+	Oalgndata	int16		// Max Data Alignment
+	Omodtype	[2]byte		// Module Type Field
+	Ocpuflag	uint8		// Bit Flags - Cputypes Of Objects
+	Ocputype	uint8		// Reserved for CPU type
+	Otextpsize	uint8		// Requested text page size
+	Odatapsize	uint8		// Requested data page size
+	Ostackpsize	uint8		// Requested stack page size
+	Oflags		uint8		// Flags And TLS Alignment
+	Otsize		uint64		// Text Size In Bytes
+	Odsize		uint64		// Data Size In Bytes
+	Obsize		uint64		// Bss Size In Bytes
+	Oentry		uint64		// Entry Point Address
+	Omaxstack	uint64		// Max Stack Size Allowed
+	Omaxdata	uint64		// Max Data Size Allowed
+	Osntdata	int16		// Section Number For Tdata Section
+	Osntbss		int16		// Section Number For Tbss Section
+	Ox64flags	uint16		// Additional Flags For 64-Bit Objects
+	Oresv3a		int16		// Reserved
+	Oresv3		[2]int32	// Reserved
 }
 
 // Section Header
 type XcoffScnHdr64 struct {
-	Sname    [8]byte // Section Name
-	Spaddr   uint64  // Physical Address
-	Svaddr   uint64  // Virtual Address
-	Ssize    uint64  // Section Size
-	Sscnptr  uint64  // File Offset To Raw Data
-	Srelptr  uint64  // File Offset To Relocation
-	Slnnoptr uint64  // File Offset To Line Numbers
-	Snreloc  uint32  // Number Of Relocation Entries
-	Snlnno   uint32  // Number Of Line Number Entries
-	Sflags   uint32  // flags
+	Sname		[8]byte	// Section Name
+	Spaddr		uint64	// Physical Address
+	Svaddr		uint64	// Virtual Address
+	Ssize		uint64	// Section Size
+	Sscnptr		uint64	// File Offset To Raw Data
+	Srelptr		uint64	// File Offset To Relocation
+	Slnnoptr	uint64	// File Offset To Line Numbers
+	Snreloc		uint32	// Number Of Relocation Entries
+	Snlnno		uint32	// Number Of Line Number Entries
+	Sflags		uint32	// flags
 }
 
 // Flags defining the section type.
 const (
-	STYP_DWARF  = 0x0010
-	STYP_TEXT   = 0x0020
-	STYP_DATA   = 0x0040
-	STYP_BSS    = 0x0080
-	STYP_EXCEPT = 0x0100
-	STYP_INFO   = 0x0200
-	STYP_TDATA  = 0x0400
-	STYP_TBSS   = 0x0800
-	STYP_LOADER = 0x1000
-	STYP_DEBUG  = 0x2000
-	STYP_TYPCHK = 0x4000
-	STYP_OVRFLO = 0x8000
+	STYP_DWARF	= 0x0010
+	STYP_TEXT	= 0x0020
+	STYP_DATA	= 0x0040
+	STYP_BSS	= 0x0080
+	STYP_EXCEPT	= 0x0100
+	STYP_INFO	= 0x0200
+	STYP_TDATA	= 0x0400
+	STYP_TBSS	= 0x0800
+	STYP_LOADER	= 0x1000
+	STYP_DEBUG	= 0x2000
+	STYP_TYPCHK	= 0x4000
+	STYP_OVRFLO	= 0x8000
 )
 const (
-	SSUBTYP_DWINFO  = 0x10000 // DWARF info section
-	SSUBTYP_DWLINE  = 0x20000 // DWARF line-number section
-	SSUBTYP_DWPBNMS = 0x30000 // DWARF public names section
-	SSUBTYP_DWPBTYP = 0x40000 // DWARF public types section
-	SSUBTYP_DWARNGE = 0x50000 // DWARF aranges section
-	SSUBTYP_DWABREV = 0x60000 // DWARF abbreviation section
-	SSUBTYP_DWSTR   = 0x70000 // DWARF strings section
-	SSUBTYP_DWRNGES = 0x80000 // DWARF ranges section
-	SSUBTYP_DWLOC   = 0x90000 // DWARF location lists section
-	SSUBTYP_DWFRAME = 0xA0000 // DWARF frames section
-	SSUBTYP_DWMAC   = 0xB0000 // DWARF macros section
+	SSUBTYP_DWINFO	= 0x10000	// DWARF info section
+	SSUBTYP_DWLINE	= 0x20000	// DWARF line-number section
+	SSUBTYP_DWPBNMS	= 0x30000	// DWARF public names section
+	SSUBTYP_DWPBTYP	= 0x40000	// DWARF public types section
+	SSUBTYP_DWARNGE	= 0x50000	// DWARF aranges section
+	SSUBTYP_DWABREV	= 0x60000	// DWARF abbreviation section
+	SSUBTYP_DWSTR	= 0x70000	// DWARF strings section
+	SSUBTYP_DWRNGES	= 0x80000	// DWARF ranges section
+	SSUBTYP_DWLOC	= 0x90000	// DWARF location lists section
+	SSUBTYP_DWFRAME	= 0xA0000	// DWARF frames section
+	SSUBTYP_DWMAC	= 0xB0000	// DWARF macros section
 )
 
 // Headers size
 const (
-	FILHSZ_32      = 20
-	FILHSZ_64      = 24
-	AOUTHSZ_EXEC32 = 72
-	AOUTHSZ_EXEC64 = 120
-	SCNHSZ_32      = 40
-	SCNHSZ_64      = 72
-	LDHDRSZ_32     = 32
-	LDHDRSZ_64     = 56
-	LDSYMSZ_64     = 24
-	RELSZ_64       = 14
+	FILHSZ_32	= 20
+	FILHSZ_64	= 24
+	AOUTHSZ_EXEC32	= 72
+	AOUTHSZ_EXEC64	= 120
+	SCNHSZ_32	= 40
+	SCNHSZ_64	= 72
+	LDHDRSZ_32	= 32
+	LDHDRSZ_64	= 56
+	LDSYMSZ_64	= 24
+	RELSZ_64	= 14
 )
 
 // Type representing all XCOFF symbols.
@@ -172,257 +172,257 @@ type xcoffSym interface {
 
 // Symbol Table Entry
 type XcoffSymEnt64 struct {
-	Nvalue  uint64 // Symbol value
-	Noffset uint32 // Offset of the name in string table or .debug section
-	Nscnum  int16  // Section number of symbol
-	Ntype   uint16 // Basic and derived type specification
-	Nsclass uint8  // Storage class of symbol
-	Nnumaux int8   // Number of auxiliary entries
+	Nvalue	uint64	// Symbol value
+	Noffset	uint32	// Offset of the name in string table or .debug section
+	Nscnum	int16	// Section number of symbol
+	Ntype	uint16	// Basic and derived type specification
+	Nsclass	uint8	// Storage class of symbol
+	Nnumaux	int8	// Number of auxiliary entries
 }
 
 const SYMESZ = 18
 
 const (
 	// Nscnum
-	N_DEBUG = -2
-	N_ABS   = -1
-	N_UNDEF = 0
+	N_DEBUG	= -2
+	N_ABS	= -1
+	N_UNDEF	= 0
 
 	//Ntype
-	SYM_V_INTERNAL  = 0x1000
-	SYM_V_HIDDEN    = 0x2000
-	SYM_V_PROTECTED = 0x3000
-	SYM_V_EXPORTED  = 0x4000
-	SYM_TYPE_FUNC   = 0x0020 // is function
+	SYM_V_INTERNAL	= 0x1000
+	SYM_V_HIDDEN	= 0x2000
+	SYM_V_PROTECTED	= 0x3000
+	SYM_V_EXPORTED	= 0x4000
+	SYM_TYPE_FUNC	= 0x0020	// is function
 )
 
 // Storage Class.
 const (
-	C_NULL    = 0   // Symbol table entry marked for deletion
-	C_EXT     = 2   // External symbol
-	C_STAT    = 3   // Static symbol
-	C_BLOCK   = 100 // Beginning or end of inner block
-	C_FCN     = 101 // Beginning or end of function
-	C_FILE    = 103 // Source file name and compiler information
-	C_HIDEXT  = 107 // Unnamed external symbol
-	C_BINCL   = 108 // Beginning of include file
-	C_EINCL   = 109 // End of include file
-	C_WEAKEXT = 111 // Weak external symbol
-	C_DWARF   = 112 // DWARF symbol
-	C_GSYM    = 128 // Global variable
-	C_LSYM    = 129 // Automatic variable allocated on stack
-	C_PSYM    = 130 // Argument to subroutine allocated on stack
-	C_RSYM    = 131 // Register variable
-	C_RPSYM   = 132 // Argument to function or procedure stored in register
-	C_STSYM   = 133 // Statically allocated symbol
-	C_BCOMM   = 135 // Beginning of common block
-	C_ECOML   = 136 // Local member of common block
-	C_ECOMM   = 137 // End of common block
-	C_DECL    = 140 // Declaration of object
-	C_ENTRY   = 141 // Alternate entry
-	C_FUN     = 142 // Function or procedure
-	C_BSTAT   = 143 // Beginning of static block
-	C_ESTAT   = 144 // End of static block
-	C_GTLS    = 145 // Global thread-local variable
-	C_STTLS   = 146 // Static thread-local variable
+	C_NULL		= 0	// Symbol table entry marked for deletion
+	C_EXT		= 2	// External symbol
+	C_STAT		= 3	// Static symbol
+	C_BLOCK		= 100	// Beginning or end of inner block
+	C_FCN		= 101	// Beginning or end of function
+	C_FILE		= 103	// Source file name and compiler information
+	C_HIDEXT	= 107	// Unnamed external symbol
+	C_BINCL		= 108	// Beginning of include file
+	C_EINCL		= 109	// End of include file
+	C_WEAKEXT	= 111	// Weak external symbol
+	C_DWARF		= 112	// DWARF symbol
+	C_GSYM		= 128	// Global variable
+	C_LSYM		= 129	// Automatic variable allocated on stack
+	C_PSYM		= 130	// Argument to subroutine allocated on stack
+	C_RSYM		= 131	// Register variable
+	C_RPSYM		= 132	// Argument to function or procedure stored in register
+	C_STSYM		= 133	// Statically allocated symbol
+	C_BCOMM		= 135	// Beginning of common block
+	C_ECOML		= 136	// Local member of common block
+	C_ECOMM		= 137	// End of common block
+	C_DECL		= 140	// Declaration of object
+	C_ENTRY		= 141	// Alternate entry
+	C_FUN		= 142	// Function or procedure
+	C_BSTAT		= 143	// Beginning of static block
+	C_ESTAT		= 144	// End of static block
+	C_GTLS		= 145	// Global thread-local variable
+	C_STTLS		= 146	// Static thread-local variable
 )
 
 // File Auxiliary Entry
 type XcoffAuxFile64 struct {
-	Xzeroes  uint32 // The name is always in the string table
-	Xoffset  uint32 // Offset in the string table
-	X_pad1   [6]byte
-	Xftype   uint8 // Source file string type
-	X_pad2   [2]byte
-	Xauxtype uint8 // Type of auxiliary entry
+	Xzeroes		uint32	// The name is always in the string table
+	Xoffset		uint32	// Offset in the string table
+	X_pad1		[6]byte
+	Xftype		uint8	// Source file string type
+	X_pad2		[2]byte
+	Xauxtype	uint8	// Type of auxiliary entry
 }
 
 // Function Auxiliary Entry
 type XcoffAuxFcn64 struct {
-	Xlnnoptr uint64 // File pointer to line number
-	Xfsize   uint32 // Size of function in bytes
-	Xendndx  uint32 // Symbol table index of next entry
-	Xpad     uint8  // Unused
-	Xauxtype uint8  // Type of auxiliary entry
+	Xlnnoptr	uint64	// File pointer to line number
+	Xfsize		uint32	// Size of function in bytes
+	Xendndx		uint32	// Symbol table index of next entry
+	Xpad		uint8	// Unused
+	Xauxtype	uint8	// Type of auxiliary entry
 }
 
 // csect Auxiliary Entry.
 type XcoffAuxCSect64 struct {
-	Xscnlenlo uint32 // Lower 4 bytes of length or symbol table index
-	Xparmhash uint32 // Offset of parameter type-check string
-	Xsnhash   uint16 // .typchk section number
-	Xsmtyp    uint8  // Symbol alignment and type
-	Xsmclas   uint8  // Storage-mapping class
-	Xscnlenhi uint32 // Upper 4 bytes of length or symbol table index
-	Xpad      uint8  // Unused
-	Xauxtype  uint8  // Type of auxiliary entry
+	Xscnlenlo	uint32	// Lower 4 bytes of length or symbol table index
+	Xparmhash	uint32	// Offset of parameter type-check string
+	Xsnhash		uint16	// .typchk section number
+	Xsmtyp		uint8	// Symbol alignment and type
+	Xsmclas		uint8	// Storage-mapping class
+	Xscnlenhi	uint32	// Upper 4 bytes of length or symbol table index
+	Xpad		uint8	// Unused
+	Xauxtype	uint8	// Type of auxiliary entry
 }
 
 // DWARF Auxiliary Entry
 type XcoffAuxDWARF64 struct {
-	Xscnlen  uint64 // Length of this symbol section
-	X_pad    [9]byte
-	Xauxtype uint8 // Type of auxiliary entry
+	Xscnlen		uint64	// Length of this symbol section
+	X_pad		[9]byte
+	Xauxtype	uint8	// Type of auxiliary entry
 }
 
 // Auxiliary type
 const (
-	_AUX_EXCEPT = 255
-	_AUX_FCN    = 254
-	_AUX_SYM    = 253
-	_AUX_FILE   = 252
-	_AUX_CSECT  = 251
-	_AUX_SECT   = 250
+	_AUX_EXCEPT	= 255
+	_AUX_FCN	= 254
+	_AUX_SYM	= 253
+	_AUX_FILE	= 252
+	_AUX_CSECT	= 251
+	_AUX_SECT	= 250
 )
 
 // Xftype field
 const (
-	XFT_FN = 0   // Source File Name
-	XFT_CT = 1   // Compile Time Stamp
-	XFT_CV = 2   // Compiler Version Number
-	XFT_CD = 128 // Compiler Defined Information/
+	XFT_FN	= 0	// Source File Name
+	XFT_CT	= 1	// Compile Time Stamp
+	XFT_CV	= 2	// Compiler Version Number
+	XFT_CD	= 128	// Compiler Defined Information/
 
 )
 
 // Symbol type field.
 const (
-	XTY_ER  = 0    // External reference
-	XTY_SD  = 1    // Section definition
-	XTY_LD  = 2    // Label definition
-	XTY_CM  = 3    // Common csect definition
-	XTY_WK  = 0x8  // Weak symbol
-	XTY_EXP = 0x10 // Exported symbol
-	XTY_ENT = 0x20 // Entry point symbol
-	XTY_IMP = 0x40 // Imported symbol
+	XTY_ER	= 0	// External reference
+	XTY_SD	= 1	// Section definition
+	XTY_LD	= 2	// Label definition
+	XTY_CM	= 3	// Common csect definition
+	XTY_WK	= 0x8	// Weak symbol
+	XTY_EXP	= 0x10	// Exported symbol
+	XTY_ENT	= 0x20	// Entry point symbol
+	XTY_IMP	= 0x40	// Imported symbol
 )
 
 // Storage-mapping class.
 const (
-	XMC_PR     = 0  // Program code
-	XMC_RO     = 1  // Read-only constant
-	XMC_DB     = 2  // Debug dictionary table
-	XMC_TC     = 3  // TOC entry
-	XMC_UA     = 4  // Unclassified
-	XMC_RW     = 5  // Read/Write data
-	XMC_GL     = 6  // Global linkage
-	XMC_XO     = 7  // Extended operation
-	XMC_SV     = 8  // 32-bit supervisor call descriptor
-	XMC_BS     = 9  // BSS class
-	XMC_DS     = 10 // Function descriptor
-	XMC_UC     = 11 // Unnamed FORTRAN common
-	XMC_TC0    = 15 // TOC anchor
-	XMC_TD     = 16 // Scalar data entry in the TOC
-	XMC_SV64   = 17 // 64-bit supervisor call descriptor
-	XMC_SV3264 = 18 // Supervisor call descriptor for both 32-bit and 64-bit
-	XMC_TL     = 20 // Read/Write thread-local data
-	XMC_UL     = 21 // Read/Write thread-local data (.tbss)
-	XMC_TE     = 22 // TOC entry
+	XMC_PR		= 0	// Program code
+	XMC_RO		= 1	// Read-only constant
+	XMC_DB		= 2	// Debug dictionary table
+	XMC_TC		= 3	// TOC entry
+	XMC_UA		= 4	// Unclassified
+	XMC_RW		= 5	// Read/Write data
+	XMC_GL		= 6	// Global linkage
+	XMC_XO		= 7	// Extended operation
+	XMC_SV		= 8	// 32-bit supervisor call descriptor
+	XMC_BS		= 9	// BSS class
+	XMC_DS		= 10	// Function descriptor
+	XMC_UC		= 11	// Unnamed FORTRAN common
+	XMC_TC0		= 15	// TOC anchor
+	XMC_TD		= 16	// Scalar data entry in the TOC
+	XMC_SV64	= 17	// 64-bit supervisor call descriptor
+	XMC_SV3264	= 18	// Supervisor call descriptor for both 32-bit and 64-bit
+	XMC_TL		= 20	// Read/Write thread-local data
+	XMC_UL		= 21	// Read/Write thread-local data (.tbss)
+	XMC_TE		= 22	// TOC entry
 )
 
 // Loader Header
 type XcoffLdHdr64 struct {
-	Lversion int32  // Loader section version number
-	Lnsyms   int32  // Number of symbol table entries
-	Lnreloc  int32  // Number of relocation table entries
-	Listlen  uint32 // Length of import file ID string table
-	Lnimpid  int32  // Number of import file IDs
-	Lstlen   uint32 // Length of string table
-	Limpoff  uint64 // Offset to start of import file IDs
-	Lstoff   uint64 // Offset to start of string table
-	Lsymoff  uint64 // Offset to start of symbol table
-	Lrldoff  uint64 // Offset to start of relocation entries
+	Lversion	int32	// Loader section version number
+	Lnsyms		int32	// Number of symbol table entries
+	Lnreloc		int32	// Number of relocation table entries
+	Listlen		uint32	// Length of import file ID string table
+	Lnimpid		int32	// Number of import file IDs
+	Lstlen		uint32	// Length of string table
+	Limpoff		uint64	// Offset to start of import file IDs
+	Lstoff		uint64	// Offset to start of string table
+	Lsymoff		uint64	// Offset to start of symbol table
+	Lrldoff		uint64	// Offset to start of relocation entries
 }
 
 // Loader Symbol
 type XcoffLdSym64 struct {
-	Lvalue  uint64 // Address field
-	Loffset uint32 // Byte offset into string table of symbol name
-	Lscnum  int16  // Section number containing symbol
-	Lsmtype int8   // Symbol type, export, import flags
-	Lsmclas int8   // Symbol storage class
-	Lifile  int32  // Import file ID; ordinal of import file IDs
-	Lparm   uint32 // Parameter type-check field
+	Lvalue	uint64	// Address field
+	Loffset	uint32	// Byte offset into string table of symbol name
+	Lscnum	int16	// Section number containing symbol
+	Lsmtype	int8	// Symbol type, export, import flags
+	Lsmclas	int8	// Symbol storage class
+	Lifile	int32	// Import file ID; ordinal of import file IDs
+	Lparm	uint32	// Parameter type-check field
 }
 
 type xcoffLoaderSymbol struct {
-	sym    loader.Sym
-	smtype int8
-	smclas int8
+	sym	loader.Sym
+	smtype	int8
+	smclas	int8
 }
 
 type XcoffLdImportFile64 struct {
-	Limpidpath string
-	Limpidbase string
-	Limpidmem  string
+	Limpidpath	string
+	Limpidbase	string
+	Limpidmem	string
 }
 
 type XcoffLdRel64 struct {
-	Lvaddr  uint64 // Address Field
-	Lrtype  uint16 // Relocation Size and Type
-	Lrsecnm int16  // Section Number being relocated
-	Lsymndx int32  // Loader-Section symbol table index
+	Lvaddr	uint64	// Address Field
+	Lrtype	uint16	// Relocation Size and Type
+	Lrsecnm	int16	// Section Number being relocated
+	Lsymndx	int32	// Loader-Section symbol table index
 }
 
 // xcoffLoaderReloc holds information about a relocation made by the loader.
 type xcoffLoaderReloc struct {
-	sym    loader.Sym
-	roff   int32
-	rtype  uint16
-	symndx int32
+	sym	loader.Sym
+	roff	int32
+	rtype	uint16
+	symndx	int32
 }
 
 const (
-	XCOFF_R_POS = 0x00 // A(sym) Positive Relocation
-	XCOFF_R_NEG = 0x01 // -A(sym) Negative Relocation
-	XCOFF_R_REL = 0x02 // A(sym-*) Relative to self
-	XCOFF_R_TOC = 0x03 // A(sym-TOC) Relative to TOC
-	XCOFF_R_TRL = 0x12 // A(sym-TOC) TOC Relative indirect load.
+	XCOFF_R_POS	= 0x00	// A(sym) Positive Relocation
+	XCOFF_R_NEG	= 0x01	// -A(sym) Negative Relocation
+	XCOFF_R_REL	= 0x02	// A(sym-*) Relative to self
+	XCOFF_R_TOC	= 0x03	// A(sym-TOC) Relative to TOC
+	XCOFF_R_TRL	= 0x12	// A(sym-TOC) TOC Relative indirect load.
 
-	XCOFF_R_TRLA = 0x13 // A(sym-TOC) TOC Rel load address. modifiable inst
-	XCOFF_R_GL   = 0x05 // A(external TOC of sym) Global Linkage
-	XCOFF_R_TCL  = 0x06 // A(local TOC of sym) Local object TOC address
-	XCOFF_R_RL   = 0x0C // A(sym) Pos indirect load. modifiable instruction
-	XCOFF_R_RLA  = 0x0D // A(sym) Pos Load Address. modifiable instruction
-	XCOFF_R_REF  = 0x0F // AL0(sym) Non relocating ref. No garbage collect
-	XCOFF_R_BA   = 0x08 // A(sym) Branch absolute. Cannot modify instruction
-	XCOFF_R_RBA  = 0x18 // A(sym) Branch absolute. modifiable instruction
-	XCOFF_R_BR   = 0x0A // A(sym-*) Branch rel to self. non modifiable
-	XCOFF_R_RBR  = 0x1A // A(sym-*) Branch rel to self. modifiable instr
+	XCOFF_R_TRLA	= 0x13	// A(sym-TOC) TOC Rel load address. modifiable inst
+	XCOFF_R_GL	= 0x05	// A(external TOC of sym) Global Linkage
+	XCOFF_R_TCL	= 0x06	// A(local TOC of sym) Local object TOC address
+	XCOFF_R_RL	= 0x0C	// A(sym) Pos indirect load. modifiable instruction
+	XCOFF_R_RLA	= 0x0D	// A(sym) Pos Load Address. modifiable instruction
+	XCOFF_R_REF	= 0x0F	// AL0(sym) Non relocating ref. No garbage collect
+	XCOFF_R_BA	= 0x08	// A(sym) Branch absolute. Cannot modify instruction
+	XCOFF_R_RBA	= 0x18	// A(sym) Branch absolute. modifiable instruction
+	XCOFF_R_BR	= 0x0A	// A(sym-*) Branch rel to self. non modifiable
+	XCOFF_R_RBR	= 0x1A	// A(sym-*) Branch rel to self. modifiable instr
 
-	XCOFF_R_TLS    = 0x20 // General-dynamic reference to TLS symbol
-	XCOFF_R_TLS_IE = 0x21 // Initial-exec reference to TLS symbol
-	XCOFF_R_TLS_LD = 0x22 // Local-dynamic reference to TLS symbol
-	XCOFF_R_TLS_LE = 0x23 // Local-exec reference to TLS symbol
-	XCOFF_R_TLSM   = 0x24 // Module reference to TLS symbol
-	XCOFF_R_TLSML  = 0x25 // Module reference to local (own) module
+	XCOFF_R_TLS	= 0x20	// General-dynamic reference to TLS symbol
+	XCOFF_R_TLS_IE	= 0x21	// Initial-exec reference to TLS symbol
+	XCOFF_R_TLS_LD	= 0x22	// Local-dynamic reference to TLS symbol
+	XCOFF_R_TLS_LE	= 0x23	// Local-exec reference to TLS symbol
+	XCOFF_R_TLSM	= 0x24	// Module reference to TLS symbol
+	XCOFF_R_TLSML	= 0x25	// Module reference to local (own) module
 
-	XCOFF_R_TOCU = 0x30 // Relative to TOC - high order bits
-	XCOFF_R_TOCL = 0x31 // Relative to TOC - low order bits
+	XCOFF_R_TOCU	= 0x30	// Relative to TOC - high order bits
+	XCOFF_R_TOCL	= 0x31	// Relative to TOC - low order bits
 )
 
 type XcoffLdStr64 struct {
-	size uint16
-	name string
+	size	uint16
+	name	string
 }
 
 // xcoffFile is used to build XCOFF file.
 type xcoffFile struct {
-	xfhdr           XcoffFileHdr64
-	xahdr           XcoffAoutHdr64
-	sections        []*XcoffScnHdr64
-	sectText        *XcoffScnHdr64
-	sectData        *XcoffScnHdr64
-	sectBss         *XcoffScnHdr64
-	stringTable     xcoffStringTable
-	sectNameToScnum map[string]int16
-	loaderSize      uint64
-	symtabOffset    int64                // offset to the start of symbol table
-	symbolCount     uint32               // number of symbol table records written
-	symtabSym       []xcoffSym           // XCOFF symbols for the symbol table
-	dynLibraries    map[string]int       // Dynamic libraries in .loader section. The integer represents its import file number (- 1)
-	loaderSymbols   []*xcoffLoaderSymbol // symbols inside .loader symbol table
-	loaderReloc     []*xcoffLoaderReloc  // Reloc that must be made inside loader
-	sync.Mutex                           // currently protect loaderReloc
+	xfhdr		XcoffFileHdr64
+	xahdr		XcoffAoutHdr64
+	sections	[]*XcoffScnHdr64
+	sectText	*XcoffScnHdr64
+	sectData	*XcoffScnHdr64
+	sectBss		*XcoffScnHdr64
+	stringTable	xcoffStringTable
+	sectNameToScnum	map[string]int16
+	loaderSize	uint64
+	symtabOffset	int64			// offset to the start of symbol table
+	symbolCount	uint32			// number of symbol table records written
+	symtabSym	[]xcoffSym		// XCOFF symbols for the symbol table
+	dynLibraries	map[string]int		// Dynamic libraries in .loader section. The integer represents its import file number (- 1)
+	loaderSymbols	[]*xcoffLoaderSymbol	// symbols inside .loader symbol table
+	loaderReloc	[]*xcoffLoaderReloc	// Reloc that must be made inside loader
+	sync.Mutex				// currently protect loaderReloc
 }
 
 // Var used by XCOFF Generation algorithms
@@ -432,8 +432,8 @@ var (
 
 // xcoffStringTable is a XCOFF string table.
 type xcoffStringTable struct {
-	strings    []string
-	stringsLen int
+	strings		[]string
+	stringsLen	int
 }
 
 // size returns size of string table t.
@@ -446,7 +446,7 @@ func (t *xcoffStringTable) size() int {
 func (t *xcoffStringTable) add(str string) int {
 	off := t.size()
 	t.strings = append(t.strings, str)
-	t.stringsLen += len(str) + 1 // each string will have 0 appended to it
+	t.stringsLen += len(str) + 1	// each string will have 0 appended to it
 	return off
 }
 
@@ -462,19 +462,19 @@ func (t *xcoffStringTable) write(out *OutBuf) {
 // write writes XCOFF section sect into the output file.
 func (sect *XcoffScnHdr64) write(ctxt *Link) {
 	binary.Write(ctxt.Out, binary.BigEndian, sect)
-	ctxt.Out.Write32(0) // Add 4 empty bytes at the end to match alignment
+	ctxt.Out.Write32(0)	// Add 4 empty bytes at the end to match alignment
 }
 
 // addSection adds section to the XCOFF file f.
 func (f *xcoffFile) addSection(name string, addr uint64, size uint64, fileoff uint64, flags uint32) *XcoffScnHdr64 {
 	sect := &XcoffScnHdr64{
-		Spaddr:  addr,
-		Svaddr:  addr,
-		Ssize:   size,
-		Sscnptr: fileoff,
-		Sflags:  flags,
+		Spaddr:		addr,
+		Svaddr:		addr,
+		Ssize:		size,
+		Sscnptr:	fileoff,
+		Sflags:		flags,
 	}
-	copy(sect.Sname[:], name) // copy string to [8]byte
+	copy(sect.Sname[:], name)	// copy string to [8]byte
 	f.sections = append(f.sections, sect)
 	f.sectNameToScnum[name] = int16(len(f.sections))
 	return sect
@@ -544,33 +544,32 @@ func Xcoffinit(ctxt *Link) {
 	xfile.dynLibraries = make(map[string]int)
 
 	HEADR = int32(Rnd(XCOFFHDRRESERVE, XCOFFSECTALIGN))
-	if *FlagTextAddr != -1 {
-		Errorf(nil, "-T not available on AIX")
-	}
-	*FlagTextAddr = XCOFFTEXTBASE + int64(HEADR)
 	if *FlagRound != -1 {
 		Errorf(nil, "-R not available on AIX")
 	}
-	*FlagRound = int(XCOFFSECTALIGN)
-
+	*FlagRound = XCOFFSECTALIGN
+	if *FlagTextAddr != -1 {
+		Errorf(nil, "-T not available on AIX")
+	}
+	*FlagTextAddr = Rnd(XCOFFTEXTBASE, *FlagRound) + int64(HEADR)
 }
 
 // SYMBOL TABLE
 
 // type records C_FILE information needed for genasmsym in XCOFF.
 type xcoffSymSrcFile struct {
-	name         string
-	file         *XcoffSymEnt64   // Symbol of this C_FILE
-	csectAux     *XcoffAuxCSect64 // Symbol for the current .csect
-	csectSymNb   uint64           // Symbol number for the current .csect
-	csectVAStart int64
-	csectVAEnd   int64
+	name		string
+	file		*XcoffSymEnt64		// Symbol of this C_FILE
+	csectAux	*XcoffAuxCSect64	// Symbol for the current .csect
+	csectSymNb	uint64			// Symbol number for the current .csect
+	csectVAStart	int64
+	csectVAEnd	int64
 }
 
 var (
-	currDwscnoff   = make(map[string]uint64) // Needed to create C_DWARF symbols
-	currSymSrcFile xcoffSymSrcFile
-	outerSymSize   = make(map[string]int64)
+	currDwscnoff	= make(map[string]uint64)	// Needed to create C_DWARF symbols
+	currSymSrcFile	xcoffSymSrcFile
+	outerSymSize	= make(map[string]int64)
 )
 
 // xcoffUpdateOuterSize stores the size of outer symbols in order to have it
@@ -652,20 +651,20 @@ func (f *xcoffFile) writeSymbolNewFile(ctxt *Link, name string, firstEntry uint6
 	ldr := ctxt.loader
 	/* C_FILE */
 	s := &XcoffSymEnt64{
-		Noffset: uint32(f.stringTable.add(".file")),
-		Nsclass: C_FILE,
-		Nscnum:  N_DEBUG,
-		Ntype:   0, // Go isn't inside predefined language.
-		Nnumaux: 1,
+		Noffset:	uint32(f.stringTable.add(".file")),
+		Nsclass:	C_FILE,
+		Nscnum:		N_DEBUG,
+		Ntype:		0,	// Go isn't inside predefined language.
+		Nnumaux:	1,
 	}
 	f.addSymbol(s)
 	currSymSrcFile.file = s
 
 	// Auxiliary entry for file name.
 	auxf := &XcoffAuxFile64{
-		Xoffset:  uint32(f.stringTable.add(name)),
-		Xftype:   XFT_FN,
-		Xauxtype: _AUX_FILE,
+		Xoffset:	uint32(f.stringTable.add(name)),
+		Xftype:		XFT_FN,
+		Xauxtype:	_AUX_FILE,
 	}
 	f.addSymbol(auxf)
 
@@ -689,11 +688,11 @@ func (f *xcoffFile) writeSymbolNewFile(ctxt *Link, name string, firstEntry uint6
 		// get XCOFF name
 		name, _ := xcoffGetDwarfSubtype(sect.Name)
 		s := &XcoffSymEnt64{
-			Nvalue:  currDwscnoff[sect.Name],
-			Noffset: uint32(f.stringTable.add(name)),
-			Nsclass: C_DWARF,
-			Nscnum:  f.getXCOFFscnum(sect),
-			Nnumaux: 1,
+			Nvalue:		currDwscnoff[sect.Name],
+			Noffset:	uint32(f.stringTable.add(name)),
+			Nsclass:	C_DWARF,
+			Nscnum:		f.getXCOFFscnum(sect),
+			Nnumaux:	1,
 		}
 
 		if currSymSrcFile.csectAux == nil {
@@ -717,8 +716,8 @@ func (f *xcoffFile) writeSymbolNewFile(ctxt *Link, name string, firstEntry uint6
 
 		// Auxiliary dwarf section
 		auxd := &XcoffAuxDWARF64{
-			Xscnlen:  dwsize,
-			Xauxtype: _AUX_SECT,
+			Xscnlen:	dwsize,
+			Xauxtype:	_AUX_SECT,
 		}
 
 		f.addSymbol(auxd)
@@ -735,18 +734,18 @@ func (f *xcoffFile) writeSymbolNewFile(ctxt *Link, name string, firstEntry uint6
 
 	// No offset because no name
 	s = &XcoffSymEnt64{
-		Nvalue:  firstEntry,
-		Nscnum:  extnum,
-		Nsclass: C_HIDEXT,
-		Ntype:   0, // check visibility ?
-		Nnumaux: 1,
+		Nvalue:		firstEntry,
+		Nscnum:		extnum,
+		Nsclass:	C_HIDEXT,
+		Ntype:		0,	// check visibility ?
+		Nnumaux:	1,
 	}
 	f.addSymbol(s)
 
 	aux := &XcoffAuxCSect64{
-		Xsmclas:  XMC_PR,
-		Xsmtyp:   XTY_SD | logBase2(Funcalign)<<3,
-		Xauxtype: _AUX_CSECT,
+		Xsmclas:	XMC_PR,
+		Xsmtyp:		XTY_SD | logBase2(Funcalign)<<3,
+		Xauxtype:	_AUX_CSECT,
 	}
 	f.addSymbol(aux)
 
@@ -793,7 +792,7 @@ func (f *xcoffFile) writeSymbolFunc(ctxt *Link, x loader.Sym) []xcoffSym {
 		// Trampoline don't have a FILE so there are considered
 		// in the current file.
 		// Same goes for runtime.text.X symbols.
-	} else if ldr.SymPkg(x) == "" { // Undefined global symbol
+	} else if ldr.SymPkg(x) == "" {	// Undefined global symbol
 		// If this happens, the algorithm must be redone.
 		if currSymSrcFile.name != "" {
 			Exitf("undefined global symbol found inside another file")
@@ -827,12 +826,12 @@ func (f *xcoffFile) writeSymbolFunc(ctxt *Link, x loader.Sym) []xcoffSym {
 	name = mangleABIName(ctxt, ldr, x, name)
 
 	s := &XcoffSymEnt64{
-		Nsclass: C_EXT,
-		Noffset: uint32(xfile.stringTable.add(name)),
-		Nvalue:  uint64(ldr.SymValue(x)),
-		Nscnum:  f.getXCOFFscnum(ldr.SymSect(x)),
-		Ntype:   SYM_TYPE_FUNC,
-		Nnumaux: 2,
+		Nsclass:	C_EXT,
+		Noffset:	uint32(xfile.stringTable.add(name)),
+		Nvalue:		uint64(ldr.SymValue(x)),
+		Nscnum:		f.getXCOFFscnum(ldr.SymSect(x)),
+		Ntype:		SYM_TYPE_FUNC,
+		Nnumaux:	2,
 	}
 
 	if ldr.IsFileLocal(x) || ldr.AttrVisibilityHidden(x) || ldr.AttrLocal(x) {
@@ -852,19 +851,19 @@ func (f *xcoffFile) writeSymbolFunc(ctxt *Link, x loader.Sym) []xcoffSym {
 
 	// create auxiliary entries
 	a2 := &XcoffAuxFcn64{
-		Xfsize:   uint32(ldr.SymSize(x)),
-		Xlnnoptr: 0,                     // TODO
-		Xendndx:  xfile.symbolCount + 3, // this symbol + 2 aux entries
-		Xauxtype: _AUX_FCN,
+		Xfsize:		uint32(ldr.SymSize(x)),
+		Xlnnoptr:	0,			// TODO
+		Xendndx:	xfile.symbolCount + 3,	// this symbol + 2 aux entries
+		Xauxtype:	_AUX_FCN,
 	}
 	syms = append(syms, a2)
 
 	a4 := &XcoffAuxCSect64{
-		Xscnlenlo: uint32(currSymSrcFile.csectSymNb & 0xFFFFFFFF),
-		Xscnlenhi: uint32(currSymSrcFile.csectSymNb >> 32),
-		Xsmclas:   XMC_PR, // Program Code
-		Xsmtyp:    XTY_LD, // label definition (based on C)
-		Xauxtype:  _AUX_CSECT,
+		Xscnlenlo:	uint32(currSymSrcFile.csectSymNb & 0xFFFFFFFF),
+		Xscnlenhi:	uint32(currSymSrcFile.csectSymNb >> 32),
+		Xsmclas:	XMC_PR,	// Program Code
+		Xsmtyp:		XTY_LD,	// label definition (based on C)
+		Xauxtype:	_AUX_CSECT,
 	}
 	a4.Xsmtyp |= uint8(xcoffAlign(ldr, x, TextSym) << 3)
 
@@ -875,7 +874,7 @@ func (f *xcoffFile) writeSymbolFunc(ctxt *Link, x loader.Sym) []xcoffSym {
 // put function used by genasmsym to write symbol table.
 func putaixsym(ctxt *Link, x loader.Sym, t SymbolType) {
 	// All XCOFF symbols generated by this GO symbols
-	// Can be a symbol entry or a auxiliary entry
+	// Can be a symbol entry or an auxiliary entry
 	syms := []xcoffSym{}
 
 	ldr := ctxt.loader
@@ -898,23 +897,23 @@ func putaixsym(ctxt *Link, x loader.Sym, t SymbolType) {
 				Exitf("putaixsym: unknown text symbol %s", name)
 			}
 			s := &XcoffSymEnt64{
-				Nsclass: C_HIDEXT,
-				Noffset: uint32(xfile.stringTable.add(name)),
-				Nvalue:  uint64(ldr.SymValue(x)),
-				Nscnum:  xfile.getXCOFFscnum(ldr.SymSect(x)),
-				Ntype:   SYM_TYPE_FUNC,
-				Nnumaux: 1,
+				Nsclass:	C_HIDEXT,
+				Noffset:	uint32(xfile.stringTable.add(name)),
+				Nvalue:		uint64(ldr.SymValue(x)),
+				Nscnum:		xfile.getXCOFFscnum(ldr.SymSect(x)),
+				Ntype:		SYM_TYPE_FUNC,
+				Nnumaux:	1,
 			}
 			ldr.SetSymDynid(x, int32(xfile.symbolCount))
 			syms = append(syms, s)
 
 			size := uint64(ldr.SymSize(x))
 			a4 := &XcoffAuxCSect64{
-				Xauxtype:  _AUX_CSECT,
-				Xscnlenlo: uint32(size & 0xFFFFFFFF),
-				Xscnlenhi: uint32(size >> 32),
-				Xsmclas:   XMC_PR,
-				Xsmtyp:    XTY_SD,
+				Xauxtype:	_AUX_CSECT,
+				Xscnlenlo:	uint32(size & 0xFFFFFFFF),
+				Xscnlenhi:	uint32(size >> 32),
+				Xsmclas:	XMC_PR,
+				Xsmtyp:		XTY_SD,
 			}
 			a4.Xsmtyp |= uint8(xcoffAlign(ldr, x, TextSym) << 3)
 			syms = append(syms, a4)
@@ -922,11 +921,11 @@ func putaixsym(ctxt *Link, x loader.Sym, t SymbolType) {
 
 	case DataSym, BSSSym:
 		s := &XcoffSymEnt64{
-			Nsclass: C_EXT,
-			Noffset: uint32(xfile.stringTable.add(name)),
-			Nvalue:  uint64(ldr.SymValue(x)),
-			Nscnum:  xfile.getXCOFFscnum(ldr.SymSect(x)),
-			Nnumaux: 1,
+			Nsclass:	C_EXT,
+			Noffset:	uint32(xfile.stringTable.add(name)),
+			Nvalue:		uint64(ldr.SymValue(x)),
+			Nscnum:		xfile.getXCOFFscnum(ldr.SymSect(x)),
+			Nnumaux:	1,
 		}
 
 		if ldr.IsFileLocal(x) || ldr.AttrVisibilityHidden(x) || ldr.AttrLocal(x) {
@@ -950,9 +949,9 @@ func putaixsym(ctxt *Link, x loader.Sym, t SymbolType) {
 		// It might change
 		size := uint64(ldr.SymSize(x))
 		a4 := &XcoffAuxCSect64{
-			Xauxtype:  _AUX_CSECT,
-			Xscnlenlo: uint32(size & 0xFFFFFFFF),
-			Xscnlenhi: uint32(size >> 32),
+			Xauxtype:	_AUX_CSECT,
+			Xscnlenlo:	uint32(size & 0xFFFFFFFF),
+			Xscnlenhi:	uint32(size >> 32),
 		}
 
 		if ty := ldr.SymType(x); ty >= sym.STYPE && ty <= sym.SPCLNTAB {
@@ -986,17 +985,17 @@ func putaixsym(ctxt *Link, x loader.Sym, t SymbolType) {
 			return
 		}
 		s := &XcoffSymEnt64{
-			Nsclass: C_EXT,
-			Noffset: uint32(xfile.stringTable.add(name)),
-			Nnumaux: 1,
+			Nsclass:	C_EXT,
+			Noffset:	uint32(xfile.stringTable.add(name)),
+			Nnumaux:	1,
 		}
 		ldr.SetSymDynid(x, int32(xfile.symbolCount))
 		syms = append(syms, s)
 
 		a4 := &XcoffAuxCSect64{
-			Xauxtype: _AUX_CSECT,
-			Xsmclas:  XMC_DS,
-			Xsmtyp:   XTY_ER | XTY_IMP,
+			Xauxtype:	_AUX_CSECT,
+			Xsmclas:	XMC_DS,
+			Xsmtyp:		XTY_ER | XTY_IMP,
 		}
 
 		if ldr.SymName(x) == "__n_pthreads" {
@@ -1010,11 +1009,11 @@ func putaixsym(ctxt *Link, x loader.Sym, t SymbolType) {
 
 	case TLSSym:
 		s := &XcoffSymEnt64{
-			Nsclass: C_EXT,
-			Noffset: uint32(xfile.stringTable.add(name)),
-			Nscnum:  xfile.getXCOFFscnum(ldr.SymSect(x)),
-			Nvalue:  uint64(ldr.SymValue(x)),
-			Nnumaux: 1,
+			Nsclass:	C_EXT,
+			Noffset:	uint32(xfile.stringTable.add(name)),
+			Nscnum:		xfile.getXCOFFscnum(ldr.SymSect(x)),
+			Nvalue:		uint64(ldr.SymValue(x)),
+			Nnumaux:	1,
 		}
 
 		ldr.SetSymDynid(x, int32(xfile.symbolCount))
@@ -1022,11 +1021,11 @@ func putaixsym(ctxt *Link, x loader.Sym, t SymbolType) {
 
 		size := uint64(ldr.SymSize(x))
 		a4 := &XcoffAuxCSect64{
-			Xauxtype:  _AUX_CSECT,
-			Xsmclas:   XMC_UL,
-			Xsmtyp:    XTY_CM,
-			Xscnlenlo: uint32(size & 0xFFFFFFFF),
-			Xscnlenhi: uint32(size >> 32),
+			Xauxtype:	_AUX_CSECT,
+			Xsmclas:	XMC_UL,
+			Xsmtyp:		XTY_CM,
+			Xscnlenlo:	uint32(size & 0xFFFFFFFF),
+			Xscnlenhi:	uint32(size >> 32),
 		}
 
 		syms = append(syms, a4)
@@ -1093,11 +1092,6 @@ func (f *xcoffFile) asmaixsym(ctxt *Link) {
 	}
 
 	shouldBeInSymbolTable := func(s loader.Sym, name string) bool {
-		if name == ".go.buildinfo" {
-			// On AIX, .go.buildinfo must be in the symbol table as
-			// it has relocations.
-			return true
-		}
 		if ldr.AttrNotInSymbolTable(s) {
 			return false
 		}
@@ -1127,7 +1121,7 @@ func (f *xcoffFile) asmaixsym(ctxt *Link) {
 				putaixsym(ctxt, s, BSSSym)
 			}
 
-		case st >= sym.SELFRXSECT && st < sym.SXREF: // data sections handled in dodata
+		case st >= sym.SELFRXSECT && st < sym.SXREF:	// data sections handled in dodata
 			if ldr.AttrReachable(s) {
 				putaixsym(ctxt, s, DataSym)
 			}
@@ -1146,7 +1140,7 @@ func (f *xcoffFile) asmaixsym(ctxt *Link) {
 		putaixsym(ctxt, s, TextSym)
 	}
 
-	if ctxt.Debugvlog != 0 || *flagN {
+	if ctxt.Debugvlog != 0 {
 		ctxt.Logf("symsize = %d\n", uint32(symSize))
 	}
 	xfile.updatePreviousFile(ctxt, true)
@@ -1202,9 +1196,9 @@ func (f *xcoffFile) adddynimpsym(ctxt *Link, s loader.Sym) {
 
 	// Add loader symbol
 	lds := &xcoffLoaderSymbol{
-		sym:    extsym.Sym(),
-		smtype: XTY_IMP,
-		smclas: XMC_DS,
+		sym:	extsym.Sym(),
+		smtype:	XTY_IMP,
+		smclas:	XMC_DS,
 	}
 	if ldr.SymName(s) == "__n_pthreads" {
 		// Currently, all imported symbols made by cgo_import_dynamic are
@@ -1239,8 +1233,8 @@ func Xcoffadddynrel(target *Target, ldr *loader.Loader, syms *ArchSyms, s loader
 	}
 
 	xldr := &xcoffLoaderReloc{
-		sym:  s,
-		roff: r.Off(),
+		sym:	s,
+		roff:	r.Off(),
 	}
 	targ := r.Sym()
 	var targType sym.SymKind
@@ -1257,7 +1251,7 @@ func Xcoffadddynrel(target *Target, ldr *loader.Loader, syms *ArchSyms, s loader
 			// Imported symbol relocation
 			for i, dynsym := range xfile.loaderSymbols {
 				if ldr.SymName(dynsym.sym) == ldr.SymName(targ) {
-					xldr.symndx = int32(i + 3) // +3 because of 3 section symbols
+					xldr.symndx = int32(i + 3)	// +3 because of 3 section symbols
 					break
 				}
 			}
@@ -1267,12 +1261,12 @@ func Xcoffadddynrel(target *Target, ldr *loader.Loader, syms *ArchSyms, s loader
 				ldr.Errorf(s, "unknown segment for .loader relocation with symbol %s", ldr.SymName(targ))
 			case &Segtext:
 			case &Segrodata:
-				xldr.symndx = 0 // .text
+				xldr.symndx = 0	// .text
 			case &Segdata:
 				if targType == sym.SBSS || targType == sym.SNOPTRBSS {
-					xldr.symndx = 2 // .bss
+					xldr.symndx = 2	// .bss
 				} else {
-					xldr.symndx = 1 // .data
+					xldr.symndx = 1	// .data
 				}
 			}
 
@@ -1305,9 +1299,9 @@ func (ctxt *Link) doxcoff() {
 	}
 
 	xfile.loaderSymbols = append(xfile.loaderSymbols, &xcoffLoaderSymbol{
-		sym:    ep,
-		smtype: XTY_ENT | XTY_SD,
-		smclas: XMC_DS,
+		sym:	ep,
+		smtype:	XTY_ENT | XTY_SD,
+		smclas:	XMC_DS,
 	})
 
 	xfile.genDynSym(ctxt)
@@ -1334,7 +1328,7 @@ func (ctxt *Link) doxcoff() {
 			}
 
 			if ldr.SymType(s) == sym.STEXT {
-				// On AIX, a exported function must have two symbols:
+				// On AIX, an exported function must have two symbols:
 				// - a .text symbol which must start with a ".".
 				// - a .data symbol which is a function descriptor.
 				name := ldr.SymExtname(s)
@@ -1373,17 +1367,17 @@ func (f *xcoffFile) writeLdrScn(ctxt *Link, globalOff uint64) {
 
 	// Loader Header
 	hdr := &XcoffLdHdr64{
-		Lversion: 2,
-		Lsymoff:  LDHDRSZ_64,
+		Lversion:	2,
+		Lsymoff:	LDHDRSZ_64,
 	}
 
 	ldr := ctxt.loader
 	/* Symbol table */
 	for _, s := range f.loaderSymbols {
 		lds := &XcoffLdSym64{
-			Loffset: uint32(stlen + 2),
-			Lsmtype: s.smtype,
-			Lsmclas: s.smclas,
+			Loffset:	uint32(stlen + 2),
+			Lsmtype:	s.smtype,
+			Lsmclas:	s.smclas,
 		}
 		sym := s.sym
 		switch s.smtype {
@@ -1396,18 +1390,18 @@ func (f *xcoffFile) writeLdrScn(ctxt *Link, globalOff uint64) {
 			lds.Lifile = int32(f.dynLibraries[ldr.SymDynimplib(sym)] + 1)
 		}
 		ldstr := &XcoffLdStr64{
-			size: uint16(len(ldr.SymName(sym)) + 1), // + null terminator
-			name: ldr.SymName(sym),
+			size:	uint16(len(ldr.SymName(sym)) + 1),	// + null terminator
+			name:	ldr.SymName(sym),
 		}
-		stlen += uint32(2 + ldstr.size) // 2 = sizeof ldstr.size
+		stlen += uint32(2 + ldstr.size)	// 2 = sizeof ldstr.size
 		symtab = append(symtab, lds)
 		strtab = append(strtab, ldstr)
 
 	}
 
 	hdr.Lnsyms = int32(len(symtab))
-	hdr.Lrldoff = hdr.Lsymoff + uint64(24*hdr.Lnsyms) // 24 = sizeof one symbol
-	off := hdr.Lrldoff                                // current offset is the same of reloc offset
+	hdr.Lrldoff = hdr.Lsymoff + uint64(24*hdr.Lnsyms)	// 24 = sizeof one symbol
+	off := hdr.Lrldoff					// current offset is the same of reloc offset
 
 	/* Reloc */
 	// Ensure deterministic order
@@ -1427,10 +1421,10 @@ func (f *xcoffFile) writeLdrScn(ctxt *Link, globalOff uint64) {
 
 	ep := ldr.Lookup(*flagEntrySymbol, 0)
 	xldr := &XcoffLdRel64{
-		Lvaddr:  uint64(ldr.SymValue(ep)),
-		Lrtype:  0x3F00,
-		Lrsecnm: f.getXCOFFscnum(ldr.SymSect(ep)),
-		Lsymndx: 0,
+		Lvaddr:		uint64(ldr.SymValue(ep)),
+		Lrtype:		0x3F00,
+		Lrsecnm:	f.getXCOFFscnum(ldr.SymSect(ep)),
+		Lsymndx:	0,
 	}
 	off += 16
 	reloctab = append(reloctab, xldr)
@@ -1442,9 +1436,9 @@ func (f *xcoffFile) writeLdrScn(ctxt *Link, globalOff uint64) {
 			panic("unexpected 0 sym value")
 		}
 		xldr = &XcoffLdRel64{
-			Lvaddr:  uint64(ldr.SymValue(symp) + int64(r.roff)),
-			Lrtype:  r.rtype,
-			Lsymndx: r.symndx,
+			Lvaddr:		uint64(ldr.SymValue(symp) + int64(r.roff)),
+			Lrtype:		r.rtype,
+			Lsymndx:	r.symndx,
 		}
 
 		if ldr.SymSect(symp) != nil {
@@ -1465,7 +1459,7 @@ func (f *xcoffFile) writeLdrScn(ctxt *Link, globalOff uint64) {
 	ldimpf := &XcoffLdImportFile64{
 		Limpidpath: "/usr/lib:/lib",
 	}
-	off += uint64(len(ldimpf.Limpidpath) + len(ldimpf.Limpidbase) + len(ldimpf.Limpidmem) + 3) // + null delimiter
+	off += uint64(len(ldimpf.Limpidpath) + len(ldimpf.Limpidbase) + len(ldimpf.Limpidmem) + 3)	// + null delimiter
 	importtab = append(importtab, ldimpf)
 
 	// The map created by adddynimpsym associates the name to a number
@@ -1490,11 +1484,11 @@ func (f *xcoffFile) writeLdrScn(ctxt *Link, globalOff uint64) {
 
 		}
 		ldimpf = &XcoffLdImportFile64{
-			Limpidpath: path,
-			Limpidbase: base,
-			Limpidmem:  mem,
+			Limpidpath:	path,
+			Limpidbase:	base,
+			Limpidmem:	mem,
 		}
-		off += uint64(len(ldimpf.Limpidpath) + len(ldimpf.Limpidbase) + len(ldimpf.Limpidmem) + 3) // + null delimiter
+		off += uint64(len(ldimpf.Limpidpath) + len(ldimpf.Limpidbase) + len(ldimpf.Limpidmem) + 3)	// + null delimiter
 		importtab = append(importtab, ldimpf)
 	}
 
@@ -1525,7 +1519,7 @@ func (f *xcoffFile) writeLdrScn(ctxt *Link, globalOff uint64) {
 	for _, s := range strtab {
 		ctxt.Out.Write16(s.size)
 		ctxt.Out.WriteString(s.name)
-		ctxt.Out.Write8(0) // null terminator
+		ctxt.Out.Write8(0)	// null terminator
 	}
 
 	f.loaderSize = off + uint64(stlen)
@@ -1550,7 +1544,7 @@ func (f *xcoffFile) writeFileHeader(ctxt *Link) {
 		f.xfhdr.Fflags = F_EXEC
 
 		// auxiliary header
-		f.xahdr.Ovstamp = 1 // based on dump -o
+		f.xahdr.Ovstamp = 1	// based on dump -o
 		f.xahdr.Omagic = 0x10b
 		copy(f.xahdr.Omodtype[:], "1L")
 		entry := ldr.Lookup(*flagEntrySymbol, 0)
@@ -1586,7 +1580,7 @@ func xcoffwrite(ctxt *Link) {
 func asmbXcoff(ctxt *Link) {
 	ctxt.Out.SeekSet(0)
 	fileoff := int64(Segdwarf.Fileoff + Segdwarf.Filelen)
-	fileoff = int64(Rnd(int64(fileoff), int64(*FlagRound)))
+	fileoff = int64(Rnd(int64(fileoff), *FlagRound))
 
 	xfile.sectNameToScnum = make(map[string]int16)
 
@@ -1736,8 +1730,8 @@ func (f *xcoffFile) emitRelocations(ctxt *Link, fileoff int64) {
 		return uint32(sect.Rellen) / RELSZ_64
 	}
 	sects := []struct {
-		xcoffSect *XcoffScnHdr64
-		segs      []*sym.Segment
+		xcoffSect	*XcoffScnHdr64
+		segs		[]*sym.Segment
 	}{
 		{f.sectText, []*sym.Segment{&Segtext}},
 		{f.sectData, []*sym.Segment{&Segrelrodata, &Segdata}},
@@ -1794,7 +1788,7 @@ func xcoffCreateExportFile(ctxt *Link) (fname string) {
 			continue
 		}
 		if ldr.IsFileLocal(s) {
-			continue // Only export non-static symbols
+			continue	// Only export non-static symbols
 		}
 
 		// Retrieve the name of the initial symbol

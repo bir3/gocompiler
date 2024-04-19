@@ -11,15 +11,15 @@ import (
 	"sort"
 )
 
-const indexVersion = "go index v1" // 11 bytes (plus \n), to align uint32s in index
+const indexVersion = "go index v2"	// 11 bytes (plus \n), to align uint32s in index
 
 // encodeModuleBytes produces the encoded representation of the module index.
 // encodeModuleBytes may modify the packages slice.
 func encodeModuleBytes(packages []*rawPackage) []byte {
 	e := newEncoder()
 	e.Bytes([]byte(indexVersion + "\n"))
-	stringTableOffsetPos := e.Pos() // fill this at the end
-	e.Uint32(0)                     // string table offset
+	stringTableOffsetPos := e.Pos()	// fill this at the end
+	e.Uint32(0)			// string table offset
 	sort.Slice(packages, func(i, j int) bool {
 		return packages[i].dir < packages[j].dir
 	})
@@ -35,7 +35,7 @@ func encodeModuleBytes(packages []*rawPackage) []byte {
 	}
 	e.IntAt(e.Pos(), stringTableOffsetPos)
 	e.Bytes(e.stringTable)
-	e.Bytes([]byte{0xFF}) // end of string table marker
+	e.Bytes([]byte{0xFF})	// end of string table marker
 	return e.b
 }
 
@@ -46,8 +46,8 @@ func encodePackageBytes(p *rawPackage) []byte {
 func encodePackage(e *encoder, p *rawPackage) {
 	e.String(p.error)
 	e.String(p.dir)
-	e.Int(len(p.sourceFiles))      // number of source files
-	sourceFileOffsetPos := e.Pos() // the pos of the start of the source file offsets
+	e.Int(len(p.sourceFiles))	// number of source files
+	sourceFileOffsetPos := e.Pos()	// the pos of the start of the source file offsets
 	for range p.sourceFiles {
 		e.Int(0)
 	}
@@ -84,6 +84,12 @@ func encodeFile(e *encoder, f *rawFile) {
 		e.String(embed.pattern)
 		e.Position(embed.position)
 	}
+
+	e.Int(len(f.directives))
+	for _, d := range f.directives {
+		e.String(d.Text)
+		e.Position(d.Pos)
+	}
 }
 
 func newEncoder() *encoder {
@@ -104,9 +110,9 @@ func (e *encoder) Position(position token.Position) {
 }
 
 type encoder struct {
-	b           []byte
-	stringTable []byte
-	strings     map[string]int
+	b		[]byte
+	stringTable	[]byte
+	strings		map[string]int
 }
 
 func (e *encoder) Pos() int {

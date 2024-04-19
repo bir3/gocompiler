@@ -6,44 +6,28 @@ package base
 
 import (
 	"fmt"
-	"os"
-	"os/exec"
-	"path/filepath"
-	"strings"
-
 	"github.com/bir3/gocompiler/src/go/build"
+	"os"
+	"path/filepath"
 
 	"github.com/bir3/gocompiler/src/cmd/gocmd/internal/cfg"
+	"github.com/bir3/gocompiler/src/cmd/gocmd/internal/par"
 )
 
 // Tool returns the path to the named tool (for example, "vet").
 // If the tool cannot be found, Tool exits the process.
 func Tool(toolName string) string {
-	toolPath := filepath.Join(build.ToolDir, toolName) + cfg.ToolExeSuffix()
-	if len(cfg.BuildToolexec) > 0 {
-		return toolPath
+	toolPath, err := ToolPath(toolName)
+	if err != nil && len(cfg.BuildToolexec) == 0 {
+		// Give a nice message if there is no tool with that name.
+		fmt.Fprintf(os.Stderr, "go: no such tool %q\n", toolName)
+		SetExitStatus(2)
+		Exit()
 	}
-	// Give a nice message if there is no tool with that name.
-
-	s := "gocompiler:" + toolName + ":" + toolPath
-	return s
+	return toolPath
 }
 
-func ToolCommand(exe string, args ...string) *exec.Cmd {
-	var cmd *exec.Cmd
-	if strings.HasPrefix(exe, "gocompiler:") {
-		// format: "gocompiler:<tool>:<original-path-is-ignored>"
-		s := exe[len("gocompiler:"):]
-		k := strings.Index(s, ":")
-		tool := s[0:k]
-		exe, err := os.Executable()
-		if err != nil {
-			panic(fmt.Sprintf("ToolCommand[gocompiler] failed to get self executable: %s", err))
-		}
-		cmd = exec.Command(exe, args...)
-		cmd.Env = append(cmd.Environ(), "BIR3_GOCOMPILER_TOOL="+tool)
-	} else {
-		cmd = exec.Command(exe, args...)
-	}
-	return cmd
-}
+// Tool returns the path at which we expect to find the named tool
+// (for example, "vet"), and the error (if any) from statting that path.
+func ToolPath(toolName string) (string, error) { return filepath.Join(build.ToolDir, toolName) + cfg.ToolExeSuffix(), nil}
+var toolStatCache par.Cache[string, error]

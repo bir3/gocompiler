@@ -8,6 +8,7 @@ package sigchanyzer
 
 import (
 	"bytes"
+	_ "embed"
 	"github.com/bir3/gocompiler/src/go/ast"
 	"github.com/bir3/gocompiler/src/go/format"
 	"github.com/bir3/gocompiler/src/go/token"
@@ -15,23 +16,27 @@ import (
 
 	"github.com/bir3/gocompiler/src/xvendor/golang.org/x/tools/go/analysis"
 	"github.com/bir3/gocompiler/src/xvendor/golang.org/x/tools/go/analysis/passes/inspect"
+	"github.com/bir3/gocompiler/src/xvendor/golang.org/x/tools/go/analysis/passes/internal/analysisutil"
 	"github.com/bir3/gocompiler/src/xvendor/golang.org/x/tools/go/ast/inspector"
 )
 
-const Doc = `check for unbuffered channel of os.Signal
-
-This checker reports call expression of the form signal.Notify(c <-chan os.Signal, sig ...os.Signal),
-where c is an unbuffered channel, which can be at risk of missing the signal.`
+//go:embed doc.go
+var doc string
 
 // Analyzer describes sigchanyzer analysis function detector.
 var Analyzer = &analysis.Analyzer{
-	Name:     "sigchanyzer",
-	Doc:      Doc,
-	Requires: []*analysis.Analyzer{inspect.Analyzer},
-	Run:      run,
+	Name:		"sigchanyzer",
+	Doc:		analysisutil.MustExtractDoc(doc, "sigchanyzer"),
+	URL:		"https://pkg.go.dev/golang.org/x/tools/go/analysis/passes/sigchanyzer",
+	Requires:	[]*analysis.Analyzer{inspect.Analyzer},
+	Run:		run,
 }
 
 func run(pass *analysis.Pass) (interface{}, error) {
+	if !analysisutil.Imports(pass.Pkg, "os/signal") {
+		return nil, nil	// doesn't directly import signal
+	}
+
 	inspect := pass.ResultOf[inspect.Analyzer].(*inspector.Inspector)
 
 	nodeFilter := []ast.Node{
@@ -66,8 +71,8 @@ func run(pass *analysis.Pass) (interface{}, error) {
 		*chanDeclCopy = *chanDecl
 		chanDeclCopy.Args = append([]ast.Expr(nil), chanDecl.Args...)
 		chanDeclCopy.Args = append(chanDeclCopy.Args, &ast.BasicLit{
-			Kind:  token.INT,
-			Value: "1",
+			Kind:	token.INT,
+			Value:	"1",
 		})
 
 		var buf bytes.Buffer
@@ -75,15 +80,15 @@ func run(pass *analysis.Pass) (interface{}, error) {
 			return
 		}
 		pass.Report(analysis.Diagnostic{
-			Pos:     call.Pos(),
-			End:     call.End(),
-			Message: "misuse of unbuffered os.Signal channel as argument to signal.Notify",
+			Pos:		call.Pos(),
+			End:		call.End(),
+			Message:	"misuse of unbuffered os.Signal channel as argument to signal.Notify",
 			SuggestedFixes: []analysis.SuggestedFix{{
-				Message: "Change to buffer channel",
+				Message:	"Change to buffer channel",
 				TextEdits: []analysis.TextEdit{{
-					Pos:     chanDecl.Pos(),
-					End:     chanDecl.End(),
-					NewText: buf.Bytes(),
+					Pos:		chanDecl.Pos(),
+					End:		chanDecl.End(),
+					NewText:	buf.Bytes(),
 				}},
 			}},
 		})

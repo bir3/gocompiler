@@ -31,10 +31,10 @@ package mips
 
 import (
 	"github.com/bir3/gocompiler/src/cmd/internal/obj"
-	"github.com/bir3/gocompiler/src/cmd/internal/objabi"
 	"github.com/bir3/gocompiler/src/cmd/internal/sys"
 	"encoding/binary"
 	"fmt"
+	"github.com/bir3/gocompiler/src/internal/abi"
 	"log"
 	"math"
 )
@@ -309,7 +309,7 @@ func preprocess(ctxt *obj.Link, cursym *obj.LSym, newprog obj.ProgAlloc) {
 			}
 
 			if !p.From.Sym.NoSplit() {
-				p = c.stacksplit(p, autosize) // emit split check
+				p = c.stacksplit(p, autosize)	// emit split check
 			}
 
 			q = p
@@ -383,7 +383,7 @@ func preprocess(ctxt *obj.Link, cursym *obj.LSym, newprog obj.ProgAlloc) {
 				q.As = mov
 				q.From.Type = obj.TYPE_MEM
 				q.From.Reg = REGG
-				q.From.Offset = 4 * int64(c.ctxt.Arch.PtrSize) // G.panic
+				q.From.Offset = 4 * int64(c.ctxt.Arch.PtrSize)	// G.panic
 				q.To.Type = obj.TYPE_REG
 				q.To.Reg = REG_R1
 
@@ -399,7 +399,7 @@ func preprocess(ctxt *obj.Link, cursym *obj.LSym, newprog obj.ProgAlloc) {
 				q.As = mov
 				q.From.Type = obj.TYPE_MEM
 				q.From.Reg = REG_R1
-				q.From.Offset = 0 // Panic.argp
+				q.From.Offset = 0	// Panic.argp
 				q.To.Type = obj.TYPE_REG
 				q.To.Reg = REG_R2
 
@@ -434,7 +434,7 @@ func preprocess(ctxt *obj.Link, cursym *obj.LSym, newprog obj.ProgAlloc) {
 				q.From.Reg = REG_R2
 				q.To.Type = obj.TYPE_MEM
 				q.To.Reg = REG_R1
-				q.To.Offset = 0 // Panic.argp
+				q.To.Offset = 0	// Panic.argp
 
 				q = obj.Appendp(q, newprog)
 
@@ -450,14 +450,14 @@ func preprocess(ctxt *obj.Link, cursym *obj.LSym, newprog obj.ProgAlloc) {
 			}
 
 			retSym := p.To.Sym
-			p.To.Name = obj.NAME_NONE // clear fields as we may modify p to other instruction
+			p.To.Name = obj.NAME_NONE	// clear fields as we may modify p to other instruction
 			p.To.Sym = nil
 
 			if c.cursym.Func().Text.Mark&LEAF != 0 {
 				if autosize == 0 {
 					p.As = AJMP
 					p.From = obj.Addr{}
-					if retSym != nil { // retjmp
+					if retSym != nil {	// retjmp
 						p.To.Type = obj.TYPE_BRANCH
 						p.To.Name = obj.NAME_EXTERN
 						p.To.Sym = retSym
@@ -480,7 +480,7 @@ func preprocess(ctxt *obj.Link, cursym *obj.LSym, newprog obj.ProgAlloc) {
 				q = c.newprog()
 				q.As = AJMP
 				q.Pos = p.Pos
-				if retSym != nil { // retjmp
+				if retSym != nil {	// retjmp
 					q.To.Type = obj.TYPE_BRANCH
 					q.To.Name = obj.NAME_EXTERN
 					q.To.Sym = retSym
@@ -521,7 +521,7 @@ func preprocess(ctxt *obj.Link, cursym *obj.LSym, newprog obj.ProgAlloc) {
 			q1 = c.newprog()
 			q1.As = AJMP
 			q1.Pos = p.Pos
-			if retSym != nil { // retjmp
+			if retSym != nil {	// retjmp
 				q1.To.Type = obj.TYPE_BRANCH
 				q1.To.Name = obj.NAME_EXTERN
 				q1.To.Sym = retSym
@@ -560,8 +560,8 @@ func preprocess(ctxt *obj.Link, cursym *obj.LSym, newprog obj.ProgAlloc) {
 
 		if p.To.Type == obj.TYPE_REG && p.To.Reg == REGSP && p.Spadj == 0 {
 			f := c.cursym.Func()
-			if f.FuncFlag&objabi.FuncFlag_SPWRITE == 0 {
-				c.cursym.Func().FuncFlag |= objabi.FuncFlag_SPWRITE
+			if f.FuncFlag&abi.FuncFlagSPWrite == 0 {
+				c.cursym.Func().FuncFlag |= abi.FuncFlagSPWrite
 				if ctxt.Debugvlog || !ctxt.IsAsm {
 					ctxt.Logf("auto-SPWRITE: %s %v\n", c.cursym.Name, p)
 					if !ctxt.IsAsm {
@@ -595,7 +595,7 @@ func preprocess(ctxt *obj.Link, cursym *obj.LSym, newprog obj.ProgAlloc) {
 
 			var addrOff int64
 			if c.ctxt.Arch.ByteOrder == binary.BigEndian {
-				addrOff = 4 // swap load/save order
+				addrOff = 4	// swap load/save order
 			}
 			if p.From.Type == obj.TYPE_MEM {
 				reg := REG_F0 + (p.To.Reg-REG_F0)&^1
@@ -625,9 +625,9 @@ func preprocess(ctxt *obj.Link, cursym *obj.LSym, newprog obj.ProgAlloc) {
 	}
 
 	// instruction scheduling
-	q = nil                   // p - 1
-	q1 = c.cursym.Func().Text // top of block
-	o := 0                    // count of instructions
+	q = nil				// p - 1
+	q1 = c.cursym.Func().Text	// top of block
+	o := 0				// count of instructions
 	for p = c.cursym.Func().Text; p != nil; p = p1 {
 		p1 = p.Link
 		o++
@@ -760,9 +760,9 @@ func (c *ctxt0) stacksplit(p *obj.Prog, framesize int32) *obj.Prog {
 	p.As = mov
 	p.From.Type = obj.TYPE_MEM
 	p.From.Reg = REGG
-	p.From.Offset = 2 * int64(c.ctxt.Arch.PtrSize) // G.stackguard0
+	p.From.Offset = 2 * int64(c.ctxt.Arch.PtrSize)	// G.stackguard0
 	if c.cursym.CFunc() {
-		p.From.Offset = 3 * int64(c.ctxt.Arch.PtrSize) // G.stackguard1
+		p.From.Offset = 3 * int64(c.ctxt.Arch.PtrSize)	// G.stackguard1
 	}
 	p.To.Type = obj.TYPE_REG
 	p.To.Reg = REG_R1
@@ -774,7 +774,7 @@ func (c *ctxt0) stacksplit(p *obj.Prog, framesize int32) *obj.Prog {
 	p = c.ctxt.StartUnsafePoint(p, c.newprog)
 
 	var q *obj.Prog
-	if framesize <= objabi.StackSmall {
+	if framesize <= abi.StackSmall {
 		// small stack: SP < stackguard
 		//	AGTU	SP, stackguard, R1
 		p = obj.Appendp(p, c.newprog)
@@ -787,8 +787,8 @@ func (c *ctxt0) stacksplit(p *obj.Prog, framesize int32) *obj.Prog {
 		p.To.Reg = REG_R1
 	} else {
 		// large stack: SP-framesize < stackguard-StackSmall
-		offset := int64(framesize) - objabi.StackSmall
-		if framesize > objabi.StackBig {
+		offset := int64(framesize) - abi.StackSmall
+		if framesize > abi.StackBig {
 			// Such a large stack we need to protect against underflow.
 			// The runtime guarantees SP > objabi.StackBig, but
 			// framesize is large enough that SP-framesize may
@@ -890,7 +890,7 @@ func (c *ctxt0) stacksplit(p *obj.Prog, framesize int32) *obj.Prog {
 	// placeholder for q1's jump target
 	p = obj.Appendp(p, c.newprog)
 
-	p.As = obj.ANOP // zero-width place holder
+	p.As = obj.ANOP	// zero-width place holder
 	q1.To.SetTarget(p)
 
 	return p
@@ -905,31 +905,31 @@ func (c *ctxt0) addnop(p *obj.Prog) {
 }
 
 const (
-	E_HILO  = 1 << 0
-	E_FCR   = 1 << 1
-	E_MCR   = 1 << 2
-	E_MEM   = 1 << 3
-	E_MEMSP = 1 << 4 /* uses offset and size */
-	E_MEMSB = 1 << 5 /* uses offset and size */
-	ANYMEM  = E_MEM | E_MEMSP | E_MEMSB
+	E_HILO	= 1 << 0
+	E_FCR	= 1 << 1
+	E_MCR	= 1 << 2
+	E_MEM	= 1 << 3
+	E_MEMSP	= 1 << 4	/* uses offset and size */
+	E_MEMSB	= 1 << 5	/* uses offset and size */
+	ANYMEM	= E_MEM | E_MEMSP | E_MEMSB
 	//DELAY = LOAD|BRANCH|FCMP
-	DELAY = BRANCH /* only schedule branch */
+	DELAY	= BRANCH	/* only schedule branch */
 )
 
 type Dep struct {
-	ireg uint32
-	freg uint32
-	cc   uint32
+	ireg	uint32
+	freg	uint32
+	cc	uint32
 }
 
 type Sch struct {
-	p       obj.Prog
-	set     Dep
-	used    Dep
-	soffset int32
-	size    uint8
-	nop     uint8
-	comp    bool
+	p	obj.Prog
+	set	Dep
+	used	Dep
+	soffset	int32
+	size	uint8
+	nop	uint8
+	comp	bool
 }
 
 func (c *ctxt0) sched(p0, pe *obj.Prog) {
@@ -1030,10 +1030,10 @@ func (c *ctxt0) markregused(s *Sch) {
 		s.used.ireg |= 1 << (REGTMP - REG_R0)
 	}
 
-	ar := 0  /* dest is really reference */
-	ad := 0  /* source/dest is really address */
-	ld := 0  /* opcode is load instruction */
-	sz := 20 /* size of load/store for overlap computation */
+	ar := 0		/* dest is really reference */
+	ad := 0		/* source/dest is really address */
+	ld := 0		/* opcode is load instruction */
+	sz := 20	/* size of load/store for overlap computation */
 
 	/*
 	 * flags based on opcode
@@ -1400,7 +1400,7 @@ func (c *ctxt0) markregused(s *Sch) {
 			s.used.ireg |= 1 << uint(cls-REG_R0)
 		}
 	}
-	s.set.ireg &^= (1 << (REGZERO - REG_R0)) /* R0 can't be set */
+	s.set.ireg &^= (1 << (REGZERO - REG_R0))	/* R0 can't be set */
 }
 
 /*
@@ -1500,37 +1500,37 @@ func (c *ctxt0) compound(p *obj.Prog) bool {
 }
 
 var Linkmips64 = obj.LinkArch{
-	Arch:           sys.ArchMIPS64,
-	Init:           buildop,
-	Preprocess:     preprocess,
-	Assemble:       span0,
-	Progedit:       progedit,
-	DWARFRegisters: MIPSDWARFRegisters,
+	Arch:		sys.ArchMIPS64,
+	Init:		buildop,
+	Preprocess:	preprocess,
+	Assemble:	span0,
+	Progedit:	progedit,
+	DWARFRegisters:	MIPSDWARFRegisters,
 }
 
 var Linkmips64le = obj.LinkArch{
-	Arch:           sys.ArchMIPS64LE,
-	Init:           buildop,
-	Preprocess:     preprocess,
-	Assemble:       span0,
-	Progedit:       progedit,
-	DWARFRegisters: MIPSDWARFRegisters,
+	Arch:		sys.ArchMIPS64LE,
+	Init:		buildop,
+	Preprocess:	preprocess,
+	Assemble:	span0,
+	Progedit:	progedit,
+	DWARFRegisters:	MIPSDWARFRegisters,
 }
 
 var Linkmips = obj.LinkArch{
-	Arch:           sys.ArchMIPS,
-	Init:           buildop,
-	Preprocess:     preprocess,
-	Assemble:       span0,
-	Progedit:       progedit,
-	DWARFRegisters: MIPSDWARFRegisters,
+	Arch:		sys.ArchMIPS,
+	Init:		buildop,
+	Preprocess:	preprocess,
+	Assemble:	span0,
+	Progedit:	progedit,
+	DWARFRegisters:	MIPSDWARFRegisters,
 }
 
 var Linkmipsle = obj.LinkArch{
-	Arch:           sys.ArchMIPSLE,
-	Init:           buildop,
-	Preprocess:     preprocess,
-	Assemble:       span0,
-	Progedit:       progedit,
-	DWARFRegisters: MIPSDWARFRegisters,
+	Arch:		sys.ArchMIPSLE,
+	Init:		buildop,
+	Preprocess:	preprocess,
+	Assemble:	span0,
+	Progedit:	progedit,
+	DWARFRegisters:	MIPSDWARFRegisters,
 }

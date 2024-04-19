@@ -39,15 +39,15 @@ import (
  * mips 64
  */
 const (
-	NSNAME = 8
-	NSYM   = 50
-	NREG   = 32 /* number of general registers */
-	NFREG  = 32 /* number of floating point registers */
-	NWREG  = 32 /* number of MSA registers */
+	NSNAME	= 8
+	NSYM	= 50
+	NREG	= 32	/* number of general registers */
+	NFREG	= 32	/* number of floating point registers */
+	NWREG	= 32	/* number of MSA registers */
 )
 
 const (
-	REG_R0 = obj.RBaseMIPS + iota // must be a multiple of 32
+	REG_R0	= obj.RBaseMIPS + iota	// must be a multiple of 32
 	REG_R1
 	REG_R2
 	REG_R3
@@ -80,7 +80,7 @@ const (
 	REG_R30
 	REG_R31
 
-	REG_F0 // must be a multiple of 32
+	REG_F0	// must be a multiple of 32
 	REG_F1
 	REG_F2
 	REG_F3
@@ -114,7 +114,7 @@ const (
 	REG_F31
 
 	// co-processor 0 control registers
-	REG_M0 // must be a multiple of 32
+	REG_M0	// must be a multiple of 32
 	REG_M1
 	REG_M2
 	REG_M3
@@ -148,7 +148,7 @@ const (
 	REG_M31
 
 	// FPU control registers
-	REG_FCR0 // must be a multiple of 32
+	REG_FCR0	// must be a multiple of 32
 	REG_FCR1
 	REG_FCR2
 	REG_FCR3
@@ -183,7 +183,7 @@ const (
 
 	// MSA registers
 	// The lower bits of W registers are alias to F registers
-	REG_W0 // must be a multiple of 32
+	REG_W0	// must be a multiple of 32
 	REG_W1
 	REG_W2
 	REG_W3
@@ -219,22 +219,22 @@ const (
 	REG_HI
 	REG_LO
 
-	REG_LAST = REG_LO // the last defined register
+	REG_LAST	= REG_LO	// the last defined register
 
-	REG_SPECIAL = REG_M0
+	REG_SPECIAL	= REG_M0
 
-	REGZERO = REG_R0 /* set to zero */
-	REGSP   = REG_R29
-	REGSB   = REG_R28
-	REGLINK = REG_R31
-	REGRET  = REG_R1
-	REGARG  = -1      /* -1 disables passing the first argument in register */
-	REGRT1  = REG_R1  /* reserved for runtime, duffzero and duffcopy */
-	REGRT2  = REG_R2  /* reserved for runtime, duffcopy */
-	REGCTXT = REG_R22 /* context for closures */
-	REGG    = REG_R30 /* G */
-	REGTMP  = REG_R23 /* used by the linker */
-	FREGRET = REG_F0
+	REGZERO	= REG_R0	/* set to zero */
+	REGSP	= REG_R29
+	REGSB	= REG_R28
+	REGLINK	= REG_R31
+	REGRET	= REG_R1
+	REGARG	= -1		/* -1 disables passing the first argument in register */
+	REGRT1	= REG_R1	/* reserved for runtime, duffzero and duffcopy */
+	REGRT2	= REG_R2	/* reserved for runtime, duffcopy */
+	REGCTXT	= REG_R22	/* context for closures */
+	REGG	= REG_R30	/* G */
+	REGTMP	= REG_R23	/* used by the linker */
+	FREGRET	= REG_F0
 )
 
 // https://llvm.org/svn/llvm-project/llvm/trunk/lib/Target/Mips/MipsRegisterInfo.td search for DwarfRegNum
@@ -250,7 +250,7 @@ func init() {
 		}
 	}
 	f(REG_R0, REG_R31, 0)
-	f(REG_F0, REG_F31, 32) // For 32-bit MIPS, compiler only uses even numbered registers --  see cmd/compile/internal/ssa/gen/MIPSOps.go
+	f(REG_F0, REG_F31, 32)	// For 32-bit MIPS, compiler only uses even numbered registers --  see cmd/compile/internal/ssa/gen/MIPSOps.go
 	MIPSDWARFRegisters[REG_HI] = 64
 	MIPSDWARFRegisters[REG_LO] = 65
 	// The lower bits of W registers are alias to F registers
@@ -263,42 +263,42 @@ const (
 
 const (
 	/* mark flags */
-	FOLL    = 1 << 0
-	LABEL   = 1 << 1
-	LEAF    = 1 << 2
-	SYNC    = 1 << 3
-	BRANCH  = 1 << 4
-	LOAD    = 1 << 5
-	FCMP    = 1 << 6
-	NOSCHED = 1 << 7
+	FOLL	= 1 << 0
+	LABEL	= 1 << 1
+	LEAF	= 1 << 2
+	SYNC	= 1 << 3
+	BRANCH	= 1 << 4
+	LOAD	= 1 << 5
+	FCMP	= 1 << 6
+	NOSCHED	= 1 << 7
 
-	NSCHED = 20
+	NSCHED	= 20
 )
 
 const (
-	C_NONE = iota
+	C_NONE	= iota
 	C_REG
 	C_FREG
 	C_FCREG
-	C_MREG /* special processor register */
-	C_WREG /* MSA registers */
+	C_MREG	/* special processor register */
+	C_WREG	/* MSA registers */
 	C_HI
 	C_LO
 	C_ZCON
-	C_SCON /* 16 bit signed */
-	C_UCON /* 32 bit signed, low 16 bits 0 */
+	C_SCON	/* 16 bit signed */
+	C_UCON	/* 32 bit signed, low 16 bits 0 */
 	C_ADD0CON
 	C_AND0CON
-	C_ADDCON /* -0x8000 <= v < 0 */
-	C_ANDCON /* 0 < v <= 0xFFFF */
-	C_LCON   /* other 32 */
-	C_DCON   /* other 64 (could subdivide further) */
-	C_SACON  /* $n(REG) where n <= int16 */
+	C_ADDCON	/* -0x8000 <= v < 0 */
+	C_ANDCON	/* 0 < v <= 0xFFFF */
+	C_LCON		/* other 32 */
+	C_DCON		/* other 64 (could subdivide further) */
+	C_SACON		/* $n(REG) where n <= int16 */
 	C_SECON
-	C_LACON /* $n(REG) where int16 < n <= int32 */
+	C_LACON	/* $n(REG) where int16 < n <= int32 */
 	C_LECON
-	C_DACON /* $n(REG) where int32 < n */
-	C_STCON /* $tlsvar */
+	C_DACON	/* $n(REG) where int32 < n */
+	C_STCON	/* $tlsvar */
 	C_SBRA
 	C_LBRA
 	C_SAUTO
@@ -313,11 +313,11 @@ const (
 	C_TLS
 	C_TEXTSIZE
 
-	C_NCLASS /* must be the last */
+	C_NCLASS	/* must be the last */
 )
 
 const (
-	AABSD = obj.ABaseMIPS + obj.A_ARCHSPECIFIC + iota
+	AABSD	= obj.ABaseMIPS + obj.A_ARCHSPECIFIC + iota
 	AABSF
 	AABSW
 	AADD
@@ -384,7 +384,7 @@ const (
 	ANEGF
 	ANEGW
 	ANEGV
-	ANOOP // hardware nop
+	ANOOP	// hardware nop
 	ANOR
 	AOR
 	AREM
@@ -394,6 +394,8 @@ const (
 	AROTRV
 	ASC
 	ASCV
+	ASEB
+	ASEH
 	ASGT
 	ASGTU
 	ASLL
@@ -415,6 +417,7 @@ const (
 	ATLBWR
 	ATNE
 	AWORD
+	AWSBH
 	AXOR
 
 	/* 64-bit */
@@ -434,6 +437,8 @@ const (
 	AADDVU
 	ASUBV
 	ASUBVU
+	ADSBH
+	ADSHD
 
 	/* 64-bit FP */
 	ATRUNCFV
@@ -455,9 +460,9 @@ const (
 	ALAST
 
 	// aliases
-	AJMP = obj.AJMP
-	AJAL = obj.ACALL
-	ARET = obj.ARET
+	AJMP	= obj.AJMP
+	AJAL	= obj.ACALL
+	ARET	= obj.ARET
 )
 
 func init() {

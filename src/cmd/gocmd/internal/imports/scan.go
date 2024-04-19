@@ -29,7 +29,7 @@ func ScanDir(dir string, tags map[string]bool) ([]string, []string, error) {
 		if info.Mode()&fs.ModeSymlink != 0 {
 			info, err = fsys.Stat(filepath.Join(dir, name))
 			if err != nil {
-				continue // Ignore broken symlinks.
+				continue	// Ignore broken symlinks.
 			}
 		}
 

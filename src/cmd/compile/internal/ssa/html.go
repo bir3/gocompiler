@@ -11,20 +11,20 @@ import (
 	"html"
 	"io"
 	"os"
-	"os/exec"
+	"github.com/bir3/gocompiler/exec"
 	"path/filepath"
 	"strconv"
 	"strings"
 )
 
 type HTMLWriter struct {
-	w             io.WriteCloser
-	Func          *Func
-	path          string
-	dot           *dotWriter
-	prevHash      []byte
-	pendingPhases []string
-	pendingTitles []string
+	w		io.WriteCloser
+	Func		*Func
+	path		string
+	dot		*dotWriter
+	prevHash	[]byte
+	pendingPhases	[]string
+	pendingTitles	[]string
 }
 
 func NewHTMLWriter(path string, f *Func, cfgMask string) *HTMLWriter {
@@ -42,10 +42,10 @@ func NewHTMLWriter(path string, f *Func, cfgMask string) *HTMLWriter {
 		reportPath = filepath.Join(pwd, path)
 	}
 	html := HTMLWriter{
-		w:    out,
-		Func: f,
-		path: reportPath,
-		dot:  newDotWriter(cfgMask),
+		w:	out,
+		Func:	f,
+		path:	reportPath,
+		dot:	newDotWriter(cfgMask),
 	}
 	html.start()
 	return &html
@@ -741,7 +741,7 @@ function toggleDarkMode() {
 </head>`)
 	w.WriteString("<body>")
 	w.WriteString("<h1>")
-	w.WriteString(html.EscapeString(w.Func.Name))
+	w.WriteString(html.EscapeString(w.Func.NameABI()))
 	w.WriteString("</h1>")
 	w.WriteString(`
 <a href="#" onclick="toggle_visibility('help');return false;" id="helplink">help</a>
@@ -784,14 +784,14 @@ func (w *HTMLWriter) Close() {
 	io.WriteString(w.w, "</body>")
 	io.WriteString(w.w, "</html>")
 	w.w.Close()
-	fmt.Printf("dumped SSA to %v\n", w.path)
+	fmt.Printf("dumped SSA for %s to %v\n", w.Func.NameABI(), w.path)
 }
 
 // WritePhase writes f in a column headed by title.
 // phase is used for collapsing columns and should be unique across the table.
 func (w *HTMLWriter) WritePhase(phase, title string) {
 	if w == nil {
-		return // avoid generating HTML just to discard it
+		return	// avoid generating HTML just to discard it
 	}
 	hash := hashFunc(w.Func)
 	w.pendingPhases = append(w.pendingPhases, phase)
@@ -822,17 +822,17 @@ func (w *HTMLWriter) flushPhases() {
 // FuncLines contains source code for a function to be displayed
 // in sources column.
 type FuncLines struct {
-	Filename    string
-	StartLineno uint
-	Lines       []string
+	Filename	string
+	StartLineno	uint
+	Lines		[]string
 }
 
 // ByTopo sorts topologically: target function is on top,
 // followed by inlined functions sorted by filename and line numbers.
 type ByTopo []*FuncLines
 
-func (x ByTopo) Len() int      { return len(x) }
-func (x ByTopo) Swap(i, j int) { x[i], x[j] = x[j], x[i] }
+func (x ByTopo) Len() int	{ return len(x) }
+func (x ByTopo) Swap(i, j int)	{ x[i], x[j] = x[j], x[i] }
 func (x ByTopo) Less(i, j int) bool {
 	a := x[i]
 	b := x[j]
@@ -846,7 +846,7 @@ func (x ByTopo) Less(i, j int) bool {
 // phase is used for collapsing columns and should be unique across the table.
 func (w *HTMLWriter) WriteSources(phase string, all []*FuncLines) {
 	if w == nil {
-		return // avoid generating HTML just to discard it
+		return	// avoid generating HTML just to discard it
 	}
 	var buf strings.Builder
 	fmt.Fprint(&buf, "<div class=\"lines\" style=\"width: 8%\">")
@@ -887,7 +887,7 @@ func (w *HTMLWriter) WriteSources(phase string, all []*FuncLines) {
 
 func (w *HTMLWriter) WriteAST(phase string, buf *bytes.Buffer) {
 	if w == nil {
-		return // avoid generating HTML just to discard it
+		return	// avoid generating HTML just to discard it
 	}
 	lines := strings.Split(buf.String(), "\n")
 	var out strings.Builder
@@ -1002,7 +1002,7 @@ func (v *Value) LongHTML() string {
 		for _, value := range values {
 			if value == v {
 				names = append(names, name.String())
-				break // drop duplicates.
+				break	// drop duplicates.
 			}
 		}
 	}
@@ -1035,7 +1035,7 @@ func (b *Block) LongHTML() string {
 		s += fmt.Sprintf(" %s", c.HTML())
 	}
 	if len(b.Succs) > 0 {
-		s += " &#8594;" // right arrow
+		s += " &#8594;"	// right arrow
 		for _, e := range b.Succs {
 			c := e.b
 			s += " " + c.HTML()
@@ -1195,7 +1195,7 @@ type htmlFuncPrinter struct {
 	w io.Writer
 }
 
-func (p htmlFuncPrinter) header(f *Func) {}
+func (p htmlFuncPrinter) header(f *Func)	{}
 
 func (p htmlFuncPrinter) startBlock(b *Block, reachable bool) {
 	var dead string
@@ -1205,7 +1205,7 @@ func (p htmlFuncPrinter) startBlock(b *Block, reachable bool) {
 	fmt.Fprintf(p.w, "<ul class=\"%s ssa-print-func %s\">", b, dead)
 	fmt.Fprintf(p.w, "<li class=\"ssa-start-block\">%s:", b.HTML())
 	if len(b.Preds) > 0 {
-		io.WriteString(p.w, " &#8592;") // left arrow
+		io.WriteString(p.w, " &#8592;")	// left arrow
 		for _, e := range b.Preds {
 			pred := e.b
 			fmt.Fprintf(p.w, " %s", pred.HTML())
@@ -1215,14 +1215,14 @@ func (p htmlFuncPrinter) startBlock(b *Block, reachable bool) {
 		io.WriteString(p.w, `<button onclick="hideBlock(this)">-</button>`)
 	}
 	io.WriteString(p.w, "</li>")
-	if len(b.Values) > 0 { // start list of values
+	if len(b.Values) > 0 {	// start list of values
 		io.WriteString(p.w, "<li class=\"ssa-value-list\">")
 		io.WriteString(p.w, "<ul>")
 	}
 }
 
 func (p htmlFuncPrinter) endBlock(b *Block, reachable bool) {
-	if len(b.Values) > 0 { // end list of values
+	if len(b.Values) > 0 {	// end list of values
 		io.WriteString(p.w, "</ul>")
 		io.WriteString(p.w, "</li>")
 	}
@@ -1259,9 +1259,9 @@ func (p htmlFuncPrinter) named(n LocalSlot, vals []*Value) {
 }
 
 type dotWriter struct {
-	path   string
-	broken bool
-	phases map[string]bool // keys specify phases with CFGs
+	path	string
+	broken	bool
+	phases	map[string]bool	// keys specify phases with CFGs
 }
 
 // newDotWriter returns non-nil value when mask is valid.

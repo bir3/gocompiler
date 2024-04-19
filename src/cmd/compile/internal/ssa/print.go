@@ -50,8 +50,8 @@ type funcPrinter interface {
 }
 
 type stringFuncPrinter struct {
-	w         io.Writer
-	printDead bool
+	w		io.Writer
+	printDead	bool
 }
 
 func (p stringFuncPrinter) header(f *Func) {
@@ -116,7 +116,7 @@ func (p stringFuncPrinter) startDepCycle() {
 	fmt.Fprintln(p.w, "dependency cycle!")
 }
 
-func (p stringFuncPrinter) endDepCycle() {}
+func (p stringFuncPrinter) endDepCycle()	{}
 
 func (p stringFuncPrinter) named(n LocalSlot, vals []*Value) {
 	fmt.Fprintf(p.w, "name %s: %v\n", n, vals)

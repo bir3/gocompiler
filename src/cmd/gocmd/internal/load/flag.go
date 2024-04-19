@@ -12,25 +12,25 @@ import (
 )
 
 var (
-	BuildAsmflags   PerPackageFlag // -asmflags
-	BuildGcflags    PerPackageFlag // -gcflags
-	BuildLdflags    PerPackageFlag // -ldflags
-	BuildGccgoflags PerPackageFlag // -gccgoflags
+	BuildAsmflags	PerPackageFlag	// -asmflags
+	BuildGcflags	PerPackageFlag	// -gcflags
+	BuildLdflags	PerPackageFlag	// -ldflags
+	BuildGccgoflags	PerPackageFlag	// -gccgoflags
 )
 
 // A PerPackageFlag is a command-line flag implementation (a flag.Value)
 // that allows specifying different effective flags for different packages.
 // See 'go help build' for more details about per-package flags.
 type PerPackageFlag struct {
-	raw     string
-	present bool
-	values  []ppfValue
+	raw	string
+	present	bool
+	values	[]ppfValue
 }
 
 // A ppfValue is a single <pattern>=<flags> per-package flag value.
 type ppfValue struct {
-	match func(*Package) bool // compiled pattern
-	flags []string
+	match	func(*Package) bool	// compiled pattern
+	flags	[]string
 }
 
 // Set is called each time the flag is encountered on the command line.
@@ -42,7 +42,7 @@ func (f *PerPackageFlag) Set(v string) error {
 func (f *PerPackageFlag) set(v, cwd string) error {
 	f.raw = v
 	f.present = true
-	match := func(p *Package) bool { return p.Internal.CmdlinePkg || p.Internal.CmdlineFiles } // default predicate with no pattern
+	match := func(p *Package) bool { return p.Internal.CmdlinePkg || p.Internal.CmdlineFiles }	// default predicate with no pattern
 	// For backwards compatibility with earlier flag splitting, ignore spaces around flags.
 	v = strings.TrimSpace(v)
 	if v == "" {
@@ -77,7 +77,7 @@ func (f *PerPackageFlag) set(v, cwd string) error {
 	return nil
 }
 
-func (f *PerPackageFlag) String() string { return f.raw }
+func (f *PerPackageFlag) String() string	{ return f.raw }
 
 // Present reports whether the flag appeared on the command line.
 func (f *PerPackageFlag) Present() bool {

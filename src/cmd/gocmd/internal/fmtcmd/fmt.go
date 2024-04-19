@@ -27,9 +27,9 @@ func init() {
 }
 
 var CmdFmt = &base.Command{
-	Run:       runFmt,
-	UsageLine: "go fmt [-n] [-x] [packages]",
-	Short:     "gofmt (reformat) package sources",
+	Run:		runFmt,
+	UsageLine:	"go fmt [-n] [-x] [packages]",
+	Short:		"gofmt (reformat) package sources",
 	Long: `
 Fmt runs the command 'gofmt -l -w' on the packages named
 by the import paths. It prints the names of the files that are modified.
@@ -84,7 +84,7 @@ func runFmt(ctx context.Context, cmd *base.Command, args []string) {
 		files := base.RelPaths(pkg.InternalAllGoFiles())
 		for _, file := range files {
 			gofmtArgs = append(gofmtArgs, file)
-			gofmtArgLen += 1 + len(file) // plus separator
+			gofmtArgLen += 1 + len(file)	// plus separator
 			if gofmtArgLen >= sys.ExecArgLengthLimit {
 				base.Run(gofmtArgs)
 				gofmtArgs = gofmtArgs[:baseGofmtArgs]

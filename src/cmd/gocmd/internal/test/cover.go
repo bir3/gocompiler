@@ -15,8 +15,8 @@ import (
 )
 
 var coverMerge struct {
-	f          *os.File
-	sync.Mutex // for f.Write
+	f		*os.File
+	sync.Mutex	// for f.Write
 }
 
 // initCoverProfile initializes the test coverage profile.

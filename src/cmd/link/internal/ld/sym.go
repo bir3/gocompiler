@@ -44,14 +44,14 @@ import (
 func linknew(arch *sys.Arch) *Link {
 	ler := loader.ErrorReporter{AfterErrorAction: afterErrorAction}
 	ctxt := &Link{
-		Target:        Target{Arch: arch},
-		version:       sym.SymVerStatic,
-		outSem:        make(chan int, 2*runtime.GOMAXPROCS(0)),
-		Out:           NewOutBuf(arch),
-		LibraryByPkg:  make(map[string]*sym.Library),
-		numelfsym:     1,
-		ErrorReporter: ErrorReporter{ErrorReporter: ler},
-		generatorSyms: make(map[loader.Sym]generatorFunc),
+		Target:		Target{Arch: arch},
+		version:	sym.SymVerStatic,
+		outSem:		make(chan int, 2*runtime.GOMAXPROCS(0)),
+		Out:		NewOutBuf(arch),
+		LibraryByPkg:	make(map[string]*sym.Library),
+		numelfsym:	1,
+		ErrorReporter:	ErrorReporter{ErrorReporter: ler},
+		generatorSyms:	make(map[loader.Sym]generatorFunc),
 	}
 
 	if buildcfg.GOARCH != arch.Name {
@@ -75,7 +75,7 @@ func (ctxt *Link) computeTLSOffset() {
 	default:
 		log.Fatalf("unknown thread-local storage offset for %v", ctxt.HeadType)
 
-	case objabi.Hplan9, objabi.Hwindows, objabi.Hjs, objabi.Haix:
+	case objabi.Hplan9, objabi.Hwindows, objabi.Hjs, objabi.Hwasip1, objabi.Haix:
 		break
 
 	case objabi.Hlinux,
@@ -110,7 +110,7 @@ func (ctxt *Link) computeTLSOffset() {
 			ctxt.Tlsoffset = 0x30
 
 		case sys.ARM64:
-			ctxt.Tlsoffset = 0 // dummy value, not needed
+			ctxt.Tlsoffset = 0	// dummy value, not needed
 		}
 	}
 

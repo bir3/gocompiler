@@ -5,13 +5,14 @@
 package script
 
 import (
+	"github.com/bir3/gocompiler/src/cmd/gocmd/internal/cfg"
 	"github.com/bir3/gocompiler/src/cmd/gocmd/internal/robustio"
 	"errors"
 	"fmt"
 	"github.com/bir3/gocompiler/src/internal/diff"
 	"io/fs"
 	"os"
-	"os/exec"
+	"github.com/bir3/gocompiler/exec"
 	"path/filepath"
 	"regexp"
 	"runtime"
@@ -27,28 +28,28 @@ import (
 // commands.
 func DefaultCmds() map[string]Cmd {
 	return map[string]Cmd{
-		"cat":     Cat(),
-		"cd":      Cd(),
-		"chmod":   Chmod(),
-		"cmp":     Cmp(),
-		"cmpenv":  Cmpenv(),
-		"cp":      Cp(),
-		"echo":    Echo(),
-		"env":     Env(),
-		"exec":    Exec(func(cmd *exec.Cmd) error { return cmd.Process.Signal(os.Interrupt) }, 100*time.Millisecond), // arbitrary grace period
-		"exists":  Exists(),
-		"grep":    Grep(),
-		"help":    Help(),
-		"mkdir":   Mkdir(),
-		"mv":      Mv(),
-		"rm":      Rm(),
-		"replace": Replace(),
-		"sleep":   Sleep(),
-		"stderr":  Stderr(),
-		"stdout":  Stdout(),
-		"stop":    Stop(),
-		"symlink": Symlink(),
-		"wait":    Wait(),
+		"cat":		Cat(),
+		"cd":		Cd(),
+		"chmod":	Chmod(),
+		"cmp":		Cmp(),
+		"cmpenv":	Cmpenv(),
+		"cp":		Cp(),
+		"echo":		Echo(),
+		"env":		Env(),
+		"exec":		Exec(func(cmd *exec.Cmd) error { return cmd.Process.Signal(os.Interrupt) }, 100*time.Millisecond),	// arbitrary grace period
+		"exists":	Exists(),
+		"grep":		Grep(),
+		"help":		Help(),
+		"mkdir":	Mkdir(),
+		"mv":		Mv(),
+		"rm":		Rm(),
+		"replace":	Replace(),
+		"sleep":	Sleep(),
+		"stderr":	Stderr(),
+		"stdout":	Stdout(),
+		"stop":		Stop(),
+		"symlink":	Symlink(),
+		"wait":		Wait(),
 	}
 }
 
@@ -56,22 +57,22 @@ func DefaultCmds() map[string]Cmd {
 // given CmdUsage and a Run method calls the given function.
 func Command(usage CmdUsage, run func(*State, ...string) (WaitFunc, error)) Cmd {
 	return &funcCmd{
-		usage: usage,
-		run:   run,
+		usage:	usage,
+		run:	run,
 	}
 }
 
 // A funcCmd implements Cmd using a function value.
 type funcCmd struct {
-	usage CmdUsage
-	run   func(*State, ...string) (WaitFunc, error)
+	usage	CmdUsage
+	run	func(*State, ...string) (WaitFunc, error)
 }
 
 func (c *funcCmd) Run(s *State, args ...string) (WaitFunc, error) {
 	return c.run(s, args...)
 }
 
-func (c *funcCmd) Usage() *CmdUsage { return &c.usage }
+func (c *funcCmd) Usage() *CmdUsage	{ return &c.usage }
 
 // firstNonFlag returns a slice containing the index of the first argument in
 // rawArgs that is not a flag, or nil if all arguments are flags.
@@ -92,8 +93,8 @@ func firstNonFlag(rawArgs ...string) []int {
 func Cat() Cmd {
 	return Command(
 		CmdUsage{
-			Summary: "concatenate files and print to the script's stdout buffer",
-			Args:    "files...",
+			Summary:	"concatenate files and print to the script's stdout buffer",
+			Args:		"files...",
 		},
 		func(s *State, args ...string) (WaitFunc, error) {
 			if len(args) == 0 {
@@ -131,8 +132,8 @@ func Cat() Cmd {
 func Cd() Cmd {
 	return Command(
 		CmdUsage{
-			Summary: "change the working directory",
-			Args:    "dir",
+			Summary:	"change the working directory",
+			Args:		"dir",
 		},
 		func(s *State, args ...string) (WaitFunc, error) {
 			if len(args) != 1 {
@@ -146,8 +147,8 @@ func Cd() Cmd {
 func Chmod() Cmd {
 	return Command(
 		CmdUsage{
-			Summary: "change file mode bits",
-			Args:    "perm paths...",
+			Summary:	"change file mode bits",
+			Args:		"perm paths...",
 			Detail: []string{
 				"Changes the permissions of the named files or directories to be equal to perm.",
 				"Only numerical permissions are supported.",
@@ -179,8 +180,8 @@ func Chmod() Cmd {
 func Cmp() Cmd {
 	return Command(
 		CmdUsage{
-			Args:    "[-q] file1 file2",
-			Summary: "compare files for differences",
+			Args:		"[-q] file1 file2",
+			Summary:	"compare files for differences",
 			Detail: []string{
 				"By convention, file1 is the actual data and file2 is the expected data.",
 				"The command succeeds if the file contents are identical.",
@@ -197,8 +198,8 @@ func Cmp() Cmd {
 func Cmpenv() Cmd {
 	return Command(
 		CmdUsage{
-			Args:    "[-q] file1 file2",
-			Summary: "compare files for differences, with environment expansion",
+			Args:		"[-q] file1 file2",
+			Summary:	"compare files for differences, with environment expansion",
 			Detail: []string{
 				"By convention, file1 is the actual data and file2 is the expected data.",
 				"The command succeeds if the file contents are identical after substituting variables from the script environment.",
@@ -260,8 +261,8 @@ func doCompare(s *State, env bool, args ...string) error {
 func Cp() Cmd {
 	return Command(
 		CmdUsage{
-			Summary: "copy files to a target file or directory",
-			Args:    "src... dst",
+			Summary:	"copy files to a target file or directory",
+			Args:		"src... dst",
 			Detail: []string{
 				"src can include 'stdout' or 'stderr' to copy from the script's stdout or stderr buffer.",
 			},
@@ -280,9 +281,9 @@ func Cp() Cmd {
 
 			for _, arg := range args[:len(args)-1] {
 				var (
-					src  string
-					data []byte
-					mode fs.FileMode
+					src	string
+					data	[]byte
+					mode	fs.FileMode
 				)
 				switch arg {
 				case "stdout":
@@ -323,8 +324,8 @@ func Cp() Cmd {
 func Echo() Cmd {
 	return Command(
 		CmdUsage{
-			Summary: "display a line of text",
-			Args:    "string...",
+			Summary:	"display a line of text",
+			Args:		"string...",
 		},
 		func(s *State, args ...string) (WaitFunc, error) {
 			var buf strings.Builder
@@ -358,8 +359,8 @@ func Echo() Cmd {
 func Env() Cmd {
 	return Command(
 		CmdUsage{
-			Summary: "set or log the values of environment variables",
-			Args:    "[key[=value]...]",
+			Summary:	"set or log the values of environment variables",
+			Args:		"[key[=value]...]",
 			Detail: []string{
 				"With no arguments, print the script environment to the log.",
 				"Otherwise, add the listed key=value pairs to the environment or print the listed keys.",
@@ -402,19 +403,19 @@ func Env() Cmd {
 func Exec(cancel func(*exec.Cmd) error, waitDelay time.Duration) Cmd {
 	return Command(
 		CmdUsage{
-			Summary: "run an executable program with arguments",
-			Args:    "program [args...]",
+			Summary:	"run an executable program with arguments",
+			Args:		"program [args...]",
 			Detail: []string{
 				"Note that 'exec' does not terminate the script (unlike Unix shells).",
 			},
-			Async: true,
+			Async:	true,
 		},
 		func(s *State, args ...string) (WaitFunc, error) {
 			if len(args) < 1 {
 				return nil, ErrUsage
 			}
 
-			// Use the script's PATH to look up the command if it contains a separator
+			// Use the script's PATH to look up the command (if it does not contain a separator)
 			// instead of the test process's PATH (see lookPath).
 			// Don't use filepath.Clean, since that changes "./foo" to "foo".
 			name := filepath.FromSlash(args[0])
@@ -433,8 +434,8 @@ func Exec(cancel func(*exec.Cmd) error, waitDelay time.Duration) Cmd {
 
 func startCommand(s *State, name, path string, args []string, cancel func(*exec.Cmd) error, waitDelay time.Duration) (WaitFunc, error) {
 	var (
-		cmd                  *exec.Cmd
-		stdoutBuf, stderrBuf strings.Builder
+		cmd			*exec.Cmd
+		stdoutBuf, stderrBuf	strings.Builder
 	)
 	for {
 		cmd = exec.CommandContext(s.Context(), path, args...)
@@ -513,6 +514,18 @@ func lookPath(s *State, command string) (string, error) {
 
 	pathEnv, _ := s.LookupEnv(pathEnvName())
 	for _, dir := range strings.Split(pathEnv, string(filepath.ListSeparator)) {
+		if dir == "" {
+			continue
+		}
+
+		// Determine whether dir needs a trailing path separator.
+		// Note: we avoid filepath.Join in this function because it cleans the
+		// result: we want to preserve the exact dir prefix from the environment.
+		sep := string(filepath.Separator)
+		if os.IsPathSeparator(dir[len(dir)-1]) {
+			sep = ""
+		}
+
 		if searchExt {
 			ents, err := os.ReadDir(dir)
 			if err != nil {
@@ -521,12 +534,12 @@ func lookPath(s *State, command string) (string, error) {
 			for _, ent := range ents {
 				for _, ext := range pathExt {
 					if !ent.IsDir() && strEqual(ent.Name(), command+ext) {
-						return dir + string(filepath.Separator) + ent.Name(), nil
+						return dir + sep + ent.Name(), nil
 					}
 				}
 			}
 		} else {
-			path := dir + string(filepath.Separator) + command
+			path := dir + sep + command
 			if fi, err := os.Stat(path); err == nil && isExecutable(fi) {
 				return path, nil
 			}
@@ -553,8 +566,8 @@ func pathEnvName() string {
 func Exists() Cmd {
 	return Command(
 		CmdUsage{
-			Summary: "check that files exist",
-			Args:    "[-readonly] [-exec] file...",
+			Summary:	"check that files exist",
+			Args:		"[-readonly] [-exec] file...",
 		},
 		func(s *State, args ...string) (WaitFunc, error) {
 			var readonly, exec bool
@@ -601,13 +614,13 @@ func Exists() Cmd {
 func Grep() Cmd {
 	return Command(
 		CmdUsage{
-			Summary: "find lines in a file that match a pattern",
-			Args:    matchUsage + " file",
+			Summary:	"find lines in a file that match a pattern",
+			Args:		matchUsage + " file",
 			Detail: []string{
 				"The command succeeds if at least one match (or the exact count, if given) is found.",
 				"The -q flag suppresses printing of matches.",
 			},
-			RegexpArgs: firstNonFlag,
+			RegexpArgs:	firstNonFlag,
 		},
 		func(s *State, args ...string) (WaitFunc, error) {
 			return nil, match(s, args, "", "grep")
@@ -653,7 +666,7 @@ func match(s *State, args []string, text, name string) error {
 	}
 
 	if isGrep {
-		name = args[1] // for error messages
+		name = args[1]	// for error messages
 		data, err := os.ReadFile(s.Path(args[1]))
 		if err != nil {
 			return err
@@ -692,8 +705,8 @@ func match(s *State, args []string, text, name string) error {
 func Help() Cmd {
 	return Command(
 		CmdUsage{
-			Summary: "log help text for commands and conditions",
-			Args:    "[-v] name...",
+			Summary:	"log help text for commands and conditions",
+			Args:		"[-v] name...",
 			Detail: []string{
 				"To display help for a specific condition, enclose it in brackets: 'help [amd64]'.",
 				"To display complete documentation when listing all commands, pass the -v flag.",
@@ -748,8 +761,8 @@ func Help() Cmd {
 func Mkdir() Cmd {
 	return Command(
 		CmdUsage{
-			Summary: "create directories, if they do not already exist",
-			Args:    "path...",
+			Summary:	"create directories, if they do not already exist",
+			Args:		"path...",
 			Detail: []string{
 				"Unlike Unix mkdir, parent directories are always created if needed.",
 			},
@@ -771,8 +784,8 @@ func Mkdir() Cmd {
 func Mv() Cmd {
 	return Command(
 		CmdUsage{
-			Summary: "rename a file or directory to a new path",
-			Args:    "old new",
+			Summary:	"rename a file or directory to a new path",
+			Args:		"old new",
 			Detail: []string{
 				"OS-specific restrictions may apply when old and new are in different directories.",
 			},
@@ -789,11 +802,11 @@ func Mv() Cmd {
 // host process's PATH (not looked up in the script's PATH).
 func Program(name string, cancel func(*exec.Cmd) error, waitDelay time.Duration) Cmd {
 	var (
-		shortName    string
-		summary      string
-		lookPathOnce sync.Once
-		path         string
-		pathErr      error
+		shortName	string
+		summary		string
+		lookPathOnce	sync.Once
+		path		string
+		pathErr		error
 	)
 	if filepath.IsAbs(name) {
 		lookPathOnce.Do(func() { path = filepath.Clean(name) })
@@ -806,13 +819,13 @@ func Program(name string, cancel func(*exec.Cmd) error, waitDelay time.Duration)
 
 	return Command(
 		CmdUsage{
-			Summary: summary,
-			Args:    "[args...]",
-			Async:   true,
+			Summary:	summary,
+			Args:		"[args...]",
+			Async:		true,
 		},
 		func(s *State, args ...string) (WaitFunc, error) {
 			lookPathOnce.Do(func() {
-				path, pathErr = exec.LookPath(name)
+				path, pathErr = cfg.LookPath(name)
 			})
 			if pathErr != nil {
 				return nil, pathErr
@@ -825,8 +838,8 @@ func Program(name string, cancel func(*exec.Cmd) error, waitDelay time.Duration)
 func Replace() Cmd {
 	return Command(
 		CmdUsage{
-			Summary: "replace strings in a file",
-			Args:    "[old new]... file",
+			Summary:	"replace strings in a file",
+			Args:		"[old new]... file",
 			Detail: []string{
 				"The 'old' and 'new' arguments are unquoted as if in quoted Go strings.",
 			},
@@ -865,8 +878,8 @@ func Replace() Cmd {
 func Rm() Cmd {
 	return Command(
 		CmdUsage{
-			Summary: "remove a file or directory",
-			Args:    "path...",
+			Summary:	"remove a file or directory",
+			Args:		"path...",
 			Detail: []string{
 				"If the path is a directory, its contents are removed recursively.",
 			},
@@ -907,12 +920,12 @@ func removeAll(dir string) error {
 func Sleep() Cmd {
 	return Command(
 		CmdUsage{
-			Summary: "sleep for a specified duration",
-			Args:    "duration",
+			Summary:	"sleep for a specified duration",
+			Args:		"duration",
 			Detail: []string{
 				"The duration must be given as a Go time.Duration string.",
 			},
-			Async: true,
+			Async:	true,
 		},
 		func(s *State, args ...string) (WaitFunc, error) {
 			if len(args) != 1 {
@@ -943,13 +956,13 @@ func Sleep() Cmd {
 func Stderr() Cmd {
 	return Command(
 		CmdUsage{
-			Summary: "find lines in the stderr buffer that match a pattern",
-			Args:    matchUsage + " file",
+			Summary:	"find lines in the stderr buffer that match a pattern",
+			Args:		matchUsage + " file",
 			Detail: []string{
 				"The command succeeds if at least one match (or the exact count, if given) is found.",
 				"The -q flag suppresses printing of matches.",
 			},
-			RegexpArgs: firstNonFlag,
+			RegexpArgs:	firstNonFlag,
 		},
 		func(s *State, args ...string) (WaitFunc, error) {
 			return nil, match(s, args, s.Stderr(), "stderr")
@@ -960,13 +973,13 @@ func Stderr() Cmd {
 func Stdout() Cmd {
 	return Command(
 		CmdUsage{
-			Summary: "find lines in the stdout buffer that match a pattern",
-			Args:    matchUsage + " file",
+			Summary:	"find lines in the stdout buffer that match a pattern",
+			Args:		matchUsage + " file",
 			Detail: []string{
 				"The command succeeds if at least one match (or the exact count, if given) is found.",
 				"The -q flag suppresses printing of matches.",
 			},
-			RegexpArgs: firstNonFlag,
+			RegexpArgs:	firstNonFlag,
 		},
 		func(s *State, args ...string) (WaitFunc, error) {
 			return nil, match(s, args, s.Stdout(), "stdout")
@@ -978,8 +991,8 @@ func Stdout() Cmd {
 func Stop() Cmd {
 	return Command(
 		CmdUsage{
-			Summary: "stop execution of the script",
-			Args:    "[msg]",
+			Summary:	"stop execution of the script",
+			Args:		"[msg]",
 			Detail: []string{
 				"The message is written to the script log, but no error is reported from the script engine.",
 			},
@@ -1013,8 +1026,8 @@ func (s stopError) Error() string {
 func Symlink() Cmd {
 	return Command(
 		CmdUsage{
-			Summary: "create a symlink",
-			Args:    "path -> target",
+			Summary:	"create a symlink",
+			Args:		"path -> target",
 			Detail: []string{
 				"Creates path as a symlink to target.",
 				"The '->' token (like in 'ls -l' output on Unix) is required.",
@@ -1039,8 +1052,8 @@ func Symlink() Cmd {
 func Wait() Cmd {
 	return Command(
 		CmdUsage{
-			Summary: "wait for completion of background commands",
-			Args:    "",
+			Summary:	"wait for completion of background commands",
+			Args:		"",
 			Detail: []string{
 				"Waits for all background commands to complete.",
 				"The output (and any error) from each command is printed to the log in the order in which the commands were started.",

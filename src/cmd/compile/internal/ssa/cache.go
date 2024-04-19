@@ -13,33 +13,28 @@ import (
 // It is intended to be re-used for multiple Func compilations.
 type Cache struct {
 	// Storage for low-numbered values and blocks.
-	values [2000]Value
-	blocks [200]Block
-	locs   [2000]Location
+	values	[2000]Value
+	blocks	[200]Block
+	locs	[2000]Location
 
 	// Reusable stackAllocState.
 	// See stackalloc.go's {new,put}StackAllocState.
-	stackAllocState *stackAllocState
+	stackAllocState	*stackAllocState
 
-	scrPoset []*poset // scratch poset to be reused
+	scrPoset	[]*poset	// scratch poset to be reused
 
 	// Reusable regalloc state.
-	regallocValues []valState
+	regallocValues	[]valState
 
-	ValueToProgAfter []*obj.Prog
-	debugState       debugState
+	ValueToProgAfter	[]*obj.Prog
+	debugState		debugState
 
-	Liveness interface{} // *gc.livenessFuncCache
+	Liveness	interface{}	// *gc.livenessFuncCache
 
 	// Free "headers" for use by the allocators in allocators.go.
 	// Used to put slices in sync.Pools without allocation.
-	hdrValueSlice []*[]*Value
-	hdrBlockSlice []*[]*Block
-	hdrBoolSlice  []*[]bool
-	hdrIntSlice   []*[]int
-	hdrInt32Slice []*[]int32
-	hdrInt8Slice  []*[]int8
-	hdrIDSlice    []*[]ID
+	hdrValueSlice	[]*[]*Value
+	hdrInt64Slice	[]*[]int64
 }
 
 func (c *Cache) Reset() {

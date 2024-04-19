@@ -14,24 +14,24 @@ import (
 )
 
 type stackAllocState struct {
-	f *Func
+	f	*Func
 
 	// live is the output of stackalloc.
 	// live[b.id] = live values at the end of block b.
-	live [][]ID
+	live	[][]ID
 
 	// The following slices are reused across multiple users
 	// of stackAllocState.
-	values    []stackValState
-	interfere [][]ID // interfere[v.id] = values that interfere with v.
-	names     []LocalSlot
+	values		[]stackValState
+	interfere	[][]ID	// interfere[v.id] = values that interfere with v.
+	names		[]LocalSlot
 
-	nArgSlot, // Number of Values sourced to arg slot
-	nNotNeed, // Number of Values not needing a stack slot
-	nNamedSlot, // Number of Values using a named stack slot
-	nReuse, // Number of values reusing a stack slot
-	nAuto, // Number of autos allocated for stack slots.
-	nSelfInterfere int32 // Number of self-interferences
+	nArgSlot,	// Number of Values sourced to arg slot
+	nNotNeed,	// Number of Values not needing a stack slot
+	nNamedSlot,	// Number of Values using a named stack slot
+	nReuse,	// Number of values reusing a stack slot
+	nAuto,	// Number of autos allocated for stack slots.
+	nSelfInterfere	int32	// Number of self-interferences
 }
 
 func newStackAllocState(f *Func) *stackAllocState {
@@ -62,10 +62,10 @@ func putStackAllocState(s *stackAllocState) {
 }
 
 type stackValState struct {
-	typ      *types.Type
-	spill    *Value
-	needSlot bool
-	isArg    bool
+	typ		*types.Type
+	spill		*Value
+	needSlot	bool
+	isArg		bool
 }
 
 // stackalloc allocates storage in the stack frame for
@@ -227,7 +227,7 @@ func (s *stackAllocState) stackalloc() {
 			}
 			if hasAnyArgOp(v) {
 				s.nArgSlot++
-				continue // already picked
+				continue	// already picked
 			}
 
 			// If this is a named value, try to use the name as
@@ -280,7 +280,7 @@ func (s *stackAllocState) stackalloc() {
 			// If there is no unused stack slot, allocate a new one.
 			if i == len(locs) {
 				s.nAuto++
-				locs = append(locs, LocalSlot{N: f.fe.Auto(v.Pos, v.Type), Type: v.Type, Off: 0})
+				locs = append(locs, LocalSlot{N: f.NewLocal(v.Pos, v.Type), Type: v.Type, Off: 0})
 				locations[v.Type] = locs
 			}
 			// Use the stack variable at that index for v.

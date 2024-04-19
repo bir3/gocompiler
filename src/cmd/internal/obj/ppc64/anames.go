@@ -5,7 +5,7 @@ package ppc64
 import "github.com/bir3/gocompiler/src/cmd/internal/obj"
 
 var Anames = []string{
-	obj.A_ARCHSPECIFIC: "ADD",
+	obj.A_ARCHSPECIFIC:	"ADD",
 	"ADDCC",
 	"ADDIS",
 	"ADDV",
@@ -333,6 +333,7 @@ var Anames = []string{
 	"EXTSWSLICC",
 	"STDCCC",
 	"TD",
+	"SETB",
 	"DWORD",
 	"REMD",
 	"REMDU",
@@ -522,6 +523,8 @@ var Anames = []string{
 	"VSHASIGMAD",
 	"VMRGEW",
 	"VMRGOW",
+	"VCLZLSBB",
+	"VCTZLSBB",
 	"LXV",
 	"LXVL",
 	"LXVLL",

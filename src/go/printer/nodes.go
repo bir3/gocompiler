@@ -44,10 +44,7 @@ import (
 // linebreaks. At the moment there is no easy way to know about
 // future (not yet interspersed) comments in this function.
 func (p *printer) linebreak(line, min int, ws whiteSpace, newSection bool) (nbreaks int) {
-	n := nlimit(line - p.pos.Line)
-	if n < min {
-		n = min
-	}
+	n := max(nlimit(line-p.pos.Line), min)
 	if n > 0 {
 		p.print(ws)
 		if newSection {
@@ -90,15 +87,15 @@ func (p *printer) setComment(g *ast.CommentGroup) {
 	// immediately followed by a lead comment with no other
 	// tokens between)
 	if p.commentOffset == infinity {
-		p.nextComment() // get comment ready for use
+		p.nextComment()	// get comment ready for use
 	}
 }
 
 type exprListMode uint
 
 const (
-	commaTerm exprListMode = 1 << iota // list is optionally terminated by a comma
-	noIndent                           // no extra indentation in multi-line lists
+	commaTerm	exprListMode	= 1 << iota	// list is optionally terminated by a comma
+	noIndent					// no extra indentation in multi-line lists
 )
 
 // If indent is set, a multi-line identifier list is indented after the
@@ -175,7 +172,7 @@ func (p *printer) exprList(prev0 token.Pos, list []ast.Expr, depth int, mode exp
 
 	// The first linebreak is always a formfeed since this section must not
 	// depend on any previous formatting.
-	prevBreak := -1 // index of last expression that was followed by a linebreak
+	prevBreak := -1	// index of last expression that was followed by a linebreak
 	if prev.IsValid() && prev.Line < line && p.linebreak(line, 0, ws, true) > 0 {
 		ws = ignore
 		prevBreak = 0
@@ -208,13 +205,13 @@ func (p *printer) exprList(prev0 token.Pos, list []ast.Expr, depth int, mode exp
 		// generated code - simply ignore the size in this case by setting
 		// it to 0).
 		prevSize := size
-		const infinity = 1e6 // larger than any source line
+		const infinity = 1e6	// larger than any source line
 		size = p.nodeSize(x, infinity)
 		pair, isPair := x.(*ast.KeyValueExpr)
 		if size <= infinity && prev.IsValid() && next.IsValid() {
 			// x fits on a single line
 			if isPair {
-				size = p.nodeSize(pair.Key, infinity) // size <= infinity
+				size = p.nodeSize(pair.Key, infinity)	// size <= infinity
 			}
 		} else {
 			// size too large or we don't have good layout information
@@ -231,8 +228,8 @@ func (p *printer) exprList(prev0 token.Pos, list []ast.Expr, depth int, mode exp
 			if count == 0 || prevSize <= smallSize && size <= smallSize {
 				useFF = false
 			} else {
-				const r = 2.5                               // threshold
-				geomean := math.Exp(lnsum / float64(count)) // count > 0
+				const r = 2.5					// threshold
+				geomean := math.Exp(lnsum / float64(count))	// count > 0
 				ratio := float64(size) / geomean
 				useFF = r*ratio <= 1 || r <= ratio
 			}
@@ -256,7 +253,7 @@ func (p *printer) exprList(prev0 token.Pos, list []ast.Expr, depth int, mode exp
 				if nbreaks > 0 {
 					ws = ignore
 					prevBreak = i
-					needsBlank = false // we got a line break instead
+					needsBlank = false	// we got a line break instead
 				}
 				// If there was a new section or more than one new line
 				// (which means that the tabwriter will implicitly break
@@ -305,7 +302,7 @@ func (p *printer) exprList(prev0 token.Pos, list []ast.Expr, depth int, mode exp
 			// unindent if we indented
 			p.print(unindent)
 		}
-		p.print(formfeed) // terminating comma needs a line break to look good
+		p.print(formfeed)	// terminating comma needs a line break to look good
 		return
 	}
 
@@ -323,7 +320,7 @@ func (p *printer) exprList(prev0 token.Pos, list []ast.Expr, depth int, mode exp
 type paramMode int
 
 const (
-	funcParam paramMode = iota
+	funcParam	paramMode	= iota
 	funcTParam
 	typeTParam
 )
@@ -475,17 +472,17 @@ func identListSize(list []*ast.Ident, maxSize int) (size int) {
 
 func (p *printer) isOneLineFieldList(list []*ast.Field) bool {
 	if len(list) != 1 {
-		return false // allow only one field
+		return false	// allow only one field
 	}
 	f := list[0]
 	if f.Tag != nil || f.Comment != nil {
-		return false // don't allow tags or comments
+		return false	// don't allow tags or comments
 	}
 	// only name(s) and type
-	const maxSize = 30 // adjust as appropriate, this is an approximate value
+	const maxSize = 30	// adjust as appropriate, this is an approximate value
 	namesSize := identListSize(f.Names, maxSize)
 	if namesSize > 0 {
-		namesSize = 1 // blank between names and types
+		namesSize = 1	// blank between names and types
 	}
 	typeSize := p.nodeSize(f.Type, maxSize)
 	return namesSize+typeSize <= maxSize
@@ -529,11 +526,11 @@ func (p *printer) fieldList(fields *ast.FieldList, isStruct, isIncomplete bool) 
 					p.print(blank)
 				}
 				p.expr(f.Type)
-			} else { // interface
+			} else {	// interface
 				if len(f.Names) > 0 {
-					name := f.Names[0] // method name
+					name := f.Names[0]	// method name
 					p.expr(name)
-					p.signature(f.Type.(*ast.FuncType)) // don't print "func"
+					p.signature(f.Type.(*ast.FuncType))	// don't print "func"
 				} else {
 					// embedded interface
 					p.expr(f.Type)
@@ -598,16 +595,16 @@ func (p *printer) fieldList(fields *ast.FieldList, isStruct, isIncomplete bool) 
 			if len(list) > 0 {
 				p.print(formfeed)
 			}
-			p.flush(p.posFor(rbrace), token.RBRACE) // make sure we don't lose the last line comment
+			p.flush(p.posFor(rbrace), token.RBRACE)	// make sure we don't lose the last line comment
 			p.setLineComment("// " + filteredMsg)
 		}
 
-	} else { // interface
+	} else {	// interface
 
 		var line int
-		var prev *ast.Ident // previous "type" identifier
+		var prev *ast.Ident	// previous "type" identifier
 		for i, f := range list {
-			var name *ast.Ident // first name, or nil
+			var name *ast.Ident	// first name, or nil
 			if len(f.Names) > 0 {
 				name = f.Names[0]
 			}
@@ -626,7 +623,7 @@ func (p *printer) fieldList(fields *ast.FieldList, isStruct, isIncomplete bool) 
 			if name != nil {
 				// method
 				p.expr(name)
-				p.signature(f.Type.(*ast.FuncType)) // don't print "func"
+				p.signature(f.Type.(*ast.FuncType))	// don't print "func"
 				prev = nil
 			} else {
 				// embedded interface
@@ -639,7 +636,7 @@ func (p *printer) fieldList(fields *ast.FieldList, isStruct, isIncomplete bool) 
 			if len(list) > 0 {
 				p.print(formfeed)
 			}
-			p.flush(p.posFor(rbrace), token.RBRACE) // make sure we don't lose the last line comment
+			p.flush(p.posFor(rbrace), token.RBRACE)	// make sure we don't lose the last line comment
 			p.setLineComment("// contains filtered or unexported methods")
 		}
 
@@ -670,9 +667,7 @@ func walkBinary(e *ast.BinaryExpr) (has4, has5 bool, maxProblem int) {
 		h4, h5, mp := walkBinary(l)
 		has4 = has4 || h4
 		has5 = has5 || h5
-		if maxProblem < mp {
-			maxProblem = mp
-		}
+		maxProblem = max(maxProblem, mp)
 	}
 
 	switch r := e.Y.(type) {
@@ -685,12 +680,10 @@ func walkBinary(e *ast.BinaryExpr) (has4, has5 bool, maxProblem int) {
 		h4, h5, mp := walkBinary(r)
 		has4 = has4 || h4
 		has5 = has5 || h5
-		if maxProblem < mp {
-			maxProblem = mp
-		}
+		maxProblem = max(maxProblem, mp)
 
 	case *ast.StarExpr:
-		if e.Op == token.QUO { // `*/`
+		if e.Op == token.QUO {	// `*/`
 			maxProblem = 5
 		}
 
@@ -699,9 +692,7 @@ func walkBinary(e *ast.BinaryExpr) (has4, has5 bool, maxProblem int) {
 		case "/*", "&&", "&^":
 			maxProblem = 5
 		case "++", "--":
-			if maxProblem < 4 {
-				maxProblem = 4
-			}
+			maxProblem = max(maxProblem, 4)
 		}
 	}
 	return
@@ -783,7 +774,7 @@ func (p *printer) binaryExpr(x *ast.BinaryExpr, prec1, cutoff, depth int) {
 		// Note: The parser inserts an ast.ParenExpr node; thus this case
 		//       can only occur if the AST is created in a different way.
 		p.print(token.LPAREN)
-		p.expr0(x, reduceDepth(depth)) // parentheses undo one level of depth
+		p.expr0(x, reduceDepth(depth))	// parentheses undo one level of depth
 		p.print(token.RPAREN)
 		return
 	}
@@ -795,7 +786,7 @@ func (p *printer) binaryExpr(x *ast.BinaryExpr, prec1, cutoff, depth int) {
 	if printBlank {
 		p.print(blank)
 	}
-	xline := p.pos.Line // before the operator (it may be on the next line!)
+	xline := p.pos.Line	// before the operator (it may be on the next line!)
 	yline := p.lineFor(x.Y.Pos())
 	p.setPos(x.OpPos)
 	p.print(x.Op)
@@ -804,7 +795,7 @@ func (p *printer) binaryExpr(x *ast.BinaryExpr, prec1, cutoff, depth int) {
 		// in the source
 		if p.linebreak(yline, 1, ws, true) > 0 {
 			ws = ignore
-			printBlank = false // no blank after line break
+			printBlank = false	// no blank after line break
 		}
 	}
 	if printBlank {
@@ -896,7 +887,7 @@ func (p *printer) expr1(expr ast.Expr, prec1, depth int) {
 			p.expr0(x.X, depth)
 		} else {
 			p.print(token.LPAREN)
-			p.expr0(x.X, reduceDepth(depth)) // parentheses undo one level of depth
+			p.expr0(x.X, reduceDepth(depth))	// parentheses undo one level of depth
 			p.setPos(x.Rparen)
 			p.print(token.RPAREN)
 		}
@@ -983,15 +974,24 @@ func (p *printer) expr1(expr ast.Expr, prec1, depth int) {
 		if len(x.Args) > 1 {
 			depth++
 		}
-		var wasIndented bool
-		if _, ok := x.Fun.(*ast.FuncType); ok {
-			// conversions to literal function types require parentheses around the type
-			p.print(token.LPAREN)
-			wasIndented = p.possibleSelectorExpr(x.Fun, token.HighestPrec, depth)
-			p.print(token.RPAREN)
-		} else {
-			wasIndented = p.possibleSelectorExpr(x.Fun, token.HighestPrec, depth)
+
+		// Conversions to literal function types or <-chan
+		// types require parentheses around the type.
+		paren := false
+		switch t := x.Fun.(type) {
+		case *ast.FuncType:
+			paren = true
+		case *ast.ChanType:
+			paren = t.Dir == ast.RECV
 		}
+		if paren {
+			p.print(token.LPAREN)
+		}
+		wasIndented := p.possibleSelectorExpr(x.Fun, token.HighestPrec, depth)
+		if paren {
+			p.print(token.RPAREN)
+		}
+
 		p.setPos(x.Lparen)
 		p.print(token.LPAREN)
 		if x.Ellipsis.IsValid() {
@@ -1072,7 +1072,7 @@ func (p *printer) expr1(expr ast.Expr, prec1, depth int) {
 		case ast.SEND | ast.RECV:
 			p.print(token.CHAN)
 		case ast.RECV:
-			p.print(token.ARROW, token.CHAN) // x.Arrow and x.Pos() are the same
+			p.print(token.ARROW, token.CHAN)	// x.Arrow and x.Pos() are the same
 		case ast.SEND:
 			p.print(token.CHAN)
 			p.setPos(x.Arrow)
@@ -1096,10 +1096,10 @@ func (p *printer) expr1(expr ast.Expr, prec1, depth int) {
 // lit is returned as is. Otherwise a new ast.BasicLit is created.
 func normalizedNumber(lit *ast.BasicLit) *ast.BasicLit {
 	if lit.Kind != token.INT && lit.Kind != token.FLOAT && lit.Kind != token.IMAG {
-		return lit // not a number - nothing to do
+		return lit	// not a number - nothing to do
 	}
 	if len(lit.Value) < 2 {
-		return lit // only one digit (common case) - nothing to do
+		return lit	// only one digit (common case) - nothing to do
 	}
 	// len(lit.Value) >= 2
 
@@ -1130,17 +1130,17 @@ func normalizedNumber(lit *ast.BasicLit) *ast.BasicLit {
 		// possibly a hexadecimal float
 		i := strings.LastIndexByte(x, 'P')
 		if i == -1 {
-			return lit // nothing to do
+			return lit	// nothing to do
 		}
 		x = x[:i] + "p" + x[i+1:]
 	case "0O":
 		x = "0o" + x[2:]
 	case "0o":
-		return lit // nothing to do
+		return lit	// nothing to do
 	case "0B":
 		x = "0b" + x[2:]
 	case "0b":
-		return lit // nothing to do
+		return lit	// nothing to do
 	}
 
 	return &ast.BasicLit{ValuePos: lit.ValuePos, Kind: lit.Kind, Value: x}
@@ -1257,7 +1257,7 @@ func stripParens(x ast.Expr) ast.Expr {
 				return false
 			case *ast.CompositeLit:
 				if isTypeName(x.Type) {
-					strip = false // do not strip parentheses
+					strip = false	// do not strip parentheses
 				}
 				return false
 			}
@@ -1324,7 +1324,7 @@ func (p *printer) indentList(list []ast.Expr) bool {
 		var e = p.lineFor(list[len(list)-1].End())
 		if 0 < b && b < e {
 			// list spans multiple lines
-			n := 0 // multi-line element count
+			n := 0	// multi-line element count
 			line := b
 			for _, x := range list {
 				xb := p.lineFor(x.Pos())
@@ -1585,7 +1585,7 @@ func keepTypeColumn(specs []ast.Spec) []bool {
 		}
 	}
 
-	i0 := -1 // if i0 >= 0 we are in a run and i0 is the start of the run
+	i0 := -1	// if i0 >= 0 we are in a run and i0 is the start of the run
 	var keepType bool
 	for i, s := range specs {
 		t := s.(*ast.ValueSpec)
@@ -1616,7 +1616,7 @@ func keepTypeColumn(specs []ast.Spec) []bool {
 
 func (p *printer) valueSpec(s *ast.ValueSpec, keepType bool) {
 	p.setComment(s.Doc)
-	p.identList(s.Names, false) // always present
+	p.identList(s.Names, false)	// always present
 	extraTabs := 3
 	if s.Type != nil || keepType {
 		p.print(vtab)
@@ -1676,7 +1676,7 @@ func sanitizeImportPath(lit *ast.BasicLit) *ast.BasicLit {
 	// otherwise, return the double-quoted path
 	s = strconv.Quote(s)
 	if s == lit.Value {
-		return lit // nothing wrong with lit
+		return lit	// nothing wrong with lit
 	}
 	return &ast.BasicLit{ValuePos: lit.ValuePos, Kind: token.STRING, Value: s}
 }
@@ -1701,7 +1701,7 @@ func (p *printer) spec(spec ast.Spec, n int, doIndent bool) {
 			p.internalError("expected n = 1; got", n)
 		}
 		p.setComment(s.Doc)
-		p.identList(s.Names, doIndent) // always present
+		p.identList(s.Names, doIndent)	// always present
 		if s.Type != nil {
 			p.print(blank)
 			p.expr(s.Type)
@@ -1739,7 +1739,7 @@ func (p *printer) genDecl(d *ast.GenDecl) {
 	p.setPos(d.Pos())
 	p.print(d.Tok, blank)
 
-	if d.Lparen.IsValid() || len(d.Specs) > 1 {
+	if d.Lparen.IsValid() || len(d.Specs) != 1 {
 		// group of parenthesized declarations
 		p.setPos(d.Lparen)
 		p.print(token.LPAREN)
@@ -1781,8 +1781,8 @@ func (p *printer) genDecl(d *ast.GenDecl) {
 // sizeCounter is an io.Writer which counts the number of bytes written,
 // as well as whether a newline character was seen.
 type sizeCounter struct {
-	hasNewline bool
-	size       int
+	hasNewline	bool
+	size		int
 }
 
 func (c *sizeCounter) Write(p []byte) (int, error) {
@@ -1811,7 +1811,7 @@ func (p *printer) nodeSize(n ast.Node, maxSize int) (size int) {
 		return size
 	}
 
-	size = maxSize + 1 // assume n doesn't fit
+	size = maxSize + 1	// assume n doesn't fit
 	p.nodeSizes[n] = size
 
 	// nodeSize computation must be independent of particular
@@ -1856,10 +1856,10 @@ func (p *printer) bodySize(b *ast.BlockStmt, maxSize int) int {
 	bodySize := p.commentSizeBefore(p.posFor(pos2))
 	for i, s := range b.List {
 		if bodySize > maxSize {
-			break // no need to continue
+			break	// no need to continue
 		}
 		if i > 0 {
-			bodySize += 2 // space for a semicolon and blank
+			bodySize += 2	// space for a semicolon and blank
 		}
 		bodySize += p.nodeSize(s, maxSize)
 	}
@@ -1904,7 +1904,7 @@ func (p *printer) funcBody(headerSize int, sep whiteSpace, b *ast.BlockStmt) {
 	}
 
 	if sep != ignore {
-		p.print(blank) // always use blank
+		p.print(blank)	// always use blank
 	}
 	p.block(b, 1)
 }
@@ -1928,7 +1928,7 @@ func (p *printer) funcDecl(d *ast.FuncDecl) {
 	// FUNC is emitted).
 	startCol := p.out.Column - len("func ")
 	if d.Recv != nil {
-		p.parameters(d.Recv, funcParam) // method: print receiver
+		p.parameters(d.Recv, funcParam)	// method: print receiver
 		p.print(blank)
 	}
 	p.expr(d.Name)

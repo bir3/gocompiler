@@ -15,9 +15,9 @@ import (
 // MethodSet(T) is called so that repeat queries are fast.
 // The zero value is a ready-to-use cache instance.
 type MethodSetCache struct {
-	mu     sync.Mutex
-	named  map[*types.Named]struct{ value, pointer *types.MethodSet } // method sets for named N and *N
-	others map[types.Type]*types.MethodSet                            // all other types
+	mu	sync.Mutex
+	named	map[*types.Named]struct{ value, pointer *types.MethodSet }	// method sets for named N and *N
+	others	map[types.Type]*types.MethodSet					// all other types
 }
 
 // MethodSet returns the method set of type T.  It is thread-safe.

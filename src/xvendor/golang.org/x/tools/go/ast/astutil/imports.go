@@ -3,7 +3,7 @@
 // license that can be found in the LICENSE file.
 
 // Package astutil contains common utilities for working with the Go AST.
-package astutil // import "golang.org/x/tools/go/ast/astutil"
+package astutil	// import "golang.org/x/tools/go/ast/astutil"
 
 import (
 	"fmt"
@@ -35,8 +35,8 @@ func AddNamedImport(fset *token.FileSet, f *ast.File, name, path string) (added 
 
 	newImport := &ast.ImportSpec{
 		Path: &ast.BasicLit{
-			Kind:  token.STRING,
-			Value: strconv.Quote(path),
+			Kind:	token.STRING,
+			Value:	strconv.Quote(path),
 		},
 	}
 	if name != "" {
@@ -48,12 +48,12 @@ func AddNamedImport(fset *token.FileSet, f *ast.File, name, path string) (added 
 	// whose import path has the longest shared
 	// prefix with path.
 	var (
-		bestMatch  = -1         // length of longest shared prefix
-		lastImport = -1         // index in f.Decls of the file's final import decl
-		impDecl    *ast.GenDecl // import decl containing the best match
-		impIndex   = -1         // spec index in impDecl containing the best match
+		bestMatch	= -1		// length of longest shared prefix
+		lastImport	= -1		// index in f.Decls of the file's final import decl
+		impDecl		*ast.GenDecl	// import decl containing the best match
+		impIndex	= -1		// spec index in impDecl containing the best match
 
-		isThirdPartyPath = isThirdParty(path)
+		isThirdPartyPath	= isThirdParty(path)
 	)
 	for i, decl := range f.Decls {
 		gen, ok := decl.(*ast.GenDecl)
@@ -176,7 +176,7 @@ func AddNamedImport(fset *token.FileSet, f *ast.File, name, path string) (added 
 		}
 		if first == nil {
 			first = gen
-			continue // Don't touch the first one.
+			continue	// Don't touch the first one.
 		}
 		// We now know there is more than one package in this import
 		// declaration. Ensure that it ends up parenthesized.

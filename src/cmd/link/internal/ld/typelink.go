@@ -14,13 +14,13 @@ import (
 type byTypeStr []typelinkSortKey
 
 type typelinkSortKey struct {
-	TypeStr string
-	Type    loader.Sym
+	TypeStr	string
+	Type	loader.Sym
 }
 
-func (s byTypeStr) Less(i, j int) bool { return s[i].TypeStr < s[j].TypeStr }
-func (s byTypeStr) Len() int           { return len(s) }
-func (s byTypeStr) Swap(i, j int)      { s[i], s[j] = s[j], s[i] }
+func (s byTypeStr) Less(i, j int) bool	{ return s[i].TypeStr < s[j].TypeStr }
+func (s byTypeStr) Len() int		{ return len(s) }
+func (s byTypeStr) Swap(i, j int)	{ s[i], s[j] = s[j], s[i] }
 
 // typelink generates the typelink table which is used by reflect.typelinks().
 // Types that should be added to the typelinks table are marked with the

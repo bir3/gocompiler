@@ -35,16 +35,16 @@ func unreachable() {
 // An error_ represents a type-checking error.
 // To report an error_, call Checker.report.
 type error_ struct {
-	desc []errorDesc
-	code Code
-	soft bool // TODO(gri) eventually determine this from an error code
+	desc	[]errorDesc
+	code	Code
+	soft	bool	// TODO(gri) eventually determine this from an error code
 }
 
 // An errorDesc describes part of a type-checking error.
 type errorDesc struct {
-	pos    syntax.Pos
-	format string
-	args   []interface{}
+	pos	syntax.Pos
+	format	string
+	args	[]interface{}
 }
 
 func (err *error_) empty() bool {
@@ -87,7 +87,7 @@ func (err *error_) String() string {
 // errorf adds formatted error information to err.
 // It may be called multiple times to provide additional information.
 func (err *error_) errorf(at poser, format string, args ...interface{}) {
-	err.desc = append(err.desc, errorDesc{posFor(at), format, args})
+	err.desc = append(err.desc, errorDesc{atPos(at), format, args})
 }
 
 func sprintf(qf Qualifier, tpSubscripts bool, format string, args ...interface{}) string {
@@ -237,7 +237,7 @@ func (check *Checker) err(at poser, code Code, msg string, soft bool) {
 		return
 	}
 
-	pos := posFor(at)
+	pos := atPos(at)
 
 	// If we are encountering an error while evaluating an inherited
 	// constant initialization expression, pos is the position of in
@@ -250,7 +250,17 @@ func (check *Checker) err(at poser, code Code, msg string, soft bool) {
 		pos = check.errpos
 	}
 
-	err := Error{pos, stripAnnotations(msg), msg, soft}
+	// If we have a URL for error codes, add a link to the first line.
+	if code != 0 && check.conf.ErrorURL != "" {
+		u := fmt.Sprintf(check.conf.ErrorURL, code)
+		if i := strings.Index(msg, "\n"); i >= 0 {
+			msg = msg[:i] + u + msg[i:]
+		} else {
+			msg += u
+		}
+	}
+
+	err := Error{pos, stripAnnotations(msg), msg, soft, code}
 	if check.firstErr == nil {
 		check.firstErr = err
 	}
@@ -261,14 +271,14 @@ func (check *Checker) err(at poser, code Code, msg string, soft bool) {
 
 	f := check.conf.Error
 	if f == nil {
-		panic(bailout{}) // report only first error
+		panic(bailout{})	// report only first error
 	}
 	f(err)
 }
 
 const (
-	invalidArg = "invalid argument: "
-	invalidOp  = "invalid operation: "
+	invalidArg	= "invalid argument: "
+	invalidOp	= "invalid operation: "
 )
 
 type poser interface {
@@ -287,14 +297,14 @@ func (check *Checker) softErrorf(at poser, code Code, format string, args ...int
 	check.err(at, code, check.sprintf(format, args...), true)
 }
 
-func (check *Checker) versionErrorf(at poser, goVersion string, format string, args ...interface{}) {
+func (check *Checker) versionErrorf(at poser, v goVersion, format string, args ...interface{}) {
 	msg := check.sprintf(format, args...)
-	msg = fmt.Sprintf("%s requires %s or later", msg, goVersion)
+	msg = fmt.Sprintf("%s requires %s or later", msg, v)
 	check.err(at, UnsupportedFeature, msg, true)
 }
 
-// posFor reports the left (= start) position of at.
-func posFor(at poser) syntax.Pos {
+// atPos reports the left (= start) position of at.
+func atPos(at poser) syntax.Pos {
 	switch x := at.(type) {
 	case *operand:
 		if x.expr != nil {
@@ -311,7 +321,7 @@ func stripAnnotations(s string) string {
 	var buf strings.Builder
 	for _, r := range s {
 		// strip #'s and subscript digits
-		if r < '₀' || '₀'+10 <= r { // '₀' == U+2080
+		if r < '₀' || '₀'+10 <= r {	// '₀' == U+2080
 			buf.WriteRune(r)
 		}
 	}

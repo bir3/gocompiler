@@ -257,9 +257,9 @@ func adddynrel(target *ld.Target, ldr *loader.Loader, syms *ld.ArchSyms, s loade
 			o := target.Arch.ByteOrder.Uint32(data[off:])
 			su := ldr.MakeSymbolUpdater(s)
 			switch {
-			case (o>>24)&0x9f == 0x90: // adrp
+			case (o>>24)&0x9f == 0x90:	// adrp
 				// keep instruction unchanged, change relocation type below
-			case o>>24 == 0xf9: // ldr
+			case o>>24 == 0xf9:	// ldr
 				// rewrite to add
 				o = (0x91 << 24) | (o & (1<<22 - 1))
 				su.MakeWritable()
@@ -284,9 +284,7 @@ func adddynrel(target *ld.Target, ldr *loader.Loader, syms *ld.ArchSyms, s loade
 	r = relocs.At(rIdx)
 
 	switch r.Type() {
-	case objabi.R_CALL,
-		objabi.R_PCREL,
-		objabi.R_CALLARM64:
+	case objabi.R_CALLARM64:
 		if targType != sym.SDYNIMPORT {
 			// nothing to do, the relocation will be laid out in reloc
 			return true
@@ -305,6 +303,40 @@ func adddynrel(target *ld.Target, ldr *loader.Loader, syms *ld.ArchSyms, s loade
 		su.SetRelocSym(rIdx, syms.PLT)
 		su.SetRelocAdd(rIdx, int64(ldr.SymPlt(targ)))
 		return true
+
+	case objabi.R_ADDRARM64:
+		if targType == sym.SDYNIMPORT && ldr.SymType(s) == sym.STEXT && target.IsDarwin() {
+			// Loading the address of a dynamic symbol. Rewrite to use GOT.
+			// turn MOVD $sym (adrp+add) into MOVD sym@GOT (adrp+ldr)
+			if r.Add() != 0 {
+				ldr.Errorf(s, "unexpected nonzero addend for dynamic symbol %s", ldr.SymName(targ))
+				return false
+			}
+			su := ldr.MakeSymbolUpdater(s)
+			data := ldr.Data(s)
+			off := r.Off()
+			if int(off+8) > len(data) {
+				ldr.Errorf(s, "unexpected R_ADDRARM64 reloc for dynamic symbol %s", ldr.SymName(targ))
+				return false
+			}
+			o := target.Arch.ByteOrder.Uint32(data[off+4:])
+			if o>>24 == 0x91 {	// add
+				// rewrite to ldr
+				o = (0xf9 << 24) | 1<<22 | (o & (1<<22 - 1))
+				su.MakeWritable()
+				su.SetUint32(target.Arch, int64(off+4), o)
+				if target.IsInternal() {
+					ld.AddGotSym(target, ldr, syms, targ, 0)
+					su.SetRelocSym(rIdx, syms.GOT)
+					su.SetRelocAdd(rIdx, int64(ldr.SymGot(targ)))
+					su.SetRelocType(rIdx, objabi.R_ARM64_PCREL_LDST64)
+				} else {
+					su.SetRelocType(rIdx, objabi.R_ARM64_GOTPCREL)
+				}
+				return true
+			}
+			ldr.Errorf(s, "unexpected R_ADDRARM64 reloc for dynamic symbol %s", ldr.SymName(targ))
+		}
 
 	case objabi.R_ADDR:
 		if ldr.SymType(s) == sym.STEXT && target.IsElf() {
@@ -514,8 +546,8 @@ func elfreloc1(ctxt *ld.Link, out *ld.OutBuf, ldr *loader.Loader, s loader.Sym, 
 }
 
 // sign-extends from 21, 24-bit.
-func signext21(x int64) int64 { return x << (64 - 21) >> (64 - 21) }
-func signext24(x int64) int64 { return x << (64 - 24) >> (64 - 24) }
+func signext21(x int64) int64	{ return x << (64 - 21) >> (64 - 21) }
+func signext24(x int64) int64	{ return x << (64 - 24) >> (64 - 24) }
 
 func machoreloc1(arch *sys.Arch, out *ld.OutBuf, ldr *loader.Loader, s loader.Sym, r loader.ExtReloc, sectoff int64) bool {
 	var v uint32
@@ -525,9 +557,11 @@ func machoreloc1(arch *sys.Arch, out *ld.OutBuf, ldr *loader.Loader, s loader.Sy
 	siz := r.Size
 	xadd := r.Xadd
 
-	if xadd != signext24(xadd) {
+	if xadd != signext24(xadd) && rt != objabi.R_ADDR {
 		// If the relocation target would overflow the addend, then target
 		// a linker-manufactured label symbol with a smaller addend instead.
+		// R_ADDR has full-width addend encoded in data content, so it doesn't
+		// use a label symbol.
 		label := ldr.Lookup(offsetLabelName(ldr, rs, xadd/machoRelocLimit*machoRelocLimit), ldr.SymVersion(rs))
 		if label != 0 {
 			xadd = ldr.SymValue(rs) + xadd - ldr.SymValue(label)
@@ -540,22 +574,19 @@ func machoreloc1(arch *sys.Arch, out *ld.OutBuf, ldr *loader.Loader, s loader.Sy
 	if rt == objabi.R_CALLARM64 && xadd != 0 {
 		label := ldr.Lookup(offsetLabelName(ldr, rs, xadd), ldr.SymVersion(rs))
 		if label != 0 {
-			xadd = ldr.SymValue(rs) + xadd - ldr.SymValue(label) // should always be 0 (checked below)
+			xadd = ldr.SymValue(rs) + xadd - ldr.SymValue(label)	// should always be 0 (checked below)
 			rs = label
 		}
 	}
 
-	if ldr.SymType(rs) == sym.SHOSTOBJ || rt == objabi.R_CALLARM64 ||
-		rt == objabi.R_ARM64_PCREL_LDST8 || rt == objabi.R_ARM64_PCREL_LDST16 ||
-		rt == objabi.R_ARM64_PCREL_LDST32 || rt == objabi.R_ARM64_PCREL_LDST64 ||
-		rt == objabi.R_ADDRARM64 || rt == objabi.R_ARM64_GOTPCREL {
+	if !ldr.SymType(s).IsDWARF() {
 		if ldr.SymDynid(rs) < 0 {
 			ldr.Errorf(s, "reloc %d (%s) to non-macho symbol %s type=%d (%s)", rt, sym.RelocName(arch, rt), ldr.SymName(rs), ldr.SymType(rs), ldr.SymType(rs))
 			return false
 		}
 
 		v = uint32(ldr.SymDynid(rs))
-		v |= 1 << 27 // external relocation
+		v |= 1 << 27	// external relocation
 	} else {
 		v = uint32(ldr.SymSect(rs).Extnum)
 		if v == 0 {
@@ -574,7 +605,7 @@ func machoreloc1(arch *sys.Arch, out *ld.OutBuf, ldr *loader.Loader, s loader.Sy
 			// Addend should be handled above via label symbols.
 			ldr.Errorf(s, "unexpected non-zero addend: %s+%d", ldr.SymName(rs), xadd)
 		}
-		v |= 1 << 24 // pc-relative bit
+		v |= 1 << 24	// pc-relative bit
 		v |= ld.MACHO_ARM64_RELOC_BRANCH26 << 28
 	case objabi.R_ADDRARM64,
 		objabi.R_ARM64_PCREL_LDST8,
@@ -594,7 +625,7 @@ func machoreloc1(arch *sys.Arch, out *ld.OutBuf, ldr *loader.Loader, s loader.Sy
 			out.Write32(uint32(sectoff))
 			out.Write32((ld.MACHO_ARM64_RELOC_ADDEND << 28) | (2 << 25) | uint32(xadd&0xffffff))
 		}
-		v |= 1 << 24 // pc-relative bit
+		v |= 1 << 24	// pc-relative bit
 		v |= ld.MACHO_ARM64_RELOC_PAGE21 << 28
 	case objabi.R_ARM64_GOTPCREL:
 		siz = 4
@@ -610,7 +641,7 @@ func machoreloc1(arch *sys.Arch, out *ld.OutBuf, ldr *loader.Loader, s loader.Sy
 			out.Write32(uint32(sectoff))
 			out.Write32((ld.MACHO_ARM64_RELOC_ADDEND << 28) | (2 << 25) | uint32(xadd&0xffffff))
 		}
-		v |= 1 << 24 // pc-relative bit
+		v |= 1 << 24	// pc-relative bit
 		v |= ld.MACHO_ARM64_RELOC_GOT_LOAD_PAGE21 << 28
 	}
 
@@ -679,6 +710,9 @@ func pereloc1(arch *sys.Arch, out *ld.OutBuf, ldr *loader.Loader, s loader.Sym, 
 			out.Write16(ld.IMAGE_REL_ARM64_ADDR32)
 		}
 
+	case objabi.R_PEIMAGEOFF:
+		out.Write16(ld.IMAGE_REL_ARM64_ADDR32NB)
+
 	case objabi.R_ADDRARM64:
 		// Note: r.Xadd has been taken care of below, in archreloc.
 		out.Write32(uint32(sectoff))
@@ -737,9 +771,9 @@ func archreloc(target *ld.Target, ldr *loader.Loader, syms *ld.ArchSyms, r loade
 				ldr.Errorf(s, "missing section for %s", ldr.SymName(rs))
 			}
 
-			nExtReloc = 2 // need two ELF/Mach-O relocations. see elfreloc1/machoreloc1
+			nExtReloc = 2	// need two ELF/Mach-O relocations. see elfreloc1/machoreloc1
 			if target.IsDarwin() && xadd != 0 {
-				nExtReloc = 4 // need another two relocations for non-zero addend
+				nExtReloc = 4	// need another two relocations for non-zero addend
 			}
 
 			if target.IsWindows() {
@@ -801,7 +835,7 @@ func archreloc(target *ld.Target, ldr *loader.Loader, syms *ld.ArchSyms, r loade
 			return val, nExtReloc, isOk
 
 		case objabi.R_ARM64_TLS_IE:
-			nExtReloc = 2 // need two ELF relocations. see elfreloc1
+			nExtReloc = 2	// need two ELF relocations. see elfreloc1
 			return val, nExtReloc, isOk
 
 		case objabi.R_ADDR:
@@ -980,7 +1014,7 @@ func archreloc(target *ld.Target, ldr *loader.Loader, syms *ld.ArchSyms, r loade
 			// patch ldr/str(b/h/w/d/q) (integer or vector) instructions, which have different scaling factors.
 			// Mach-O uses same relocation type for them.
 			shift := uint32(val) >> 30
-			if shift == 0 && (val>>20)&0x048 == 0x048 { // 128-bit vector load
+			if shift == 0 && (val>>20)&0x048 == 0x048 {	// 128-bit vector load
 				shift = 4
 			}
 			t := ldr.SymAddr(rs) + r.Add() - ((ldr.SymValue(s) + int64(r.Off())) &^ 0xfff)
@@ -1057,7 +1091,7 @@ func extreloc(target *ld.Target, ldr *loader.Loader, r loader.Reloc, s loader.Sy
 	return loader.ExtReloc{}, false
 }
 
-func elfsetupplt(ctxt *ld.Link, plt, gotplt *loader.SymbolBuilder, dynamic loader.Sym) {
+func elfsetupplt(ctxt *ld.Link, ldr *loader.Loader, plt, gotplt *loader.SymbolBuilder, dynamic loader.Sym) {
 	if plt.Size() == 0 {
 		// stp     x16, x30, [sp, #-16]!
 		// identifying information
@@ -1178,8 +1212,8 @@ func addpltsym(target *ld.Target, ldr *loader.Loader, syms *ld.ArchSyms, s loade
 }
 
 const (
-	machoRelocLimit = 1 << 23
-	peRelocLimit    = 1 << 20
+	machoRelocLimit	= 1 << 23
+	peRelocLimit	= 1 << 20
 )
 
 func gensymlate(ctxt *ld.Link, ldr *loader.Loader) {
@@ -1235,7 +1269,7 @@ func gensymlate(ctxt *ld.Link, ldr *loader.Loader) {
 			}
 		}
 		if !big {
-			return // skip work if nothing big
+			return	// skip work if nothing big
 		}
 	}
 
@@ -1250,7 +1284,7 @@ func gensymlate(ctxt *ld.Link, ldr *loader.Loader) {
 			continue
 		}
 		if t >= sym.SDWARFSECT {
-			continue // no need to add label for DWARF symbols
+			continue	// no need to add label for DWARF symbols
 		}
 		sz := ldr.SymSize(s)
 		if sz <= limit {
@@ -1346,7 +1380,7 @@ func trampoline(ctxt *ld.Link, ldr *loader.Loader, ri int, rs, s loader.Sym) {
 			relocs := sb.Relocs()
 			r := relocs.At(ri)
 			r.SetSym(tramp)
-			r.SetAdd(0) // clear the offset embedded in the instruction
+			r.SetAdd(0)	// clear the offset embedded in the instruction
 		}
 	default:
 		ctxt.Errorf(s, "trampoline called with non-jump reloc: %d (%s)", r.Type(), sym.RelocName(ctxt.Arch, r.Type()))
@@ -1355,11 +1389,11 @@ func trampoline(ctxt *ld.Link, ldr *loader.Loader, ri int, rs, s loader.Sym) {
 
 // generate a trampoline to target+offset.
 func gentramp(ctxt *ld.Link, ldr *loader.Loader, tramp *loader.SymbolBuilder, target loader.Sym, offset int64) {
-	tramp.SetSize(12) // 3 instructions
+	tramp.SetSize(12)	// 3 instructions
 	P := make([]byte, tramp.Size())
-	o1 := uint32(0x90000010) // adrp x16, target
-	o2 := uint32(0x91000210) // add x16, pc-relative-offset
-	o3 := uint32(0xd61f0200) // br x16
+	o1 := uint32(0x90000010)	// adrp x16, target
+	o2 := uint32(0x91000210)	// add x16, pc-relative-offset
+	o3 := uint32(0xd61f0200)	// br x16
 	ctxt.Arch.ByteOrder.PutUint32(P, o1)
 	ctxt.Arch.ByteOrder.PutUint32(P[4:], o2)
 	ctxt.Arch.ByteOrder.PutUint32(P[8:], o3)
@@ -1373,11 +1407,11 @@ func gentramp(ctxt *ld.Link, ldr *loader.Loader, tramp *loader.SymbolBuilder, ta
 
 // generate a trampoline to target+offset for a DYNIMPORT symbol via GOT.
 func gentrampgot(ctxt *ld.Link, ldr *loader.Loader, tramp *loader.SymbolBuilder, target loader.Sym) {
-	tramp.SetSize(12) // 3 instructions
+	tramp.SetSize(12)	// 3 instructions
 	P := make([]byte, tramp.Size())
-	o1 := uint32(0x90000010) // adrp x16, target@GOT
-	o2 := uint32(0xf9400210) // ldr x16, [x16, offset]
-	o3 := uint32(0xd61f0200) // br x16
+	o1 := uint32(0x90000010)	// adrp x16, target@GOT
+	o2 := uint32(0xf9400210)	// ldr x16, [x16, offset]
+	o3 := uint32(0xd61f0200)	// br x16
 	ctxt.Arch.ByteOrder.PutUint32(P, o1)
 	ctxt.Arch.ByteOrder.PutUint32(P[4:], o2)
 	ctxt.Arch.ByteOrder.PutUint32(P[8:], o3)

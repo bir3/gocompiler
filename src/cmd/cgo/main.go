@@ -12,6 +12,7 @@ package cgo
 
 import (
 	"github.com/bir3/gocompiler/src/cmd/cgo/flag"
+	"github.com/bir3/gocompiler/src/cmd/cgo/flag_objabi"
 	"fmt"
 	"github.com/bir3/gocompiler/src/go/ast"
 	"github.com/bir3/gocompiler/src/go/printer"
@@ -28,48 +29,51 @@ import (
 	"github.com/bir3/gocompiler/src/cmd/internal/edit"
 	"github.com/bir3/gocompiler/src/cmd/internal/notsha256"
 	"github.com/bir3/gocompiler/src/cmd/internal/objabi"
-	"github.com/bir3/gocompiler/src/cmd/cgo/flag_objabi"
 )
 
 // A Package collects information about the package we're going to write.
 type Package struct {
-	PackageName string // name of package
-	PackagePath string
-	PtrSize     int64
-	IntSize     int64
-	GccOptions  []string
-	GccIsClang  bool
-	CgoFlags    map[string][]string // #cgo flags (CFLAGS, LDFLAGS)
-	Written     map[string]bool
-	Name        map[string]*Name // accumulated Name from Files
-	ExpFunc     []*ExpFunc       // accumulated ExpFunc from Files
-	Decl        []ast.Decl
-	GoFiles     []string        // list of Go files
-	GccFiles    []string        // list of gcc output files
-	Preamble    string          // collected preamble for _cgo_export.h
-	typedefs    map[string]bool // type names that appear in the types of the objects we're interested in
-	typedefList []typedefInfo
+	PackageName	string	// name of package
+	PackagePath	string
+	PtrSize		int64
+	IntSize		int64
+	GccOptions	[]string
+	GccIsClang	bool
+	LdFlags		[]string	// #cgo LDFLAGS
+	Written		map[string]bool
+	Name		map[string]*Name	// accumulated Name from Files
+	ExpFunc		[]*ExpFunc		// accumulated ExpFunc from Files
+	Decl		[]ast.Decl
+	GoFiles		[]string	// list of Go files
+	GccFiles	[]string	// list of gcc output files
+	Preamble	string		// collected preamble for _cgo_export.h
+	typedefs	map[string]bool	// type names that appear in the types of the objects we're interested in
+	typedefList	[]typedefInfo
+	noCallbacks	map[string]bool	// C function names with #cgo nocallback directive
+	noEscapes	map[string]bool	// C function names with #cgo noescape directive
 }
 
 // A typedefInfo is an element on Package.typedefList: a typedef name
 // and the position where it was required.
 type typedefInfo struct {
-	typedef string
-	pos     token.Pos
+	typedef	string
+	pos	token.Pos
 }
 
 // A File collects information about a single Go input file.
 type File struct {
-	AST      *ast.File           // parsed AST
-	Comments []*ast.CommentGroup // comments from file
-	Package  string              // Package name
-	Preamble string              // C preamble (doc comment on import "C")
-	Ref      []*Ref              // all references to C.xxx in AST
-	Calls    []*Call             // all calls to C.xxx in AST
-	ExpFunc  []*ExpFunc          // exported functions for this file
-	Name     map[string]*Name    // map from Go name to Name
-	NamePos  map[*Name]token.Pos // map from Name to position of the first reference
-	Edit     *edit.Buffer
+	AST		*ast.File		// parsed AST
+	Comments	[]*ast.CommentGroup	// comments from file
+	Package		string			// Package name
+	Preamble	string			// C preamble (doc comment on import "C")
+	Ref		[]*Ref			// all references to C.xxx in AST
+	Calls		[]*Call			// all calls to C.xxx in AST
+	ExpFunc		[]*ExpFunc		// exported functions for this file
+	Name		map[string]*Name	// map from Go name to Name
+	NamePos		map[*Name]token.Pos	// map from Name to position of the first reference
+	NoCallbacks	map[string]bool		// C function names that with #cgo nocallback directive
+	NoEscapes	map[string]bool		// C function names that with #cgo noescape directive
+	Edit		*edit.Buffer
 }
 
 func (f *File) offset(p token.Pos) int {
@@ -87,17 +91,17 @@ func nameKeys(m map[string]*Name) []string {
 
 // A Call refers to a call of a C.xxx function in the AST.
 type Call struct {
-	Call     *ast.CallExpr
-	Deferred bool
-	Done     bool
+	Call		*ast.CallExpr
+	Deferred	bool
+	Done		bool
 }
 
 // A Ref refers to an expression of the form C.xxx in the AST.
 type Ref struct {
-	Name    *Name
-	Expr    *ast.Expr
-	Context astContext
-	Done    bool
+	Name	*Name
+	Expr	*ast.Expr
+	Context	astContext
+	Done	bool
 }
 
 func (r *Ref) Pos() token.Pos {
@@ -108,15 +112,15 @@ var nameKinds = []string{"iconst", "fconst", "sconst", "type", "var", "fpvar", "
 
 // A Name collects information about C.xxx.
 type Name struct {
-	Go       string // name used in Go referring to package C
-	Mangle   string // name used in generated Go
-	C        string // name used in C
-	Define   string // #define expansion
-	Kind     string // one of the nameKinds
-	Type     *Type  // the type of xxx
-	FuncType *FuncType
-	AddError bool
-	Const    string // constant definition
+	Go		string	// name used in Go referring to package C
+	Mangle		string	// name used in generated Go
+	C		string	// name used in C
+	Define		string	// #define expansion
+	Kind		string	// one of the nameKinds
+	Type		*Type	// the type of xxx
+	FuncType	*FuncType
+	AddError	bool
+	Const		string	// constant definition
 }
 
 // IsVar reports whether Kind is either "var" or "fpvar"
@@ -133,33 +137,33 @@ func (n *Name) IsConst() bool {
 // Such functions are identified in the Go input file
 // by doc comments containing the line //export ExpName
 type ExpFunc struct {
-	Func    *ast.FuncDecl
-	ExpName string // name to use from C
-	Doc     string
+	Func	*ast.FuncDecl
+	ExpName	string	// name to use from C
+	Doc	string
 }
 
 // A TypeRepr contains the string representation of a type.
 type TypeRepr struct {
-	Repr       string
-	FormatArgs []interface{}
+	Repr		string
+	FormatArgs	[]interface{}
 }
 
 // A Type collects information about a type in both the C and Go worlds.
 type Type struct {
-	Size       int64
-	Align      int64
-	C          *TypeRepr
-	Go         ast.Expr
-	EnumValues map[string]int64
-	Typedef    string
-	BadPointer bool // this pointer type should be represented as a uintptr (deprecated)
+	Size		int64
+	Align		int64
+	C		*TypeRepr
+	Go		ast.Expr
+	EnumValues	map[string]int64
+	Typedef		string
+	BadPointer	bool	// this pointer type should be represented as a uintptr (deprecated)
 }
 
 // A FuncType collects information about a function type in both the C and Go worlds.
 type FuncType struct {
-	Params []*Type
-	Result *Type
-	Go     *ast.FuncType
+	Params	[]*Type
+	Result	*Type
+	Go	*ast.FuncType
 }
 
 func usage() {
@@ -169,55 +173,55 @@ func usage() {
 }
 
 var ptrSizeMap = map[string]int64{
-	"386":      4,
-	"alpha":    8,
-	"amd64":    8,
-	"arm":      4,
-	"arm64":    8,
-	"loong64":  8,
-	"m68k":     4,
-	"mips":     4,
-	"mipsle":   4,
-	"mips64":   8,
-	"mips64le": 8,
-	"nios2":    4,
-	"ppc":      4,
-	"ppc64":    8,
-	"ppc64le":  8,
-	"riscv":    4,
-	"riscv64":  8,
-	"s390":     4,
-	"s390x":    8,
-	"sh":       4,
-	"shbe":     4,
-	"sparc":    4,
-	"sparc64":  8,
+	"386":		4,
+	"alpha":	8,
+	"amd64":	8,
+	"arm":		4,
+	"arm64":	8,
+	"loong64":	8,
+	"m68k":		4,
+	"mips":		4,
+	"mipsle":	4,
+	"mips64":	8,
+	"mips64le":	8,
+	"nios2":	4,
+	"ppc":		4,
+	"ppc64":	8,
+	"ppc64le":	8,
+	"riscv":	4,
+	"riscv64":	8,
+	"s390":		4,
+	"s390x":	8,
+	"sh":		4,
+	"shbe":		4,
+	"sparc":	4,
+	"sparc64":	8,
 }
 
 var intSizeMap = map[string]int64{
-	"386":      4,
-	"alpha":    8,
-	"amd64":    8,
-	"arm":      4,
-	"arm64":    8,
-	"loong64":  8,
-	"m68k":     4,
-	"mips":     4,
-	"mipsle":   4,
-	"mips64":   8,
-	"mips64le": 8,
-	"nios2":    4,
-	"ppc":      4,
-	"ppc64":    8,
-	"ppc64le":  8,
-	"riscv":    4,
-	"riscv64":  8,
-	"s390":     4,
-	"s390x":    8,
-	"sh":       4,
-	"shbe":     4,
-	"sparc":    4,
-	"sparc64":  8,
+	"386":		4,
+	"alpha":	8,
+	"amd64":	8,
+	"arm":		4,
+	"arm64":	8,
+	"loong64":	8,
+	"m68k":		4,
+	"mips":		4,
+	"mipsle":	4,
+	"mips64":	8,
+	"mips64le":	8,
+	"nios2":	4,
+	"ppc":		4,
+	"ppc64":	8,
+	"ppc64le":	8,
+	"riscv":	4,
+	"riscv64":	8,
+	"s390":		4,
+	"s390x":	8,
+	"sh":		4,
+	"shbe":		4,
+	"sparc":	4,
+	"sparc64":	8,
 }
 
 var cPrefix string
@@ -252,7 +256,7 @@ var goarch, goos, gomips, gomips64 string
 var gccBaseCmd []string
 
 func Main() {
-	flag_objabi.AddVersionFlag() // -V
+	flag_objabi.AddVersionFlag()	// -V
 	flag_objabi.Flagparse(usage)
 
 	if *gccgoDefineCgoIncomplete {
@@ -375,7 +379,7 @@ func Main() {
 		f := new(File)
 		f.Edit = edit.NewBuffer(b)
 		f.ParseGo(input, b)
-		f.DiscardCgoDirectives()
+		f.ProcessCgoDirectives()
 		fs[i] = f
 	}
 
@@ -412,6 +416,25 @@ func Main() {
 			os.Stdout.WriteString(p.godefs(f, osArgs))
 		} else {
 			p.writeOutput(f, input)
+		}
+	}
+	cFunctions := make(map[string]bool)
+	for _, key := range nameKeys(p.Name) {
+		n := p.Name[key]
+		if n.FuncType != nil {
+			cFunctions[n.C] = true
+		}
+	}
+
+	for funcName := range p.noEscapes {
+		if _, found := cFunctions[funcName]; !found {
+			error_(token.NoPos, "#cgo noescape %s: no matched C function", funcName)
+		}
+	}
+
+	for funcName := range p.noCallbacks {
+		if _, found := cFunctions[funcName]; !found {
+			error_(token.NoPos, "#cgo nocallback %s: no matched C function", funcName)
 		}
 	}
 
@@ -451,10 +474,11 @@ func newPackage(args []string) *Package {
 	os.Setenv("LC_ALL", "C")
 
 	p := &Package{
-		PtrSize:  ptrSize,
-		IntSize:  intSize,
-		CgoFlags: make(map[string][]string),
-		Written:  make(map[string]bool),
+		PtrSize:	ptrSize,
+		IntSize:	intSize,
+		Written:	make(map[string]bool),
+		noCallbacks:	make(map[string]bool),
+		noEscapes:	make(map[string]bool),
 	}
 	p.addToFlag("CFLAGS", args)
 	return p
@@ -486,6 +510,14 @@ func (p *Package) Record(f *File) {
 				error_(token.NoPos, "inconsistent definitions for C.%s", fixGo(k))
 			}
 		}
+	}
+
+	// merge nocallback & noescape
+	for k, v := range f.NoCallbacks {
+		p.noCallbacks[k] = v
+	}
+	for k, v := range f.NoEscapes {
+		p.noEscapes[k] = v
 	}
 
 	if f.ExpFunc != nil {

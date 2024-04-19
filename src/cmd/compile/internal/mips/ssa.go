@@ -30,9 +30,9 @@ func isHILO(r int16) bool {
 // loadByType returns the load instruction of the given type.
 func loadByType(t *types.Type, r int16) obj.As {
 	if isFPreg(r) {
-		if t.Size() == 4 { // float32 or int32
+		if t.Size() == 4 {	// float32 or int32
 			return mips.AMOVF
-		} else { // float64 or int64
+		} else {	// float64 or int64
 			return mips.AMOVD
 		}
 	} else {
@@ -59,9 +59,9 @@ func loadByType(t *types.Type, r int16) obj.As {
 // storeByType returns the store instruction of the given type.
 func storeByType(t *types.Type, r int16) obj.As {
 	if isFPreg(r) {
-		if t.Size() == 4 { // float32 or int32
+		if t.Size() == 4 {	// float32 or int32
 			return mips.AMOVF
-		} else { // float64 or int64
+		} else {	// float64 or int64
 			return mips.AMOVD
 		}
 	} else {
@@ -361,8 +361,11 @@ func ssaGenValue(s *ssagen.State, v *ssa.Value) {
 		ssa.OpMIPSTRUNCDW,
 		ssa.OpMIPSMOVFD,
 		ssa.OpMIPSMOVDF,
+		ssa.OpMIPSMOVWfpgp,
+		ssa.OpMIPSMOVWgpfp,
 		ssa.OpMIPSNEGF,
 		ssa.OpMIPSNEGD,
+		ssa.OpMIPSABSD,
 		ssa.OpMIPSSQRTF,
 		ssa.OpMIPSSQRTD,
 		ssa.OpMIPSCLZ:
@@ -481,19 +484,20 @@ func ssaGenValue(s *ssagen.State, v *ssa.Value) {
 		p := s.Prog(obj.ACALL)
 		p.To.Type = obj.TYPE_MEM
 		p.To.Name = obj.NAME_EXTERN
-		p.To.Sym = v.Aux.(*obj.LSym)
+		// AuxInt encodes how many buffer entries we need.
+		p.To.Sym = ir.Syms.GCWriteBarrier[v.AuxInt-1]
 	case ssa.OpMIPSLoweredPanicBoundsA, ssa.OpMIPSLoweredPanicBoundsB, ssa.OpMIPSLoweredPanicBoundsC:
 		p := s.Prog(obj.ACALL)
 		p.To.Type = obj.TYPE_MEM
 		p.To.Name = obj.NAME_EXTERN
 		p.To.Sym = ssagen.BoundsCheckFunc[v.AuxInt]
-		s.UseArgs(8) // space used in callee args area by assembly stubs
+		s.UseArgs(8)	// space used in callee args area by assembly stubs
 	case ssa.OpMIPSLoweredPanicExtendA, ssa.OpMIPSLoweredPanicExtendB, ssa.OpMIPSLoweredPanicExtendC:
 		p := s.Prog(obj.ACALL)
 		p.To.Type = obj.TYPE_MEM
 		p.To.Name = obj.NAME_EXTERN
 		p.To.Sym = ssagen.ExtendCheckFunc[v.AuxInt]
-		s.UseArgs(12) // space used in callee args area by assembly stubs
+		s.UseArgs(12)	// space used in callee args area by assembly stubs
 	case ssa.OpMIPSLoweredAtomicLoad8,
 		ssa.OpMIPSLoweredAtomicLoad32:
 		s.Prog(mips.ASYNC)
@@ -762,7 +766,7 @@ func ssaGenValue(s *ssagen.State, v *ssa.Value) {
 		if logopt.Enabled() {
 			logopt.LogOpt(v.Pos, "nilcheck", "genssa", v.Block.Func.Name)
 		}
-		if base.Debug.Nil != 0 && v.Pos.Line() > 1 { // v.Pos.Line()==1 in generated wrappers
+		if base.Debug.Nil != 0 && v.Pos.Line() > 1 {	// v.Pos.Line()==1 in generated wrappers
 			base.WarnfAt(v.Pos, "generated nil check")
 		}
 	case ssa.OpMIPSFPFlagTrue,
@@ -810,14 +814,14 @@ func ssaGenValue(s *ssagen.State, v *ssa.Value) {
 var blockJump = map[ssa.BlockKind]struct {
 	asm, invasm obj.As
 }{
-	ssa.BlockMIPSEQ:  {mips.ABEQ, mips.ABNE},
-	ssa.BlockMIPSNE:  {mips.ABNE, mips.ABEQ},
-	ssa.BlockMIPSLTZ: {mips.ABLTZ, mips.ABGEZ},
-	ssa.BlockMIPSGEZ: {mips.ABGEZ, mips.ABLTZ},
-	ssa.BlockMIPSLEZ: {mips.ABLEZ, mips.ABGTZ},
-	ssa.BlockMIPSGTZ: {mips.ABGTZ, mips.ABLEZ},
-	ssa.BlockMIPSFPT: {mips.ABFPT, mips.ABFPF},
-	ssa.BlockMIPSFPF: {mips.ABFPF, mips.ABFPT},
+	ssa.BlockMIPSEQ:	{mips.ABEQ, mips.ABNE},
+	ssa.BlockMIPSNE:	{mips.ABNE, mips.ABEQ},
+	ssa.BlockMIPSLTZ:	{mips.ABLTZ, mips.ABGEZ},
+	ssa.BlockMIPSGEZ:	{mips.ABGEZ, mips.ABLTZ},
+	ssa.BlockMIPSLEZ:	{mips.ABLEZ, mips.ABGTZ},
+	ssa.BlockMIPSGTZ:	{mips.ABGTZ, mips.ABLEZ},
+	ssa.BlockMIPSFPT:	{mips.ABFPT, mips.ABFPF},
+	ssa.BlockMIPSFPF:	{mips.ABFPF, mips.ABFPT},
 }
 
 func ssaGenBlock(s *ssagen.State, b, next *ssa.Block) {

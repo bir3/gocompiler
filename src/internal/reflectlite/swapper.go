@@ -31,9 +31,9 @@ func Swapper(slice any) func(i, j int) {
 		}
 	}
 
-	typ := v.Type().Elem().(*rtype)
+	typ := v.Type().Elem().common()
 	size := typ.Size()
-	hasPtr := typ.ptrdata != 0
+	hasPtr := typ.PtrBytes != 0
 
 	// Some common & small cases, without using memmove:
 	if hasPtr {
@@ -63,7 +63,7 @@ func Swapper(slice any) func(i, j int) {
 	}
 
 	s := (*unsafeheader.Slice)(v.ptr)
-	tmp := unsafe_New(typ) // swap scratch space
+	tmp := unsafe_New(typ)	// swap scratch space
 
 	return func(i, j int) {
 		if uint(i) >= uint(s.Len) || uint(j) >= uint(s.Len) {

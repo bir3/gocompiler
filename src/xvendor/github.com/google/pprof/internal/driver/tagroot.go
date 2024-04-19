@@ -45,15 +45,15 @@ func addLabelNodes(p *profile.Profile, rootKeys, leafKeys []string, outputUnit s
 		}
 
 		function := &profile.Function{
-			ID:       nextFuncID,
-			Name:     locKey.functionName,
-			Filename: locKey.fileName,
+			ID:		nextFuncID,
+			Name:		locKey.functionName,
+			Filename:	locKey.fileName,
 		}
 		nextFuncID++
 		p.Function = append(p.Function, function)
 
 		loc = &profile.Location{
-			ID: nextLocID,
+			ID:	nextLocID,
 			Line: []profile.Line{
 				{
 					Function: function,
@@ -78,8 +78,8 @@ func addLabelNodes(p *profile.Profile, rootKeys, leafKeys []string, outputUnit s
 				match = true
 			}
 			locKey := locKey{
-				functionName: strings.Join(values, ","),
-				fileName:     k,
+				functionName:	strings.Join(values, ","),
+				fileName:	k,
 			}
 			loc := internLoc(locKey)
 			locs = append(locs, loc)

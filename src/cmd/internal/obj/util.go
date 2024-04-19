@@ -6,9 +6,8 @@ package obj
 
 import (
 	"bytes"
-	"github.com/bir3/gocompiler/src/cmd/internal/objabi"
-	"github.com/bir3/gocompiler/src/cmd/internal/src"
 	"fmt"
+	"github.com/bir3/gocompiler/src/internal/abi"
 	"github.com/bir3/gocompiler/src/internal/buildcfg"
 	"io"
 	"strings"
@@ -48,10 +47,6 @@ func (p *Prog) InnermostFilename() string {
 	return pos.Filename()
 }
 
-func (p *Prog) AllPos(result []src.Pos) []src.Pos {
-	return p.Ctxt.AllPos(p.Pos, result)
-}
-
 var armCondCode = []string{
 	".EQ",
 	".NE",
@@ -73,13 +68,13 @@ var armCondCode = []string{
 
 /* ARM scond byte */
 const (
-	C_SCOND     = (1 << 4) - 1
-	C_SBIT      = 1 << 4
-	C_PBIT      = 1 << 5
-	C_WBIT      = 1 << 6
-	C_FBIT      = 1 << 7
-	C_UBIT      = 1 << 7
-	C_SCOND_XOR = 14
+	C_SCOND		= (1 << 4) - 1
+	C_SBIT		= 1 << 4
+	C_PBIT		= 1 << 5
+	C_WBIT		= 1 << 6
+	C_FBIT		= 1 << 7
+	C_UBIT		= 1 << 7
+	C_SCOND_XOR	= 14
 )
 
 // CConv formats opcode suffix bits (Prog.Scond).
@@ -112,7 +107,7 @@ func CConvARM(s uint8) string {
 	if s&C_WBIT != 0 {
 		sc += ".W"
 	}
-	if s&C_UBIT != 0 { /* ambiguous with FBIT */
+	if s&C_UBIT != 0 {	/* ambiguous with FBIT */
 		sc += ".U"
 	}
 	return sc
@@ -202,6 +197,7 @@ func (p *Prog) WriteInstructionString(w io.Writer) {
 	if p.To.Type != TYPE_NONE {
 		io.WriteString(w, sep)
 		WriteDconv(w, p, &p.To)
+		sep = ", "
 	}
 	if p.RegTo2 != REG_NONE {
 		fmt.Fprintf(w, "%s%v", sep, Rconv(int(p.RegTo2)))
@@ -312,7 +308,7 @@ func writeDconv(w io.Writer, p *Prog, a *Addr, abiDetail bool) {
 		}
 
 	case TYPE_TEXTSIZE:
-		if a.Val.(int32) == objabi.ArgsSizeUnknown {
+		if a.Val.(int32) == abi.ArgsSizeUnknown {
 			fmt.Fprintf(w, "$%d", a.Offset)
 		} else {
 			fmt.Fprintf(w, "$%d-%d", a.Offset, a.Val.(int32))
@@ -471,8 +467,8 @@ func offConv(off int64) string {
 // Instead, every arch may interpret/format all 8 bits as they like,
 // as long as they register proper cconv function for it.
 type opSuffixSet struct {
-	arch  string
-	cconv func(suffix uint8) string
+	arch	string
+	cconv	func(suffix uint8) string
 }
 
 var opSuffixSpace []opSuffixSet
@@ -483,15 +479,15 @@ var opSuffixSpace []opSuffixSet
 // cconv is never called with 0 argument.
 func RegisterOpSuffix(arch string, cconv func(uint8) string) {
 	opSuffixSpace = append(opSuffixSpace, opSuffixSet{
-		arch:  arch,
-		cconv: cconv,
+		arch:	arch,
+		cconv:	cconv,
 	})
 }
 
 type regSet struct {
-	lo    int
-	hi    int
-	Rconv func(int) string
+	lo	int
+	hi	int
+	Rconv	func(int) string
 }
 
 // Few enough architectures that a linear scan is fastest.
@@ -507,16 +503,16 @@ var regSpace []regSet
 const (
 	// Because of masking operations in the encodings, each register
 	// space should start at 0 modulo some power of 2.
-	RBase386     = 1 * 1024
-	RBaseAMD64   = 2 * 1024
-	RBaseARM     = 3 * 1024
-	RBasePPC64   = 4 * 1024  // range [4k, 8k)
-	RBaseARM64   = 8 * 1024  // range [8k, 13k)
-	RBaseMIPS    = 13 * 1024 // range [13k, 14k)
-	RBaseS390X   = 14 * 1024 // range [14k, 15k)
-	RBaseRISCV   = 15 * 1024 // range [15k, 16k)
-	RBaseWasm    = 16 * 1024
-	RBaseLOONG64 = 17 * 1024
+	RBase386	= 1 * 1024
+	RBaseAMD64	= 2 * 1024
+	RBaseARM	= 3 * 1024
+	RBasePPC64	= 4 * 1024	// range [4k, 8k)
+	RBaseARM64	= 8 * 1024	// range [8k, 13k)
+	RBaseMIPS	= 13 * 1024	// range [13k, 14k)
+	RBaseS390X	= 14 * 1024	// range [14k, 15k)
+	RBaseRISCV	= 15 * 1024	// range [15k, 16k)
+	RBaseWasm	= 16 * 1024
+	RBaseLOONG64	= 17 * 1024
 )
 
 // RegisterRegister binds a pretty-printer (Rconv) for register
@@ -540,9 +536,9 @@ func Rconv(reg int) string {
 }
 
 type regListSet struct {
-	lo     int64
-	hi     int64
-	RLconv func(int64) string
+	lo	int64
+	hi	int64
+	RLconv	func(int64) string
 }
 
 var regListSpace []regListSet
@@ -550,16 +546,16 @@ var regListSpace []regListSet
 // Each architecture is allotted a distinct subspace: [Lo, Hi) for declaring its
 // arch-specific register list numbers.
 const (
-	RegListARMLo = 0
-	RegListARMHi = 1 << 16
+	RegListARMLo	= 0
+	RegListARMHi	= 1 << 16
 
 	// arm64 uses the 60th bit to differentiate from other archs
-	RegListARM64Lo = 1 << 60
-	RegListARM64Hi = 1<<61 - 1
+	RegListARM64Lo	= 1 << 60
+	RegListARM64Hi	= 1<<61 - 1
 
 	// x86 uses the 61th bit to differentiate from other archs
-	RegListX86Lo = 1 << 61
-	RegListX86Hi = 1<<62 - 1
+	RegListX86Lo	= 1 << 61
+	RegListX86Hi	= 1<<62 - 1
 )
 
 // RegisterRegisterList binds a pretty-printer (RLconv) for register list
@@ -581,9 +577,9 @@ func RLconv(list int64) string {
 
 // Special operands
 type spcSet struct {
-	lo      int64
-	hi      int64
-	SPCconv func(int64) string
+	lo	int64
+	hi	int64
+	SPCconv	func(int64) string
 }
 
 var spcSpace []spcSet
@@ -607,8 +603,8 @@ func SPCconv(spc int64) string {
 }
 
 type opSet struct {
-	lo    As
-	names []string
+	lo	As
+	names	[]string
 }
 
 // Not even worth sorting

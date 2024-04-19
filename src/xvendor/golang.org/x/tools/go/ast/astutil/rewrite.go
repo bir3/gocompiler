@@ -9,8 +9,6 @@ import (
 	"github.com/bir3/gocompiler/src/go/ast"
 	"reflect"
 	"sort"
-
-	"github.com/bir3/gocompiler/src/xvendor/golang.org/x/tools/internal/typeparams"
 )
 
 // An ApplyFunc is invoked by Apply for each node n, even if n is nil,
@@ -54,7 +52,7 @@ func Apply(root ast.Node, pre, post ApplyFunc) (result ast.Node) {
 	return
 }
 
-var abort = new(int) // singleton, to signal termination of Apply
+var abort = new(int)	// singleton, to signal termination of Apply
 
 // A Cursor describes a node encountered during Apply.
 // Information about the node and its parent is available
@@ -70,22 +68,22 @@ var abort = new(int) // singleton, to signal termination of Apply
 // The methods Replace, Delete, InsertBefore, and InsertAfter
 // can be used to change the AST without disrupting Apply.
 type Cursor struct {
-	parent ast.Node
-	name   string
-	iter   *iterator // valid if non-nil
-	node   ast.Node
+	parent	ast.Node
+	name	string
+	iter	*iterator	// valid if non-nil
+	node	ast.Node
 }
 
 // Node returns the current Node.
-func (c *Cursor) Node() ast.Node { return c.node }
+func (c *Cursor) Node() ast.Node	{ return c.node }
 
 // Parent returns the parent of the current Node.
-func (c *Cursor) Parent() ast.Node { return c.parent }
+func (c *Cursor) Parent() ast.Node	{ return c.parent }
 
 // Name returns the name of the parent Node field that contains the current Node.
 // If the parent is a *ast.Package and the current Node is a *ast.File, Name returns
 // the filename for the current Node.
-func (c *Cursor) Name() string { return c.name }
+func (c *Cursor) Name() string	{ return c.name }
 
 // Index reports the index >= 0 of the current Node in the slice of Nodes that
 // contains it, or a value < 0 if the current Node is not part of a slice.
@@ -178,9 +176,9 @@ func (c *Cursor) InsertBefore(n ast.Node) {
 
 // application carries all the shared data so we can pass it around cheaply.
 type application struct {
-	pre, post ApplyFunc
-	cursor    Cursor
-	iter      iterator
+	pre, post	ApplyFunc
+	cursor		Cursor
+	iter		iterator
 }
 
 func (a *application) apply(parent ast.Node, name string, iter *iterator, n ast.Node) {
@@ -252,7 +250,7 @@ func (a *application) apply(parent ast.Node, name string, iter *iterator, n ast.
 		a.apply(n, "X", nil, n.X)
 		a.apply(n, "Index", nil, n.Index)
 
-	case *typeparams.IndexListExpr:
+	case *ast.IndexListExpr:
 		a.apply(n, "X", nil, n.X)
 		a.applyList(n, "Indices")
 
@@ -293,7 +291,7 @@ func (a *application) apply(parent ast.Node, name string, iter *iterator, n ast.
 		a.apply(n, "Fields", nil, n.Fields)
 
 	case *ast.FuncType:
-		if tparams := typeparams.ForFuncType(n); tparams != nil {
+		if tparams := n.TypeParams; tparams != nil {
 			a.apply(n, "TypeParams", nil, tparams)
 		}
 		a.apply(n, "Params", nil, n.Params)
@@ -408,7 +406,7 @@ func (a *application) apply(parent ast.Node, name string, iter *iterator, n ast.
 	case *ast.TypeSpec:
 		a.apply(n, "Doc", nil, n.Doc)
 		a.apply(n, "Name", nil, n.Name)
-		if tparams := typeparams.ForTypeSpec(n); tparams != nil {
+		if tparams := n.TypeParams; tparams != nil {
 			a.apply(n, "TypeParams", nil, tparams)
 		}
 		a.apply(n, "Type", nil, n.Type)

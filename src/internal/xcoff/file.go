@@ -17,26 +17,26 @@ import (
 
 // SectionHeader holds information about an XCOFF section header.
 type SectionHeader struct {
-	Name           string
-	VirtualAddress uint64
-	Size           uint64
-	Type           uint32
-	Relptr         uint64
-	Nreloc         uint32
+	Name		string
+	VirtualAddress	uint64
+	Size		uint64
+	Type		uint32
+	Relptr		uint64
+	Nreloc		uint32
 }
 
 type Section struct {
 	SectionHeader
-	Relocs []Reloc
+	Relocs	[]Reloc
 	io.ReaderAt
-	sr *io.SectionReader
+	sr	*io.SectionReader
 }
 
 // AuxiliaryCSect holds information about an XCOFF symbol in an AUX_CSECT entry.
 type AuxiliaryCSect struct {
-	Length              int64
-	StorageMappingClass int
-	SymbolType          int
+	Length			int64
+	StorageMappingClass	int
+	SymbolType		int
 }
 
 // AuxiliaryFcn holds information about an XCOFF symbol in an AUX_FCN entry.
@@ -45,27 +45,27 @@ type AuxiliaryFcn struct {
 }
 
 type Symbol struct {
-	Name          string
-	Value         uint64
-	SectionNumber int
-	StorageClass  int
-	AuxFcn        AuxiliaryFcn
-	AuxCSect      AuxiliaryCSect
+	Name		string
+	Value		uint64
+	SectionNumber	int
+	StorageClass	int
+	AuxFcn		AuxiliaryFcn
+	AuxCSect	AuxiliaryCSect
 }
 
 type Reloc struct {
-	VirtualAddress   uint64
-	Symbol           *Symbol
-	Signed           bool
-	InstructionFixed bool
-	Length           uint8
-	Type             uint8
+	VirtualAddress		uint64
+	Symbol			*Symbol
+	Signed			bool
+	InstructionFixed	bool
+	Length			uint8
+	Type			uint8
 }
 
 // ImportedSymbol holds information about an imported XCOFF symbol.
 type ImportedSymbol struct {
-	Name    string
-	Library string
+	Name	string
+	Library	string
 }
 
 // FileHeader holds information about an XCOFF file header.
@@ -76,12 +76,12 @@ type FileHeader struct {
 // A File represents an open XCOFF file.
 type File struct {
 	FileHeader
-	Sections     []*Section
-	Symbols      []*Symbol
-	StringTable  []byte
-	LibraryPaths []string
+	Sections	[]*Section
+	Symbols		[]*Symbol
+	StringTable	[]byte
+	LibraryPaths	[]string
 
-	closer io.Closer
+	closer	io.Closer
 }
 
 // Open opens the named file using os.Open and prepares it for use as an XCOFF binary.
@@ -173,7 +173,7 @@ func NewFile(r io.ReaderAt) (*File, error) {
 	}
 	var nscns uint16
 	var symptr uint64
-	var nsyms int32
+	var nsyms uint32
 	var opthdr uint16
 	var hdrsz int
 	switch f.TargetMachine {
@@ -225,7 +225,11 @@ func NewFile(r io.ReaderAt) (*File, error) {
 	if _, err := sr.Seek(int64(hdrsz)+int64(opthdr), io.SeekStart); err != nil {
 		return nil, err
 	}
-	f.Sections = make([]*Section, nscns)
+	c := saferio.SliceCap[*Section](uint64(nscns))
+	if c < 0 {
+		return nil, fmt.Errorf("too many XCOFF sections (%d)", nscns)
+	}
+	f.Sections = make([]*Section, 0, c)
 	for i := 0; i < int(nscns); i++ {
 		var scnptr uint64
 		s := new(Section)
@@ -256,12 +260,12 @@ func NewFile(r io.ReaderAt) (*File, error) {
 			s.Nreloc = shdr.Snreloc
 		}
 		r2 := r
-		if scnptr == 0 { // .bss must have all 0s
+		if scnptr == 0 {	// .bss must have all 0s
 			r2 = zeroReaderAt{}
 		}
 		s.sr = io.NewSectionReader(r2, int64(scnptr), int64(s.Size))
 		s.ReaderAt = s.sr
-		f.Sections[i] = s
+		f.Sections = append(f.Sections, s)
 	}
 
 	// Symbol map needed by relocation
@@ -283,9 +287,6 @@ func NewFile(r io.ReaderAt) (*File, error) {
 				return nil, err
 			}
 			numaux = int(se.Nnumaux)
-			if numaux < 0 {
-				return nil, fmt.Errorf("malformed symbol table, invalid number of aux symbols")
-			}
 			sym.SectionNumber = int(se.Nscnum)
 			sym.StorageClass = int(se.Nsclass)
 			sym.Value = uint64(se.Nvalue)
@@ -306,9 +307,6 @@ func NewFile(r io.ReaderAt) (*File, error) {
 				return nil, err
 			}
 			numaux = int(se.Nnumaux)
-			if numaux < 0 {
-				return nil, fmt.Errorf("malformed symbol table, invalid number of aux symbols")
-			}
 			sym.SectionNumber = int(se.Nscnum)
 			sym.StorageClass = int(se.Nsclass)
 			sym.Value = se.Nvalue
@@ -386,7 +384,7 @@ func NewFile(r io.ReaderAt) (*File, error) {
 		}
 		f.Symbols = append(f.Symbols, sym)
 	skip:
-		i += numaux // Skip auxiliary entries
+		i += numaux	// Skip auxiliary entries
 		if _, err := sr.Seek(int64(numaux)*SYMESZ, io.SeekCurrent); err != nil {
 			return nil, err
 		}
@@ -394,34 +392,39 @@ func NewFile(r io.ReaderAt) (*File, error) {
 
 	// Read relocations
 	// Only for .data or .text section
-	for _, sect := range f.Sections {
+	for sectNum, sect := range f.Sections {
 		if sect.Type != STYP_TEXT && sect.Type != STYP_DATA {
 			continue
 		}
-		sect.Relocs = make([]Reloc, sect.Nreloc)
 		if sect.Relptr == 0 {
 			continue
 		}
+		c := saferio.SliceCap[Reloc](uint64(sect.Nreloc))
+		if c < 0 {
+			return nil, fmt.Errorf("too many relocs (%d) for section %d", sect.Nreloc, sectNum)
+		}
+		sect.Relocs = make([]Reloc, 0, c)
 		if _, err := sr.Seek(int64(sect.Relptr), io.SeekStart); err != nil {
 			return nil, err
 		}
 		for i := uint32(0); i < sect.Nreloc; i++ {
+			var reloc Reloc
 			switch f.TargetMachine {
 			case U802TOCMAGIC:
 				rel := new(Reloc32)
 				if err := binary.Read(sr, binary.BigEndian, rel); err != nil {
 					return nil, err
 				}
-				sect.Relocs[i].VirtualAddress = uint64(rel.Rvaddr)
-				sect.Relocs[i].Symbol = idxToSym[int(rel.Rsymndx)]
-				sect.Relocs[i].Type = rel.Rtype
-				sect.Relocs[i].Length = rel.Rsize&0x3F + 1
+				reloc.VirtualAddress = uint64(rel.Rvaddr)
+				reloc.Symbol = idxToSym[int(rel.Rsymndx)]
+				reloc.Type = rel.Rtype
+				reloc.Length = rel.Rsize&0x3F + 1
 
 				if rel.Rsize&0x80 != 0 {
-					sect.Relocs[i].Signed = true
+					reloc.Signed = true
 				}
 				if rel.Rsize&0x40 != 0 {
-					sect.Relocs[i].InstructionFixed = true
+					reloc.InstructionFixed = true
 				}
 
 			case U64_TOCMAGIC:
@@ -429,17 +432,19 @@ func NewFile(r io.ReaderAt) (*File, error) {
 				if err := binary.Read(sr, binary.BigEndian, rel); err != nil {
 					return nil, err
 				}
-				sect.Relocs[i].VirtualAddress = rel.Rvaddr
-				sect.Relocs[i].Symbol = idxToSym[int(rel.Rsymndx)]
-				sect.Relocs[i].Type = rel.Rtype
-				sect.Relocs[i].Length = rel.Rsize&0x3F + 1
+				reloc.VirtualAddress = rel.Rvaddr
+				reloc.Symbol = idxToSym[int(rel.Rsymndx)]
+				reloc.Type = rel.Rtype
+				reloc.Length = rel.Rsize&0x3F + 1
 				if rel.Rsize&0x80 != 0 {
-					sect.Relocs[i].Signed = true
+					reloc.Signed = true
 				}
 				if rel.Rsize&0x40 != 0 {
-					sect.Relocs[i].InstructionFixed = true
+					reloc.InstructionFixed = true
 				}
 			}
+
+			sect.Relocs = append(sect.Relocs, reloc)
 		}
 	}
 
@@ -517,7 +522,7 @@ func (f *File) readImportIDs(s *Section) ([]string, error) {
 		return nil, err
 	}
 	var istlen uint32
-	var nimpid int32
+	var nimpid uint32
 	var impoff uint64
 	switch f.TargetMachine {
 	case U802TOCMAGIC:
@@ -551,7 +556,7 @@ func (f *File) readImportIDs(s *Section) ([]string, error) {
 	// First import file ID is the default LIBPATH value
 	libpath := cstring(table[offset:])
 	f.LibraryPaths = strings.Split(libpath, ":")
-	offset += len(libpath) + 3 // 3 null bytes
+	offset += len(libpath) + 3	// 3 null bytes
 	all := make([]string, 0)
 	for i := 1; i < int(nimpid); i++ {
 		impidpath := cstring(table[offset:])
@@ -587,7 +592,7 @@ func (f *File) ImportedSymbols() ([]ImportedSymbol, error) {
 	}
 	var stlen uint32
 	var stoff uint64
-	var nsyms int32
+	var nsyms uint32
 	var symoff uint64
 	switch f.TargetMachine {
 	case U802TOCMAGIC:
@@ -632,7 +637,7 @@ func (f *File) ImportedSymbols() ([]ImportedSymbol, error) {
 	all := make([]ImportedSymbol, 0)
 	for i := 0; i < int(nsyms); i++ {
 		var name string
-		var ifile int32
+		var ifile uint32
 		var ok bool
 		switch f.TargetMachine {
 		case U802TOCMAGIC:
@@ -641,7 +646,7 @@ func (f *File) ImportedSymbols() ([]ImportedSymbol, error) {
 				return nil, err
 			}
 			if ldsym.Lsmtype&0x40 == 0 {
-				continue // Imported symbols only
+				continue	// Imported symbols only
 			}
 			zeroes := binary.BigEndian.Uint32(ldsym.Lname[:4])
 			if zeroes != 0 {
@@ -660,7 +665,7 @@ func (f *File) ImportedSymbols() ([]ImportedSymbol, error) {
 				return nil, err
 			}
 			if ldsym.Lsmtype&0x40 == 0 {
-				continue // Imported symbols only
+				continue	// Imported symbols only
 			}
 			name, ok = getString(st, ldsym.Loffset)
 			if !ok {

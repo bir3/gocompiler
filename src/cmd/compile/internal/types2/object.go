@@ -17,13 +17,13 @@ import (
 // constant, type, variable, function (incl. methods), or label.
 // All objects implement the Object interface.
 type Object interface {
-	Parent() *Scope  // scope in which this object is declared; nil for methods and struct fields
-	Pos() syntax.Pos // position of object identifier in declaration
-	Pkg() *Package   // package to which this object belongs; nil for labels and objects in the Universe scope
-	Name() string    // package local object name
-	Type() Type      // object type
-	Exported() bool  // reports whether the name starts with a capital letter
-	Id() string      // object name if exported, qualified name if not exported (see func Id)
+	Parent() *Scope		// scope in which this object is declared; nil for methods and struct fields
+	Pos() syntax.Pos	// position of object identifier in declaration
+	Pkg() *Package		// package to which this object belongs; nil for labels and objects in the Universe scope
+	Name() string		// package local object name
+	Type() Type		// object type
+	Exported() bool		// reports whether the name starts with a capital letter
+	Id() string		// object name if exported, qualified name if not exported (see func Id)
 
 	// String returns a human-readable string of the object.
 	String() string
@@ -86,14 +86,14 @@ func Id(pkg *Package, name string) string {
 
 // An object implements the common parts of an Object.
 type object struct {
-	parent    *Scope
-	pos       syntax.Pos
-	pkg       *Package
-	name      string
-	typ       Type
-	order_    uint32
-	color_    color
-	scopePos_ syntax.Pos
+	parent		*Scope
+	pos		syntax.Pos
+	pkg		*Package
+	name		string
+	typ		Type
+	order_		uint32
+	color_		color
+	scopePos_	syntax.Pos
 }
 
 // color encodes the color of an object (see Checker.objDecl for details).
@@ -102,9 +102,9 @@ type color uint32
 // An object may be painted in one of three colors.
 // Color values other than white or black are considered grey.
 const (
-	white color = iota
+	white	color	= iota
 	black
-	grey // must be > white and black
+	grey	// must be > white and black
 )
 
 func (c color) String() string {
@@ -129,39 +129,39 @@ func colorFor(t Type) color {
 
 // Parent returns the scope in which the object is declared.
 // The result is nil for methods and struct fields.
-func (obj *object) Parent() *Scope { return obj.parent }
+func (obj *object) Parent() *Scope	{ return obj.parent }
 
 // Pos returns the declaration position of the object's identifier.
-func (obj *object) Pos() syntax.Pos { return obj.pos }
+func (obj *object) Pos() syntax.Pos	{ return obj.pos }
 
 // Pkg returns the package to which the object belongs.
 // The result is nil for labels and objects in the Universe scope.
-func (obj *object) Pkg() *Package { return obj.pkg }
+func (obj *object) Pkg() *Package	{ return obj.pkg }
 
 // Name returns the object's (package-local, unqualified) name.
-func (obj *object) Name() string { return obj.name }
+func (obj *object) Name() string	{ return obj.name }
 
 // Type returns the object's type.
-func (obj *object) Type() Type { return obj.typ }
+func (obj *object) Type() Type	{ return obj.typ }
 
 // Exported reports whether the object is exported (starts with a capital letter).
 // It doesn't take into account whether the object is in a local (function) scope
 // or not.
-func (obj *object) Exported() bool { return isExported(obj.name) }
+func (obj *object) Exported() bool	{ return isExported(obj.name) }
 
 // Id is a wrapper for Id(obj.Pkg(), obj.Name()).
-func (obj *object) Id() string { return Id(obj.pkg, obj.name) }
+func (obj *object) Id() string	{ return Id(obj.pkg, obj.name) }
 
-func (obj *object) String() string       { panic("abstract") }
-func (obj *object) order() uint32        { return obj.order_ }
-func (obj *object) color() color         { return obj.color_ }
-func (obj *object) scopePos() syntax.Pos { return obj.scopePos_ }
+func (obj *object) String() string		{ panic("abstract") }
+func (obj *object) order() uint32		{ return obj.order_ }
+func (obj *object) color() color		{ return obj.color_ }
+func (obj *object) scopePos() syntax.Pos	{ return obj.scopePos_ }
 
-func (obj *object) setParent(parent *Scope)    { obj.parent = parent }
-func (obj *object) setType(typ Type)           { obj.typ = typ }
-func (obj *object) setOrder(order uint32)      { assert(order > 0); obj.order_ = order }
-func (obj *object) setColor(color color)       { assert(color != white); obj.color_ = color }
-func (obj *object) setScopePos(pos syntax.Pos) { obj.scopePos_ = pos }
+func (obj *object) setParent(parent *Scope)	{ obj.parent = parent }
+func (obj *object) setType(typ Type)		{ obj.typ = typ }
+func (obj *object) setOrder(order uint32)	{ assert(order > 0); obj.order_ = order }
+func (obj *object) setColor(color color)	{ assert(color != white); obj.color_ = color }
+func (obj *object) setScopePos(pos syntax.Pos)	{ obj.scopePos_ = pos }
 
 func (obj *object) sameId(pkg *Package, name string) bool {
 	// spec:
@@ -225,8 +225,8 @@ func (a *object) less(b *object) bool {
 // PkgNames don't have a type.
 type PkgName struct {
 	object
-	imported *Package
-	used     bool // set if the package was used
+	imported	*Package
+	used		bool	// set if the package was used
 }
 
 // NewPkgName returns a new PkgName object representing an imported package.
@@ -237,12 +237,12 @@ func NewPkgName(pos syntax.Pos, pkg *Package, name string, imported *Package) *P
 
 // Imported returns the package that was imported.
 // It is distinct from Pkg(), which is the package containing the import statement.
-func (obj *PkgName) Imported() *Package { return obj.imported }
+func (obj *PkgName) Imported() *Package	{ return obj.imported }
 
 // A Const represents a declared constant.
 type Const struct {
 	object
-	val constant.Value
+	val	constant.Value
 }
 
 // NewConst returns a new constant with value val.
@@ -252,9 +252,9 @@ func NewConst(pos syntax.Pos, pkg *Package, name string, typ Type, val constant.
 }
 
 // Val returns the constant's value.
-func (obj *Const) Val() constant.Value { return obj.val }
+func (obj *Const) Val() constant.Value	{ return obj.val }
 
-func (*Const) isDependency() {} // a constant may be a dependency of an initialization expression
+func (*Const) isDependency()	{}	// a constant may be a dependency of an initialization expression
 
 // A TypeName represents a name for a (defined or alias) type.
 type TypeName struct {
@@ -285,6 +285,8 @@ func (obj *TypeName) IsAlias() bool {
 	switch t := obj.typ.(type) {
 	case nil:
 		return false
+	// case *Alias:
+	//	handled by default case
 	case *Basic:
 		// unsafe.Pointer is not an alias.
 		if obj.pkg == Unsafe {
@@ -309,10 +311,10 @@ func (obj *TypeName) IsAlias() bool {
 // A Variable represents a declared variable (including function parameters and results, and struct fields).
 type Var struct {
 	object
-	embedded bool // if set, the variable is an embedded struct field, and name is the type name
-	isField  bool // var is struct field
-	used     bool // set if the variable was used
-	origin   *Var // if non-nil, the Var from which this one was instantiated
+	embedded	bool	// if set, the variable is an embedded struct field, and name is the type name
+	isField		bool	// var is struct field
+	used		bool	// set if the variable was used
+	origin		*Var	// if non-nil, the Var from which this one was instantiated
 }
 
 // NewVar returns a new variable.
@@ -323,7 +325,7 @@ func NewVar(pos syntax.Pos, pkg *Package, name string, typ Type) *Var {
 
 // NewParam returns a new variable representing a function parameter.
 func NewParam(pos syntax.Pos, pkg *Package, name string, typ Type) *Var {
-	return &Var{object: object{nil, pos, pkg, name, typ, 0, colorFor(typ), nopos}, used: true} // parameters are always 'used'
+	return &Var{object: object{nil, pos, pkg, name, typ, 0, colorFor(typ), nopos}, used: true}	// parameters are always 'used'
 }
 
 // NewField returns a new variable representing a struct field.
@@ -335,13 +337,13 @@ func NewField(pos syntax.Pos, pkg *Package, name string, typ Type, embedded bool
 
 // Anonymous reports whether the variable is an embedded field.
 // Same as Embedded; only present for backward-compatibility.
-func (obj *Var) Anonymous() bool { return obj.embedded }
+func (obj *Var) Anonymous() bool	{ return obj.embedded }
 
 // Embedded reports whether the variable is an embedded field.
-func (obj *Var) Embedded() bool { return obj.embedded }
+func (obj *Var) Embedded() bool	{ return obj.embedded }
 
 // IsField reports whether the variable is a struct field.
-func (obj *Var) IsField() bool { return obj.isField }
+func (obj *Var) IsField() bool	{ return obj.isField }
 
 // Origin returns the canonical Var for its receiver, i.e. the Var object
 // recorded in Info.Defs.
@@ -357,15 +359,15 @@ func (obj *Var) Origin() *Var {
 	return obj
 }
 
-func (*Var) isDependency() {} // a variable may be a dependency of an initialization expression
+func (*Var) isDependency()	{}	// a variable may be a dependency of an initialization expression
 
 // A Func represents a declared function, concrete method, or abstract
 // (interface) method. Its Type() is always a *Signature.
 // An abstract method may belong to many interfaces due to embedding.
 type Func struct {
 	object
-	hasPtrRecv_ bool  // only valid for methods that don't have a type yet; use hasPtrRecv() to read
-	origin      *Func // if non-nil, the Func from which this one was instantiated
+	hasPtrRecv_	bool	// only valid for methods that don't have a type yet; use hasPtrRecv() to read
+	origin		*Func	// if non-nil, the Func from which this one was instantiated
 }
 
 // NewFunc returns a new function with the given signature, representing
@@ -390,7 +392,7 @@ func (obj *Func) FullName() string {
 // Scope returns the scope of the function's body block.
 // The result is nil for imported or instantiated functions and methods
 // (but there is also no mechanism to get to an instantiated function).
-func (obj *Func) Scope() *Scope { return obj.typ.(*Signature).scope }
+func (obj *Func) Scope() *Scope	{ return obj.typ.(*Signature).scope }
 
 // Origin returns the canonical Func for its receiver, i.e. the Func object
 // recorded in Info.Defs.
@@ -405,6 +407,12 @@ func (obj *Func) Origin() *Func {
 	}
 	return obj
 }
+
+// Pkg returns the package to which the function belongs.
+//
+// The result is nil for methods of types in the Universe scope,
+// like method Error of the error built-in interface type.
+func (obj *Func) Pkg() *Package	{ return obj.object.Pkg() }
 
 // hasPtrRecv reports whether the receiver is of the form *T for the given method obj.
 func (obj *Func) hasPtrRecv() bool {
@@ -425,13 +433,13 @@ func (obj *Func) hasPtrRecv() bool {
 	return obj.hasPtrRecv_
 }
 
-func (*Func) isDependency() {} // a function may be a dependency of an initialization expression
+func (*Func) isDependency()	{}	// a function may be a dependency of an initialization expression
 
 // A Label represents a declared label.
 // Labels don't have a type.
 type Label struct {
 	object
-	used bool // set if the label was used
+	used	bool	// set if the label was used
 }
 
 // NewLabel returns a new label.
@@ -443,7 +451,7 @@ func NewLabel(pos syntax.Pos, pkg *Package, name string) *Label {
 // Builtins don't have a valid type.
 type Builtin struct {
 	object
-	id builtinId
+	id	builtinId
 }
 
 func newBuiltin(id builtinId) *Builtin {
@@ -578,14 +586,14 @@ func ObjectString(obj Object, qf Qualifier) string {
 	return buf.String()
 }
 
-func (obj *PkgName) String() string  { return ObjectString(obj, nil) }
-func (obj *Const) String() string    { return ObjectString(obj, nil) }
-func (obj *TypeName) String() string { return ObjectString(obj, nil) }
-func (obj *Var) String() string      { return ObjectString(obj, nil) }
-func (obj *Func) String() string     { return ObjectString(obj, nil) }
-func (obj *Label) String() string    { return ObjectString(obj, nil) }
-func (obj *Builtin) String() string  { return ObjectString(obj, nil) }
-func (obj *Nil) String() string      { return ObjectString(obj, nil) }
+func (obj *PkgName) String() string	{ return ObjectString(obj, nil) }
+func (obj *Const) String() string	{ return ObjectString(obj, nil) }
+func (obj *TypeName) String() string	{ return ObjectString(obj, nil) }
+func (obj *Var) String() string		{ return ObjectString(obj, nil) }
+func (obj *Func) String() string	{ return ObjectString(obj, nil) }
+func (obj *Label) String() string	{ return ObjectString(obj, nil) }
+func (obj *Builtin) String() string	{ return ObjectString(obj, nil) }
+func (obj *Nil) String() string		{ return ObjectString(obj, nil) }
 
 func writeFuncName(buf *bytes.Buffer, f *Func, qf Qualifier) {
 	if f.typ != nil {

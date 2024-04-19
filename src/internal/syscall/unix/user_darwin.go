@@ -24,28 +24,28 @@ func Getgrouplist(name *byte, gid uint32, gids *uint32, n *int32) error {
 }
 
 const (
-	SC_GETGR_R_SIZE_MAX = 0x46
-	SC_GETPW_R_SIZE_MAX = 0x47
+	SC_GETGR_R_SIZE_MAX	= 0x46
+	SC_GETPW_R_SIZE_MAX	= 0x47
 )
 
 type Passwd struct {
-	Name   *byte
-	Passwd *byte
-	Uid    uint32 // uid_t
-	Gid    uint32 // gid_t
-	Change int64  // time_t
-	Class  *byte
-	Gecos  *byte
-	Dir    *byte
-	Shell  *byte
-	Expire int64 // time_t
+	Name	*byte
+	Passwd	*byte
+	Uid	uint32	// uid_t
+	Gid	uint32	// gid_t
+	Change	int64	// time_t
+	Class	*byte
+	Gecos	*byte
+	Dir	*byte
+	Shell	*byte
+	Expire	int64	// time_t
 }
 
 type Group struct {
-	Name   *byte
-	Passwd *byte
-	Gid    uint32 // gid_t
-	Mem    **byte
+	Name	*byte
+	Passwd	*byte
+	Gid	uint32	// gid_t
+	Mem	**byte
 }
 
 //go:cgo_import_dynamic libc_getpwnam_r getpwnam_r  "/usr/lib/libSystem.B.dylib"

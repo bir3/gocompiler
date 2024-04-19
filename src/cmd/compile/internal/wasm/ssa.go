@@ -280,15 +280,15 @@ func ssaGenValue(s *ssagen.State, v *ssa.Value) {
 		if logopt.Enabled() {
 			logopt.LogOpt(v.Pos, "nilcheck", "genssa", v.Block.Func.Name)
 		}
-		if base.Debug.Nil != 0 && v.Pos.Line() > 1 { // v.Pos.Line()==1 in generated wrappers
+		if base.Debug.Nil != 0 && v.Pos.Line() > 1 {	// v.Pos.Line()==1 in generated wrappers
 			base.WarnfAt(v.Pos, "generated nil check")
 		}
 
 	case ssa.OpWasmLoweredWB:
-		getValue64(s, v.Args[0])
-		getValue64(s, v.Args[1])
-		p := s.Prog(wasm.ACALLNORESUME) // TODO(neelance): If possible, turn this into a simple wasm.ACall).
-		p.To = obj.Addr{Type: obj.TYPE_MEM, Name: obj.NAME_EXTERN, Sym: v.Aux.(*obj.LSym)}
+		p := s.Prog(wasm.ACall)
+		// AuxInt encodes how many buffer entries we need.
+		p.To = obj.Addr{Type: obj.TYPE_MEM, Name: obj.NAME_EXTERN, Sym: ir.Syms.GCWriteBarrier[v.AuxInt-1]}
+		setReg(s, v.Reg0())	// move result from wasm stack to register local
 
 	case ssa.OpWasmI64Store8, ssa.OpWasmI64Store16, ssa.OpWasmI64Store32, ssa.OpWasmI64Store, ssa.OpWasmF32Store, ssa.OpWasmF64Store:
 		getValue32(s, v.Args[0])
@@ -332,23 +332,23 @@ func ssaGenValueOnStack(s *ssagen.State, v *ssa.Value, extend bool) {
 		p := s.Prog(wasm.AI64Load)
 		// Caller PC is stored 8 bytes below first parameter.
 		p.From = obj.Addr{
-			Type:   obj.TYPE_MEM,
-			Name:   obj.NAME_PARAM,
-			Offset: -8,
+			Type:	obj.TYPE_MEM,
+			Name:	obj.NAME_PARAM,
+			Offset:	-8,
 		}
 
 	case ssa.OpWasmLoweredGetCallerSP:
 		p := s.Prog(wasm.AGet)
 		// Caller SP is the address of the first parameter.
 		p.From = obj.Addr{
-			Type:   obj.TYPE_ADDR,
-			Name:   obj.NAME_PARAM,
-			Reg:    wasm.REG_SP,
-			Offset: 0,
+			Type:	obj.TYPE_ADDR,
+			Name:	obj.NAME_PARAM,
+			Reg:	wasm.REG_SP,
+			Offset:	0,
 		}
 
 	case ssa.OpWasmLoweredAddr:
-		if v.Aux == nil { // address of off(SP), no symbol
+		if v.Aux == nil {	// address of off(SP), no symbol
 			getValue64(s, v.Args[0])
 			i64Const(s, v.AuxInt)
 			s.Prog(wasm.AI64Add)

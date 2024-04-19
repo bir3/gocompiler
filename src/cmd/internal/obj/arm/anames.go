@@ -5,7 +5,7 @@ package arm
 import "github.com/bir3/gocompiler/src/cmd/internal/obj"
 
 var Anames = []string{
-	obj.A_ARCHSPECIFIC: "AND",
+	obj.A_ARCHSPECIFIC:	"AND",
 	"EOR",
 	"SUB",
 	"RSB",

@@ -42,12 +42,12 @@ import (
 // Each function gets a fresh ctxt0.
 // This allows for multiple functions to be safely concurrently assembled.
 type ctxt0 struct {
-	ctxt       *obj.Link
-	newprog    obj.ProgAlloc
-	cursym     *obj.LSym
-	autosize   int32
-	instoffset int64
-	pc         int64
+	ctxt		*obj.Link
+	newprog		obj.ProgAlloc
+	cursym		*obj.LSym
+	autosize	int32
+	instoffset	int64
+	pc		int64
 }
 
 // Instruction layout.
@@ -61,20 +61,20 @@ const (
 )
 
 type Optab struct {
-	as     obj.As
-	a1     uint8
-	a2     uint8
-	a3     uint8
-	type_  int8
-	size   int8
-	param  int16
-	family sys.ArchFamily // 0 means both sys.MIPS and sys.MIPS64
-	flag   uint8
+	as	obj.As
+	a1	uint8
+	a2	uint8
+	a3	uint8
+	type_	int8
+	size	int8
+	param	int16
+	family	sys.ArchFamily	// 0 means both sys.MIPS and sys.MIPS64
+	flag	uint8
 }
 
 const (
 	// Optab.flag
-	NOTUSETMP = 1 << iota // p expands to multiple instructions, but does NOT use REGTMP
+	NOTUSETMP = 1 << iota	// p expands to multiple instructions, but does NOT use REGTMP
 )
 
 var optab = []Optab{
@@ -382,7 +382,10 @@ var optab = []Optab{
 	{AVMOVB, C_SOREG, C_NONE, C_WREG, 57, 4, 0, sys.MIPS64, 0},
 	{AVMOVB, C_WREG, C_NONE, C_SOREG, 58, 4, 0, sys.MIPS64, 0},
 
-	{ABREAK, C_REG, C_NONE, C_SEXT, 7, 4, REGSB, sys.MIPS64, 0}, /* really CACHE instruction */
+	{AWSBH, C_REG, C_NONE, C_REG, 59, 4, 0, 0, 0},
+	{ADSBH, C_REG, C_NONE, C_REG, 59, 4, 0, sys.MIPS64, 0},
+
+	{ABREAK, C_REG, C_NONE, C_SEXT, 7, 4, REGSB, sys.MIPS64, 0},	/* really CACHE instruction */
 	{ABREAK, C_REG, C_NONE, C_SAUTO, 7, 4, REGSP, sys.MIPS64, 0},
 	{ABREAK, C_REG, C_NONE, C_SOREG, 7, 4, REGZERO, sys.MIPS64, 0},
 	{ABREAK, C_NONE, C_NONE, C_NONE, 5, 4, 0, 0, 0},
@@ -391,11 +394,11 @@ var optab = []Optab{
 	{obj.APCDATA, C_LCON, C_NONE, C_LCON, 0, 0, 0, 0, 0},
 	{obj.AFUNCDATA, C_SCON, C_NONE, C_ADDR, 0, 0, 0, 0, 0},
 	{obj.ANOP, C_NONE, C_NONE, C_NONE, 0, 0, 0, 0, 0},
-	{obj.ANOP, C_LCON, C_NONE, C_NONE, 0, 0, 0, 0, 0}, // nop variants, see #40689
+	{obj.ANOP, C_LCON, C_NONE, C_NONE, 0, 0, 0, 0, 0},	// nop variants, see #40689
 	{obj.ANOP, C_REG, C_NONE, C_NONE, 0, 0, 0, 0, 0},
 	{obj.ANOP, C_FREG, C_NONE, C_NONE, 0, 0, 0, 0, 0},
-	{obj.ADUFFZERO, C_NONE, C_NONE, C_LBRA, 11, 4, 0, 0, 0}, // same as AJMP
-	{obj.ADUFFCOPY, C_NONE, C_NONE, C_LBRA, 11, 4, 0, 0, 0}, // same as AJMP
+	{obj.ADUFFZERO, C_NONE, C_NONE, C_LBRA, 11, 4, 0, 0, 0},	// same as AJMP
+	{obj.ADUFFCOPY, C_NONE, C_NONE, C_LBRA, 11, 4, 0, 0, 0},	// same as AJMP
 
 	{obj.AXXX, C_NONE, C_NONE, C_NONE, 0, 4, 0, 0, 0},
 }
@@ -407,11 +410,11 @@ var xcmp [C_NCLASS][C_NCLASS]bool
 func span0(ctxt *obj.Link, cursym *obj.LSym, newprog obj.ProgAlloc) {
 	if ctxt.Retpoline {
 		ctxt.Diag("-spectre=ret not supported on mips")
-		ctxt.Retpoline = false // don't keep printing
+		ctxt.Retpoline = false	// don't keep printing
 	}
 
 	p := cursym.Func().Text
-	if p == nil || p.Link == nil { // handle external functions and ELF section symbols
+	if p == nil || p.Link == nil {	// handle external functions and ELF section symbols
 		return
 	}
 
@@ -601,7 +604,7 @@ func (c *ctxt0) aclass(a *obj.Addr) int {
 				break
 			}
 			c.instoffset = a.Offset
-			if a.Sym != nil { // use relocation
+			if a.Sym != nil {	// use relocation
 				if a.Sym.Type == objabi.STLSBSS {
 					return C_TLS
 				}
@@ -654,7 +657,7 @@ func (c *ctxt0) aclass(a *obj.Addr) int {
 		switch a.Name {
 		case obj.NAME_NONE:
 			c.instoffset = a.Offset
-			if a.Reg != 0 {
+			if a.Reg != obj.REG_NONE {
 				if -BIG <= c.instoffset && c.instoffset <= BIG {
 					return C_SACON
 				}
@@ -673,7 +676,7 @@ func (c *ctxt0) aclass(a *obj.Addr) int {
 
 			c.instoffset = a.Offset
 			if s.Type == objabi.STLSBSS {
-				return C_STCON // address of TLS variable
+				return C_STCON	// address of TLS variable
 			}
 			return C_LECON
 
@@ -715,13 +718,13 @@ func (c *ctxt0) aclass(a *obj.Addr) int {
 			if c.instoffset <= 0xffff {
 				return C_ANDCON
 			}
-			if c.instoffset&0xffff == 0 && isuint32(uint64(c.instoffset)) { /* && (instoffset & (1<<31)) == 0) */
+			if c.instoffset&0xffff == 0 && isuint32(uint64(c.instoffset)) {	/* && （(instoffset & (1<<31)) == 0) */
 				return C_UCON
 			}
 			if isint32(c.instoffset) || isuint32(uint64(c.instoffset)) {
 				return C_LCON
 			}
-			return C_LCON // C_DCON
+			return C_LCON	// C_DCON
 		}
 
 		if c.instoffset >= -0x8000 {
@@ -733,7 +736,7 @@ func (c *ctxt0) aclass(a *obj.Addr) int {
 		if isint32(c.instoffset) {
 			return C_LCON
 		}
-		return C_LCON // C_DCON
+		return C_LCON	// C_DCON
 
 	case obj.TYPE_BRANCH:
 		return C_SBRA
@@ -770,7 +773,7 @@ func (c *ctxt0) oplook(p *obj.Prog) *Optab {
 
 	a3--
 	a2 := C_NONE
-	if p.Reg != 0 {
+	if p.Reg != obj.REG_NONE {
 		a2 = C_REG
 	}
 
@@ -855,7 +858,7 @@ func cmp(a int, b int) bool {
 
 	case C_REG:
 		if b == C_ZCON {
-			return r0iszero != 0 /*TypeKind(100016)*/
+			return r0iszero != 0	/*TypeKind(100016)*/
 		}
 
 	case C_LOREG:
@@ -1101,6 +1104,13 @@ func buildop(ctxt *obj.Link) {
 
 		case ATEQ:
 			opset(ATNE, r0)
+
+		case AWSBH:
+			opset(ASEB, r0)
+			opset(ASEH, r0)
+
+		case ADSBH:
+			opset(ADSHD, r0)
 		}
 	}
 }
@@ -1137,20 +1147,20 @@ func FPV(x uint32, y uint32) uint32 {
 	return SP(2, 1) | 21<<21 | x<<3 | y<<0
 }
 
-func OP_RRR(op uint32, r1 uint32, r2 uint32, r3 uint32) uint32 {
-	return op | (r1&31)<<16 | (r2&31)<<21 | (r3&31)<<11
+func OP_RRR(op uint32, r1 int16, r2 int16, r3 int16) uint32 {
+	return op | uint32(r1&31)<<16 | uint32(r2&31)<<21 | uint32(r3&31)<<11
 }
 
-func OP_IRR(op uint32, i uint32, r2 uint32, r3 uint32) uint32 {
-	return op | i&0xFFFF | (r2&31)<<21 | (r3&31)<<16
+func OP_IRR(op uint32, i uint32, r2 int16, r3 int16) uint32 {
+	return op | i&0xFFFF | uint32(r2&31)<<21 | uint32(r3&31)<<16
 }
 
-func OP_SRR(op uint32, s uint32, r2 uint32, r3 uint32) uint32 {
-	return op | (s&31)<<6 | (r2&31)<<16 | (r3&31)<<11
+func OP_SRR(op uint32, s uint32, r2 int16, r3 int16) uint32 {
+	return op | (s&31)<<6 | uint32(r2&31)<<16 | uint32(r3&31)<<11
 }
 
-func OP_FRRR(op uint32, r1 uint32, r2 uint32, r3 uint32) uint32 {
-	return op | (r1&31)<<16 | (r2&31)<<11 | (r3&31)<<6
+func OP_FRRR(op uint32, r1 int16, r2 int16, r3 int16) uint32 {
+	return op | uint32(r1&31)<<16 | uint32(r2&31)<<11 | uint32(r3&31)<<6
 }
 
 func OP_JMP(op uint32, i uint32) uint32 {
@@ -1181,56 +1191,52 @@ func (c *ctxt0) asmout(p *obj.Prog, o *Optab, out []uint32) {
 		c.ctxt.Diag("unknown type %d %v", o.type_)
 		prasm(p)
 
-	case 0: /* pseudo ops */
+	case 0:	/* pseudo ops */
 		break
 
-	case 1: /* mov r1,r2 ==> OR r1,r0,r2 */
+	case 1:	/* mov r1,r2 ==> OR r1,r0,r2 */
 		a := AOR
 		if p.As == AMOVW && c.ctxt.Arch.Family == sys.MIPS64 {
 			// on MIPS64, most of the 32-bit instructions have unpredictable behavior,
 			// but SLL is special that the result is always sign-extended to 64-bit.
 			a = ASLL
 		}
-		o1 = OP_RRR(c.oprrr(a), uint32(p.From.Reg), uint32(REGZERO), uint32(p.To.Reg))
+		o1 = OP_RRR(c.oprrr(a), p.From.Reg, REGZERO, p.To.Reg)
 
-	case 2: /* add/sub r1,[r2],r3 */
-		r := int(p.Reg)
+	case 2:	/* add/sub r1,[r2],r3 */
+		r := p.Reg
 		if p.As == ANEGW || p.As == ANEGV {
 			r = REGZERO
 		}
-		if r == 0 {
-			r = int(p.To.Reg)
+		if r == obj.REG_NONE {
+			r = p.To.Reg
 		}
-		o1 = OP_RRR(c.oprrr(p.As), uint32(p.From.Reg), uint32(r), uint32(p.To.Reg))
+		o1 = OP_RRR(c.oprrr(p.As), p.From.Reg, r, p.To.Reg)
 
-	case 3: /* mov $soreg, r ==> or/add $i,o,r */
-		v := c.regoff(&p.From)
-
-		r := int(p.From.Reg)
-		if r == 0 {
-			r = int(o.param)
-		}
+	case 3:	/* mov $soreg, r ==> or/add $i,o,r */
 		a := add
 		if o.a1 == C_ANDCON {
 			a = AOR
 		}
-
-		o1 = OP_IRR(c.opirr(a), uint32(v), uint32(r), uint32(p.To.Reg))
-
-	case 4: /* add $scon,[r1],r2 */
-		v := c.regoff(&p.From)
-
-		r := int(p.Reg)
-		if r == 0 {
-			r = int(p.To.Reg)
+		r := p.From.Reg
+		if r == obj.REG_NONE {
+			r = o.param
 		}
+		v := c.regoff(&p.From)
+		o1 = OP_IRR(c.opirr(a), uint32(v), r, p.To.Reg)
 
-		o1 = OP_IRR(c.opirr(p.As), uint32(v), uint32(r), uint32(p.To.Reg))
+	case 4:	/* add $scon,[r1],r2 */
+		r := p.Reg
+		if r == obj.REG_NONE {
+			r = p.To.Reg
+		}
+		v := c.regoff(&p.From)
+		o1 = OP_IRR(c.opirr(p.As), uint32(v), r, p.To.Reg)
 
-	case 5: /* syscall */
+	case 5:	/* syscall */
 		o1 = c.oprrr(p.As)
 
-	case 6: /* beq r1,[r2],sbra */
+	case 6:	/* beq r1,[r2],sbra */
 		v := int32(0)
 		if p.To.Target() == nil {
 			v = int32(-4) >> 2
@@ -1240,49 +1246,48 @@ func (c *ctxt0) asmout(p *obj.Prog, o *Optab, out []uint32) {
 		if (v<<16)>>16 != v {
 			c.ctxt.Diag("short branch too far\n%v", p)
 		}
-		o1 = OP_IRR(c.opirr(p.As), uint32(v), uint32(p.From.Reg), uint32(p.Reg))
+		o1 = OP_IRR(c.opirr(p.As), uint32(v), p.From.Reg, p.Reg)
 		// for ABFPT and ABFPF only: always fill delay slot with 0
 		// see comments in func preprocess for details.
 		o2 = 0
 
-	case 7: /* mov r, soreg ==> sw o(r) */
-		r := int(p.To.Reg)
-		if r == 0 {
-			r = int(o.param)
+	case 7:	/* mov r, soreg ==> sw o(r) */
+		r := p.To.Reg
+		if r == obj.REG_NONE {
+			r = o.param
 		}
 		v := c.regoff(&p.To)
-		o1 = OP_IRR(c.opirr(p.As), uint32(v), uint32(r), uint32(p.From.Reg))
+		o1 = OP_IRR(c.opirr(p.As), uint32(v), r, p.From.Reg)
 
-	case 8: /* mov soreg, r ==> lw o(r) */
-		r := int(p.From.Reg)
-		if r == 0 {
-			r = int(o.param)
+	case 8:	/* mov soreg, r ==> lw o(r) */
+		r := p.From.Reg
+		if r == obj.REG_NONE {
+			r = o.param
 		}
 		v := c.regoff(&p.From)
-		o1 = OP_IRR(c.opirr(-p.As), uint32(v), uint32(r), uint32(p.To.Reg))
+		o1 = OP_IRR(c.opirr(-p.As), uint32(v), r, p.To.Reg)
 
-	case 9: /* sll r1,[r2],r3 */
-		r := int(p.Reg)
-
-		if r == 0 {
-			r = int(p.To.Reg)
+	case 9:	/* sll r1,[r2],r3 */
+		r := p.Reg
+		if r == obj.REG_NONE {
+			r = p.To.Reg
 		}
-		o1 = OP_RRR(c.oprrr(p.As), uint32(r), uint32(p.From.Reg), uint32(p.To.Reg))
+		o1 = OP_RRR(c.oprrr(p.As), r, p.From.Reg, p.To.Reg)
 
-	case 10: /* add $con,[r1],r2 ==> mov $con, t; add t,[r1],r2 */
+	case 10:	/* add $con,[r1],r2 ==> mov $con, t; add t,[r1],r2 */
 		v := c.regoff(&p.From)
 		a := AOR
 		if v < 0 {
 			a = AADDU
 		}
-		o1 = OP_IRR(c.opirr(a), uint32(v), uint32(0), uint32(REGTMP))
-		r := int(p.Reg)
-		if r == 0 {
-			r = int(p.To.Reg)
+		o1 = OP_IRR(c.opirr(a), uint32(v), obj.REG_NONE, REGTMP)
+		r := p.Reg
+		if r == obj.REG_NONE {
+			r = p.To.Reg
 		}
-		o2 = OP_RRR(c.oprrr(p.As), uint32(REGTMP), uint32(r), uint32(p.To.Reg))
+		o2 = OP_RRR(c.oprrr(p.As), REGTMP, r, p.To.Reg)
 
-	case 11: /* jmp lbra */
+	case 11:	/* jmp lbra */
 		v := int32(0)
 		if c.aclass(&p.To) == C_SBRA && p.To.Sym == nil && p.As == AJMP {
 			// use PC-relative branch for short branches
@@ -1293,7 +1298,7 @@ func (c *ctxt0) asmout(p *obj.Prog, o *Optab, out []uint32) {
 				v = int32(p.To.Target().Pc-p.Pc-4) >> 2
 			}
 			if (v<<16)>>16 == v {
-				o1 = OP_IRR(c.opirr(ABEQ), uint32(v), uint32(REGZERO), uint32(REGZERO))
+				o1 = OP_IRR(c.opirr(ABEQ), uint32(v), REGZERO, REGZERO)
 				break
 			}
 		}
@@ -1318,61 +1323,61 @@ func (c *ctxt0) asmout(p *obj.Prog, o *Optab, out []uint32) {
 			rel.Type = objabi.R_JMPMIPS
 		}
 
-	case 12: /* movbs r,r */
+	case 12:	/* movbs r,r */
 		// NOTE: this case does not use REGTMP. If it ever does,
 		// remove the NOTUSETMP flag in optab.
 		v := 16
 		if p.As == AMOVB {
 			v = 24
 		}
-		o1 = OP_SRR(c.opirr(ASLL), uint32(v), uint32(p.From.Reg), uint32(p.To.Reg))
-		o2 = OP_SRR(c.opirr(ASRA), uint32(v), uint32(p.To.Reg), uint32(p.To.Reg))
+		o1 = OP_SRR(c.opirr(ASLL), uint32(v), p.From.Reg, p.To.Reg)
+		o2 = OP_SRR(c.opirr(ASRA), uint32(v), p.To.Reg, p.To.Reg)
 
-	case 13: /* movbu r,r */
+	case 13:	/* movbu r,r */
 		if p.As == AMOVBU {
-			o1 = OP_IRR(c.opirr(AAND), uint32(0xff), uint32(p.From.Reg), uint32(p.To.Reg))
+			o1 = OP_IRR(c.opirr(AAND), uint32(0xff), p.From.Reg, p.To.Reg)
 		} else {
-			o1 = OP_IRR(c.opirr(AAND), uint32(0xffff), uint32(p.From.Reg), uint32(p.To.Reg))
+			o1 = OP_IRR(c.opirr(AAND), uint32(0xffff), p.From.Reg, p.To.Reg)
 		}
 
-	case 14: /* movwu r,r */
+	case 14:	/* movwu r,r */
 		// NOTE: this case does not use REGTMP. If it ever does,
 		// remove the NOTUSETMP flag in optab.
-		o1 = OP_SRR(c.opirr(-ASLLV), uint32(0), uint32(p.From.Reg), uint32(p.To.Reg))
-		o2 = OP_SRR(c.opirr(-ASRLV), uint32(0), uint32(p.To.Reg), uint32(p.To.Reg))
+		o1 = OP_SRR(c.opirr(-ASLLV), 0, p.From.Reg, p.To.Reg)
+		o2 = OP_SRR(c.opirr(-ASRLV), 0, p.To.Reg, p.To.Reg)
 
-	case 15: /* teq $c r,r */
-		v := c.regoff(&p.From)
-		r := int(p.Reg)
-		if r == 0 {
+	case 15:	/* teq $c r,r */
+		r := p.Reg
+		if r == obj.REG_NONE {
 			r = REGZERO
 		}
-		/* only use 10 bits of trap code */
-		o1 = OP_IRR(c.opirr(p.As), (uint32(v)&0x3FF)<<6, uint32(r), uint32(p.To.Reg))
-
-	case 16: /* sll $c,[r1],r2 */
 		v := c.regoff(&p.From)
-		r := int(p.Reg)
-		if r == 0 {
-			r = int(p.To.Reg)
+		/* only use 10 bits of trap code */
+		o1 = OP_IRR(c.opirr(p.As), (uint32(v)&0x3FF)<<6, r, p.To.Reg)
+
+	case 16:	/* sll $c,[r1],r2 */
+		r := p.Reg
+		if r == obj.REG_NONE {
+			r = p.To.Reg
 		}
+		v := c.regoff(&p.From)
 
 		/* OP_SRR will use only the low 5 bits of the shift value */
 		if v >= 32 && vshift(p.As) {
-			o1 = OP_SRR(c.opirr(-p.As), uint32(v-32), uint32(r), uint32(p.To.Reg))
+			o1 = OP_SRR(c.opirr(-p.As), uint32(v-32), r, p.To.Reg)
 		} else {
-			o1 = OP_SRR(c.opirr(p.As), uint32(v), uint32(r), uint32(p.To.Reg))
+			o1 = OP_SRR(c.opirr(p.As), uint32(v), r, p.To.Reg)
 		}
 
 	case 17:
-		o1 = OP_RRR(c.oprrr(p.As), uint32(REGZERO), uint32(p.From.Reg), uint32(p.To.Reg))
+		o1 = OP_RRR(c.oprrr(p.As), REGZERO, p.From.Reg, p.To.Reg)
 
-	case 18: /* jmp [r1],0(r2) */
-		r := int(p.Reg)
-		if r == 0 {
-			r = int(o.param)
+	case 18:	/* jmp [r1],0(r2) */
+		r := p.Reg
+		if r == obj.REG_NONE {
+			r = o.param
 		}
-		o1 = OP_RRR(c.oprrr(p.As), uint32(0), uint32(p.To.Reg), uint32(r))
+		o1 = OP_RRR(c.oprrr(p.As), obj.REG_NONE, p.To.Reg, r)
 		if p.As == obj.ACALL {
 			rel := obj.Addrel(c.cursym)
 			rel.Off = int32(c.pc)
@@ -1380,203 +1385,203 @@ func (c *ctxt0) asmout(p *obj.Prog, o *Optab, out []uint32) {
 			rel.Type = objabi.R_CALLIND
 		}
 
-	case 19: /* mov $lcon,r ==> lu+or */
+	case 19:	/* mov $lcon,r ==> lu+or */
 		// NOTE: this case does not use REGTMP. If it ever does,
 		// remove the NOTUSETMP flag in optab.
 		v := c.regoff(&p.From)
-		o1 = OP_IRR(c.opirr(ALUI), uint32(v>>16), uint32(REGZERO), uint32(p.To.Reg))
-		o2 = OP_IRR(c.opirr(AOR), uint32(v), uint32(p.To.Reg), uint32(p.To.Reg))
+		o1 = OP_IRR(c.opirr(ALUI), uint32(v>>16), REGZERO, p.To.Reg)
+		o2 = OP_IRR(c.opirr(AOR), uint32(v), p.To.Reg, p.To.Reg)
 
-	case 20: /* mov lo/hi,r */
-		a := OP(2, 0) /* mfhi */
+	case 20:	/* mov lo/hi,r */
+		a := OP(2, 0)	/* mfhi */
 		if p.From.Reg == REG_LO {
-			a = OP(2, 2) /* mflo */
+			a = OP(2, 2)	/* mflo */
 		}
-		o1 = OP_RRR(a, uint32(REGZERO), uint32(REGZERO), uint32(p.To.Reg))
+		o1 = OP_RRR(a, REGZERO, REGZERO, p.To.Reg)
 
-	case 21: /* mov r,lo/hi */
-		a := OP(2, 1) /* mthi */
+	case 21:	/* mov r,lo/hi */
+		a := OP(2, 1)	/* mthi */
 		if p.To.Reg == REG_LO {
-			a = OP(2, 3) /* mtlo */
+			a = OP(2, 3)	/* mtlo */
 		}
-		o1 = OP_RRR(a, uint32(REGZERO), uint32(p.From.Reg), uint32(REGZERO))
+		o1 = OP_RRR(a, REGZERO, p.From.Reg, REGZERO)
 
-	case 22: /* mul r1,r2 [r3]*/
-		if p.To.Reg != 0 {
-			r := int(p.Reg)
-			if r == 0 {
-				r = int(p.To.Reg)
+	case 22:	/* mul r1,r2 [r3]*/
+		if p.To.Reg != obj.REG_NONE {
+			r := p.Reg
+			if r == obj.REG_NONE {
+				r = p.To.Reg
 			}
-			a := SP(3, 4) | 2 /* mul */
-			o1 = OP_RRR(a, uint32(p.From.Reg), uint32(r), uint32(p.To.Reg))
+			a := SP(3, 4) | 2	/* mul */
+			o1 = OP_RRR(a, p.From.Reg, r, p.To.Reg)
 		} else {
-			o1 = OP_RRR(c.oprrr(p.As), uint32(p.From.Reg), uint32(p.Reg), uint32(REGZERO))
+			o1 = OP_RRR(c.oprrr(p.As), p.From.Reg, p.Reg, REGZERO)
 		}
 
-	case 23: /* add $lcon,r1,r2 ==> lu+or+add */
+	case 23:	/* add $lcon,r1,r2 ==> lu+or+add */
 		v := c.regoff(&p.From)
-		o1 = OP_IRR(c.opirr(ALUI), uint32(v>>16), uint32(REGZERO), uint32(REGTMP))
-		o2 = OP_IRR(c.opirr(AOR), uint32(v), uint32(REGTMP), uint32(REGTMP))
-		r := int(p.Reg)
-		if r == 0 {
-			r = int(p.To.Reg)
+		o1 = OP_IRR(c.opirr(ALUI), uint32(v>>16), REGZERO, REGTMP)
+		o2 = OP_IRR(c.opirr(AOR), uint32(v), REGTMP, REGTMP)
+		r := p.Reg
+		if r == obj.REG_NONE {
+			r = p.To.Reg
 		}
-		o3 = OP_RRR(c.oprrr(p.As), uint32(REGTMP), uint32(r), uint32(p.To.Reg))
+		o3 = OP_RRR(c.oprrr(p.As), REGTMP, r, p.To.Reg)
 
-	case 24: /* mov $ucon,r ==> lu r */
+	case 24:	/* mov $ucon,r ==> lu r */
 		v := c.regoff(&p.From)
-		o1 = OP_IRR(c.opirr(ALUI), uint32(v>>16), uint32(REGZERO), uint32(p.To.Reg))
+		o1 = OP_IRR(c.opirr(ALUI), uint32(v>>16), REGZERO, p.To.Reg)
 
-	case 25: /* add/and $ucon,[r1],r2 ==> lu $con,t; add t,[r1],r2 */
+	case 25:	/* add/and $ucon,[r1],r2 ==> lu $con,t; add t,[r1],r2 */
 		v := c.regoff(&p.From)
-		o1 = OP_IRR(c.opirr(ALUI), uint32(v>>16), uint32(REGZERO), uint32(REGTMP))
-		r := int(p.Reg)
-		if r == 0 {
-			r = int(p.To.Reg)
+		o1 = OP_IRR(c.opirr(ALUI), uint32(v>>16), REGZERO, REGTMP)
+		r := p.Reg
+		if r == obj.REG_NONE {
+			r = p.To.Reg
 		}
-		o2 = OP_RRR(c.oprrr(p.As), uint32(REGTMP), uint32(r), uint32(p.To.Reg))
+		o2 = OP_RRR(c.oprrr(p.As), REGTMP, r, p.To.Reg)
 
-	case 26: /* mov $lsext/auto/oreg,r ==> lu+or+add */
+	case 26:	/* mov $lsext/auto/oreg,r ==> lu+or+add */
 		v := c.regoff(&p.From)
-		o1 = OP_IRR(c.opirr(ALUI), uint32(v>>16), uint32(REGZERO), uint32(REGTMP))
-		o2 = OP_IRR(c.opirr(AOR), uint32(v), uint32(REGTMP), uint32(REGTMP))
-		r := int(p.From.Reg)
-		if r == 0 {
-			r = int(o.param)
+		o1 = OP_IRR(c.opirr(ALUI), uint32(v>>16), REGZERO, REGTMP)
+		o2 = OP_IRR(c.opirr(AOR), uint32(v), REGTMP, REGTMP)
+		r := p.From.Reg
+		if r == obj.REG_NONE {
+			r = o.param
 		}
-		o3 = OP_RRR(c.oprrr(add), uint32(REGTMP), uint32(r), uint32(p.To.Reg))
+		o3 = OP_RRR(c.oprrr(add), REGTMP, r, p.To.Reg)
 
-	case 27: /* mov [sl]ext/auto/oreg,fr ==> lwc1 o(r) */
-		v := c.regoff(&p.From)
-		r := int(p.From.Reg)
-		if r == 0 {
-			r = int(o.param)
-		}
+	case 27:	/* mov [sl]ext/auto/oreg,fr ==> lwc1 o(r) */
 		a := -AMOVF
 		if p.As == AMOVD {
 			a = -AMOVD
 		}
+		r := p.From.Reg
+		if r == obj.REG_NONE {
+			r = o.param
+		}
+		v := c.regoff(&p.From)
 		switch o.size {
 		case 12:
-			o1 = OP_IRR(c.opirr(ALUI), uint32((v+1<<15)>>16), uint32(REGZERO), uint32(REGTMP))
-			o2 = OP_RRR(c.oprrr(add), uint32(r), uint32(REGTMP), uint32(REGTMP))
-			o3 = OP_IRR(c.opirr(a), uint32(v), uint32(REGTMP), uint32(p.To.Reg))
+			o1 = OP_IRR(c.opirr(ALUI), uint32((v+1<<15)>>16), REGZERO, REGTMP)
+			o2 = OP_RRR(c.oprrr(add), r, REGTMP, REGTMP)
+			o3 = OP_IRR(c.opirr(a), uint32(v), REGTMP, p.To.Reg)
 
 		case 4:
-			o1 = OP_IRR(c.opirr(a), uint32(v), uint32(r), uint32(p.To.Reg))
+			o1 = OP_IRR(c.opirr(a), uint32(v), r, p.To.Reg)
 		}
 
-	case 28: /* mov fr,[sl]ext/auto/oreg ==> swc1 o(r) */
-		v := c.regoff(&p.To)
-		r := int(p.To.Reg)
-		if r == 0 {
-			r = int(o.param)
-		}
+	case 28:	/* mov fr,[sl]ext/auto/oreg ==> swc1 o(r) */
 		a := AMOVF
 		if p.As == AMOVD {
 			a = AMOVD
 		}
+		r := p.To.Reg
+		if r == obj.REG_NONE {
+			r = o.param
+		}
+		v := c.regoff(&p.To)
 		switch o.size {
 		case 12:
-			o1 = OP_IRR(c.opirr(ALUI), uint32((v+1<<15)>>16), uint32(REGZERO), uint32(REGTMP))
-			o2 = OP_RRR(c.oprrr(add), uint32(r), uint32(REGTMP), uint32(REGTMP))
-			o3 = OP_IRR(c.opirr(a), uint32(v), uint32(REGTMP), uint32(p.From.Reg))
+			o1 = OP_IRR(c.opirr(ALUI), uint32((v+1<<15)>>16), REGZERO, REGTMP)
+			o2 = OP_RRR(c.oprrr(add), r, REGTMP, REGTMP)
+			o3 = OP_IRR(c.opirr(a), uint32(v), REGTMP, p.From.Reg)
 
 		case 4:
-			o1 = OP_IRR(c.opirr(a), uint32(v), uint32(r), uint32(p.From.Reg))
+			o1 = OP_IRR(c.opirr(a), uint32(v), r, p.From.Reg)
 		}
 
-	case 30: /* movw r,fr */
-		a := SP(2, 1) | (4 << 21) /* mtc1 */
-		o1 = OP_RRR(a, uint32(p.From.Reg), uint32(0), uint32(p.To.Reg))
+	case 30:	/* movw r,fr */
+		a := SP(2, 1) | (4 << 21)	/* mtc1 */
+		o1 = OP_RRR(a, p.From.Reg, obj.REG_NONE, p.To.Reg)
 
-	case 31: /* movw fr,r */
-		a := SP(2, 1) | (0 << 21) /* mtc1 */
-		o1 = OP_RRR(a, uint32(p.To.Reg), uint32(0), uint32(p.From.Reg))
+	case 31:	/* movw fr,r */
+		a := SP(2, 1) | (0 << 21)	/* mtc1 */
+		o1 = OP_RRR(a, p.To.Reg, obj.REG_NONE, p.From.Reg)
 
-	case 32: /* fadd fr1,[fr2],fr3 */
-		r := int(p.Reg)
-		if r == 0 {
-			r = int(p.To.Reg)
+	case 32:	/* fadd fr1,[fr2],fr3 */
+		r := p.Reg
+		if r == obj.REG_NONE {
+			r = p.To.Reg
 		}
-		o1 = OP_FRRR(c.oprrr(p.As), uint32(p.From.Reg), uint32(r), uint32(p.To.Reg))
+		o1 = OP_FRRR(c.oprrr(p.As), p.From.Reg, r, p.To.Reg)
 
-	case 33: /* fabs fr1, fr3 */
-		o1 = OP_FRRR(c.oprrr(p.As), uint32(0), uint32(p.From.Reg), uint32(p.To.Reg))
+	case 33:	/* fabs fr1, fr3 */
+		o1 = OP_FRRR(c.oprrr(p.As), obj.REG_NONE, p.From.Reg, p.To.Reg)
 
-	case 34: /* mov $con,fr ==> or/add $i,t; mov t,fr */
-		v := c.regoff(&p.From)
+	case 34:	/* mov $con,fr ==> or/add $i,t; mov t,fr */
 		a := AADDU
 		if o.a1 == C_ANDCON {
 			a = AOR
 		}
-		o1 = OP_IRR(c.opirr(a), uint32(v), uint32(0), uint32(REGTMP))
-		o2 = OP_RRR(SP(2, 1)|(4<<21), uint32(REGTMP), uint32(0), uint32(p.To.Reg)) /* mtc1 */
-
-	case 35: /* mov r,lext/auto/oreg ==> sw o(REGTMP) */
-		v := c.regoff(&p.To)
-		r := int(p.To.Reg)
-		if r == 0 {
-			r = int(o.param)
-		}
-		o1 = OP_IRR(c.opirr(ALUI), uint32((v+1<<15)>>16), uint32(REGZERO), uint32(REGTMP))
-		o2 = OP_RRR(c.oprrr(add), uint32(r), uint32(REGTMP), uint32(REGTMP))
-		o3 = OP_IRR(c.opirr(p.As), uint32(v), uint32(REGTMP), uint32(p.From.Reg))
-
-	case 36: /* mov lext/auto/oreg,r ==> lw o(REGTMP) */
 		v := c.regoff(&p.From)
-		r := int(p.From.Reg)
-		if r == 0 {
-			r = int(o.param)
-		}
-		o1 = OP_IRR(c.opirr(ALUI), uint32((v+1<<15)>>16), uint32(REGZERO), uint32(REGTMP))
-		o2 = OP_RRR(c.oprrr(add), uint32(r), uint32(REGTMP), uint32(REGTMP))
-		o3 = OP_IRR(c.opirr(-p.As), uint32(v), uint32(REGTMP), uint32(p.To.Reg))
+		o1 = OP_IRR(c.opirr(a), uint32(v), obj.REG_NONE, REGTMP)
+		o2 = OP_RRR(SP(2, 1)|(4<<21), REGTMP, obj.REG_NONE, p.To.Reg)	/* mtc1 */
 
-	case 37: /* movw r,mr */
-		a := SP(2, 0) | (4 << 21) /* mtc0 */
+	case 35:	/* mov r,lext/auto/oreg ==> sw o(REGTMP) */
+		r := p.To.Reg
+		if r == obj.REG_NONE {
+			r = o.param
+		}
+		v := c.regoff(&p.To)
+		o1 = OP_IRR(c.opirr(ALUI), uint32((v+1<<15)>>16), REGZERO, REGTMP)
+		o2 = OP_RRR(c.oprrr(add), r, REGTMP, REGTMP)
+		o3 = OP_IRR(c.opirr(p.As), uint32(v), REGTMP, p.From.Reg)
+
+	case 36:	/* mov lext/auto/oreg,r ==> lw o(REGTMP) */
+		r := p.From.Reg
+		if r == obj.REG_NONE {
+			r = o.param
+		}
+		v := c.regoff(&p.From)
+		o1 = OP_IRR(c.opirr(ALUI), uint32((v+1<<15)>>16), REGZERO, REGTMP)
+		o2 = OP_RRR(c.oprrr(add), r, REGTMP, REGTMP)
+		o3 = OP_IRR(c.opirr(-p.As), uint32(v), REGTMP, p.To.Reg)
+
+	case 37:	/* movw r,mr */
+		a := SP(2, 0) | (4 << 21)	/* mtc0 */
 		if p.As == AMOVV {
-			a = SP(2, 0) | (5 << 21) /* dmtc0 */
+			a = SP(2, 0) | (5 << 21)	/* dmtc0 */
 		}
-		o1 = OP_RRR(a, uint32(p.From.Reg), uint32(0), uint32(p.To.Reg))
+		o1 = OP_RRR(a, p.From.Reg, obj.REG_NONE, p.To.Reg)
 
-	case 38: /* movw mr,r */
-		a := SP(2, 0) | (0 << 21) /* mfc0 */
+	case 38:	/* movw mr,r */
+		a := SP(2, 0) | (0 << 21)	/* mfc0 */
 		if p.As == AMOVV {
-			a = SP(2, 0) | (1 << 21) /* dmfc0 */
+			a = SP(2, 0) | (1 << 21)	/* dmfc0 */
 		}
-		o1 = OP_RRR(a, uint32(p.To.Reg), uint32(0), uint32(p.From.Reg))
+		o1 = OP_RRR(a, p.To.Reg, obj.REG_NONE, p.From.Reg)
 
-	case 40: /* word */
+	case 40:	/* word */
 		o1 = uint32(c.regoff(&p.From))
 
-	case 41: /* movw f,fcr */
-		o1 = OP_RRR(SP(2, 1)|(6<<21), uint32(p.From.Reg), uint32(0), uint32(p.To.Reg)) /* mtcc1 */
+	case 41:	/* movw f,fcr */
+		o1 = OP_RRR(SP(2, 1)|(6<<21), p.From.Reg, obj.REG_NONE, p.To.Reg)	/* mtcc1 */
 
-	case 42: /* movw fcr,r */
-		o1 = OP_RRR(SP(2, 1)|(2<<21), uint32(p.To.Reg), uint32(0), uint32(p.From.Reg)) /* mfcc1 */
+	case 42:	/* movw fcr,r */
+		o1 = OP_RRR(SP(2, 1)|(2<<21), p.To.Reg, obj.REG_NONE, p.From.Reg)	/* mfcc1 */
 
-	case 47: /* movv r,fr */
-		a := SP(2, 1) | (5 << 21) /* dmtc1 */
-		o1 = OP_RRR(a, uint32(p.From.Reg), uint32(0), uint32(p.To.Reg))
+	case 47:	/* movv r,fr */
+		a := SP(2, 1) | (5 << 21)	/* dmtc1 */
+		o1 = OP_RRR(a, p.From.Reg, obj.REG_NONE, p.To.Reg)
 
-	case 48: /* movv fr,r */
-		a := SP(2, 1) | (1 << 21) /* dmtc1 */
-		o1 = OP_RRR(a, uint32(p.To.Reg), uint32(0), uint32(p.From.Reg))
+	case 48:	/* movv fr,r */
+		a := SP(2, 1) | (1 << 21)	/* dmtc1 */
+		o1 = OP_RRR(a, p.To.Reg, obj.REG_NONE, p.From.Reg)
 
-	case 49: /* undef */
-		o1 = 52 /* trap -- teq r0, r0 */
+	case 49:	/* undef */
+		o1 = 52	/* trap -- teq r0, r0 */
 
 	/* relocation operations */
-	case 50: /* mov r,addr ==> lu + add REGSB, REGTMP + sw o(REGTMP) */
-		o1 = OP_IRR(c.opirr(ALUI), uint32(0), uint32(REGZERO), uint32(REGTMP))
+	case 50:	/* mov r,addr ==> lu + add REGSB, REGTMP + sw o(REGTMP) */
+		o1 = OP_IRR(c.opirr(ALUI), 0, REGZERO, REGTMP)
 		rel := obj.Addrel(c.cursym)
 		rel.Off = int32(c.pc)
 		rel.Siz = 4
 		rel.Sym = p.To.Sym
 		rel.Add = p.To.Offset
 		rel.Type = objabi.R_ADDRMIPSU
-		o2 = OP_IRR(c.opirr(p.As), uint32(0), uint32(REGTMP), uint32(p.From.Reg))
+		o2 = OP_IRR(c.opirr(p.As), 0, REGTMP, p.From.Reg)
 		rel2 := obj.Addrel(c.cursym)
 		rel2.Off = int32(c.pc + 4)
 		rel2.Siz = 4
@@ -1586,19 +1591,19 @@ func (c *ctxt0) asmout(p *obj.Prog, o *Optab, out []uint32) {
 
 		if o.size == 12 {
 			o3 = o2
-			o2 = OP_RRR(c.oprrr(AADDVU), uint32(REGSB), uint32(REGTMP), uint32(REGTMP))
+			o2 = OP_RRR(c.oprrr(AADDVU), REGSB, REGTMP, REGTMP)
 			rel2.Off += 4
 		}
 
-	case 51: /* mov addr,r ==> lu + add REGSB, REGTMP + lw o(REGTMP) */
-		o1 = OP_IRR(c.opirr(ALUI), uint32(0), uint32(REGZERO), uint32(REGTMP))
+	case 51:	/* mov addr,r ==> lu + add REGSB, REGTMP + lw o(REGTMP) */
+		o1 = OP_IRR(c.opirr(ALUI), 0, REGZERO, REGTMP)
 		rel := obj.Addrel(c.cursym)
 		rel.Off = int32(c.pc)
 		rel.Siz = 4
 		rel.Sym = p.From.Sym
 		rel.Add = p.From.Offset
 		rel.Type = objabi.R_ADDRMIPSU
-		o2 = OP_IRR(c.opirr(-p.As), uint32(0), uint32(REGTMP), uint32(p.To.Reg))
+		o2 = OP_IRR(c.opirr(-p.As), 0, REGTMP, p.To.Reg)
 		rel2 := obj.Addrel(c.cursym)
 		rel2.Off = int32(c.pc + 4)
 		rel2.Siz = 4
@@ -1608,21 +1613,21 @@ func (c *ctxt0) asmout(p *obj.Prog, o *Optab, out []uint32) {
 
 		if o.size == 12 {
 			o3 = o2
-			o2 = OP_RRR(c.oprrr(AADDVU), uint32(REGSB), uint32(REGTMP), uint32(REGTMP))
+			o2 = OP_RRR(c.oprrr(AADDVU), REGSB, REGTMP, REGTMP)
 			rel2.Off += 4
 		}
 
-	case 52: /* mov $lext, r ==> lu + add REGSB, r + add */
+	case 52:	/* mov $lext, r ==> lu + add REGSB, r + add */
 		// NOTE: this case does not use REGTMP. If it ever does,
 		// remove the NOTUSETMP flag in optab.
-		o1 = OP_IRR(c.opirr(ALUI), uint32(0), uint32(REGZERO), uint32(p.To.Reg))
+		o1 = OP_IRR(c.opirr(ALUI), 0, REGZERO, p.To.Reg)
 		rel := obj.Addrel(c.cursym)
 		rel.Off = int32(c.pc)
 		rel.Siz = 4
 		rel.Sym = p.From.Sym
 		rel.Add = p.From.Offset
 		rel.Type = objabi.R_ADDRMIPSU
-		o2 = OP_IRR(c.opirr(add), uint32(0), uint32(p.To.Reg), uint32(p.To.Reg))
+		o2 = OP_IRR(c.opirr(add), 0, p.To.Reg, p.To.Reg)
 		rel2 := obj.Addrel(c.cursym)
 		rel2.Off = int32(c.pc + 4)
 		rel2.Siz = 4
@@ -1632,17 +1637,17 @@ func (c *ctxt0) asmout(p *obj.Prog, o *Optab, out []uint32) {
 
 		if o.size == 12 {
 			o3 = o2
-			o2 = OP_RRR(c.oprrr(AADDVU), uint32(REGSB), uint32(p.To.Reg), uint32(p.To.Reg))
+			o2 = OP_RRR(c.oprrr(AADDVU), REGSB, p.To.Reg, p.To.Reg)
 			rel2.Off += 4
 		}
 
-	case 53: /* mov r, tlsvar ==> rdhwr + sw o(r3) */
+	case 53:	/* mov r, tlsvar ==> rdhwr + sw o(r3) */
 		// clobbers R3 !
 		// load thread pointer with RDHWR, R3 is used for fast kernel emulation on Linux
 		// NOTE: this case does not use REGTMP. If it ever does,
 		// remove the NOTUSETMP flag in optab.
-		o1 = (037<<26 + 073) | (29 << 11) | (3 << 16) // rdhwr $29, r3
-		o2 = OP_IRR(c.opirr(p.As), uint32(0), uint32(REG_R3), uint32(p.From.Reg))
+		o1 = (037<<26 + 073) | (29 << 11) | (3 << 16)	// rdhwr $29, r3
+		o2 = OP_IRR(c.opirr(p.As), 0, REG_R3, p.From.Reg)
 		rel := obj.Addrel(c.cursym)
 		rel.Off = int32(c.pc + 4)
 		rel.Siz = 4
@@ -1650,12 +1655,12 @@ func (c *ctxt0) asmout(p *obj.Prog, o *Optab, out []uint32) {
 		rel.Add = p.To.Offset
 		rel.Type = objabi.R_ADDRMIPSTLS
 
-	case 54: /* mov tlsvar, r ==> rdhwr + lw o(r3) */
+	case 54:	/* mov tlsvar, r ==> rdhwr + lw o(r3) */
 		// clobbers R3 !
 		// NOTE: this case does not use REGTMP. If it ever does,
 		// remove the NOTUSETMP flag in optab.
-		o1 = (037<<26 + 073) | (29 << 11) | (3 << 16) // rdhwr $29, r3
-		o2 = OP_IRR(c.opirr(-p.As), uint32(0), uint32(REG_R3), uint32(p.To.Reg))
+		o1 = (037<<26 + 073) | (29 << 11) | (3 << 16)	// rdhwr $29, r3
+		o2 = OP_IRR(c.opirr(-p.As), 0, REG_R3, p.To.Reg)
 		rel := obj.Addrel(c.cursym)
 		rel.Off = int32(c.pc + 4)
 		rel.Siz = 4
@@ -1663,12 +1668,12 @@ func (c *ctxt0) asmout(p *obj.Prog, o *Optab, out []uint32) {
 		rel.Add = p.From.Offset
 		rel.Type = objabi.R_ADDRMIPSTLS
 
-	case 55: /* mov $tlsvar, r ==> rdhwr + add */
+	case 55:	/* mov $tlsvar, r ==> rdhwr + add */
 		// clobbers R3 !
 		// NOTE: this case does not use REGTMP. If it ever does,
 		// remove the NOTUSETMP flag in optab.
-		o1 = (037<<26 + 073) | (29 << 11) | (3 << 16) // rdhwr $29, r3
-		o2 = OP_IRR(c.opirr(add), uint32(0), uint32(REG_R3), uint32(p.To.Reg))
+		o1 = (037<<26 + 073) | (29 << 11) | (3 << 16)	// rdhwr $29, r3
+		o2 = OP_IRR(c.opirr(add), 0, REG_R3, p.To.Reg)
 		rel := obj.Addrel(c.cursym)
 		rel.Off = int32(c.pc + 4)
 		rel.Siz = 4
@@ -1676,18 +1681,21 @@ func (c *ctxt0) asmout(p *obj.Prog, o *Optab, out []uint32) {
 		rel.Add = p.From.Offset
 		rel.Type = objabi.R_ADDRMIPSTLS
 
-	case 56: /* vmov{b,h,w,d} $scon, wr */
+	case 56:	/* vmov{b,h,w,d} $scon, wr */
 
 		v := c.regoff(&p.From)
 		o1 = OP_VI10(110, c.twobitdf(p.As), v, uint32(p.To.Reg), 7)
 
-	case 57: /* vld $soreg, wr */
+	case 57:	/* vld $soreg, wr */
 		v := c.lsoffset(p.As, c.regoff(&p.From))
 		o1 = OP_VMI10(v, uint32(p.From.Reg), uint32(p.To.Reg), 8, c.twobitdf(p.As))
 
-	case 58: /* vst wr, $soreg */
+	case 58:	/* vst wr, $soreg */
 		v := c.lsoffset(p.As, c.regoff(&p.To))
 		o1 = OP_VMI10(v, uint32(p.To.Reg), uint32(p.From.Reg), 9, c.twobitdf(p.As))
+
+	case 59:
+		o1 = OP_RRR(c.oprrr(p.As), p.From.Reg, REGZERO, p.To.Reg)
 	}
 
 	out[0] = o1
@@ -1888,6 +1896,16 @@ func (c *ctxt0) oprrr(a obj.As) uint32 {
 		return SP(3, 4) | OP(0, 0)
 	case AMSUB:
 		return SP(3, 4) | OP(0, 4)
+	case AWSBH:
+		return SP(3, 7) | OP(20, 0)
+	case ADSBH:
+		return SP(3, 7) | OP(20, 4)
+	case ADSHD:
+		return SP(3, 7) | OP(44, 4)
+	case ASEB:
+		return SP(3, 7) | OP(132, 0)
+	case ASEH:
+		return SP(3, 7) | OP(196, 0)
 	}
 
 	if a < 0 {
@@ -1938,43 +1956,43 @@ func (c *ctxt0) opirr(a obj.As) uint32 {
 	case ABEQ:
 		return SP(0, 4)
 	case -ABEQ:
-		return SP(2, 4) /* likely */
+		return SP(2, 4)	/* likely */
 	case ABNE:
 		return SP(0, 5)
 	case -ABNE:
-		return SP(2, 5) /* likely */
+		return SP(2, 5)	/* likely */
 	case ABGEZ:
 		return SP(0, 1) | BCOND(0, 1)
 	case -ABGEZ:
-		return SP(0, 1) | BCOND(0, 3) /* likely */
+		return SP(0, 1) | BCOND(0, 3)	/* likely */
 	case ABGEZAL:
 		return SP(0, 1) | BCOND(2, 1)
 	case -ABGEZAL:
-		return SP(0, 1) | BCOND(2, 3) /* likely */
+		return SP(0, 1) | BCOND(2, 3)	/* likely */
 	case ABGTZ:
 		return SP(0, 7)
 	case -ABGTZ:
-		return SP(2, 7) /* likely */
+		return SP(2, 7)	/* likely */
 	case ABLEZ:
 		return SP(0, 6)
 	case -ABLEZ:
-		return SP(2, 6) /* likely */
+		return SP(2, 6)	/* likely */
 	case ABLTZ:
 		return SP(0, 1) | BCOND(0, 0)
 	case -ABLTZ:
-		return SP(0, 1) | BCOND(0, 2) /* likely */
+		return SP(0, 1) | BCOND(0, 2)	/* likely */
 	case ABLTZAL:
 		return SP(0, 1) | BCOND(2, 0)
 	case -ABLTZAL:
-		return SP(0, 1) | BCOND(2, 2) /* likely */
+		return SP(0, 1) | BCOND(2, 2)	/* likely */
 	case ABFPT:
 		return SP(2, 1) | (257 << 16)
 	case -ABFPT:
-		return SP(2, 1) | (259 << 16) /* likely */
+		return SP(2, 1) | (259 << 16)	/* likely */
 	case ABFPF:
 		return SP(2, 1) | (256 << 16)
 	case -ABFPF:
-		return SP(2, 1) | (258 << 16) /* likely */
+		return SP(2, 1) | (258 << 16)	/* likely */
 
 	case AMOVB,
 		AMOVBU:

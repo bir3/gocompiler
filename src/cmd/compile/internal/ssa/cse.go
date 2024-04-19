@@ -32,7 +32,7 @@ func cse(f *Func) {
 
 	// Make initial coarse partitions by using a subset of the conditions above.
 	a := f.Cache.allocValueSlice(f.NumValues())
-	defer func() { f.Cache.freeValueSlice(a) }() // inside closure to use final value of a
+	defer func() { f.Cache.freeValueSlice(a) }()	// inside closure to use final value of a
 	a = a[:0]
 	if f.auxmap == nil {
 		f.auxmap = auxmap{}
@@ -40,7 +40,7 @@ func cse(f *Func) {
 	for _, b := range f.Blocks {
 		for _, v := range b.Values {
 			if v.Type.IsMemory() {
-				continue // memory values can never cse
+				continue	// memory values can never cse
 			}
 			if f.auxmap[v.Aux] == 0 {
 				f.auxmap[v.Aux] = int32(len(f.auxmap)) + 1
@@ -86,7 +86,7 @@ func cse(f *Func) {
 	// non-equivalent arguments.  Repeat until we can't find any
 	// more splits.
 	var splitPoints []int
-	byArgClass := new(partitionByArgClass) // reusable partitionByArgClass to reduce allocations
+	byArgClass := new(partitionByArgClass)	// reusable partitionByArgClass to reduce allocations
 	for {
 		changed := false
 
@@ -127,7 +127,7 @@ func cse(f *Func) {
 				}
 			}
 			if len(splitPoints) == 1 {
-				continue // no splits, leave equivalence class alone.
+				continue	// no splits, leave equivalence class alone.
 			}
 
 			// Move another equivalence class down in place of e.
@@ -164,7 +164,7 @@ func cse(f *Func) {
 	// if v and w are in the same equivalence class and v dominates w.
 	rewrite := f.Cache.allocValueSlice(f.NumValues())
 	defer f.Cache.freeValueSlice(rewrite)
-	byDom := new(partitionByDom) // reusable partitionByDom to reduce allocs
+	byDom := new(partitionByDom)	// reusable partitionByDom to reduce allocs
 	for _, e := range partition {
 		byDom.a = e
 		byDom.sdom = sdom
@@ -208,7 +208,7 @@ func cse(f *Func) {
 						if w.Block == v.Block && w.Pos.Line() == v.Pos.Line() {
 							v.Pos = v.Pos.WithIsStmt()
 							w.Pos = w.Pos.WithNotStmt()
-						} // TODO and if this fails?
+						}	// TODO and if this fails?
 					}
 					v.SetArg(i, x)
 					rewrites++
@@ -325,12 +325,12 @@ func cmpVal(v, w *Value, auxIDs auxmap) types.Cmp {
 
 // Sort values to make the initial partition.
 type sortvalues struct {
-	a      []*Value // array of values
-	auxIDs auxmap   // aux -> aux ID map
+	a	[]*Value	// array of values
+	auxIDs	auxmap		// aux -> aux ID map
 }
 
-func (sv sortvalues) Len() int      { return len(sv.a) }
-func (sv sortvalues) Swap(i, j int) { sv.a[i], sv.a[j] = sv.a[j], sv.a[i] }
+func (sv sortvalues) Len() int		{ return len(sv.a) }
+func (sv sortvalues) Swap(i, j int)	{ sv.a[i], sv.a[j] = sv.a[j], sv.a[i] }
 func (sv sortvalues) Less(i, j int) bool {
 	v := sv.a[i]
 	w := sv.a[j]
@@ -343,12 +343,12 @@ func (sv sortvalues) Less(i, j int) bool {
 }
 
 type partitionByDom struct {
-	a    []*Value // array of values
-	sdom SparseTree
+	a	[]*Value	// array of values
+	sdom	SparseTree
 }
 
-func (sv partitionByDom) Len() int      { return len(sv.a) }
-func (sv partitionByDom) Swap(i, j int) { sv.a[i], sv.a[j] = sv.a[j], sv.a[i] }
+func (sv partitionByDom) Len() int	{ return len(sv.a) }
+func (sv partitionByDom) Swap(i, j int)	{ sv.a[i], sv.a[j] = sv.a[j], sv.a[i] }
 func (sv partitionByDom) Less(i, j int) bool {
 	v := sv.a[i]
 	w := sv.a[j]
@@ -356,12 +356,12 @@ func (sv partitionByDom) Less(i, j int) bool {
 }
 
 type partitionByArgClass struct {
-	a       []*Value // array of values
-	eqClass []ID     // equivalence class IDs of values
+	a	[]*Value	// array of values
+	eqClass	[]ID		// equivalence class IDs of values
 }
 
-func (sv partitionByArgClass) Len() int      { return len(sv.a) }
-func (sv partitionByArgClass) Swap(i, j int) { sv.a[i], sv.a[j] = sv.a[j], sv.a[i] }
+func (sv partitionByArgClass) Len() int		{ return len(sv.a) }
+func (sv partitionByArgClass) Swap(i, j int)	{ sv.a[i], sv.a[j] = sv.a[j], sv.a[i] }
 func (sv partitionByArgClass) Less(i, j int) bool {
 	v := sv.a[i]
 	w := sv.a[j]

@@ -87,14 +87,14 @@ func (mset methodSet) set(f *ast.FuncDecl, preserveAST bool) {
 		recv = recvString(typ)
 	}
 	mset[name] = &Func{
-		Doc:  f.Doc.Text(),
-		Name: name,
-		Decl: f,
-		Recv: recv,
-		Orig: recv,
+		Doc:	f.Doc.Text(),
+		Name:	name,
+		Decl:	f,
+		Recv:	recv,
+		Orig:	recv,
 	}
 	if !preserveAST {
-		f.Doc = nil // doc consumed - remove from AST
+		f.Doc = nil	// doc consumed - remove from AST
 	}
 }
 
@@ -110,8 +110,8 @@ func (mset methodSet) add(m *Func) {
 	if m.Level == old.Level {
 		// conflict - mark it using a method with nil Decl
 		mset[m.Name] = &Func{
-			Name:  m.Name,
-			Level: m.Level,
+			Name:	m.Name,
+			Level:	m.Level,
 		}
 	}
 }
@@ -150,18 +150,18 @@ type embeddedSet map[*namedType]bool
 // predeclared) type. The namedType for a type name is always found via
 // reader.lookupType.
 type namedType struct {
-	doc  string       // doc comment for type
-	name string       // type name
-	decl *ast.GenDecl // nil if declaration hasn't been seen yet
+	doc	string		// doc comment for type
+	name	string		// type name
+	decl	*ast.GenDecl	// nil if declaration hasn't been seen yet
 
-	isEmbedded bool        // true if this type is embedded
-	isStruct   bool        // true if this type is a struct
-	embedded   embeddedSet // true if the embedded type is a pointer
+	isEmbedded	bool		// true if this type is embedded
+	isStruct	bool		// true if this type is a struct
+	embedded	embeddedSet	// true if the embedded type is a pointer
 
 	// associated declarations
-	values  []*Value // consts and vars
-	funcs   methodSet
-	methods methodSet
+	values	[]*Value	// consts and vars
+	funcs	methodSet
+	methods	methodSet
 }
 
 // ----------------------------------------------------------------------------
@@ -174,27 +174,27 @@ type namedType struct {
 // twice (once when printing the documentation and once when
 // printing the corresponding AST node).
 type reader struct {
-	mode Mode
+	mode	Mode
 
 	// package properties
-	doc       string // package documentation, if any
-	filenames []string
-	notes     map[string][]*Note
+	doc		string	// package documentation, if any
+	filenames	[]string
+	notes		map[string][]*Note
 
 	// imports
-	imports      map[string]int
-	hasDotImp    bool // if set, package contains a dot import
-	importByName map[string]string
+	imports		map[string]int
+	hasDotImp	bool	// if set, package contains a dot import
+	importByName	map[string]string
 
 	// declarations
-	values []*Value // consts and vars
-	order  int      // sort order of const and var declarations (when we can't use a name)
-	types  map[string]*namedType
-	funcs  methodSet
+	values	[]*Value	// consts and vars
+	order	int		// sort order of const and var declarations (when we can't use a name)
+	types	map[string]*namedType
+	funcs	methodSet
 
 	// support for package-local shadowing of predeclared types
-	shadowedPredecl map[string]bool
-	fixmap          map[string][]*ast.InterfaceType
+	shadowedPredecl	map[string]bool
+	fixmap		map[string][]*ast.InterfaceType
 }
 
 func (r *reader) isVisible(name string) bool {
@@ -207,17 +207,17 @@ func (r *reader) isVisible(name string) bool {
 // is added to the type map.
 func (r *reader) lookupType(name string) *namedType {
 	if name == "" || name == "_" {
-		return nil // no type docs for anonymous types
+		return nil	// no type docs for anonymous types
 	}
 	if typ, found := r.types[name]; found {
 		return typ
 	}
 	// type not found - add one without declaration
 	typ := &namedType{
-		name:     name,
-		embedded: make(embeddedSet),
-		funcs:    make(methodSet),
-		methods:  make(methodSet),
+		name:		name,
+		embedded:	make(embeddedSet),
+		funcs:		make(methodSet),
+		methods:	make(methodSet),
 	}
 	r.types[name] = typ
 	return typ
@@ -259,7 +259,7 @@ func (r *reader) remember(predecl string, typ *ast.InterfaceType) {
 }
 
 func specNames(specs []ast.Spec) []string {
-	names := make([]string, 0, len(specs)) // reasonable estimate
+	names := make([]string, 0, len(specs))	// reasonable estimate
 	for _, s := range specs {
 		// s guaranteed to be an *ast.ValueSpec by readValue
 		for _, ident := range s.(*ast.ValueSpec).Names {
@@ -282,7 +282,7 @@ func (r *reader) readValue(decl *ast.GenDecl) {
 	for _, spec := range decl.Specs {
 		s, ok := spec.(*ast.ValueSpec)
 		if !ok {
-			continue // should not happen, but be conservative
+			continue	// should not happen, but be conservative
 		}
 		name := ""
 		switch {
@@ -322,18 +322,18 @@ func (r *reader) readValue(decl *ast.GenDecl) {
 	if domName != "" && r.isVisible(domName) && domFreq >= int(float64(len(decl.Specs))*threshold) {
 		// typed entries are sufficiently frequent
 		if typ := r.lookupType(domName); typ != nil {
-			values = &typ.values // associate with that type
+			values = &typ.values	// associate with that type
 		}
 	}
 
 	*values = append(*values, &Value{
-		Doc:   decl.Doc.Text(),
-		Names: specNames(decl.Specs),
-		Decl:  decl,
-		order: r.order,
+		Doc:	decl.Doc.Text(),
+		Names:	specNames(decl.Specs),
+		Decl:	decl,
+		order:	r.order,
 	})
 	if r.mode&PreserveAST == 0 {
-		decl.Doc = nil // doc consumed - remove from AST
+		decl.Doc = nil	// doc consumed - remove from AST
 	}
 	// Note: It's important that the order used here is global because the cleanupTypes
 	// methods may move values associated with types back into the global list. If the
@@ -362,7 +362,7 @@ func fields(typ ast.Expr) (list []*ast.Field, isStruct bool) {
 func (r *reader) readType(decl *ast.GenDecl, spec *ast.TypeSpec) {
 	typ := r.lookupType(spec.Name.Name)
 	if typ == nil {
-		return // no name or blank name - ignore the type
+		return	// no name or blank name - ignore the type
 	}
 
 	// A type should be added at most once, so typ.decl
@@ -376,8 +376,8 @@ func (r *reader) readType(decl *ast.GenDecl, spec *ast.TypeSpec) {
 		doc = decl.Doc
 	}
 	if r.mode&PreserveAST == 0 {
-		spec.Doc = nil // doc consumed - remove from AST
-		decl.Doc = nil // doc consumed - remove from AST
+		spec.Doc = nil	// doc consumed - remove from AST
+		decl.Doc = nil	// doc consumed - remove from AST
 	}
 	typ.doc = doc.Text()
 
@@ -433,7 +433,7 @@ func (r *reader) readFunc(fun *ast.FuncDecl) {
 	// Associate factory functions with the first visible result type, as long as
 	// others are predeclared types.
 	if fun.Type.Results.NumFields() >= 1 {
-		var typ *namedType // type to associate the function with
+		var typ *namedType	// type to associate the function with
 		numResultTypes := 0
 		for _, res := range fun.Type.Results.List {
 			factoryType := res.Type
@@ -486,9 +486,9 @@ func lookupTypeParam(name string, tparams *ast.FieldList) *ast.Ident {
 }
 
 var (
-	noteMarker    = `([A-Z][A-Z]+)\(([^)]+)\):?`                // MARKER(uid), MARKER at least 2 chars, uid at least 1 char
-	noteMarkerRx  = lazyregexp.New(`^[ \t]*` + noteMarker)      // MARKER(uid) at text start
-	noteCommentRx = lazyregexp.New(`^/[/*][ \t]*` + noteMarker) // MARKER(uid) at comment start
+	noteMarker	= `([A-Z][A-Z]+)\(([^)]+)\):?`			// MARKER(uid), MARKER at least 2 chars, uid at least 1 char
+	noteMarkerRx	= lazyregexp.New(`^[ \t]*` + noteMarker)	// MARKER(uid) at text start
+	noteCommentRx	= lazyregexp.New(`^/[/*][ \t]*` + noteMarker)	// MARKER(uid) at comment start
 )
 
 // clean replaces each sequence of space, \r, or \t characters
@@ -525,10 +525,10 @@ func (r *reader) readNote(list []*ast.Comment) {
 		if body != "" {
 			marker := text[m[2]:m[3]]
 			r.notes[marker] = append(r.notes[marker], &Note{
-				Pos:  list[0].Pos(),
-				End:  list[len(list)-1].End(),
-				UID:  text[m[4]:m[5]],
-				Body: body,
+				Pos:	list[0].Pos(),
+				End:	list[len(list)-1].End(),
+				UID:	text[m[4]:m[5]],
+				Body:	body,
 			})
 		}
 	}
@@ -541,7 +541,7 @@ func (r *reader) readNote(list []*ast.Comment) {
 // another note in the same comment group, whichever comes first.
 func (r *reader) readNotes(comments []*ast.CommentGroup) {
 	for _, group := range comments {
-		i := -1 // comment index of most recent note start, valid if >= 0
+		i := -1	// comment index of most recent note start, valid if >= 0
 		list := group.List
 		for j, c := range list {
 			if noteCommentRx.MatchString(c.Text) {
@@ -563,7 +563,7 @@ func (r *reader) readFile(src *ast.File) {
 	if src.Doc != nil {
 		r.readDoc(src.Doc)
 		if r.mode&PreserveAST == 0 {
-			src.Doc = nil // doc consumed - remove from AST
+			src.Doc = nil	// doc consumed - remove from AST
 		}
 	}
 
@@ -593,7 +593,7 @@ func (r *reader) readFile(src *ast.File) {
 								if !ok {
 									r.importByName[name] = import_
 								} else if old != import_ && old != "" {
-									r.importByName[name] = "" // ambiguous
+									r.importByName[name] = ""	// ambiguous
 								}
 							}
 						}
@@ -622,15 +622,15 @@ func (r *reader) readFile(src *ast.File) {
 						// gets to (re-)use the declaration documentation
 						// if there's none associated with the spec itself
 						fake := &ast.GenDecl{
-							Doc: d.Doc,
+							Doc:	d.Doc,
 							// don't use the existing TokPos because it
 							// will lead to the wrong selection range for
 							// the fake declaration if there are more
 							// than one type in the group (this affects
 							// src/cmd/godoc/godoc.go's posLink_urlFunc)
-							TokPos: s.Pos(),
-							Tok:    token.TYPE,
-							Specs:  []ast.Spec{s},
+							TokPos:	s.Pos(),
+							Tok:	token.TYPE,
+							Specs:	[]ast.Spec{s},
 						}
 						r.readType(fake, s)
 					}
@@ -642,7 +642,7 @@ func (r *reader) readFile(src *ast.File) {
 	// collect MARKER(...): annotations
 	r.readNotes(src.Comments)
 	if r.mode&PreserveAST == 0 {
-		src.Comments = nil // consumed unassociated comments - remove from AST
+		src.Comments = nil	// consumed unassociated comments - remove from AST
 	}
 }
 
@@ -695,7 +695,7 @@ func (r *reader) readPackage(pkg *ast.Package, mode Mode) {
 
 func customizeRecv(f *Func, recvTypeName string, embeddedIsPtr bool, level int) *Func {
 	if f == nil || f.Decl == nil || f.Decl.Recv == nil || len(f.Decl.Recv.List) != 1 {
-		return f // shouldn't happen, but be safe
+		return f	// shouldn't happen, but be safe
 	}
 
 	// copy existing receiver field and set new type
@@ -705,7 +705,7 @@ func customizeRecv(f *Func, recvTypeName string, embeddedIsPtr bool, level int) 
 	newIdent := &ast.Ident{NamePos: origPos, Name: recvTypeName}
 	var typ ast.Expr = newIdent
 	if !embeddedIsPtr && origRecvIsPtr {
-		newIdent.NamePos++ // '*' is one character
+		newIdent.NamePos++	// '*' is one character
 		typ = &ast.StarExpr{Star: origPos, X: newIdent}
 	}
 	newField.Type = typ
@@ -817,14 +817,14 @@ func (r *reader) cleanupTypes() {
 // Sorting
 
 type data struct {
-	n    int
-	swap func(i, j int)
-	less func(i, j int) bool
+	n	int
+	swap	func(i, j int)
+	less	func(i, j int) bool
 }
 
-func (d *data) Len() int           { return d.n }
-func (d *data) Swap(i, j int)      { d.swap(i, j) }
-func (d *data) Less(i, j int) bool { return d.less(i, j) }
+func (d *data) Len() int		{ return d.n }
+func (d *data) Swap(i, j int)		{ d.swap(i, j) }
+func (d *data) Less(i, j int) bool	{ return d.less(i, j) }
 
 // sortBy is a helper function for sorting.
 func sortBy(less func(i, j int) bool, swap func(i, j int), n int) {
@@ -853,7 +853,7 @@ func sortingName(d *ast.GenDecl) string {
 }
 
 func sortedValues(m []*Value, tok token.Token) []*Value {
-	list := make([]*Value, len(m)) // big enough in any case
+	list := make([]*Value, len(m))	// big enough in any case
 	i := 0
 	for _, val := range m {
 		if val.Decl.Tok == tok {
@@ -882,13 +882,13 @@ func sortedTypes(m map[string]*namedType, allMethods bool) []*Type {
 	i := 0
 	for _, t := range m {
 		list[i] = &Type{
-			Doc:     t.doc,
-			Name:    t.name,
-			Decl:    t.decl,
-			Consts:  sortedValues(t.values, token.CONST),
-			Vars:    sortedValues(t.values, token.VAR),
-			Funcs:   sortedFuncs(t.funcs, true),
-			Methods: sortedFuncs(t.methods, allMethods),
+			Doc:		t.doc,
+			Name:		t.name,
+			Decl:		t.decl,
+			Consts:		sortedValues(t.values, token.CONST),
+			Vars:		sortedValues(t.values, token.VAR),
+			Funcs:		sortedFuncs(t.funcs, true),
+			Methods:	sortedFuncs(t.methods, allMethods),
 		}
 		i++
 	}
@@ -952,53 +952,53 @@ func IsPredeclared(s string) bool {
 }
 
 var predeclaredTypes = map[string]bool{
-	"any":        true,
-	"bool":       true,
-	"byte":       true,
-	"comparable": true,
-	"complex64":  true,
-	"complex128": true,
-	"error":      true,
-	"float32":    true,
-	"float64":    true,
-	"int":        true,
-	"int8":       true,
-	"int16":      true,
-	"int32":      true,
-	"int64":      true,
-	"rune":       true,
-	"string":     true,
-	"uint":       true,
-	"uint8":      true,
-	"uint16":     true,
-	"uint32":     true,
-	"uint64":     true,
-	"uintptr":    true,
+	"any":		true,
+	"bool":		true,
+	"byte":		true,
+	"comparable":	true,
+	"complex64":	true,
+	"complex128":	true,
+	"error":	true,
+	"float32":	true,
+	"float64":	true,
+	"int":		true,
+	"int8":		true,
+	"int16":	true,
+	"int32":	true,
+	"int64":	true,
+	"rune":		true,
+	"string":	true,
+	"uint":		true,
+	"uint8":	true,
+	"uint16":	true,
+	"uint32":	true,
+	"uint64":	true,
+	"uintptr":	true,
 }
 
 var predeclaredFuncs = map[string]bool{
-	"append":  true,
-	"cap":     true,
-	"close":   true,
-	"complex": true,
-	"copy":    true,
-	"delete":  true,
-	"imag":    true,
-	"len":     true,
-	"make":    true,
-	"new":     true,
-	"panic":   true,
-	"print":   true,
-	"println": true,
-	"real":    true,
-	"recover": true,
+	"append":	true,
+	"cap":		true,
+	"close":	true,
+	"complex":	true,
+	"copy":		true,
+	"delete":	true,
+	"imag":		true,
+	"len":		true,
+	"make":		true,
+	"new":		true,
+	"panic":	true,
+	"print":	true,
+	"println":	true,
+	"real":		true,
+	"recover":	true,
 }
 
 var predeclaredConstants = map[string]bool{
-	"false": true,
-	"iota":  true,
-	"nil":   true,
-	"true":  true,
+	"false":	true,
+	"iota":		true,
+	"nil":		true,
+	"true":		true,
 }
 
 // assumedPackageName returns the assumed package name

@@ -20,14 +20,14 @@ import (
 type Value struct {
 	// A unique identifier for the value. For performance we allocate these IDs
 	// densely starting at 1.  There is no guarantee that there won't be occasional holes, though.
-	ID ID
+	ID	ID
 
 	// The operation that computes this value. See op.go.
-	Op Op
+	Op	Op
 
 	// The type of this value. Normally this will be a Go type, but there
 	// are a few other pseudo-types, see ../types/type.go.
-	Type *types.Type
+	Type	*types.Type
 
 	// Auxiliary info for this value. The type of this information depends on the opcode and type.
 	// AuxInt is used for integer values, Aux is used for other values.
@@ -36,30 +36,30 @@ type Value struct {
 	// even if the represented value is unsigned.
 	// Users of AuxInt which interpret AuxInt as unsigned (e.g. shifts) must be careful.
 	// Use Value.AuxUnsigned to get the zero-extended value of AuxInt.
-	AuxInt int64
-	Aux    Aux
+	AuxInt	int64
+	Aux	Aux
 
 	// Arguments of this value
-	Args []*Value
+	Args	[]*Value
 
 	// Containing basic block
-	Block *Block
+	Block	*Block
 
 	// Source position
-	Pos src.XPos
+	Pos	src.XPos
 
 	// Use count. Each appearance in Value.Args and Block.Controls counts once.
-	Uses int32
+	Uses	int32
 
 	// wasm: Value stays on the WebAssembly stack. This value will not get a "register" (WebAssembly variable)
 	// nor a slot on Go stack, and the generation of this value is delayed to its use time.
-	OnWasmStack bool
+	OnWasmStack	bool
 
 	// Is this value in the per-function constant cache? If so, remove from cache before changing it or recycling it.
-	InCache bool
+	InCache	bool
 
 	// Storage for the first three args
-	argstorage [3]*Value
+	argstorage	[3]*Value
 }
 
 // Examples:
@@ -72,7 +72,7 @@ type Value struct {
 // short form print. Just v#.
 func (v *Value) String() string {
 	if v == nil {
-		return "nil" // should never happen, but not panicking helps with debugging
+		return "nil"	// should never happen, but not panicking helps with debugging
 	}
 	return fmt.Sprintf("v%d", v.ID)
 }
@@ -82,6 +82,13 @@ func (v *Value) AuxInt8() int8 {
 		v.Fatalf("op %s doesn't have an int8 aux field", v.Op)
 	}
 	return int8(v.AuxInt)
+}
+
+func (v *Value) AuxUInt8() uint8 {
+	if opcodeTable[v.Op].auxType != auxUInt8 {
+		v.Fatalf("op %s doesn't have a uint8 aux field", v.Op)
+	}
+	return uint8(v.AuxInt)
 }
 
 func (v *Value) AuxInt16() int16 {
@@ -163,12 +170,12 @@ func (v *Value) LongString() string {
 		for _, value := range values {
 			if value == v {
 				names = append(names, name.String())
-				break // drop duplicates.
+				break	// drop duplicates.
 			}
 		}
 	}
 	if len(names) != 0 {
-		sort.Strings(names) // Otherwise a source of variation in debugging output.
+		sort.Strings(names)	// Otherwise a source of variation in debugging output.
 		s += " (" + strings.Join(names, ", ") + ")"
 	}
 	return s
@@ -190,6 +197,8 @@ func (v *Value) auxString() string {
 		return fmt.Sprintf(" [%d]", v.AuxInt32())
 	case auxInt64, auxInt128:
 		return fmt.Sprintf(" [%d]", v.AuxInt)
+	case auxUInt8:
+		return fmt.Sprintf(" [%d]", v.AuxUInt8())
 	case auxARM64BitField:
 		lsb := v.AuxArm64BitField().getARM64BFlsb()
 		width := v.AuxArm64BitField().getARM64BFwidth()
@@ -202,6 +211,7 @@ func (v *Value) auxString() string {
 		if v.Aux != nil {
 			return fmt.Sprintf(" {%v}", v.Aux)
 		}
+		return ""
 	case auxSymOff, auxCallOff, auxTypSize, auxNameOffsetInt8:
 		s := ""
 		if v.Aux != nil {
@@ -223,8 +233,12 @@ func (v *Value) auxString() string {
 		return fmt.Sprintf(" {%v}", v.Aux)
 	case auxFlagConstant:
 		return fmt.Sprintf("[%s]", flagConstant(v.AuxInt))
+	case auxNone:
+		return ""
+	default:
+		// If you see this, add a case above instead.
+		return fmt.Sprintf("[auxtype=%d AuxInt=%d Aux=%v]", opcodeTable[v.Op].auxType, v.AuxInt, v.Aux)
 	}
-	return ""
 }
 
 // If/when midstack inlining is enabled (-l=4), the compiler gets both larger and slower.
@@ -233,7 +247,7 @@ func (v *Value) auxString() string {
 //go:noinline
 func (v *Value) AddArg(w *Value) {
 	if v.Args == nil {
-		v.resetArgs() // use argstorage
+		v.resetArgs()	// use argstorage
 	}
 	v.Args = append(v.Args, w)
 	w.Uses++
@@ -242,7 +256,7 @@ func (v *Value) AddArg(w *Value) {
 //go:noinline
 func (v *Value) AddArg2(w1, w2 *Value) {
 	if v.Args == nil {
-		v.resetArgs() // use argstorage
+		v.resetArgs()	// use argstorage
 	}
 	v.Args = append(v.Args, w1, w2)
 	w1.Uses++
@@ -252,7 +266,7 @@ func (v *Value) AddArg2(w1, w2 *Value) {
 //go:noinline
 func (v *Value) AddArg3(w1, w2, w3 *Value) {
 	if v.Args == nil {
-		v.resetArgs() // use argstorage
+		v.resetArgs()	// use argstorage
 	}
 	v.Args = append(v.Args, w1, w2, w3)
 	w1.Uses++
@@ -292,7 +306,7 @@ func (v *Value) AddArg6(w1, w2, w3, w4, w5, w6 *Value) {
 
 func (v *Value) AddArgs(a ...*Value) {
 	if v.Args == nil {
-		v.resetArgs() // use argstorage
+		v.resetArgs()	// use argstorage
 	}
 	v.Args = append(v.Args, a...)
 	for _, x := range a {
@@ -400,7 +414,7 @@ func (v *Value) copyOf(a *Value) {
 // copyInto makes a new value identical to v and adds it to the end of b.
 // unlike copyIntoWithXPos this does not check for v.Pos being a statement.
 func (v *Value) copyInto(b *Block) *Value {
-	c := b.NewValue0(v.Pos.WithNotStmt(), v.Op, v.Type) // Lose the position, this causes line number churn otherwise.
+	c := b.NewValue0(v.Pos.WithNotStmt(), v.Op, v.Type)	// Lose the position, this causes line number churn otherwise.
 	c.Aux = v.Aux
 	c.AuxInt = v.AuxInt
 	c.AddArgs(v.Args...)
@@ -434,8 +448,8 @@ func (v *Value) copyIntoWithXPos(b *Block, pos src.XPos) *Value {
 	return c
 }
 
-func (v *Value) Logf(msg string, args ...interface{}) { v.Block.Logf(msg, args...) }
-func (v *Value) Log() bool                            { return v.Block.Log() }
+func (v *Value) Logf(msg string, args ...interface{})	{ v.Block.Logf(msg, args...) }
+func (v *Value) Log() bool				{ return v.Block.Log() }
 func (v *Value) Fatalf(msg string, args ...interface{}) {
 	v.Block.Func.fe.Fatalf(v.Pos, msg, args...)
 }
@@ -538,7 +552,11 @@ func (v *Value) LackingPos() bool {
 // if its use count drops to 0.
 func (v *Value) removeable() bool {
 	if v.Type.IsVoid() {
-		// Void ops, like nil pointer checks, must stay.
+		// Void ops (inline marks), must stay.
+		return false
+	}
+	if opcodeTable[v.Op].nilCheck {
+		// Nil pointer checks must stay.
 		return false
 	}
 	if v.Type.IsMemory() {
@@ -554,9 +572,6 @@ func (v *Value) removeable() bool {
 	return true
 }
 
-// TODO(mdempsky): Shouldn't be necessary; see discussion at golang.org/cl/275756
-func (*Value) CanBeAnSSAAux() {}
-
 // AutoVar returns a *Name and int64 representing the auto variable and offset within it
 // where v should be spilled.
 func AutoVar(v *Value) (*ir.Name, int64) {
@@ -569,4 +584,37 @@ func AutoVar(v *Value) (*ir.Name, int64) {
 	// Assume it is a register, return its spill slot, which needs to be live
 	nameOff := v.Aux.(*AuxNameOffset)
 	return nameOff.Name, nameOff.Offset
+}
+
+// CanSSA reports whether values of type t can be represented as a Value.
+func CanSSA(t *types.Type) bool {
+	types.CalcSize(t)
+	if t.Size() > int64(4*types.PtrSize) {
+		// 4*Widthptr is an arbitrary constant. We want it
+		// to be at least 3*Widthptr so slices can be registerized.
+		// Too big and we'll introduce too much register pressure.
+		return false
+	}
+	switch t.Kind() {
+	case types.TARRAY:
+		// We can't do larger arrays because dynamic indexing is
+		// not supported on SSA variables.
+		// TODO: allow if all indexes are constant.
+		if t.NumElem() <= 1 {
+			return CanSSA(t.Elem())
+		}
+		return false
+	case types.TSTRUCT:
+		if t.NumFields() > MaxStruct {
+			return false
+		}
+		for _, t1 := range t.Fields() {
+			if !CanSSA(t1.Type) {
+				return false
+			}
+		}
+		return true
+	default:
+		return true
+	}
 }

@@ -17,8 +17,8 @@ import (
 // "can do weird things in GOPATH and we'd prefer they didn't
 // do _that_ weird thing" (per rsc). See also #4257.
 var ReservedImports = map[string]bool{
-	"go":   true,
-	"type": true,
+	"go":	true,
+	"type":	true,
 }
 
 var Ctxt *obj.Link

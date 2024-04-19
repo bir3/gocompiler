@@ -89,13 +89,13 @@ func collapse(prev, next Spec) bool {
 }
 
 type posSpan struct {
-	Start token.Pos
-	End   token.Pos
+	Start	token.Pos
+	End	token.Pos
 }
 
 type cgPos struct {
-	left bool // true if comment is to the left of the spec, false otherwise.
-	cg   *CommentGroup
+	left	bool	// true if comment is to the left of the spec, false otherwise.
+	cg	*CommentGroup
 }
 
 func sortSpecs(fset *token.FileSet, f *File, specs []Spec) []Spec {
@@ -122,7 +122,7 @@ func sortSpecs(fset *token.FileSet, f *File, specs []Spec) []Spec {
 	if endLine == endFile.LineCount() {
 		end = endSpecs
 	} else {
-		end = endFile.LineStart(endLine + 1) // beginning of next line
+		end = endFile.LineStart(endLine + 1)	// beginning of next line
 	}
 	first := len(f.Comments)
 	last := -1
@@ -158,7 +158,7 @@ func sortSpecs(fset *token.FileSet, f *File, specs []Spec) []Spec {
 		// A block comment can appear before the first import spec.
 		if specIndex == 0 && pos[specIndex].Start > g.Pos() {
 			left = true
-		} else if specIndex+1 < len(specs) && // Or it can appear on the left of an import spec.
+		} else if specIndex+1 < len(specs) &&	// Or it can appear on the left of an import spec.
 			lineAt(fset, pos[specIndex].Start)+1 == lineAt(fset, g.Pos()) {
 			specIndex++
 			left = true

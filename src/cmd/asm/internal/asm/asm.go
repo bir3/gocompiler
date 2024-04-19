@@ -6,6 +6,7 @@ package asm
 
 import (
 	"fmt"
+	"github.com/bir3/gocompiler/src/internal/abi"
 	"strconv"
 	"strings"
 	"text/scanner"
@@ -16,13 +17,12 @@ import (
 	"github.com/bir3/gocompiler/src/cmd/internal/obj"
 	"github.com/bir3/gocompiler/src/cmd/internal/obj/ppc64"
 	"github.com/bir3/gocompiler/src/cmd/internal/obj/x86"
-	"github.com/bir3/gocompiler/src/cmd/internal/objabi"
 	"github.com/bir3/gocompiler/src/cmd/internal/sys"
 )
 
 // TODO: configure the architecture
 
-var testOut *strings.Builder // Gathers output when testing.
+var testOut *strings.Builder	// Gathers output when testing.
 
 // append adds the Prog to the end of the program-thus-far.
 // If doLabel is set, it also defines the labels collect for this Prog.
@@ -169,7 +169,7 @@ func (p *Parser) asmText(operands [][]lex.Token) {
 		frameSize = -frameSize
 	}
 	op = op[1:]
-	argSize := int64(objabi.ArgsSizeUnknown)
+	argSize := int64(abi.ArgsSizeUnknown)
 	if len(op) > 0 {
 		// There is an argument size. It must be a minus sign followed by a non-negative integer literal.
 		if len(op) != 2 || op[0].ScanToken != '-' || op[1].ScanToken != scanner.Int {
@@ -180,13 +180,13 @@ func (p *Parser) asmText(operands [][]lex.Token) {
 	}
 	p.ctxt.InitTextSym(nameAddr.Sym, int(flag), p.pos())
 	prog := &obj.Prog{
-		Ctxt: p.ctxt,
-		As:   obj.ATEXT,
-		Pos:  p.pos(),
-		From: nameAddr,
+		Ctxt:	p.ctxt,
+		As:	obj.ATEXT,
+		Pos:	p.pos(),
+		From:	nameAddr,
 		To: obj.Addr{
-			Type:   obj.TYPE_TEXTSIZE,
-			Offset: frameSize,
+			Type:	obj.TYPE_TEXTSIZE,
+			Offset:	frameSize,
 			// Argsize set below.
 		},
 	}
@@ -322,11 +322,11 @@ func (p *Parser) asmPCData(operands [][]lex.Token) {
 
 	// log.Printf("PCDATA $%d, $%d", key.Offset, value.Offset)
 	prog := &obj.Prog{
-		Ctxt: p.ctxt,
-		As:   obj.APCDATA,
-		Pos:  p.pos(),
-		From: key,
-		To:   value,
+		Ctxt:	p.ctxt,
+		As:	obj.APCDATA,
+		Pos:	p.pos(),
+		From:	key,
+		To:	value,
 	}
 	p.append(prog, "", true)
 }
@@ -346,9 +346,9 @@ func (p *Parser) asmPCAlign(operands [][]lex.Token) {
 	}
 
 	prog := &obj.Prog{
-		Ctxt: p.ctxt,
-		As:   obj.APCALIGN,
-		From: key,
+		Ctxt:	p.ctxt,
+		As:	obj.APCALIGN,
+		From:	key,
 	}
 	p.append(prog, "", true)
 }
@@ -374,11 +374,11 @@ func (p *Parser) asmFuncData(operands [][]lex.Token) {
 	}
 
 	prog := &obj.Prog{
-		Ctxt: p.ctxt,
-		As:   obj.AFUNCDATA,
-		Pos:  p.pos(),
-		From: valueAddr,
-		To:   nameAddr,
+		Ctxt:	p.ctxt,
+		As:	obj.AFUNCDATA,
+		Pos:	p.pos(),
+		From:	valueAddr,
+		To:	nameAddr,
 	}
 	p.append(prog, "", true)
 }
@@ -390,9 +390,9 @@ func (p *Parser) asmFuncData(operands [][]lex.Token) {
 func (p *Parser) asmJump(op obj.As, cond string, a []obj.Addr) {
 	var target *obj.Addr
 	prog := &obj.Prog{
-		Ctxt: p.ctxt,
-		Pos:  p.pos(),
-		As:   op,
+		Ctxt:	p.ctxt,
+		Pos:	p.pos(),
+		As:	op,
 	}
 	targetAddr := &prog.To
 	switch len(a) {
@@ -429,8 +429,8 @@ func (p *Parser) asmJump(op obj.As, cond string, a []obj.Addr) {
 				// into
 				//   BC $4,...
 				prog.From = obj.Addr{
-					Type:   obj.TYPE_CONST,
-					Offset: p.getConstant(prog, op, &a[0]),
+					Type:	obj.TYPE_CONST,
+					Offset:	p.getConstant(prog, op, &a[0]),
 				}
 
 			}
@@ -445,7 +445,7 @@ func (p *Parser) asmJump(op obj.As, cond string, a []obj.Addr) {
 			//   BC x,CR0EQ,...
 			//   BC x,CR1LT,...
 			//   BC x,CR1GT,...
-			// The first and second case demonstrate a symbol name which is
+			// The first and second cases demonstrate a symbol name which is
 			// effectively discarded. In these cases, the offset determines
 			// the CR bit.
 			prog.Reg = a[1].Reg
@@ -485,7 +485,7 @@ func (p *Parser) asmJump(op obj.As, cond string, a []obj.Addr) {
 				prog.Reg = p.getRegister(prog, op, &a[1])
 			} else {
 				// Compare register with immediate and jump.
-				prog.SetFrom3(a[1])
+				prog.AddRestSource(a[1])
 			}
 			break
 		}
@@ -508,7 +508,7 @@ func (p *Parser) asmJump(op obj.As, cond string, a []obj.Addr) {
 			// 4-operand compare-and-branch.
 			prog.From = a[0]
 			prog.Reg = p.getRegister(prog, op, &a[1])
-			prog.SetFrom3(a[2])
+			prog.AddRestSource(a[2])
 			target = &a[3]
 			break
 		}
@@ -522,8 +522,8 @@ func (p *Parser) asmJump(op obj.As, cond string, a []obj.Addr) {
 	case target.Type == obj.TYPE_BRANCH:
 		// JMP 4(PC)
 		*targetAddr = obj.Addr{
-			Type:   obj.TYPE_BRANCH,
-			Offset: p.pc + 1 + target.Offset, // +1 because p.pc is incremented in append, below.
+			Type:	obj.TYPE_BRANCH,
+			Offset:	p.pc + 1 + target.Offset,	// +1 because p.pc is incremented in append, below.
 		}
 	case target.Type == obj.TYPE_REG:
 		// JMP R1
@@ -581,8 +581,8 @@ func (p *Parser) patch() {
 
 func (p *Parser) branch(addr *obj.Addr, target *obj.Prog) {
 	*addr = obj.Addr{
-		Type:  obj.TYPE_BRANCH,
-		Index: 0,
+		Type:	obj.TYPE_BRANCH,
+		Index:	0,
 	}
 	addr.Val = target
 }
@@ -592,9 +592,9 @@ func (p *Parser) branch(addr *obj.Addr, target *obj.Prog) {
 func (p *Parser) asmInstruction(op obj.As, cond string, a []obj.Addr) {
 	// fmt.Printf("%s %+v\n", op, a)
 	prog := &obj.Prog{
-		Ctxt: p.ctxt,
-		Pos:  p.pos(),
-		As:   op,
+		Ctxt:	p.ctxt,
+		Pos:	p.pos(),
+		As:	op,
 	}
 	switch len(a) {
 	case 0:
@@ -642,6 +642,18 @@ func (p *Parser) asmInstruction(op obj.As, cond string, a []obj.Addr) {
 				prog.Reg = p.getRegister(prog, op, &a[1])
 				break
 			}
+
+			if arch.IsLoong64RDTIME(op) {
+				// The Loong64 RDTIME family of instructions is a bit special,
+				// in that both its register operands are outputs
+				prog.To = a[0]
+				if a[1].Type != obj.TYPE_REG {
+					p.errorf("invalid addressing modes for 2nd operand to %s instruction, must be register", op)
+					return
+				}
+				prog.RegTo2 = a[1].Reg
+				break
+			}
 		}
 		prog.From = a[0]
 		prog.To = a[1]
@@ -670,7 +682,7 @@ func (p *Parser) asmInstruction(op obj.As, cond string, a []obj.Addr) {
 			if arch.IsARMBFX(op) {
 				// a[0] and a[1] must be constants, a[2] must be a register
 				prog.From = a[0]
-				prog.SetFrom3(a[1])
+				prog.AddRestSource(a[1])
 				prog.To = a[2]
 				break
 			}
@@ -680,7 +692,7 @@ func (p *Parser) asmInstruction(op obj.As, cond string, a []obj.Addr) {
 			prog.To = a[2]
 		case sys.AMD64:
 			prog.From = a[0]
-			prog.SetFrom3(a[1])
+			prog.AddRestSource(a[1])
 			prog.To = a[2]
 		case sys.ARM64:
 			switch {
@@ -696,7 +708,7 @@ func (p *Parser) asmInstruction(op obj.As, cond string, a []obj.Addr) {
 			case arch.IsARM64TBL(op):
 				// one of its inputs does not fit into prog.Reg.
 				prog.From = a[0]
-				prog.SetFrom3(a[1])
+				prog.AddRestSource(a[1])
 				prog.To = a[2]
 			case arch.IsARM64CASP(op):
 				prog.From = a[0]
@@ -709,7 +721,7 @@ func (p *Parser) asmInstruction(op obj.As, cond string, a []obj.Addr) {
 				}
 				// For ARM64 CASP-like instructions, its 2nd destination operand is register pair(Rt, Rt+1) that can
 				// not fit into prog.RegTo2, so save it to the prog.RestArgs.
-				prog.SetTo2(a[2])
+				prog.AddRestDest(a[2])
 			default:
 				prog.From = a[0]
 				prog.Reg = p.getRegister(prog, op, &a[1])
@@ -717,7 +729,7 @@ func (p *Parser) asmInstruction(op obj.As, cond string, a []obj.Addr) {
 			}
 		case sys.I386:
 			prog.From = a[0]
-			prog.SetFrom3(a[1])
+			prog.AddRestSource(a[1])
 			prog.To = a[2]
 		case sys.PPC64:
 			if arch.IsPPC64CMP(op) {
@@ -732,12 +744,12 @@ func (p *Parser) asmInstruction(op obj.As, cond string, a []obj.Addr) {
 			prog.To = a[2]
 
 			// If the second argument is not a register argument, it must be
-			// passed RestArgs/SetFrom3
+			// passed RestArgs/AddRestSource
 			switch a[1].Type {
 			case obj.TYPE_REG:
 				prog.Reg = p.getRegister(prog, op, &a[1])
 			default:
-				prog.SetFrom3(a[1])
+				prog.AddRestSource(a[1])
 			}
 		case sys.RISCV64:
 			// RISCV64 instructions with one input and two outputs.
@@ -759,7 +771,7 @@ func (p *Parser) asmInstruction(op obj.As, cond string, a []obj.Addr) {
 			if a[1].Type == obj.TYPE_REG {
 				prog.Reg = p.getRegister(prog, op, &a[1])
 			} else {
-				prog.SetFrom3(a[1])
+				prog.AddRestSource(a[1])
 			}
 			prog.To = a[2]
 		default:
@@ -771,7 +783,7 @@ func (p *Parser) asmInstruction(op obj.As, cond string, a []obj.Addr) {
 			if arch.IsARMBFX(op) {
 				// a[0] and a[1] must be constants, a[2] and a[3] must be registers
 				prog.From = a[0]
-				prog.SetFrom3(a[1])
+				prog.AddRestSource(a[1])
 				prog.Reg = p.getRegister(prog, op, &a[2])
 				prog.To = a[3]
 				break
@@ -792,14 +804,14 @@ func (p *Parser) asmInstruction(op obj.As, cond string, a []obj.Addr) {
 		}
 		if p.arch.Family == sys.AMD64 {
 			prog.From = a[0]
-			prog.SetRestArgs([]obj.Addr{a[1], a[2]})
+			prog.AddRestSourceArgs([]obj.Addr{a[1], a[2]})
 			prog.To = a[3]
 			break
 		}
 		if p.arch.Family == sys.ARM64 {
 			prog.From = a[0]
 			prog.Reg = p.getRegister(prog, op, &a[1])
-			prog.SetFrom3(a[2])
+			prog.AddRestSource(a[2])
 			prog.To = a[3]
 			break
 		}
@@ -807,20 +819,20 @@ func (p *Parser) asmInstruction(op obj.As, cond string, a []obj.Addr) {
 			prog.From = a[0]
 			prog.To = a[3]
 			// If the second argument is not a register argument, it must be
-			// passed RestArgs/SetFrom3
+			// passed RestArgs/AddRestSource
 			if a[1].Type == obj.TYPE_REG {
 				prog.Reg = p.getRegister(prog, op, &a[1])
-				prog.SetRestArgs([]obj.Addr{a[2]})
+				prog.AddRestSource(a[2])
 			} else {
 				// Don't set prog.Reg if a1 isn't a reg arg.
-				prog.SetRestArgs([]obj.Addr{a[1], a[2]})
+				prog.AddRestSourceArgs([]obj.Addr{a[1], a[2]})
 			}
 			break
 		}
 		if p.arch.Family == sys.RISCV64 {
 			prog.From = a[0]
 			prog.Reg = p.getRegister(prog, op, &a[1])
-			prog.SetRestArgs([]obj.Addr{a[2]})
+			prog.AddRestSource(a[2])
 			prog.To = a[3]
 			break
 		}
@@ -831,7 +843,7 @@ func (p *Parser) asmInstruction(op obj.As, cond string, a []obj.Addr) {
 			}
 			prog.From = a[0]
 			prog.Reg = p.getRegister(prog, op, &a[1])
-			prog.SetFrom3(a[2])
+			prog.AddRestSource(a[2])
 			prog.To = a[3]
 			break
 		}
@@ -842,19 +854,19 @@ func (p *Parser) asmInstruction(op obj.As, cond string, a []obj.Addr) {
 			prog.From = a[0]
 			// Second arg is always a register type on ppc64.
 			prog.Reg = p.getRegister(prog, op, &a[1])
-			prog.SetRestArgs([]obj.Addr{a[2], a[3]})
+			prog.AddRestSourceArgs([]obj.Addr{a[2], a[3]})
 			prog.To = a[4]
 			break
 		}
 		if p.arch.Family == sys.AMD64 {
 			prog.From = a[0]
-			prog.SetRestArgs([]obj.Addr{a[1], a[2], a[3]})
+			prog.AddRestSourceArgs([]obj.Addr{a[1], a[2], a[3]})
 			prog.To = a[4]
 			break
 		}
 		if p.arch.Family == sys.S390X {
 			prog.From = a[0]
-			prog.SetRestArgs([]obj.Addr{a[1], a[2], a[3]})
+			prog.AddRestSourceArgs([]obj.Addr{a[1], a[2], a[3]})
 			prog.To = a[4]
 			break
 		}
@@ -877,14 +889,14 @@ func (p *Parser) asmInstruction(op obj.As, cond string, a []obj.Addr) {
 			}
 			prog.To.Offset = offset
 			cond = ""
-			prog.As = MRC // Both instructions are coded as MRC.
+			prog.As = MRC	// Both instructions are coded as MRC.
 			break
 		}
 		if p.arch.Family == sys.PPC64 {
 			prog.From = a[0]
 			// Second arg is always a register type on ppc64.
 			prog.Reg = p.getRegister(prog, op, &a[1])
-			prog.SetRestArgs([]obj.Addr{a[2], a[3], a[4]})
+			prog.AddRestSourceArgs([]obj.Addr{a[2], a[3], a[4]})
 			prog.To = a[5]
 			break
 		}
@@ -897,7 +909,7 @@ func (p *Parser) asmInstruction(op obj.As, cond string, a []obj.Addr) {
 	p.append(prog, cond, true)
 }
 
-// symbolName returns the symbol name, or an error string if none if available.
+// symbolName returns the symbol name, or an error string if none is available.
 func symbolName(addr *obj.Addr) string {
 	if addr.Sym != nil {
 		return addr.Sym.Name

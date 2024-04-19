@@ -31,13 +31,13 @@ const deltaNewFile = -64
 
 // Synthesize a token.Pos
 type fakeFileSet struct {
-	fset  *token.FileSet
-	files map[string]*fileInfo
+	fset	*token.FileSet
+	files	map[string]*fileInfo
 }
 
 type fileInfo struct {
-	file     *token.File
-	lastline int
+	file		*token.File
+	lastline	int
 }
 
 const maxlines = 64 * 1024
@@ -79,8 +79,8 @@ func (s *fakeFileSet) setLines() {
 }
 
 var (
-	fakeLines     []int
-	fakeLinesOnce sync.Once
+	fakeLines	[]int
+	fakeLinesOnce	sync.Once
 )
 
 func chanDir(d int) types.ChanDir {
@@ -138,7 +138,7 @@ var predeclared = []types.Type{
 	types.Typ[types.UnsafePointer],
 
 	// invalid type
-	types.Typ[types.Invalid], // only appears in packages with errors
+	types.Typ[types.Invalid],	// only appears in packages with errors
 
 	// used internally by gc; never used by this package or in .a files
 	// not to be confused with the universe any
@@ -153,19 +153,19 @@ var predeclared = []types.Type{
 
 type anyType struct{}
 
-func (t anyType) Underlying() types.Type { return t }
-func (t anyType) String() string         { return "any" }
+func (t anyType) Underlying() types.Type	{ return t }
+func (t anyType) String() string		{ return "any" }
 
 // See cmd/compile/internal/noder.derivedInfo.
 type derivedInfo struct {
-	idx    pkgbits.Index
-	needed bool
+	idx	pkgbits.Index
+	needed	bool
 }
 
 // See cmd/compile/internal/noder.typeInfo.
 type typeInfo struct {
-	idx     pkgbits.Index
-	derived bool
+	idx	pkgbits.Index
+	derived	bool
 }
 
 // See cmd/compile/internal/types.SplitVargenSuffix.

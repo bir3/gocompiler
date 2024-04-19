@@ -57,5 +57,5 @@ func (s *Stack) Col() int {
 	return s.tr[len(s.tr)-1].Col()
 }
 
-func (s *Stack) Close() { // Unused.
+func (s *Stack) Close() {	// Unused.
 }

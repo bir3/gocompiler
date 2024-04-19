@@ -26,11 +26,12 @@ const Doc = `check that struct field tags conform to reflect.StructTag.Get
 Also report certain struct tags (json, xml) used with unexported fields.`
 
 var Analyzer = &analysis.Analyzer{
-	Name:             "structtag",
-	Doc:              Doc,
-	Requires:         []*analysis.Analyzer{inspect.Analyzer},
-	RunDespiteErrors: true,
-	Run:              run,
+	Name:			"structtag",
+	Doc:			Doc,
+	URL:			"https://pkg.go.dev/golang.org/x/tools/go/analysis/passes/structtag",
+	Requires:		[]*analysis.Analyzer{inspect.Analyzer},
+	RunDespiteErrors:	true,
+	Run:			run,
 }
 
 func run(pass *analysis.Pass) (interface{}, error) {
@@ -62,9 +63,9 @@ func run(pass *analysis.Pass) (interface{}, error) {
 type namesSeen map[uniqueName]token.Pos
 
 type uniqueName struct {
-	key   string // "xml" or "json"
-	name  string // the encoding name
-	level int    // anonymous struct nesting level
+	key	string	// "xml" or "json"
+	name	string	// the encoding name
+	level	int	// anonymous struct nesting level
 }
 
 func (s *namesSeen) Get(key, name string, level int) (token.Pos, bool) {
@@ -168,7 +169,7 @@ func checkTagDuplicates(pass *analysis.Pass, tag, key string, nearest, field *ty
 			// Use a separate namespace for XML attributes.
 			for _, opt := range strings.Split(val[i:], ",") {
 				if opt == "attr" {
-					key += " attribute" // Key is part of the error message.
+					key += " attribute"	// Key is part of the error message.
 					break
 				}
 			}
@@ -199,11 +200,11 @@ func checkTagDuplicates(pass *analysis.Pass, tag, key string, nearest, field *ty
 }
 
 var (
-	errTagSyntax      = errors.New("bad syntax for struct tag pair")
-	errTagKeySyntax   = errors.New("bad syntax for struct tag key")
-	errTagValueSyntax = errors.New("bad syntax for struct tag value")
-	errTagValueSpace  = errors.New("suspicious space in struct tag value")
-	errTagSpace       = errors.New("key:\"value\" pairs not separated by spaces")
+	errTagSyntax		= errors.New("bad syntax for struct tag pair")
+	errTagKeySyntax		= errors.New("bad syntax for struct tag key")
+	errTagValueSyntax	= errors.New("bad syntax for struct tag value")
+	errTagValueSpace	= errors.New("suspicious space in struct tag value")
+	errTagSpace		= errors.New("key:\"value\" pairs not separated by spaces")
 )
 
 // validateStructTag parses the struct tag and returns an error if it is not

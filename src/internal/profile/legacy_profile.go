@@ -11,40 +11,40 @@ import (
 	"bufio"
 	"bytes"
 	"fmt"
+	"github.com/bir3/gocompiler/src/internal/lazyregexp"
 	"io"
 	"math"
-	"regexp"
 	"strconv"
 	"strings"
 )
 
 var (
-	countStartRE = regexp.MustCompile(`\A(\w+) profile: total \d+\n\z`)
-	countRE      = regexp.MustCompile(`\A(\d+) @(( 0x[0-9a-f]+)+)\n\z`)
+	countStartRE	= lazyregexp.New(`\A(\w+) profile: total \d+\n\z`)
+	countRE		= lazyregexp.New(`\A(\d+) @(( 0x[0-9a-f]+)+)\n\z`)
 
-	heapHeaderRE = regexp.MustCompile(`heap profile: *(\d+): *(\d+) *\[ *(\d+): *(\d+) *\] *@ *(heap[_a-z0-9]*)/?(\d*)`)
-	heapSampleRE = regexp.MustCompile(`(-?\d+): *(-?\d+) *\[ *(\d+): *(\d+) *] @([ x0-9a-f]*)`)
+	heapHeaderRE	= lazyregexp.New(`heap profile: *(\d+): *(\d+) *\[ *(\d+): *(\d+) *\] *@ *(heap[_a-z0-9]*)/?(\d*)`)
+	heapSampleRE	= lazyregexp.New(`(-?\d+): *(-?\d+) *\[ *(\d+): *(\d+) *] @([ x0-9a-f]*)`)
 
-	contentionSampleRE = regexp.MustCompile(`(\d+) *(\d+) @([ x0-9a-f]*)`)
+	contentionSampleRE	= lazyregexp.New(`(\d+) *(\d+) @([ x0-9a-f]*)`)
 
-	hexNumberRE = regexp.MustCompile(`0x[0-9a-f]+`)
+	hexNumberRE	= lazyregexp.New(`0x[0-9a-f]+`)
 
-	growthHeaderRE = regexp.MustCompile(`heap profile: *(\d+): *(\d+) *\[ *(\d+): *(\d+) *\] @ growthz`)
+	growthHeaderRE	= lazyregexp.New(`heap profile: *(\d+): *(\d+) *\[ *(\d+): *(\d+) *\] @ growthz`)
 
-	fragmentationHeaderRE = regexp.MustCompile(`heap profile: *(\d+): *(\d+) *\[ *(\d+): *(\d+) *\] @ fragmentationz`)
+	fragmentationHeaderRE	= lazyregexp.New(`heap profile: *(\d+): *(\d+) *\[ *(\d+): *(\d+) *\] @ fragmentationz`)
 
-	threadzStartRE = regexp.MustCompile(`--- threadz \d+ ---`)
-	threadStartRE  = regexp.MustCompile(`--- Thread ([[:xdigit:]]+) \(name: (.*)/(\d+)\) stack: ---`)
+	threadzStartRE	= lazyregexp.New(`--- threadz \d+ ---`)
+	threadStartRE	= lazyregexp.New(`--- Thread ([[:xdigit:]]+) \(name: (.*)/(\d+)\) stack: ---`)
 
-	procMapsRE = regexp.MustCompile(`([[:xdigit:]]+)-([[:xdigit:]]+)\s+([-rwxp]+)\s+([[:xdigit:]]+)\s+([[:xdigit:]]+):([[:xdigit:]]+)\s+([[:digit:]]+)\s*(\S+)?`)
+	procMapsRE	= lazyregexp.New(`([[:xdigit:]]+)-([[:xdigit:]]+)\s+([-rwxp]+)\s+([[:xdigit:]]+)\s+([[:xdigit:]]+):([[:xdigit:]]+)\s+([[:digit:]]+)\s*(\S+)?`)
 
-	briefMapsRE = regexp.MustCompile(`\s*([[:xdigit:]]+)-([[:xdigit:]]+):\s*(\S+)(\s.*@)?([[:xdigit:]]+)?`)
+	briefMapsRE	= lazyregexp.New(`\s*([[:xdigit:]]+)-([[:xdigit:]]+):\s*(\S+)(\s.*@)?([[:xdigit:]]+)?`)
 
 	// LegacyHeapAllocated instructs the heapz parsers to use the
 	// allocated memory stats instead of the default in-use memory. Note
 	// that tcmalloc doesn't provide all allocated memory, only in-use
 	// stats.
-	LegacyHeapAllocated bool
+	LegacyHeapAllocated	bool
 )
 
 func isSpaceOrComment(line string) bool {
@@ -76,9 +76,9 @@ func parseGoCount(b []byte) (*Profile, error) {
 	}
 	profileType := m[1]
 	p := &Profile{
-		PeriodType: &ValueType{Type: profileType, Unit: "count"},
-		Period:     1,
-		SampleType: []*ValueType{{Type: profileType, Unit: "count"}},
+		PeriodType:	&ValueType{Type: profileType, Unit: "count"},
+		Period:		1,
+		SampleType:	[]*ValueType{{Type: profileType, Unit: "count"}},
 	}
 	locations := make(map[uint64]*Location)
 	for {
@@ -123,8 +123,8 @@ func parseGoCount(b []byte) (*Profile, error) {
 			locs = append(locs, loc)
 		}
 		p.Sample = append(p.Sample, &Sample{
-			Location: locs,
-			Value:    []int64{n},
+			Location:	locs,
+			Value:		[]int64{n},
 		})
 	}
 
@@ -253,8 +253,8 @@ func ParseTracebacks(b []byte) (*Profile, error) {
 	r := bytes.NewBuffer(b)
 
 	p := &Profile{
-		PeriodType: &ValueType{Type: "trace", Unit: "count"},
-		Period:     1,
+		PeriodType:	&ValueType{Type: "trace", Unit: "count"},
+		Period:		1,
 		SampleType: []*ValueType{
 			{Type: "trace", Unit: "count"},
 		},
@@ -316,9 +316,9 @@ func ParseTracebacks(b []byte) (*Profile, error) {
 func addTracebackSample(l []*Location, s []string, p *Profile) {
 	p.Sample = append(p.Sample,
 		&Sample{
-			Value:    []int64{1},
-			Location: l,
-			Label:    map[string][]string{"source": s},
+			Value:		[]int64{1},
+			Location:	l,
+			Label:		map[string][]string{"source": s},
 		})
 }
 
@@ -358,8 +358,8 @@ func parseCPU(b []byte) (*Profile, error) {
 // profile in its native endianness.
 func cpuProfile(b []byte, period int64, parse func(b []byte) (uint64, []byte)) (*Profile, error) {
 	p := &Profile{
-		Period:     period * 1000,
-		PeriodType: &ValueType{Type: "cpu", Unit: "nanoseconds"},
+		Period:		period * 1000,
+		PeriodType:	&ValueType{Type: "cpu", Unit: "nanoseconds"},
 		SampleType: []*ValueType{
 			{Type: "samples", Unit: "count"},
 			{Type: "cpu", Unit: "nanoseconds"},
@@ -454,8 +454,8 @@ func parseCPUSamples(b []byte, parse func(b []byte) (uint64, []byte), adjust boo
 		}
 		p.Sample = append(p.Sample,
 			&Sample{
-				Value:    []int64{int64(count), int64(count) * p.Period},
-				Location: sloc,
+				Value:		[]int64{int64(count), int64(count) * p.Period},
+				Location:	sloc,
 			})
 	}
 	// Reached the end without finding the EOD marker.
@@ -479,7 +479,7 @@ func parseHeap(b []byte) (p *Profile, err error) {
 				{Type: "objects", Unit: "count"},
 				{Type: "space", Unit: "bytes"},
 			},
-			PeriodType: &ValueType{Type: "objects", Unit: "bytes"},
+			PeriodType:	&ValueType{Type: "objects", Unit: "bytes"},
 		}
 
 		var period int64
@@ -505,8 +505,8 @@ func parseHeap(b []byte) (p *Profile, err error) {
 				{Type: "objects", Unit: "count"},
 				{Type: "space", Unit: "bytes"},
 			},
-			PeriodType: &ValueType{Type: "heapgrowth", Unit: "count"},
-			Period:     1,
+			PeriodType:	&ValueType{Type: "heapgrowth", Unit: "count"},
+			Period:		1,
 		}
 	} else if header = fragmentationHeaderRE.FindStringSubmatch(l); header != nil {
 		p = &Profile{
@@ -514,8 +514,8 @@ func parseHeap(b []byte) (p *Profile, err error) {
 				{Type: "objects", Unit: "count"},
 				{Type: "space", Unit: "bytes"},
 			},
-			PeriodType: &ValueType{Type: "allocations", Unit: "count"},
-			Period:     1,
+			PeriodType:	&ValueType{Type: "allocations", Unit: "count"},
+			Period:		1,
 		}
 	} else {
 		return nil, errUnrecognized
@@ -574,9 +574,9 @@ func parseHeap(b []byte) (p *Profile, err error) {
 		}
 
 		p.Sample = append(p.Sample, &Sample{
-			Value:    value,
-			Location: sloc,
-			NumLabel: map[string][]int64{"bytes": {blocksize}},
+			Value:		value,
+			Location:	sloc,
+			NumLabel:	map[string][]int64{"bytes": {blocksize}},
 		})
 	}
 
@@ -710,8 +710,8 @@ func parseContention(b []byte) (*Profile, error) {
 // output from the Go runtime.
 func parseCppContention(r *bytes.Buffer) (*Profile, error) {
 	p := &Profile{
-		PeriodType: &ValueType{Type: "contentions", Unit: "count"},
-		Period:     1,
+		PeriodType:	&ValueType{Type: "contentions", Unit: "count"},
+		Period:		1,
 		SampleType: []*ValueType{
 			{Type: "contentions", Unit: "count"},
 			{Type: "delay", Unit: "nanoseconds"},
@@ -808,8 +808,8 @@ func parseCppContention(r *bytes.Buffer) (*Profile, error) {
 				sloc = append(sloc, loc)
 			}
 			p.Sample = append(p.Sample, &Sample{
-				Value:    value,
-				Location: sloc,
+				Value:		value,
+				Location:	sloc,
 			})
 		}
 
@@ -903,9 +903,9 @@ func parseThread(b []byte) (*Profile, error) {
 	}
 
 	p := &Profile{
-		SampleType: []*ValueType{{Type: "thread", Unit: "count"}},
-		PeriodType: &ValueType{Type: "thread", Unit: "count"},
-		Period:     1,
+		SampleType:	[]*ValueType{{Type: "thread", Unit: "count"}},
+		PeriodType:	&ValueType{Type: "thread", Unit: "count"},
+		Period:		1,
 	}
 
 	locs := make(map[uint64]*Location)
@@ -950,8 +950,8 @@ func parseThread(b []byte) (*Profile, error) {
 		}
 
 		p.Sample = append(p.Sample, &Sample{
-			Value:    []int64{1},
-			Location: sloc,
+			Value:		[]int64{1},
+			Location:	sloc,
 		})
 	}
 
@@ -1125,7 +1125,7 @@ func parseMappingEntry(l string) (*Mapping, error) {
 type sectionType int
 
 const (
-	unrecognizedSection sectionType = iota
+	unrecognizedSection	sectionType	= iota
 	memoryMapSection
 )
 
@@ -1156,7 +1156,7 @@ func (p *Profile) addLegacyFrameInfo() {
 	}
 }
 
-var heapzSampleTypes = []string{"allocations", "size"} // early Go pprof profiles
+var heapzSampleTypes = []string{"allocations", "size"}	// early Go pprof profiles
 var heapzInUseSampleTypes = []string{"inuse_objects", "inuse_space"}
 var heapzAllocSampleTypes = []string{"alloc_objects", "alloc_space"}
 var contentionzSampleTypes = []string{"contentions", "delay"}

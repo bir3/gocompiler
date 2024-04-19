@@ -14,7 +14,7 @@ import (
 	"reflect"
 )
 
-// A FieldFilter may be provided to Fprint to control the output.
+// A FieldFilter may be provided to [Fprint] to control the output.
 type FieldFilter func(name string, value reflect.Value) bool
 
 // NotNilFilter returns true for field values that are not nil;
@@ -32,7 +32,7 @@ func NotNilFilter(_ string, v reflect.Value) bool {
 // to that file set. Otherwise positions are printed as integer
 // values (file set specific offsets).
 //
-// A non-nil FieldFilter f may be provided to control the output:
+// A non-nil [FieldFilter] f may be provided to control the output:
 // struct fields for which f(fieldname, fieldvalue) is true are
 // printed; all others are filtered from the output. Unexported
 // struct fields are never printed.
@@ -43,17 +43,17 @@ func Fprint(w io.Writer, fset *token.FileSet, x any, f FieldFilter) error {
 func fprint(w io.Writer, fset *token.FileSet, x any, f FieldFilter) (err error) {
 	// setup printer
 	p := printer{
-		output: w,
-		fset:   fset,
-		filter: f,
-		ptrmap: make(map[any]int),
-		last:   '\n', // force printing of line number on first line
+		output:	w,
+		fset:	fset,
+		filter:	f,
+		ptrmap:	make(map[any]int),
+		last:	'\n',	// force printing of line number on first line
 	}
 
 	// install error handler
 	defer func() {
 		if e := recover(); e != nil {
-			err = e.(localError).err // re-panics if it's not a localError
+			err = e.(localError).err	// re-panics if it's not a localError
 		}
 	}()
 
@@ -75,13 +75,13 @@ func Print(fset *token.FileSet, x any) error {
 }
 
 type printer struct {
-	output io.Writer
-	fset   *token.FileSet
-	filter FieldFilter
-	ptrmap map[any]int // *T -> line number
-	indent int         // current indentation level
-	last   byte        // the last byte processed by Write
-	line   int         // current line number
+	output	io.Writer
+	fset	*token.FileSet
+	filter	FieldFilter
+	ptrmap	map[any]int	// *T -> line number
+	indent	int		// current indentation level
+	last	byte		// the last byte processed by Write
+	line	int		// current line number
 }
 
 var indent = []byte(".  ")

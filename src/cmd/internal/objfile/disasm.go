@@ -29,14 +29,14 @@ import (
 
 // Disasm is a disassembler for a given File.
 type Disasm struct {
-	syms      []Sym            //symbols in file, sorted by address
-	pcln      Liner            // pcln table
-	text      []byte           // bytes of text segment (actual instructions)
-	textStart uint64           // start PC of text
-	textEnd   uint64           // end PC of text
-	goarch    string           // GOARCH string
-	disasm    disasmFunc       // disassembler function for goarch
-	byteOrder binary.ByteOrder // byte order for goarch
+	syms		[]Sym			//symbols in file, sorted by address
+	pcln		Liner			// pcln table
+	text		[]byte			// bytes of text segment (actual instructions)
+	textStart	uint64			// start PC of text
+	textEnd		uint64			// end PC of text
+	goarch		string			// GOARCH string
+	disasm		disasmFunc		// disassembler function for goarch
+	byteOrder	binary.ByteOrder	// byte order for goarch
 }
 
 // Disasm returns a disassembler for the file f.
@@ -75,14 +75,14 @@ func (e *Entry) Disasm() (*Disasm, error) {
 	}
 	syms = keep
 	d := &Disasm{
-		syms:      syms,
-		pcln:      pcln,
-		text:      textBytes,
-		textStart: textStart,
-		textEnd:   textStart + uint64(len(textBytes)),
-		goarch:    goarch,
-		disasm:    disasm,
-		byteOrder: byteOrder,
+		syms:		syms,
+		pcln:		pcln,
+		text:		textBytes,
+		textStart:	textStart,
+		textEnd:	textStart + uint64(len(textBytes)),
+		goarch:		goarch,
+		disasm:		disasm,
+		byteOrder:	byteOrder,
 	}
 
 	return d, nil
@@ -111,21 +111,21 @@ func base(path string) string {
 
 // CachedFile contains the content of a file split into lines.
 type CachedFile struct {
-	FileName string
-	Lines    [][]byte
+	FileName	string
+	Lines		[][]byte
 }
 
 // FileCache is a simple LRU cache of file contents.
 type FileCache struct {
-	files  *list.List
-	maxLen int
+	files	*list.List
+	maxLen	int
 }
 
 // NewFileCache returns a FileCache which can contain up to maxLen cached file contents.
 func NewFileCache(maxLen int) *FileCache {
 	return &FileCache{
-		files:  list.New(),
-		maxLen: maxLen,
+		files:	list.New(),
+		maxLen:	maxLen,
 	}
 }
 
@@ -163,8 +163,8 @@ func (fc *FileCache) Line(filename string, line int) ([]byte, error) {
 		}
 
 		cf = &CachedFile{
-			FileName: filename,
-			Lines:    bytes.Split(content, []byte{'\n'}),
+			FileName:	filename,
+			Lines:		bytes.Split(content, []byte{'\n'}),
 		}
 		fc.files.PushFront(cf)
 
@@ -319,8 +319,8 @@ func disasm_x86(code []byte, pc uint64, lookup lookupFunc, arch int, gnuAsm bool
 }
 
 type textReader struct {
-	code []byte
-	pc   uint64
+	code	[]byte
+	pc	uint64
 }
 
 func (r textReader) ReadAt(data []byte, off int64) (n int, err error) {
@@ -384,22 +384,22 @@ func disasm_ppc64(code []byte, pc uint64, lookup lookupFunc, byteOrder binary.By
 }
 
 var disasms = map[string]disasmFunc{
-	"386":     disasm_386,
-	"amd64":   disasm_amd64,
-	"arm":     disasm_arm,
-	"arm64":   disasm_arm64,
-	"ppc64":   disasm_ppc64,
-	"ppc64le": disasm_ppc64,
+	"386":		disasm_386,
+	"amd64":	disasm_amd64,
+	"arm":		disasm_arm,
+	"arm64":	disasm_arm64,
+	"ppc64":	disasm_ppc64,
+	"ppc64le":	disasm_ppc64,
 }
 
 var byteOrders = map[string]binary.ByteOrder{
-	"386":     binary.LittleEndian,
-	"amd64":   binary.LittleEndian,
-	"arm":     binary.LittleEndian,
-	"arm64":   binary.LittleEndian,
-	"ppc64":   binary.BigEndian,
-	"ppc64le": binary.LittleEndian,
-	"s390x":   binary.BigEndian,
+	"386":		binary.LittleEndian,
+	"amd64":	binary.LittleEndian,
+	"arm":		binary.LittleEndian,
+	"arm64":	binary.LittleEndian,
+	"ppc64":	binary.BigEndian,
+	"ppc64le":	binary.LittleEndian,
+	"s390x":	binary.BigEndian,
 }
 
 type Liner interface {

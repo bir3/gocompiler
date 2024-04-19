@@ -68,11 +68,11 @@ func Condition(summary string, eval func(*State) (bool, error)) Cond {
 }
 
 type funcCond struct {
-	eval  func(*State) (bool, error)
-	usage CondUsage
+	eval	func(*State) (bool, error)
+	usage	CondUsage
 }
 
-func (c *funcCond) Usage() *CondUsage { return &c.usage }
+func (c *funcCond) Usage() *CondUsage	{ return &c.usage }
 
 func (c *funcCond) Eval(s *State, suffix string) (bool, error) {
 	if suffix != "" {
@@ -87,11 +87,11 @@ func PrefixCondition(summary string, eval func(*State, string) (bool, error)) Co
 }
 
 type prefixCond struct {
-	eval  func(*State, string) (bool, error)
-	usage CondUsage
+	eval	func(*State, string) (bool, error)
+	usage	CondUsage
 }
 
-func (c *prefixCond) Usage() *CondUsage { return &c.usage }
+func (c *prefixCond) Usage() *CondUsage	{ return &c.usage }
 
 func (c *prefixCond) Eval(s *State, suffix string) (bool, error) {
 	return c.eval(s, suffix)
@@ -104,11 +104,11 @@ func BoolCondition(summary string, v bool) Cond {
 }
 
 type boolCond struct {
-	v     bool
-	usage CondUsage
+	v	bool
+	usage	CondUsage
 }
 
-func (b *boolCond) Usage() *CondUsage { return &b.usage }
+func (b *boolCond) Usage() *CondUsage	{ return &b.usage }
 
 func (b *boolCond) Eval(s *State, suffix string) (bool, error) {
 	if suffix != "" {
@@ -127,14 +127,14 @@ func OnceCondition(summary string, eval func() (bool, error)) Cond {
 }
 
 type onceCond struct {
-	once  sync.Once
-	v     bool
-	err   error
-	eval  func() (bool, error)
-	usage CondUsage
+	once	sync.Once
+	v	bool
+	err	error
+	eval	func() (bool, error)
+	usage	CondUsage
 }
 
-func (l *onceCond) Usage() *CondUsage { return &l.usage }
+func (l *onceCond) Usage() *CondUsage	{ return &l.usage }
 
 func (l *onceCond) Eval(s *State, suffix string) (bool, error) {
 	if suffix != "" {
@@ -155,12 +155,12 @@ func CachedCondition(summary string, eval func(string) (bool, error)) Cond {
 }
 
 type cachedCond struct {
-	m     sync.Map
-	eval  func(string) (bool, error)
-	usage CondUsage
+	m	sync.Map
+	eval	func(string) (bool, error)
+	usage	CondUsage
 }
 
-func (c *cachedCond) Usage() *CondUsage { return &c.usage }
+func (c *cachedCond) Usage() *CondUsage	{ return &c.usage }
 
 func (c *cachedCond) Eval(_ *State, suffix string) (bool, error) {
 	for {

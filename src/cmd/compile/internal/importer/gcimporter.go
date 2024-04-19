@@ -8,12 +8,13 @@ package importer
 import (
 	"bufio"
 	"bytes"
+	"errors"
 	"fmt"
 	"github.com/bir3/gocompiler/src/go/build"
 	"github.com/bir3/gocompiler/src/internal/pkgbits"
 	"io"
 	"os"
-	"os/exec"
+	"github.com/bir3/gocompiler/exec"
 	"path/filepath"
 	"strings"
 	"sync"
@@ -21,7 +22,7 @@ import (
 	"github.com/bir3/gocompiler/src/cmd/compile/internal/types2"
 )
 
-var exportMap sync.Map // package dir → func() (string, bool)
+var exportMap sync.Map	// package dir → func() (string, error)
 
 // lookupGorootExport returns the location of the export data
 // (normally found in the build cache, but located in GOROOT/pkg
@@ -30,49 +31,53 @@ var exportMap sync.Map // package dir → func() (string, bool)
 // (We use the package's directory instead of its import path
 // mainly to simplify handling of the packages in src/vendor
 // and cmd/vendor.)
-func lookupGorootExport(pkgDir string) (string, bool) {
+func lookupGorootExport(pkgDir string) (string, error) {
 	f, ok := exportMap.Load(pkgDir)
 	if !ok {
 		var (
-			listOnce   sync.Once
-			exportPath string
+			listOnce	sync.Once
+			exportPath	string
+			err		error
 		)
-		f, _ = exportMap.LoadOrStore(pkgDir, func() (string, bool) {
+		f, _ = exportMap.LoadOrStore(pkgDir, func() (string, error) {
 			listOnce.Do(func() {
 				cmd := exec.Command(filepath.Join(build.Default.GOROOT, "bin", "go"), "list", "-export", "-f", "{{.Export}}", pkgDir)
 				cmd.Dir = build.Default.GOROOT
 				cmd.Env = append(os.Environ(), "PWD="+cmd.Dir, "GOROOT="+build.Default.GOROOT)
 				var output []byte
-				output, err := cmd.Output()
+				output, err = cmd.Output()
 				if err != nil {
+					if ee, ok := err.(*exec.ExitError); ok && len(ee.Stderr) > 0 {
+						err = errors.New(string(ee.Stderr))
+					}
 					return
 				}
 
 				exports := strings.Split(string(bytes.TrimSpace(output)), "\n")
 				if len(exports) != 1 {
+					err = fmt.Errorf("go list reported %d exports; expected 1", len(exports))
 					return
 				}
 
 				exportPath = exports[0]
 			})
 
-			return exportPath, exportPath != ""
+			return exportPath, err
 		})
 	}
 
-	return f.(func() (string, bool))()
+	return f.(func() (string, error))()
 }
 
-var pkgExts = [...]string{".a", ".o"} // a file from the build cache will have no extension
+var pkgExts = [...]string{".a", ".o"}	// a file from the build cache will have no extension
 
 // FindPkg returns the filename and unique package id for an import
 // path based on package information provided by build.Import (using
 // the build.Default build.Context). A relative srcDir is interpreted
 // relative to the current working directory.
-// If no file was found, an empty filename is returned.
-func FindPkg(path, srcDir string) (filename, id string) {
+func FindPkg(path, srcDir string) (filename, id string, err error) {
 	if path == "" {
-		return
+		return "", "", errors.New("path is empty")
 	}
 
 	var noext string
@@ -80,19 +85,22 @@ func FindPkg(path, srcDir string) (filename, id string) {
 	default:
 		// "x" -> "$GOPATH/pkg/$GOOS_$GOARCH/x.ext", "x"
 		// Don't require the source files to be present.
-		if abs, err := filepath.Abs(srcDir); err == nil { // see issue 14282
+		if abs, err := filepath.Abs(srcDir); err == nil {	// see issue 14282
 			srcDir = abs
 		}
-		bp, _ := build.Import(path, srcDir, build.FindOnly|build.AllowBinary)
+		var bp *build.Package
+		bp, err = build.Import(path, srcDir, build.FindOnly|build.AllowBinary)
 		if bp.PkgObj == "" {
-			var ok bool
 			if bp.Goroot && bp.Dir != "" {
-				filename, ok = lookupGorootExport(bp.Dir)
+				filename, err = lookupGorootExport(bp.Dir)
+				if err == nil {
+					_, err = os.Stat(filename)
+				}
+				if err == nil {
+					return filename, bp.ImportPath, nil
+				}
 			}
-			if !ok {
-				id = path // make sure we have an id to print in error message
-				return
-			}
+			goto notfound
 		} else {
 			noext = strings.TrimSuffix(bp.PkgObj, ".a")
 		}
@@ -111,27 +119,29 @@ func FindPkg(path, srcDir string) (filename, id string) {
 		id = path
 	}
 
-	if false { // for debugging
+	if false {	// for debugging
 		if path != id {
 			fmt.Printf("%s -> %s\n", path, id)
 		}
 	}
 
-	if filename != "" {
-		if f, err := os.Stat(filename); err == nil && !f.IsDir() {
-			return
-		}
-	}
 	// try extensions
 	for _, ext := range pkgExts {
 		filename = noext + ext
-		if f, err := os.Stat(filename); err == nil && !f.IsDir() {
-			return
+		f, statErr := os.Stat(filename)
+		if statErr == nil && !f.IsDir() {
+			return filename, id, nil
+		}
+		if err == nil {
+			err = statErr
 		}
 	}
 
-	filename = "" // not found
-	return
+notfound:
+	if err == nil {
+		return "", path, fmt.Errorf("can't find import: %q", path)
+	}
+	return "", path, fmt.Errorf("can't find import: %q: %w", path, err)
 }
 
 // Import imports a gc-generated package given its import path and srcDir, adds
@@ -159,12 +169,12 @@ func Import(packages map[string]*types2.Package, path, srcDir string, lookup fun
 		rc = f
 	} else {
 		var filename string
-		filename, id = FindPkg(path, srcDir)
+		filename, id, err = FindPkg(path, srcDir)
 		if filename == "" {
 			if path == "unsafe" {
 				return types2.Unsafe, nil
 			}
-			return nil, fmt.Errorf("can't find import: %q", id)
+			return nil, err
 		}
 
 		// no need to re-import if the package was imported completely before
@@ -238,6 +248,6 @@ func Import(packages map[string]*types2.Package, path, srcDir string, lookup fun
 
 type byPath []*types2.Package
 
-func (a byPath) Len() int           { return len(a) }
-func (a byPath) Swap(i, j int)      { a[i], a[j] = a[j], a[i] }
-func (a byPath) Less(i, j int) bool { return a[i].Path() < a[j].Path() }
+func (a byPath) Len() int		{ return len(a) }
+func (a byPath) Swap(i, j int)		{ a[i], a[j] = a[j], a[i] }
+func (a byPath) Less(i, j int) bool	{ return a[i].Path() < a[j].Path() }

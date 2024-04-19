@@ -19,33 +19,33 @@ import (
 type operandMode byte
 
 const (
-	invalid   operandMode = iota // operand is invalid
-	novalue                      // operand represents no value (result of a function call w/o result)
-	builtin                      // operand is a built-in function
-	typexpr                      // operand is a type
-	constant_                    // operand is a constant; the operand's typ is a Basic type
-	variable                     // operand is an addressable variable
-	mapindex                     // operand is a map index expression (acts like a variable on lhs, commaok on rhs of an assignment)
-	value                        // operand is a computed value
-	nilvalue                     // operand is the nil value
-	commaok                      // like value, but operand may be used in a comma,ok expression
-	commaerr                     // like commaok, but second value is error, not boolean
-	cgofunc                      // operand is a cgo function
+	invalid		operandMode	= iota	// operand is invalid
+	novalue					// operand represents no value (result of a function call w/o result)
+	builtin					// operand is a built-in function
+	typexpr					// operand is a type
+	constant_				// operand is a constant; the operand's typ is a Basic type
+	variable				// operand is an addressable variable
+	mapindex				// operand is a map index expression (acts like a variable on lhs, commaok on rhs of an assignment)
+	value					// operand is a computed value
+	nilvalue				// operand is the nil value
+	commaok					// like value, but operand may be used in a comma,ok expression
+	commaerr				// like commaok, but second value is error, not boolean
+	cgofunc					// operand is a cgo function
 )
 
 var operandModeString = [...]string{
-	invalid:   "invalid operand",
-	novalue:   "no value",
-	builtin:   "built-in",
-	typexpr:   "type",
-	constant_: "constant",
-	variable:  "variable",
-	mapindex:  "map index expression",
-	value:     "value",
-	nilvalue:  "nil",
-	commaok:   "comma, ok expression",
-	commaerr:  "comma, error expression",
-	cgofunc:   "cgo function",
+	invalid:	"invalid operand",
+	novalue:	"no value",
+	builtin:	"built-in",
+	typexpr:	"type",
+	constant_:	"constant",
+	variable:	"variable",
+	mapindex:	"map index expression",
+	value:		"value",
+	nilvalue:	"nil",
+	commaok:	"comma, ok expression",
+	commaerr:	"comma, error expression",
+	cgofunc:	"cgo function",
 }
 
 // An operand represents an intermediate value during type checking.
@@ -54,11 +54,11 @@ var operandModeString = [...]string{
 // for built-in functions.
 // The zero value of operand is a ready to use invalid operand.
 type operand struct {
-	mode operandMode
-	expr syntax.Expr
-	typ  Type
-	val  constant.Value
-	id   builtinId
+	mode	operandMode
+	expr	syntax.Expr
+	typ	Type
+	val	constant.Value
+	id	builtinId
 }
 
 // Pos returns the position of the expression corresponding to x.
@@ -172,7 +172,7 @@ func operandString(x *operand, qf Qualifier) string {
 
 	// <typ>
 	if hasType {
-		if x.typ != Typ[Invalid] {
+		if isValid(x.typ) {
 			var intro string
 			if isGeneric(x.typ) {
 				intro = " of generic type "
@@ -183,7 +183,7 @@ func operandString(x *operand, qf Qualifier) string {
 			WriteType(&buf, x.typ, qf)
 			if tpar, _ := x.typ.(*TypeParam); tpar != nil {
 				buf.WriteString(" constrained by ")
-				WriteType(&buf, tpar.bound, qf) // do not compute interface type sets here
+				WriteType(&buf, tpar.bound, qf)	// do not compute interface type sets here
 				// If we have the type set and it's empty, say so for better error messages.
 				if hasEmptyTypeset(tpar) {
 					buf.WriteString(" with empty type set")
@@ -235,8 +235,8 @@ func (x *operand) setConst(k syntax.LitKind, lit string) {
 	x.val = val
 }
 
-// isNil reports whether x is a typed or the untyped nil value.
-func (x *operand) isNil() bool { return x.mode == nilvalue }
+// isNil reports whether x is the (untyped) nil value.
+func (x *operand) isNil() bool	{ return x.mode == nilvalue }
 
 // assignableTo reports whether x is assignable to a variable of type T. If the
 // result is false and a non-nil cause is provided, it may be set to a more
@@ -245,8 +245,8 @@ func (x *operand) isNil() bool { return x.mode == nilvalue }
 // if assignableTo is invoked through an exported API call, i.e., when all
 // methods have been type-checked.
 func (x *operand) assignableTo(check *Checker, T Type, cause *string) (bool, Code) {
-	if x.mode == invalid || T == Typ[Invalid] {
-		return true, 0 // avoid spurious errors
+	if x.mode == invalid || !isValid(T) {
+		return true, 0	// avoid spurious errors
 	}
 
 	V := x.typ
@@ -290,18 +290,26 @@ func (x *operand) assignableTo(check *Checker, T Type, cause *string) (bool, Cod
 		return true, 0
 	}
 
-	// T is an interface type and x implements T and T is not a type parameter.
-	// Also handle the case where T is a pointer to an interface.
+	// T is an interface type, but not a type parameter, and V implements T.
+	// Also handle the case where T is a pointer to an interface so that we get
+	// the Checker.implements error cause.
 	if _, ok := Tu.(*Interface); ok && Tp == nil || isInterfacePtr(Tu) {
-		if !check.implements(V, T, false, cause) {
+		if check.implements(x.Pos(), V, T, false, cause) {
+			return true, 0
+		}
+		// V doesn't implement T but V may still be assignable to T if V
+		// is a type parameter; do not report an error in that case yet.
+		if Vp == nil {
 			return false, InvalidIfaceAssign
 		}
-		return true, 0
+		if cause != nil {
+			*cause = ""
+		}
 	}
 
 	// If V is an interface, check if a missing type assertion is the problem.
 	if Vi, _ := Vu.(*Interface); Vi != nil && Vp == nil {
-		if check.implements(T, V, false, nil) {
+		if check.implements(x.Pos(), T, V, false, nil) {
 			// T implements V, so give hint about type assertion.
 			if cause != nil {
 				*cause = "need type assertion"
@@ -341,7 +349,7 @@ func (x *operand) assignableTo(check *Checker, T Type, cause *string) (bool, Cod
 		code := IncompatibleAssign
 		Tp.is(func(T *term) bool {
 			if T == nil {
-				return false // no specific types
+				return false	// no specific types
 			}
 			ok, code = x.assignableTo(check, T.typ, cause)
 			if !ok {
@@ -357,12 +365,12 @@ func (x *operand) assignableTo(check *Checker, T Type, cause *string) (bool, Cod
 	// and values x' of each specific type in V's type set are
 	// assignable to T.
 	if Vp != nil && !hasName(T) {
-		x := *x // don't clobber outer x
+		x := *x	// don't clobber outer x
 		ok := false
 		code := IncompatibleAssign
 		Vp.is(func(V *term) bool {
 			if V == nil {
-				return false // no specific types
+				return false	// no specific types
 			}
 			x.typ = V.typ
 			ok, code = x.assignableTo(check, T, cause)
@@ -380,9 +388,9 @@ func (x *operand) assignableTo(check *Checker, T Type, cause *string) (bool, Cod
 
 // kind2tok translates syntax.LitKinds into token.Tokens.
 var kind2tok = [...]token.Token{
-	syntax.IntLit:    token.INT,
-	syntax.FloatLit:  token.FLOAT,
-	syntax.ImagLit:   token.IMAG,
-	syntax.RuneLit:   token.CHAR,
-	syntax.StringLit: token.STRING,
+	syntax.IntLit:		token.INT,
+	syntax.FloatLit:	token.FLOAT,
+	syntax.ImagLit:		token.IMAG,
+	syntax.RuneLit:		token.CHAR,
+	syntax.StringLit:	token.STRING,
 }

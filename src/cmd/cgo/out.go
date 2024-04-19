@@ -17,7 +17,7 @@ import (
 	"github.com/bir3/gocompiler/src/internal/xcoff"
 	"io"
 	"os"
-	"os/exec"
+	"github.com/bir3/gocompiler/exec"
 	"path/filepath"
 	"regexp"
 	"sort"
@@ -26,8 +26,8 @@ import (
 )
 
 var (
-	conf         = printer.Config{Mode: printer.SourcePos, Tabwidth: 8}
-	noSourceConf = printer.Config{Tabwidth: 8}
+	conf		= printer.Config{Mode: printer.SourcePos, Tabwidth: 8}
+	noSourceConf	= printer.Config{Tabwidth: 8}
 )
 
 // writeDefs creates output files to be compiled by gc and gcc.
@@ -45,21 +45,20 @@ func (p *Package) writeDefs() {
 
 	var gccgoInit strings.Builder
 
-	fflg := creat(*objDir + "_cgo_flags")
-	for k, v := range p.CgoFlags {
-		for _, arg := range v {
-			fmt.Fprintf(fflg, "_CGO_%s=%s\n", k, arg)
+	if !*gccgo {
+		for _, arg := range p.LdFlags {
+			fmt.Fprintf(fgo2, "//go:cgo_ldflag %q\n", arg)
 		}
-		if k == "LDFLAGS" && !*gccgo {
-			for _, arg := range v {
-				fmt.Fprintf(fgo2, "//go:cgo_ldflag %q\n", arg)
-			}
+	} else {
+		fflg := creat(*objDir + "_cgo_flags")
+		for _, arg := range p.LdFlags {
+			fmt.Fprintf(fflg, "_CGO_LDFLAGS=%s\n", arg)
 		}
+		fflg.Close()
 	}
-	fflg.Close()
 
 	// Write C main file for using gcc to resolve imports.
-	fmt.Fprintf(fm, "#include <stddef.h>\n") // For size_t below.
+	fmt.Fprintf(fm, "#include <stddef.h>\n")	// For size_t below.
 	fmt.Fprintf(fm, "int main() { return 0; }\n")
 	if *importRuntimeCgo {
 		fmt.Fprintf(fm, "void crosscall2(void(*fn)(void*) __attribute__((unused)), void *a __attribute__((unused)), int c __attribute__((unused)), size_t ctxt __attribute__((unused))) { }\n")
@@ -89,7 +88,7 @@ func (p *Package) writeDefs() {
 	if *importRuntimeCgo {
 		if !*gccgoDefineCgoIncomplete {
 			fmt.Fprintf(fgo2, "import _cgopackage \"runtime/cgo\"\n\n")
-			fmt.Fprintf(fgo2, "type _ _cgopackage.Incomplete\n") // prevent import-not-used error
+			fmt.Fprintf(fgo2, "type _ _cgopackage.Incomplete\n")	// prevent import-not-used error
 		} else {
 			fmt.Fprintf(fgo2, "//go:notinheap\n")
 			fmt.Fprintf(fgo2, "type _cgopackage_Incomplete struct{ _ struct{ _ struct{} } }\n")
@@ -106,6 +105,8 @@ func (p *Package) writeDefs() {
 		fmt.Fprintf(fgo2, "//go:linkname _Cgo_use runtime.cgoUse\n")
 		fmt.Fprintf(fgo2, "func _Cgo_use(interface{})\n")
 	}
+	fmt.Fprintf(fgo2, "//go:linkname _Cgo_no_callback runtime.cgoNoCallback\n")
+	fmt.Fprintf(fgo2, "func _Cgo_no_callback(bool)\n")
 
 	typedefNames := make([]string, 0, len(typedef))
 	for name := range typedef {
@@ -318,9 +319,9 @@ func elfImportedSymbols(f *elf.File) []elf.ImportedSymbol {
 	for _, s := range syms {
 		if (elf.ST_BIND(s.Info) == elf.STB_GLOBAL || elf.ST_BIND(s.Info) == elf.STB_WEAK) && s.Section == elf.SHN_UNDEF {
 			imports = append(imports, elf.ImportedSymbol{
-				Name:    s.Name,
-				Library: s.Library,
-				Version: s.Version,
+				Name:		s.Name,
+				Library:	s.Library,
+				Version:	s.Version,
 			})
 		}
 	}
@@ -481,7 +482,7 @@ func (p *Package) structType(n *Name) (string, int64) {
 		off += pad
 	}
 	if off == 0 {
-		fmt.Fprintf(&buf, "\t\tchar unused;\n") // avoid empty struct
+		fmt.Fprintf(&buf, "\t\tchar unused;\n")	// avoid empty struct
 	}
 	fmt.Fprintf(&buf, "\t}")
 	return buf.String(), off
@@ -509,8 +510,8 @@ func (p *Package) writeDefsFunc(fgo2 io.Writer, n *Name, callsMalloc *bool) {
 
 	// Go func declaration.
 	d := &ast.FuncDecl{
-		Name: ast.NewIdent(n.Mangle),
-		Type: gtype,
+		Name:	ast.NewIdent(n.Mangle),
+		Type:	gtype,
 	}
 
 	// Builtins defined in the C prolog.
@@ -612,6 +613,12 @@ func (p *Package) writeDefsFunc(fgo2 io.Writer, n *Name, callsMalloc *bool) {
 		arg = "uintptr(unsafe.Pointer(&r1))"
 	}
 
+	noCallback := p.noCallbacks[n.C]
+	if noCallback {
+		// disable cgocallback, will check it in runtime.
+		fmt.Fprintf(fgo2, "\t_Cgo_no_callback(true)\n")
+	}
+
 	prefix := ""
 	if n.AddError {
 		prefix = "errno := "
@@ -620,13 +627,21 @@ func (p *Package) writeDefsFunc(fgo2 io.Writer, n *Name, callsMalloc *bool) {
 	if n.AddError {
 		fmt.Fprintf(fgo2, "\tif errno != 0 { r2 = syscall.Errno(errno) }\n")
 	}
-	fmt.Fprintf(fgo2, "\tif _Cgo_always_false {\n")
-	if d.Type.Params != nil {
-		for i := range d.Type.Params.List {
-			fmt.Fprintf(fgo2, "\t\t_Cgo_use(p%d)\n", i)
-		}
+	if noCallback {
+		fmt.Fprintf(fgo2, "\t_Cgo_no_callback(false)\n")
 	}
-	fmt.Fprintf(fgo2, "\t}\n")
+
+	// skip _Cgo_use when noescape exist,
+	// so that the compiler won't force to escape them to heap.
+	if !p.noEscapes[n.C] {
+		fmt.Fprintf(fgo2, "\tif _Cgo_always_false {\n")
+		if d.Type.Params != nil {
+			for i := range d.Type.Params.List {
+				fmt.Fprintf(fgo2, "\t\t_Cgo_use(p%d)\n", i)
+			}
+		}
+		fmt.Fprintf(fgo2, "\t}\n")
+	}
 	fmt.Fprintf(fgo2, "\treturn\n")
 	fmt.Fprintf(fgo2, "}\n")
 }
@@ -682,12 +697,12 @@ func fixGo(name string) string {
 }
 
 var isBuiltin = map[string]bool{
-	"_Cfunc_CString":   true,
-	"_Cfunc_CBytes":    true,
-	"_Cfunc_GoString":  true,
-	"_Cfunc_GoStringN": true,
-	"_Cfunc_GoBytes":   true,
-	"_Cfunc__CMalloc":  true,
+	"_Cfunc_CString":	true,
+	"_Cfunc_CBytes":	true,
+	"_Cfunc_GoString":	true,
+	"_Cfunc_GoStringN":	true,
+	"_Cfunc_GoBytes":	true,
+	"_Cfunc__CMalloc":	true,
 }
 
 func (p *Package) writeOutputFunc(fgcc *os.File, n *Name) {
@@ -895,6 +910,8 @@ func (p *Package) writeExports(fgo2, fm, fgcc, fgcch io.Writer) {
 	fmt.Fprintf(fgcc, "#pragma GCC diagnostic ignored \"-Wunknown-pragmas\"\n")
 	fmt.Fprintf(fgcc, "#pragma GCC diagnostic ignored \"-Wpragmas\"\n")
 	fmt.Fprintf(fgcc, "#pragma GCC diagnostic ignored \"-Waddress-of-packed-member\"\n")
+	fmt.Fprintf(fgcc, "#pragma GCC diagnostic ignored \"-Wunknown-warning-option\"\n")
+	fmt.Fprintf(fgcc, "#pragma GCC diagnostic ignored \"-Wunaligned-access\"\n")
 
 	fmt.Fprintf(fgcc, "extern void crosscall2(void (*fn)(void *), void *, int, size_t);\n")
 	fmt.Fprintf(fgcc, "extern size_t _cgo_wait_runtime_init_done(void);\n")
@@ -944,7 +961,7 @@ func (p *Package) writeExports(fgo2, fm, fgcc, fgcch io.Writer) {
 				argField(atype, "r%d", i)
 			})
 		if ctype == "struct {\n" {
-			ctype += "\t\tchar unused;\n" // avoid empty struct
+			ctype += "\t\tchar unused;\n"	// avoid empty struct
 		}
 		ctype += "\t}"
 		fmt.Fprintf(gotype, "\t}")
@@ -1366,23 +1383,23 @@ func c(repr string, args ...interface{}) *TypeRepr {
 
 // Map predeclared Go types to Type.
 var goTypes = map[string]*Type{
-	"bool":       {Size: 1, Align: 1, C: c("GoUint8")},
-	"byte":       {Size: 1, Align: 1, C: c("GoUint8")},
-	"int":        {Size: 0, Align: 0, C: c("GoInt")},
-	"uint":       {Size: 0, Align: 0, C: c("GoUint")},
-	"rune":       {Size: 4, Align: 4, C: c("GoInt32")},
-	"int8":       {Size: 1, Align: 1, C: c("GoInt8")},
-	"uint8":      {Size: 1, Align: 1, C: c("GoUint8")},
-	"int16":      {Size: 2, Align: 2, C: c("GoInt16")},
-	"uint16":     {Size: 2, Align: 2, C: c("GoUint16")},
-	"int32":      {Size: 4, Align: 4, C: c("GoInt32")},
-	"uint32":     {Size: 4, Align: 4, C: c("GoUint32")},
-	"int64":      {Size: 8, Align: 8, C: c("GoInt64")},
-	"uint64":     {Size: 8, Align: 8, C: c("GoUint64")},
-	"float32":    {Size: 4, Align: 4, C: c("GoFloat32")},
-	"float64":    {Size: 8, Align: 8, C: c("GoFloat64")},
-	"complex64":  {Size: 8, Align: 4, C: c("GoComplex64")},
-	"complex128": {Size: 16, Align: 8, C: c("GoComplex128")},
+	"bool":		{Size: 1, Align: 1, C: c("GoUint8")},
+	"byte":		{Size: 1, Align: 1, C: c("GoUint8")},
+	"int":		{Size: 0, Align: 0, C: c("GoInt")},
+	"uint":		{Size: 0, Align: 0, C: c("GoUint")},
+	"rune":		{Size: 4, Align: 4, C: c("GoInt32")},
+	"int8":		{Size: 1, Align: 1, C: c("GoInt8")},
+	"uint8":	{Size: 1, Align: 1, C: c("GoUint8")},
+	"int16":	{Size: 2, Align: 2, C: c("GoInt16")},
+	"uint16":	{Size: 2, Align: 2, C: c("GoUint16")},
+	"int32":	{Size: 4, Align: 4, C: c("GoInt32")},
+	"uint32":	{Size: 4, Align: 4, C: c("GoUint32")},
+	"int64":	{Size: 8, Align: 8, C: c("GoInt64")},
+	"uint64":	{Size: 8, Align: 8, C: c("GoUint64")},
+	"float32":	{Size: 4, Align: 4, C: c("GoFloat32")},
+	"float64":	{Size: 8, Align: 8, C: c("GoFloat64")},
+	"complex64":	{Size: 8, Align: 4, C: c("GoComplex64")},
+	"complex128":	{Size: 16, Align: 8, C: c("GoComplex128")},
 }
 
 // Map an ast type to a Type.
@@ -1409,7 +1426,7 @@ func (p *Package) cgoType(e ast.Expr) *Type {
 		return &Type{Size: p.PtrSize, Align: p.PtrSize, C: c("GoChan")}
 	case *ast.Ident:
 		goTypesFixup := func(r *Type) *Type {
-			if r.Size == 0 { // int or uint
+			if r.Size == 0 {	// int or uint
 				rr := new(Type)
 				*rr = *r
 				rr.Size = p.IntSize
@@ -1507,6 +1524,8 @@ extern char* _cgo_topofstack(void);
 #pragma GCC diagnostic ignored "-Wunknown-pragmas"
 #pragma GCC diagnostic ignored "-Wpragmas"
 #pragma GCC diagnostic ignored "-Waddress-of-packed-member"
+#pragma GCC diagnostic ignored "-Wunknown-warning-option"
+#pragma GCC diagnostic ignored "-Wunaligned-access"
 
 #include <errno.h>
 #include <string.h>
@@ -1612,9 +1631,11 @@ const goProlog = `
 func _cgo_runtime_cgocall(unsafe.Pointer, uintptr) int32
 
 //go:linkname _cgoCheckPointer runtime.cgoCheckPointer
+//go:noescape
 func _cgoCheckPointer(interface{}, interface{})
 
 //go:linkname _cgoCheckResult runtime.cgoCheckResult
+//go:noescape
 func _cgoCheckResult(interface{})
 `
 
@@ -1705,12 +1726,12 @@ func _Cfunc__CMalloc(n _Ctype_size_t) unsafe.Pointer {
 `
 
 var builtinDefs = map[string]string{
-	"GoString":  goStringDef,
-	"GoStringN": goStringNDef,
-	"GoBytes":   goBytesDef,
-	"CString":   cStringDef,
-	"CBytes":    cBytesDef,
-	"_CMalloc":  cMallocDef,
+	"GoString":	goStringDef,
+	"GoStringN":	goStringNDef,
+	"GoBytes":	goBytesDef,
+	"CString":	cStringDef,
+	"CBytes":	cBytesDef,
+	"_CMalloc":	cMallocDef,
 }
 
 // Definitions for C.malloc in Go and in C. We define it ourselves

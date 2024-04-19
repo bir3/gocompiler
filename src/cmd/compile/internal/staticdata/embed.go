@@ -17,7 +17,7 @@ import (
 )
 
 const (
-	embedUnknown = iota
+	embedUnknown	= iota
 	embedBytes
 	embedString
 	embedFiles
@@ -31,11 +31,11 @@ func embedFileList(v *ir.Name, kind int) []string {
 		for _, pattern := range e.Patterns {
 			files, ok := base.Flag.Cfg.Embed.Patterns[pattern]
 			if !ok {
-				base.ErrorfAt(e.Pos, "invalid go:embed: build system did not map pattern: %s", pattern)
+				base.ErrorfAt(e.Pos, 0, "invalid go:embed: build system did not map pattern: %s", pattern)
 			}
 			for _, file := range files {
 				if base.Flag.Cfg.Embed.Files[file] == "" {
-					base.ErrorfAt(e.Pos, "invalid go:embed: build system did not map file: %s", file)
+					base.ErrorfAt(e.Pos, 0, "invalid go:embed: build system did not map file: %s", file)
 					continue
 				}
 				if !have[file] {
@@ -57,7 +57,7 @@ func embedFileList(v *ir.Name, kind int) []string {
 
 	if kind == embedString || kind == embedBytes {
 		if len(list) > 1 {
-			base.ErrorfAt(v.Pos(), "invalid go:embed: multiple files for type %v", v.Type())
+			base.ErrorfAt(v.Pos(), 0, "invalid go:embed: multiple files for type %v", v.Type())
 			return nil
 		}
 	}
@@ -109,12 +109,12 @@ func WriteEmbed(v *ir.Name) {
 
 	commentPos := (*v.Embed)[0].Pos
 	if base.Flag.Cfg.Embed.Patterns == nil {
-		base.ErrorfAt(commentPos, "invalid go:embed: build system did not supply embed configuration")
+		base.ErrorfAt(commentPos, 0, "invalid go:embed: build system did not supply embed configuration")
 		return
 	}
 	kind := embedKind(v.Type())
 	if kind == embedUnknown {
-		base.ErrorfAt(v.Pos(), "go:embed cannot apply to var of type %v", v.Type())
+		base.ErrorfAt(v.Pos(), 0, "go:embed cannot apply to var of type %v", v.Type())
 		return
 	}
 
@@ -124,21 +124,21 @@ func WriteEmbed(v *ir.Name) {
 		file := files[0]
 		fsym, size, err := fileStringSym(v.Pos(), base.Flag.Cfg.Embed.Files[file], kind == embedString, nil)
 		if err != nil {
-			base.ErrorfAt(v.Pos(), "embed %s: %v", file, err)
+			base.ErrorfAt(v.Pos(), 0, "embed %s: %v", file, err)
 		}
 		sym := v.Linksym()
 		off := 0
-		off = objw.SymPtr(sym, off, fsym, 0)       // data string
-		off = objw.Uintptr(sym, off, uint64(size)) // len
+		off = objw.SymPtr(sym, off, fsym, 0)		// data string
+		off = objw.Uintptr(sym, off, uint64(size))	// len
 		if kind == embedBytes {
-			objw.Uintptr(sym, off, uint64(size)) // cap for slice
+			objw.Uintptr(sym, off, uint64(size))	// cap for slice
 		}
 
 	case embedFiles:
 		slicedata := v.Sym().Pkg.Lookup(v.Sym().Name + `.files`).Linksym()
 		off := 0
 		// []files pointed at by Files
-		off = objw.SymPtr(slicedata, off, slicedata, 3*types.PtrSize) // []file, pointing just past slice
+		off = objw.SymPtr(slicedata, off, slicedata, 3*types.PtrSize)	// []file, pointing just past slice
 		off = objw.Uintptr(slicedata, off, uint64(len(files)))
 		off = objw.Uintptr(slicedata, off, uint64(len(files)))
 
@@ -150,7 +150,7 @@ func WriteEmbed(v *ir.Name) {
 		const hashSize = 16
 		hash := make([]byte, hashSize)
 		for _, file := range files {
-			off = objw.SymPtr(slicedata, off, StringSym(v.Pos(), file), 0) // file string
+			off = objw.SymPtr(slicedata, off, StringSym(v.Pos(), file), 0)	// file string
 			off = objw.Uintptr(slicedata, off, uint64(len(file)))
 			if strings.HasSuffix(file, "/") {
 				// entry for directory - no data
@@ -160,9 +160,9 @@ func WriteEmbed(v *ir.Name) {
 			} else {
 				fsym, size, err := fileStringSym(v.Pos(), base.Flag.Cfg.Embed.Files[file], true, hash)
 				if err != nil {
-					base.ErrorfAt(v.Pos(), "embed %s: %v", file, err)
+					base.ErrorfAt(v.Pos(), 0, "embed %s: %v", file, err)
 				}
-				off = objw.SymPtr(slicedata, off, fsym, 0) // data string
+				off = objw.SymPtr(slicedata, off, fsym, 0)	// data string
 				off = objw.Uintptr(slicedata, off, uint64(size))
 				off = int(slicedata.WriteBytes(base.Ctxt, int64(off), hash))
 			}

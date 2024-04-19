@@ -7,7 +7,7 @@ package browser
 
 import (
 	"os"
-	"os/exec"
+	"github.com/bir3/gocompiler/exec"
 	"runtime"
 	"time"
 )

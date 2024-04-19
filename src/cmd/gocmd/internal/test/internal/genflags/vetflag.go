@@ -9,7 +9,7 @@ import (
 	"github.com/bir3/gocompiler/src/cmd/gocmd/internal/base"
 	"encoding/json"
 	"fmt"
-	"os/exec"
+	"github.com/bir3/gocompiler/exec"
 	"regexp"
 	"sort"
 )
@@ -25,9 +25,9 @@ func VetAnalyzers() ([]string, error) {
 		return nil, fmt.Errorf("go vet: can't execute %s -flags: %v\n", tool, err)
 	}
 	var analysisFlags []struct {
-		Name  string
-		Bool  bool
-		Usage string
+		Name	string
+		Bool	bool
+		Usage	string
 	}
 	if err := json.Unmarshal(out.Bytes(), &analysisFlags); err != nil {
 		return nil, fmt.Errorf("go vet: can't unmarshal JSON from %s -flags: %v", tool, err)

@@ -42,34 +42,35 @@ the name, and if shorter, space padded on the right.
 // It records the offset and size of the data, so that a client can
 // read the data only if necessary.
 type Data struct {
-	Offset int64
-	Size   int64
+	Offset	int64
+	Size	int64
 }
 
 type Archive struct {
-	f       *os.File
-	Entries []Entry
+	f	*os.File
+	Entries	[]Entry
 }
 
-func (a *Archive) File() *os.File { return a.f }
+func (a *Archive) File() *os.File	{ return a.f }
 
 type Entry struct {
-	Name  string
-	Type  EntryType
-	Mtime int64
-	Uid   int
-	Gid   int
-	Mode  os.FileMode
+	Name	string
+	Type	EntryType
+	Mtime	int64
+	Uid	int
+	Gid	int
+	Mode	os.FileMode
 	Data
-	Obj *GoObj // nil if this entry is not a Go object file
+	Obj	*GoObj	// nil if this entry is not a Go object file
 }
 
 type EntryType int
 
 const (
-	EntryPkgDef EntryType = iota
+	EntryPkgDef	EntryType	= iota
 	EntryGoObj
 	EntryNativeObj
+	EntrySentinelNonObj
 )
 
 func (e *Entry) String() string {
@@ -83,27 +84,27 @@ func (e *Entry) String() string {
 }
 
 type GoObj struct {
-	TextHeader []byte
-	Arch       string
+	TextHeader	[]byte
+	Arch		string
 	Data
 }
 
 const (
-	entryHeader = "%s%-12d%-6d%-6d%-8o%-10d`\n"
+	entryHeader	= "%s%-12d%-6d%-6d%-8o%-10d`\n"
 	// In entryHeader the first entry, the name, is always printed as 16 bytes right-padded.
-	entryLen   = 16 + 12 + 6 + 6 + 8 + 10 + 1 + 1
-	timeFormat = "Jan _2 15:04 2006"
+	entryLen	= 16 + 12 + 6 + 6 + 8 + 10 + 1 + 1
+	timeFormat	= "Jan _2 15:04 2006"
 )
 
 var (
-	archiveHeader = []byte("!<arch>\n")
-	archiveMagic  = []byte("`\n")
-	goobjHeader   = []byte("go objec") // truncated to size of archiveHeader
+	archiveHeader	= []byte("!<arch>\n")
+	archiveMagic	= []byte("`\n")
+	goobjHeader	= []byte("go objec")	// truncated to size of archiveHeader
 
-	errCorruptArchive   = errors.New("corrupt archive")
-	errTruncatedArchive = errors.New("truncated archive")
-	errCorruptObject    = errors.New("corrupt object file")
-	errNotObject        = errors.New("unrecognized object file format")
+	errCorruptArchive	= errors.New("corrupt archive")
+	errTruncatedArchive	= errors.New("truncated archive")
+	errCorruptObject	= errors.New("corrupt object file")
+	errNotObject		= errors.New("unrecognized object file format")
 )
 
 type ErrGoObjOtherVersion struct{ magic []byte }
@@ -114,12 +115,12 @@ func (e ErrGoObjOtherVersion) Error() string {
 
 // An objReader is an object file reader.
 type objReader struct {
-	a      *Archive
-	b      *bio.Reader
-	err    error
-	offset int64
-	limit  int64
-	tmp    [256]byte
+	a	*Archive
+	b	*bio.Reader
+	err	error
+	offset	int64
+	limit	int64
+	tmp	[256]byte
 }
 
 func (r *objReader) init(f *os.File) {
@@ -189,7 +190,7 @@ func (r *objReader) readByte() byte {
 	return b
 }
 
-// read reads exactly len(b) bytes from the input file.
+// readFull reads exactly len(b) bytes from the input file.
 // If an error occurs, read returns the error but also
 // records it, so it is safe for callers to ignore the result
 // as long as delaying the report is not a problem.
@@ -268,10 +269,10 @@ func Parse(f *os.File, verbose bool) (*Archive, error) {
 			return nil, err
 		}
 		r.a.Entries = []Entry{{
-			Name: f.Name(),
-			Type: EntryGoObj,
-			Data: Data{off, r.limit - off},
-			Obj:  o,
+			Name:	f.Name(),
+			Type:	EntryGoObj,
+			Data:	Data{off, r.limit - off},
+			Obj:	o,
 		}}
 	}
 
@@ -286,7 +287,7 @@ func trimSpace(b []byte) string {
 
 // parseArchive parses a Unix archive of Go object files.
 func (r *objReader) parseArchive(verbose bool) error {
-	r.readFull(r.tmp[:8]) // consume header (already checked)
+	r.readFull(r.tmp[:8])	// consume header (already checked)
 	for r.offset < r.limit {
 		if err := r.readFull(r.tmp[:60]); err != nil {
 			return err
@@ -327,9 +328,9 @@ func (r *objReader) parseArchive(verbose bool) error {
 		}
 		size := get(48, 58, 10, 64)
 		var (
-			mtime    int64
-			uid, gid int
-			mode     os.FileMode
+			mtime		int64
+			uid, gid	int
+			mode		os.FileMode
 		)
 		if verbose {
 			mtime = get(16, 28, 10, 64)
@@ -348,15 +349,32 @@ func (r *objReader) parseArchive(verbose bool) error {
 		switch name {
 		case "__.PKGDEF":
 			r.a.Entries = append(r.a.Entries, Entry{
-				Name:  name,
-				Type:  EntryPkgDef,
-				Mtime: mtime,
-				Uid:   uid,
-				Gid:   gid,
-				Mode:  mode,
-				Data:  Data{r.offset, size},
+				Name:	name,
+				Type:	EntryPkgDef,
+				Mtime:	mtime,
+				Uid:	uid,
+				Gid:	gid,
+				Mode:	mode,
+				Data:	Data{r.offset, size},
 			})
 			r.skip(size)
+		case "preferlinkext", "dynimportfail":
+			if size == 0 {
+				// These are not actual objects, but rather sentinel
+				// entries put into the archive by the Go command to
+				// be read by the linker. See #62036.
+				r.a.Entries = append(r.a.Entries, Entry{
+					Name:	name,
+					Type:	EntrySentinelNonObj,
+					Mtime:	mtime,
+					Uid:	uid,
+					Gid:	gid,
+					Mode:	mode,
+					Data:	Data{r.offset, size},
+				})
+				break
+			}
+			fallthrough
 		default:
 			var typ EntryType
 			var o *GoObj
@@ -368,20 +386,23 @@ func (r *objReader) parseArchive(verbose bool) error {
 			if bytes.Equal(p, goobjHeader) {
 				typ = EntryGoObj
 				o = &GoObj{}
-				r.parseObject(o, size)
+				err := r.parseObject(o, size)
+				if err != nil {
+					return err
+				}
 			} else {
 				typ = EntryNativeObj
 				r.skip(size)
 			}
 			r.a.Entries = append(r.a.Entries, Entry{
-				Name:  name,
-				Type:  typ,
-				Mtime: mtime,
-				Uid:   uid,
-				Gid:   gid,
-				Mode:  mode,
-				Data:  Data{offset, size},
-				Obj:   o,
+				Name:	name,
+				Type:	typ,
+				Mtime:	mtime,
+				Uid:	uid,
+				Gid:	gid,
+				Mode:	mode,
+				Data:	Data{offset, size},
+				Obj:	o,
 			})
 		}
 		if size&1 != 0 {
@@ -425,7 +446,7 @@ func (r *objReader) parseObject(o *GoObj, size int64) error {
 	}
 	if !bytes.Equal(p, []byte(goobj.Magic)) {
 		if bytes.HasPrefix(p, []byte("\x00go1")) && bytes.HasSuffix(p, []byte("ld")) {
-			return r.error(ErrGoObjOtherVersion{p[1:]}) // strip the \x00 byte
+			return r.error(ErrGoObjOtherVersion{p[1:]})	// strip the \x00 byte
 		}
 		return r.error(errCorruptObject)
 	}
@@ -448,16 +469,16 @@ func (a *Archive) AddEntry(typ EntryType, name string, mtime int64, uid, gid int
 		log.Fatal(err)
 	}
 	if (off+size)&1 != 0 {
-		a.f.Write([]byte{0}) // pad to even byte
+		a.f.Write([]byte{0})	// pad to even byte
 	}
 	a.Entries = append(a.Entries, Entry{
-		Name:  name,
-		Type:  typ,
-		Mtime: mtime,
-		Uid:   uid,
-		Gid:   gid,
-		Mode:  mode,
-		Data:  Data{off + entryLen, size},
+		Name:	name,
+		Type:	typ,
+		Mtime:	mtime,
+		Uid:	uid,
+		Gid:	gid,
+		Mode:	mode,
+		Data:	Data{off + entryLen, size},
 	})
 }
 

@@ -101,12 +101,12 @@ import (
 //  {"version":0,"package":"\u0000","goos":"darwin","goarch":"amd64","gc_version":"devel +86487adf6a Thu Nov 7 19:34:56 2019 -0500","file":"x.go"}
 
 type VersionHeader struct {
-	Version   int    `json:"version"`
-	Package   string `json:"package"`
-	Goos      string `json:"goos"`
-	Goarch    string `json:"goarch"`
-	GcVersion string `json:"gc_version"`
-	File      string `json:"file,omitempty"` // LSP requires an enclosing resource, i.e., a file
+	Version		int	`json:"version"`
+	Package		string	`json:"package"`
+	Goos		string	`json:"goos"`
+	Goarch		string	`json:"goarch"`
+	GcVersion	string	`json:"gc_version"`
+	File		string	`json:"file,omitempty"`	// LSP requires an enclosing resource, i.e., a file
 }
 
 // DocumentURI, Position, Range, Location, Diagnostic, DiagnosticRelatedInformation all reuse json definitions from gopls.
@@ -115,8 +115,8 @@ type VersionHeader struct {
 type DocumentURI string
 
 type Position struct {
-	Line      uint `json:"line"`      // gopls uses float64, but json output is the same for integers
-	Character uint `json:"character"` // gopls uses float64, but json output is the same for integers
+	Line		uint	`json:"line"`		// gopls uses float64, but json output is the same for integers
+	Character	uint	`json:"character"`	// gopls uses float64, but json output is the same for integers
 }
 
 // A Range in a text document expressed as (zero-based) start and end positions.
@@ -127,21 +127,21 @@ type Range struct {
 	/*Start defined:
 	 * The range's start position
 	 */
-	Start Position `json:"start"`
+	Start	Position	`json:"start"`
 
 	/*End defined:
 	 * The range's end position
 	 */
-	End Position `json:"end"` // exclusive
+	End	Position	`json:"end"`	// exclusive
 }
 
 // A Location represents a location inside a resource, such as a line inside a text file.
 type Location struct {
 	// URI is
-	URI DocumentURI `json:"uri"`
+	URI	DocumentURI	`json:"uri"`
 
 	// Range is
-	Range Range `json:"range"`
+	Range	Range	`json:"range"`
 }
 
 /* DiagnosticRelatedInformation defined:
@@ -154,12 +154,12 @@ type DiagnosticRelatedInformation struct {
 	/*Location defined:
 	 * The location of this related diagnostic information.
 	 */
-	Location Location `json:"location"`
+	Location	Location	`json:"location"`
 
 	/*Message defined:
 	 * The message of this related diagnostic information.
 	 */
-	Message string `json:"message"`
+	Message	string	`json:"message"`
 }
 
 // DiagnosticSeverity defines constants
@@ -184,58 +184,59 @@ type Diagnostic struct {
 	/*Range defined:
 	 * The range at which the message applies
 	 */
-	Range Range `json:"range"`
+	Range	Range	`json:"range"`
 
 	/*Severity defined:
 	 * The diagnostic's severity. Can be omitted. If omitted it is up to the
 	 * client to interpret diagnostics as error, warning, info or hint.
 	 */
-	Severity DiagnosticSeverity `json:"severity,omitempty"` // always SeverityInformation for optimizer logging.
+	Severity	DiagnosticSeverity	`json:"severity,omitempty"`	// always SeverityInformation for optimizer logging.
 
 	/*Code defined:
 	 * The diagnostic's code, which usually appear in the user interface.
 	 */
-	Code string `json:"code,omitempty"` // LSP uses 'number | string' = gopls interface{}, but only string here, e.g. "boundsCheck", "nilcheck", etc.
+	Code	string	`json:"code,omitempty"`	// LSP uses 'number | string' = gopls interface{}, but only string here, e.g. "boundsCheck", "nilcheck", etc.
 
 	/*Source defined:
 	 * A human-readable string describing the source of this
 	 * diagnostic, e.g. 'typescript' or 'super lint'. It usually
 	 * appears in the user interface.
 	 */
-	Source string `json:"source,omitempty"` // "go compiler"
+	Source	string	`json:"source,omitempty"`	// "go compiler"
 
 	/*Message defined:
 	 * The diagnostic's message. It usually appears in the user interface
 	 */
-	Message string `json:"message"` // sometimes used, provides additional information.
+	Message	string	`json:"message"`	// sometimes used, provides additional information.
 
 	/*Tags defined:
 	 * Additional metadata about the diagnostic.
 	 */
-	Tags []DiagnosticTag `json:"tags,omitempty"` // always empty for logging optimizations.
+	Tags	[]DiagnosticTag	`json:"tags,omitempty"`	// always empty for logging optimizations.
 
 	/*RelatedInformation defined:
 	 * An array of related diagnostic information, e.g. when symbol-names within
 	 * a scope collide all definitions can be marked via this property.
 	 */
-	RelatedInformation []DiagnosticRelatedInformation `json:"relatedInformation,omitempty"`
+	RelatedInformation	[]DiagnosticRelatedInformation	`json:"relatedInformation,omitempty"`
 }
 
 // A LoggedOpt is what the compiler produces and accumulates,
 // to be converted to JSON for human or IDE consumption.
 type LoggedOpt struct {
-	pos          src.XPos      // Source code position at which the event occurred. If it is inlined, outer and all inlined locations will appear in JSON.
-	compilerPass string        // Compiler pass.  For human/adhoc consumption; does not appear in JSON (yet)
-	functionName string        // Function name.  For human/adhoc consumption; does not appear in JSON (yet)
-	what         string        // The (non) optimization; "nilcheck", "boundsCheck", "inline", "noInline"
-	target       []interface{} // Optional target(s) or parameter(s) of "what" -- what was inlined, why it was not, size of copy, etc. 1st is most important/relevant.
+	pos		src.XPos	// Source code position at which the event occurred. If it is inlined, outer and all inlined locations will appear in JSON.
+	lastPos		src.XPos	// Usually the same as pos; current exception is for reporting entire range of transformed loops
+	compilerPass	string		// Compiler pass.  For human/adhoc consumption; does not appear in JSON (yet)
+	functionName	string		// Function name.  For human/adhoc consumption; does not appear in JSON (yet)
+	what		string		// The (non) optimization; "nilcheck", "boundsCheck", "inline", "noInline"
+	target		[]interface{}	// Optional target(s) or parameter(s) of "what" -- what was inlined, why it was not, size of copy, etc. 1st is most important/relevant.
 }
 
 type logFormat uint8
 
 const (
-	None  logFormat = iota
-	Json0           // version 0 for LSP 3.14, 3.15; future versions of LSP may change the format and the compiler may need to support both as clients are updated.
+	None	logFormat	= iota
+	Json0			// version 0 for LSP 3.14, 3.15; future versions of LSP may change the format and the compiler may need to support both as clients are updated.
 )
 
 var Format = None
@@ -286,7 +287,7 @@ func parseLogPath(destination string) (string, string) {
 	if filepath.IsAbs(destination) {
 		return filepath.Clean(destination), ""
 	}
-	if strings.HasPrefix(destination, "file://") { // IKWIAD, or Windows C:\foo\bar\baz
+	if strings.HasPrefix(destination, "file://") {	// IKWIAD, or Windows C:\foo\bar\baz
 		uri, err := url.Parse(destination)
 		if err != nil {
 			return "", fmt.Sprintf("optimizer logging destination looked like file:// URI but failed to parse: err=%v", err)
@@ -318,15 +319,15 @@ func checkLogPath(destination string) string {
 }
 
 var loggedOpts []*LoggedOpt
-var mu = sync.Mutex{} // mu protects loggedOpts.
+var mu = sync.Mutex{}	// mu protects loggedOpts.
 
 // NewLoggedOpt allocates a new LoggedOpt, to later be passed to either NewLoggedOpt or LogOpt as "args".
 // Pos is the source position (including inlining), what is the message, pass is which pass created the message,
 // funcName is the name of the function
 // A typical use for this to accumulate an explanation for a missed optimization, for example, why did something escape?
-func NewLoggedOpt(pos src.XPos, what, pass, funcName string, args ...interface{}) *LoggedOpt {
+func NewLoggedOpt(pos, lastPos src.XPos, what, pass, funcName string, args ...interface{}) *LoggedOpt {
 	pass = strings.Replace(pass, " ", "_", -1)
-	return &LoggedOpt{pos, pass, funcName, what, args}
+	return &LoggedOpt{pos, lastPos, pass, funcName, what, args}
 }
 
 // LogOpt logs information about a (usually missed) optimization performed by the compiler.
@@ -336,7 +337,20 @@ func LogOpt(pos src.XPos, what, pass, funcName string, args ...interface{}) {
 	if Format == None {
 		return
 	}
-	lo := NewLoggedOpt(pos, what, pass, funcName, args...)
+	lo := NewLoggedOpt(pos, pos, what, pass, funcName, args...)
+	mu.Lock()
+	defer mu.Unlock()
+	// Because of concurrent calls from back end, no telling what the order will be, but is stable-sorted by outer Pos before use.
+	loggedOpts = append(loggedOpts, lo)
+}
+
+// LogOptRange is the same as LogOpt, but includes the ability to express a range of positions,
+// not just a point.
+func LogOptRange(pos, lastPos src.XPos, what, pass, funcName string, args ...interface{}) {
+	if Format == None {
+		return
+	}
+	lo := NewLoggedOpt(pos, lastPos, what, pass, funcName, args...)
 	mu.Lock()
 	defer mu.Unlock()
 	// Because of concurrent calls from back end, no telling what the order will be, but is stable-sorted by outer Pos before use.
@@ -356,15 +370,15 @@ func Enabled() bool {
 
 // byPos sorts diagnostics by source position.
 type byPos struct {
-	ctxt *obj.Link
-	a    []*LoggedOpt
+	ctxt	*obj.Link
+	a	[]*LoggedOpt
 }
 
-func (x byPos) Len() int { return len(x.a) }
+func (x byPos) Len() int	{ return len(x.a) }
 func (x byPos) Less(i, j int) bool {
 	return x.ctxt.OutermostPos(x.a[i].pos).Before(x.ctxt.OutermostPos(x.a[j].pos))
 }
-func (x byPos) Swap(i, j int) { x.a[i], x.a[j] = x.a[j], x.a[i] }
+func (x byPos) Swap(i, j int)	{ x.a[i], x.a[j] = x.a[j], x.a[i] }
 
 func writerForLSP(subdirpath, file string) io.WriteCloser {
 	basename := file
@@ -396,8 +410,8 @@ func fixSlash(f string) string {
 
 func uriIfy(f string) DocumentURI {
 	url := url.URL{
-		Scheme: "file",
-		Path:   fixSlash(f),
+		Scheme:	"file",
+		Path:	fixSlash(f),
 	}
 	return DocumentURI(url.String())
 }
@@ -420,11 +434,11 @@ func FlushLoggedOpts(ctxt *obj.Link, slashPkgPath string) {
 		return
 	}
 
-	sort.Stable(byPos{ctxt, loggedOpts}) // Stable is necessary to preserve the per-function order, which is repeatable.
+	sort.Stable(byPos{ctxt, loggedOpts})	// Stable is necessary to preserve the per-function order, which is repeatable.
 	switch Format {
 
-	case Json0: // LSP 3.15
-		var posTmp []src.Pos
+	case Json0:	// LSP 3.15
+		var posTmp, lastTmp []src.Pos
 		var encoder *json.Encoder
 		var w io.WriteCloser
 
@@ -441,7 +455,8 @@ func FlushLoggedOpts(ctxt *obj.Link, slashPkgPath string) {
 		// For LSP, make a subdirectory for the package, and for each file foo.go, create foo.json in that subdirectory.
 		currentFile := ""
 		for _, x := range loggedOpts {
-			posTmp, p0 := x.parsePos(ctxt, posTmp)
+			posTmp, p0 := parsePos(ctxt, x.pos, posTmp)
+			lastTmp, l0 := parsePos(ctxt, x.lastPos, lastTmp)	// These match posTmp/p0 except for most-inline, and that often also matches.
 			p0f := uprootedPath(p0.Filename())
 
 			if currentFile != p0f {
@@ -462,25 +477,26 @@ func FlushLoggedOpts(ctxt *obj.Link, slashPkgPath string) {
 
 			diagnostic.Code = x.what
 			diagnostic.Message = target
-			diagnostic.Range = newPointRange(p0)
+			diagnostic.Range = newRange(p0, l0)
 			diagnostic.RelatedInformation = diagnostic.RelatedInformation[:0]
 
-			appendInlinedPos(posTmp, &diagnostic)
+			appendInlinedPos(posTmp, lastTmp, &diagnostic)
 
 			// Diagnostic explanation is stored in RelatedInformation after inlining info
 			if len(x.target) > 1 {
 				switch y := x.target[1].(type) {
 				case []*LoggedOpt:
 					for _, z := range y {
-						posTmp, p0 := z.parsePos(ctxt, posTmp)
-						loc := newLocation(p0)
+						posTmp, p0 := parsePos(ctxt, z.pos, posTmp)
+						lastTmp, l0 := parsePos(ctxt, z.lastPos, lastTmp)
+						loc := newLocation(p0, l0)
 						msg := z.what
 						if len(z.target) > 0 {
 							msg = msg + ": " + fmt.Sprint(z.target[0])
 						}
 
 						diagnostic.RelatedInformation = append(diagnostic.RelatedInformation, DiagnosticRelatedInformation{Location: loc, Message: msg})
-						appendInlinedPos(posTmp, &diagnostic)
+						appendInlinedPos(posTmp, lastTmp, &diagnostic)
 					}
 				}
 			}
@@ -493,34 +509,32 @@ func FlushLoggedOpts(ctxt *obj.Link, slashPkgPath string) {
 	}
 }
 
-// newPointRange returns a single-position Range for the compiler source location p.
-func newPointRange(p src.Pos) Range {
+// newRange returns a single-position Range for the compiler source location p.
+func newRange(p, last src.Pos) Range {
 	return Range{Start: Position{p.Line(), p.Col()},
-		End: Position{p.Line(), p.Col()}}
+		End:	Position{last.Line(), last.Col()}}
 }
 
 // newLocation returns the Location for the compiler source location p.
-func newLocation(p src.Pos) Location {
-	loc := Location{URI: uriIfy(uprootedPath(p.Filename())), Range: newPointRange(p)}
+func newLocation(p, last src.Pos) Location {
+	loc := Location{URI: uriIfy(uprootedPath(p.Filename())), Range: newRange(p, last)}
 	return loc
 }
 
 // appendInlinedPos extracts inlining information from posTmp and append it to diagnostic.
-func appendInlinedPos(posTmp []src.Pos, diagnostic *Diagnostic) {
+func appendInlinedPos(posTmp, lastTmp []src.Pos, diagnostic *Diagnostic) {
 	for i := 1; i < len(posTmp); i++ {
-		p := posTmp[i]
-		loc := newLocation(p)
+		loc := newLocation(posTmp[i], lastTmp[i])
 		diagnostic.RelatedInformation = append(diagnostic.RelatedInformation, DiagnosticRelatedInformation{Location: loc, Message: "inlineLoc"})
 	}
 }
 
-func (x *LoggedOpt) parsePos(ctxt *obj.Link, posTmp []src.Pos) ([]src.Pos, src.Pos) {
-	posTmp = ctxt.AllPos(x.pos, posTmp)
-	// Reverse posTmp to put outermost first.
-	l := len(posTmp)
-	for i := 0; i < l/2; i++ {
-		posTmp[i], posTmp[l-i-1] = posTmp[l-i-1], posTmp[i]
-	}
-	p0 := posTmp[0]
-	return posTmp, p0
+// parsePos expands a src.XPos into a slice of src.Pos, with the outermost first.
+// It returns the slice, and the outermost.
+func parsePos(ctxt *obj.Link, pos src.XPos, posTmp []src.Pos) ([]src.Pos, src.Pos) {
+	posTmp = posTmp[:0]
+	ctxt.AllPos(pos, func(p src.Pos) {
+		posTmp = append(posTmp, p)
+	})
+	return posTmp, posTmp[0]
 }

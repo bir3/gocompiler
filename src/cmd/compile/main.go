@@ -26,20 +26,20 @@ import (
 )
 
 var archInits = map[string]func(*ssagen.ArchInfo){
-	"386":      x86.Init,
-	"amd64":    amd64.Init,
-	"arm":      arm.Init,
-	"arm64":    arm64.Init,
-	"loong64":  loong64.Init,
-	"mips":     mips.Init,
-	"mipsle":   mips.Init,
-	"mips64":   mips64.Init,
-	"mips64le": mips64.Init,
-	"ppc64":    ppc64.Init,
-	"ppc64le":  ppc64.Init,
-	"riscv64":  riscv64.Init,
-	"s390x":    s390x.Init,
-	"wasm":     wasm.Init,
+	"386":		x86.Init,
+	"amd64":	amd64.Init,
+	"arm":		arm.Init,
+	"arm64":	arm64.Init,
+	"loong64":	loong64.Init,
+	"mips":		mips.Init,
+	"mipsle":	mips.Init,
+	"mips64":	mips64.Init,
+	"mips64le":	mips64.Init,
+	"ppc64":	ppc64.Init,
+	"ppc64le":	ppc64.Init,
+	"riscv64":	riscv64.Init,
+	"s390x":	s390x.Init,
+	"wasm":		wasm.Init,
 }
 
 func Main() {

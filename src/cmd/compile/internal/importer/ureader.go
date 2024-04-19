@@ -15,29 +15,29 @@ import (
 type pkgReader struct {
 	pkgbits.PkgDecoder
 
-	ctxt    *types2.Context
-	imports map[string]*types2.Package
+	ctxt	*types2.Context
+	imports	map[string]*types2.Package
 
-	posBases []*syntax.PosBase
-	pkgs     []*types2.Package
-	typs     []types2.Type
+	posBases	[]*syntax.PosBase
+	pkgs		[]*types2.Package
+	typs		[]types2.Type
 }
 
 func ReadPackage(ctxt *types2.Context, imports map[string]*types2.Package, input pkgbits.PkgDecoder) *types2.Package {
 	pr := pkgReader{
-		PkgDecoder: input,
+		PkgDecoder:	input,
 
-		ctxt:    ctxt,
-		imports: imports,
+		ctxt:		ctxt,
+		imports:	imports,
 
-		posBases: make([]*syntax.PosBase, input.NumElems(pkgbits.RelocPosBase)),
-		pkgs:     make([]*types2.Package, input.NumElems(pkgbits.RelocPkg)),
-		typs:     make([]types2.Type, input.NumElems(pkgbits.RelocType)),
+		posBases:	make([]*syntax.PosBase, input.NumElems(pkgbits.RelocPosBase)),
+		pkgs:		make([]*types2.Package, input.NumElems(pkgbits.RelocPkg)),
+		typs:		make([]types2.Type, input.NumElems(pkgbits.RelocType)),
 	}
 
 	r := pr.newReader(pkgbits.RelocMeta, pkgbits.PublicRootIdx, pkgbits.SyncPublic)
 	pkg := r.pkg()
-	r.Bool() // TODO(mdempsky): Remove; was "has init"
+	r.Bool()	// TODO(mdempsky): Remove; was "has init"
 
 	for i, n := 0, r.Len(); i < n; i++ {
 		// As if r.obj(), but avoiding the Scope.Lookup call,
@@ -57,36 +57,36 @@ func ReadPackage(ctxt *types2.Context, imports map[string]*types2.Package, input
 type reader struct {
 	pkgbits.Decoder
 
-	p *pkgReader
+	p	*pkgReader
 
-	dict *readerDict
+	dict	*readerDict
 }
 
 type readerDict struct {
-	bounds []typeInfo
+	bounds	[]typeInfo
 
-	tparams []*types2.TypeParam
+	tparams	[]*types2.TypeParam
 
-	derived      []derivedInfo
-	derivedTypes []types2.Type
+	derived		[]derivedInfo
+	derivedTypes	[]types2.Type
 }
 
 type readerTypeBound struct {
-	derived  bool
-	boundIdx int
+	derived		bool
+	boundIdx	int
 }
 
 func (pr *pkgReader) newReader(k pkgbits.RelocKind, idx pkgbits.Index, marker pkgbits.SyncMarker) *reader {
 	return &reader{
-		Decoder: pr.NewDecoder(k, idx, marker),
-		p:       pr,
+		Decoder:	pr.NewDecoder(k, idx, marker),
+		p:		pr,
 	}
 }
 
 func (pr *pkgReader) tempReader(k pkgbits.RelocKind, idx pkgbits.Index, marker pkgbits.SyncMarker) *reader {
 	return &reader{
-		Decoder: pr.TempDecoder(k, idx, marker),
-		p:       pr,
+		Decoder:	pr.TempDecoder(k, idx, marker),
+		p:		pr,
 	}
 }
 
@@ -163,7 +163,7 @@ func (r *reader) doPkg() *types2.Package {
 	case "":
 		path = r.p.PkgPath()
 	case "builtin":
-		return nil // universe
+		return nil	// universe
 	case "unsafe":
 		return types2.Unsafe
 	}
@@ -521,13 +521,13 @@ func (r *reader) method() *types2.Func {
 	rtparams := r.typeParamNames()
 	sig := r.signature(r.param(), rtparams, nil)
 
-	_ = r.pos() // TODO(mdempsky): Remove; this is a hacker for linker.go.
+	_ = r.pos()	// TODO(mdempsky): Remove; this is a hacker for linker.go.
 	return types2.NewFunc(pos, pkg, name, sig)
 }
 
-func (r *reader) qualifiedIdent() (*types2.Package, string) { return r.ident(pkgbits.SyncSym) }
-func (r *reader) localIdent() (*types2.Package, string)     { return r.ident(pkgbits.SyncLocalIdent) }
-func (r *reader) selector() (*types2.Package, string)       { return r.ident(pkgbits.SyncSelector) }
+func (r *reader) qualifiedIdent() (*types2.Package, string)	{ return r.ident(pkgbits.SyncSym) }
+func (r *reader) localIdent() (*types2.Package, string)		{ return r.ident(pkgbits.SyncLocalIdent) }
+func (r *reader) selector() (*types2.Package, string)		{ return r.ident(pkgbits.SyncSelector) }
 
 func (r *reader) ident(marker pkgbits.SyncMarker) (*types2.Package, string) {
 	r.Sync(marker)

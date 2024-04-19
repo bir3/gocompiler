@@ -15,8 +15,8 @@ import (
 
 // A Struct represents a struct type.
 type Struct struct {
-	fields []*Var   // fields != nil indicates the struct is set up (possibly with len(fields) == 0)
-	tags   []string // field tags; nil if there are no tags
+	fields	[]*Var		// fields != nil indicates the struct is set up (possibly with len(fields) == 0)
+	tags	[]string	// field tags; nil if there are no tags
 }
 
 // NewStruct returns a new struct with the given fields and corresponding field tags.
@@ -39,10 +39,10 @@ func NewStruct(fields []*Var, tags []string) *Struct {
 }
 
 // NumFields returns the number of fields in the struct (including blank and embedded fields).
-func (s *Struct) NumFields() int { return len(s.fields) }
+func (s *Struct) NumFields() int	{ return len(s.fields) }
 
 // Field returns the i'th field for 0 <= i < NumFields().
-func (s *Struct) Field(i int) *Var { return s.fields[i] }
+func (s *Struct) Field(i int) *Var	{ return s.fields[i] }
 
 // Tag returns the i'th field tag for 0 <= i < NumFields().
 func (s *Struct) Tag(i int) string {
@@ -52,8 +52,8 @@ func (s *Struct) Tag(i int) string {
 	return ""
 }
 
-func (s *Struct) Underlying() Type { return s }
-func (s *Struct) String() string   { return TypeString(s, nil) }
+func (s *Struct) Underlying() Type	{ return s }
+func (s *Struct) String() string	{ return TypeString(s, nil) }
 
 // ----------------------------------------------------------------------------
 // Implementation
@@ -100,7 +100,7 @@ func (check *Checker) structType(styp *Struct, e *syntax.StructType) {
 	// addInvalid adds an embedded field of invalid type to the struct for
 	// fields with errors; this keeps the number of struct fields in sync
 	// with the source as long as the fields are _ or have different names
-	// (issue #25627).
+	// (go.dev/issue/25627).
 	addInvalid := func(ident *syntax.Name, pos syntax.Pos) {
 		typ = Typ[Invalid]
 		tag = ""
@@ -127,27 +127,27 @@ func (check *Checker) structType(styp *Struct, e *syntax.StructType) {
 			// spec: "An embedded type must be specified as a type name T or as a
 			// pointer to a non-interface type name *T, and T itself may not be a
 			// pointer type."
-			pos := syntax.StartPos(f.Type)
+			pos := syntax.StartPos(f.Type)	// position of type, for errors
 			name := embeddedFieldIdent(f.Type)
 			if name == nil {
 				check.errorf(pos, InvalidSyntaxTree, "invalid embedded field type %s", f.Type)
-				name = &syntax.Name{Value: "_"} // TODO(gri) need to set position to pos
+				name = &syntax.Name{Value: "_"}	// TODO(gri) need to set position to pos
 				addInvalid(name, pos)
 				continue
 			}
-			add(name, true, pos)
+			add(name, true, name.Pos())	// struct{p.T} field has position of T
 
 			// Because we have a name, typ must be of the form T or *T, where T is the name
 			// of a (named or alias) type, and t (= deref(typ)) must be the type of T.
 			// We must delay this check to the end because we don't want to instantiate
 			// (via under(t)) a possibly incomplete type.
-			embeddedTyp := typ // for closure below
+			embeddedTyp := typ	// for closure below
 			embeddedPos := pos
 			check.later(func() {
 				t, isPtr := deref(embeddedTyp)
 				switch u := under(t).(type) {
 				case *Basic:
-					if t == Typ[Invalid] {
+					if !isValid(t) {
 						// error was reported before
 						return
 					}
@@ -194,7 +194,7 @@ func embeddedFieldIdent(e syntax.Expr) *syntax.Name {
 	case *syntax.IndexExpr:
 		return embeddedFieldIdent(e.X)
 	}
-	return nil // invalid embedded field
+	return nil	// invalid embedded field
 }
 
 func (check *Checker) declareInSet(oset *objset, pos syntax.Pos, obj Object) bool {

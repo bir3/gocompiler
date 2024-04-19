@@ -14,7 +14,7 @@ import (
 	"github.com/bir3/gocompiler/src/cmd/internal/quoted"
 )
 
-var goflags []string // cached $GOFLAGS list; can be -x or --x form
+var goflags []string	// cached $GOFLAGS list; can be -x or --x form
 
 // GOFLAGS returns the flags from $GOFLAGS.
 // The list can be assumed to contain one string per flag,
@@ -27,7 +27,7 @@ func GOFLAGS() []string {
 // InitGOFLAGS initializes the goflags list from $GOFLAGS.
 // If goflags is already initialized, it does nothing.
 func InitGOFLAGS() {
-	if goflags != nil { // already initialized
+	if goflags != nil {	// already initialized
 		return
 	}
 

@@ -10,8 +10,8 @@ import (
 )
 
 var basicTypes = [...]struct {
-	name  string
-	etype Kind
+	name	string
+	etype	Kind
 }{
 	{"int8", TINT8},
 	{"int16", TINT16},
@@ -30,10 +30,10 @@ var basicTypes = [...]struct {
 }
 
 var typedefs = [...]struct {
-	name     string
-	etype    Kind
-	sameas32 Kind
-	sameas64 Kind
+	name		string
+	etype		Kind
+	sameas32	Kind
+	sameas64	Kind
 }{
 	{"int", TINT, TINT32, TINT64},
 	{"uint", TUINT, TUINT32, TUINT64},
@@ -57,8 +57,8 @@ func InitTypes(defTypeName func(sym *Sym, typ *Type) Object) {
 		SimType[et] = et
 	}
 
-	Types[TANY] = newType(TANY) // note: an old placeholder type, NOT the new builtin 'any' alias for interface{}
-	Types[TINTER] = NewInterface(LocalPkg, nil, false)
+	Types[TANY] = newType(TANY)	// note: an old placeholder type, NOT the new builtin 'any' alias for interface{}
+	Types[TINTER] = NewInterface(nil)
 	CheckSize(Types[TINTER])
 
 	defBasic := func(kind Kind, pkg *Pkg, name string) *Type {
@@ -111,7 +111,7 @@ func InitTypes(defTypeName func(sym *Sym, typ *Type) Object) {
 	// any type (interface)
 	DeferCheckSize()
 	AnyType = defBasic(TFORW, BuiltinPkg, "any")
-	AnyType.SetUnderlying(NewInterface(BuiltinPkg, []*Field{}, false))
+	AnyType.SetUnderlying(NewInterface(nil))
 	ResumeCheckSize()
 
 	Types[TUNSAFEPTR] = defBasic(TUNSAFEPTR, UnsafePkg, "Pointer")
@@ -140,15 +140,15 @@ func InitTypes(defTypeName func(sym *Sym, typ *Type) Object) {
 }
 
 func makeErrorInterface() *Type {
-	sig := NewSignature(NoPkg, FakeRecv(), nil, nil, []*Field{
+	sig := NewSignature(FakeRecv(), nil, []*Field{
 		NewField(src.NoXPos, nil, Types[TSTRING]),
 	})
 	method := NewField(src.NoXPos, LocalPkg.Lookup("Error"), sig)
-	return NewInterface(NoPkg, []*Field{method}, false)
+	return NewInterface([]*Field{method})
 }
 
 // makeComparableInterface makes the predefined "comparable" interface in the
 // built-in package. It has a unique name, but no methods.
 func makeComparableInterface() *Type {
-	return NewInterface(NoPkg, nil, false)
+	return NewInterface(nil)
 }

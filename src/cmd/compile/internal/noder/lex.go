@@ -28,7 +28,7 @@ const (
 		ir.Nosplit |
 		ir.Noinline |
 		ir.NoCheckPtr |
-		ir.RegisterParams | // TODO(register args) remove after register abi is working
+		ir.RegisterParams |	// TODO(register args) remove after register abi is working
 		ir.CgoUnsafeArgs |
 		ir.UintptrKeepAlive |
 		ir.UintptrEscapes |
@@ -51,7 +51,7 @@ func pragmaFlag(verb string) ir.PragmaFlag {
 	case "go:norace":
 		return ir.Norace
 	case "go:nosplit":
-		return ir.Nosplit | ir.NoCheckPtr // implies NoCheckPtr (see #34972)
+		return ir.Nosplit | ir.NoCheckPtr	// implies NoCheckPtr (see #34972)
 	case "go:noinline":
 		return ir.Noinline
 	case "go:nocheckptr":
@@ -61,19 +61,19 @@ func pragmaFlag(verb string) ir.PragmaFlag {
 	case "go:nowritebarrier":
 		return ir.Nowritebarrier
 	case "go:nowritebarrierrec":
-		return ir.Nowritebarrierrec | ir.Nowritebarrier // implies Nowritebarrier
+		return ir.Nowritebarrierrec | ir.Nowritebarrier	// implies Nowritebarrier
 	case "go:yeswritebarrierrec":
 		return ir.Yeswritebarrierrec
 	case "go:cgo_unsafe_args":
-		return ir.CgoUnsafeArgs | ir.NoCheckPtr // implies NoCheckPtr (see #34968)
+		return ir.CgoUnsafeArgs | ir.NoCheckPtr	// implies NoCheckPtr (see #34968)
 	case "go:uintptrkeepalive":
 		return ir.UintptrKeepAlive
 	case "go:uintptrescapes":
 		// This directive extends //go:uintptrkeepalive by forcing
 		// uintptr arguments to escape to the heap, which makes stack
 		// growth safe.
-		return ir.UintptrEscapes | ir.UintptrKeepAlive // implies UintptrKeepAlive
-	case "go:registerparams": // TODO(register args) remove after register abi is working
+		return ir.UintptrEscapes | ir.UintptrKeepAlive	// implies UintptrKeepAlive
+	case "go:registerparams":	// TODO(register args) remove after register abi is working
 		return ir.RegisterParams
 	}
 	return 0
@@ -151,7 +151,7 @@ func (p *noder) pragcgo(pos syntax.Pos, text string) {
 func pragmaFields(s string) []string {
 	var a []string
 	inQuote := false
-	fieldStart := -1 // Set to -1 when looking for start of field.
+	fieldStart := -1	// Set to -1 when looking for start of field.
 	for i, c := range s {
 		switch {
 		case c == '"':
@@ -177,7 +177,7 @@ func pragmaFields(s string) []string {
 			}
 		}
 	}
-	if !inQuote && fieldStart >= 0 { // Last field might end at the end of the string.
+	if !inQuote && fieldStart >= 0 {	// Last field might end at the end of the string.
 		a = append(a, s[fieldStart:])
 	}
 	return a

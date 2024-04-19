@@ -6,6 +6,9 @@ package mvs
 
 import (
 	"fmt"
+	"slices"
+
+	"github.com/bir3/gocompiler/src/cmd/gocmd/internal/gover"
 
 	"github.com/bir3/gocompiler/src/xvendor/golang.org/x/mod/module"
 )
@@ -13,13 +16,13 @@ import (
 // Graph implements an incremental version of the MVS algorithm, with the
 // requirements pushed by the caller instead of pulled by the MVS traversal.
 type Graph struct {
-	cmp   func(v1, v2 string) int
-	roots []module.Version
+	cmp	func(p, v1, v2 string) int
+	roots	[]module.Version
 
-	required map[module.Version][]module.Version
+	required	map[module.Version][]module.Version
 
-	isRoot   map[module.Version]bool // contains true for roots and false for reachable non-roots
-	selected map[string]string       // path → version
+	isRoot		map[module.Version]bool	// contains true for roots and false for reachable non-roots
+	selected	map[string]string	// path → version
 }
 
 // NewGraph returns an incremental MVS graph containing only a set of root
@@ -27,18 +30,18 @@ type Graph struct {
 //
 // The caller must ensure that the root slice is not modified while the Graph
 // may be in use.
-func NewGraph(cmp func(v1, v2 string) int, roots []module.Version) *Graph {
+func NewGraph(cmp func(p, v1, v2 string) int, roots []module.Version) *Graph {
 	g := &Graph{
-		cmp:      cmp,
-		roots:    roots[:len(roots):len(roots)],
-		required: make(map[module.Version][]module.Version),
-		isRoot:   make(map[module.Version]bool),
-		selected: make(map[string]string),
+		cmp:		cmp,
+		roots:		slices.Clip(roots),
+		required:	make(map[module.Version][]module.Version),
+		isRoot:		make(map[module.Version]bool),
+		selected:	make(map[string]string),
 	}
 
 	for _, m := range roots {
 		g.isRoot[m] = true
-		if g.cmp(g.Selected(m.Path), m.Version) < 0 {
+		if g.cmp(m.Path, g.Selected(m.Path), m.Version) < 0 {
 			g.selected[m.Path] = m.Version
 		}
 	}
@@ -64,7 +67,7 @@ func (g *Graph) Require(m module.Version, reqs []module.Version) {
 
 	// Truncate reqs to its capacity to avoid aliasing bugs if it is later
 	// returned from RequiredBy and appended to.
-	reqs = reqs[:len(reqs):len(reqs)]
+	reqs = slices.Clip(reqs)
 
 	if _, dup := g.required[m]; dup {
 		panic(fmt.Sprintf("requirements of %v have already been set", m))
@@ -77,7 +80,7 @@ func (g *Graph) Require(m module.Version, reqs []module.Version) {
 			g.isRoot[dep] = false
 		}
 
-		if g.cmp(g.Selected(dep.Path), dep.Version) < 0 {
+		if g.cmp(dep.Path, g.Selected(dep.Path), dep.Version) < 0 {
 			g.selected[dep.Path] = dep.Version
 		}
 	}
@@ -137,7 +140,7 @@ func (g *Graph) BuildList() []module.Version {
 			list = append(list, module.Version{Path: path, Version: version})
 		}
 	}
-	module.Sort(list[len(uniqueRoots):])
+	gover.ModSort(list[len(uniqueRoots):])
 
 	return list
 }

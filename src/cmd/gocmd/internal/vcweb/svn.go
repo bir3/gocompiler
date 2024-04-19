@@ -9,7 +9,7 @@ import (
 	"log"
 	"net"
 	"net/http"
-	"os/exec"
+	"github.com/bir3/gocompiler/exec"
 	"strings"
 	"sync"
 )
@@ -32,24 +32,24 @@ import (
 // straightforward for Go contributors to set up and test against on their local
 // machine.
 type svnHandler struct {
-	svnRoot string // a directory containing all svn repos to be served
-	logger  *log.Logger
+	svnRoot	string	// a directory containing all svn repos to be served
+	logger	*log.Logger
 
-	pathOnce     sync.Once
-	svnservePath string // the path to the 'svnserve' executable
-	svnserveErr  error
+	pathOnce	sync.Once
+	svnservePath	string	// the path to the 'svnserve' executable
+	svnserveErr	error
 
-	listenOnce sync.Once
-	s          chan *svnState // 1-buffered
+	listenOnce	sync.Once
+	s		chan *svnState	// 1-buffered
 }
 
 // An svnState describes the state of a port serving the 'svn://' protocol.
 type svnState struct {
-	listener  net.Listener
-	listenErr error
-	conns     map[net.Conn]struct{}
-	closing   bool
-	done      chan struct{}
+	listener	net.Listener
+	listenErr	error
+	conns		map[net.Conn]struct{}
+	closing		bool
+	done		chan struct{}
 }
 
 func (h *svnHandler) Available() bool {
@@ -77,10 +77,10 @@ func (h *svnHandler) Handler(dir string, env []string, logger *log.Logger) (http
 		done := make(chan struct{})
 
 		h.s <- &svnState{
-			listener:  l,
-			listenErr: err,
-			conns:     map[net.Conn]struct{}{},
-			done:      done,
+			listener:	l,
+			listenErr:	err,
+			conns:		map[net.Conn]struct{}{},
+			done:		done,
 		}
 		if err != nil {
 			close(done)

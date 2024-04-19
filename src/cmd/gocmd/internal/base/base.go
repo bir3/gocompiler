@@ -12,7 +12,8 @@ import (
 	"fmt"
 	"log"
 	"os"
-	"os/exec"
+	"github.com/bir3/gocompiler/exec"
+	"reflect"
 	"strings"
 	"sync"
 
@@ -25,35 +26,49 @@ import (
 type Command struct {
 	// Run runs the command.
 	// The args are the arguments after the command name.
-	Run func(ctx context.Context, cmd *Command, args []string)
+	Run	func(ctx context.Context, cmd *Command, args []string)
 
 	// UsageLine is the one-line usage message.
 	// The words between "go" and the first flag or argument in the line are taken to be the command name.
-	UsageLine string
+	UsageLine	string
 
 	// Short is the short description shown in the 'go help' output.
-	Short string
+	Short	string
 
 	// Long is the long message shown in the 'go help <this-command>' output.
-	Long string
+	Long	string
 
 	// Flag is a set of flags specific to this command.
-	Flag flag.FlagSet
+	Flag	flag.FlagSet
 
 	// CustomFlags indicates that the command will do its own
 	// flag parsing.
-	CustomFlags bool
+	CustomFlags	bool
 
 	// Commands lists the available commands and help topics.
 	// The order here is the order in which they are printed by 'go help'.
 	// Note that subcommands are in general best avoided.
-	Commands []*Command
+	Commands	[]*Command
 }
 
 var Go = &Command{
-	UsageLine: "go",
-	Long:      `Go is a tool for managing Go source code.`,
+	UsageLine:	"go",
+	Long:		`Go is a tool for managing Go source code.`,
 	// Commands initialized in package main
+}
+
+// Lookup returns the subcommand with the given name, if any.
+// Otherwise it returns nil.
+//
+// Lookup ignores subcommands that have len(c.Commands) == 0 and c.Run == nil.
+// Such subcommands are only for use as arguments to "help".
+func (c *Command) Lookup(name string) *Command {
+	for _, sub := range c.Commands {
+		if sub.Name() == name && (len(c.Commands) > 0 || c.Runnable()) {
+			return sub
+		}
+	}
+	return nil
 }
 
 // hasFlag reports whether a command or any of its subcommands contain the given
@@ -131,6 +146,28 @@ func ExitIfErrors() {
 	if exitStatus != 0 {
 		Exit()
 	}
+}
+
+func Error(err error) {
+	// We use errors.Join to return multiple errors from various routines.
+	// If we receive multiple errors joined with a basic errors.Join,
+	// handle each one separately so that they all have the leading "go: " prefix.
+	// A plain interface check is not good enough because there might be
+	// other kinds of structured errors that are logically one unit and that
+	// add other context: only handling the wrapped errors would lose
+	// that context.
+	if err != nil && reflect.TypeOf(err).String() == "*errors.joinError" {
+		for _, e := range err.(interface{ Unwrap() []error }).Unwrap() {
+			Error(e)
+		}
+		return
+	}
+	Errorf("go: %v", err)
+}
+
+func Fatal(err error) {
+	Error(err)
+	Exit()
 }
 
 var exitStatus = 0

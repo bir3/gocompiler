@@ -10,8 +10,8 @@ import (
 )
 
 var CmdMod = &base.Command{
-	UsageLine: "go mod",
-	Short:     "module maintenance",
+	UsageLine:	"go mod",
+	Short:		"module maintenance",
 	Long: `Go mod provides access to operations on modules.
 
 Note that support for modules is built into all the go commands,

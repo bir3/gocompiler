@@ -31,7 +31,7 @@ func (e *escape) stmt(n ir.Node) {
 	default:
 		base.Fatalf("unexpected stmt: %v", n)
 
-	case ir.ODCLCONST, ir.ODCLTYPE, ir.OFALL, ir.OINLMARK:
+	case ir.OFALL, ir.OINLMARK:
 		// nop
 
 	case ir.OBREAK, ir.OCONTINUE, ir.OGOTO:
@@ -64,7 +64,7 @@ func (e *escape) stmt(n ir.Node) {
 			}
 			e.loopDepth++
 		default:
-			base.Fatalf("label missing tag")
+			base.Fatalf("label %v missing tag", n.Label)
 		}
 		delete(e.labels, n.Label)
 
@@ -80,6 +80,7 @@ func (e *escape) stmt(n ir.Node) {
 
 	case ir.OFOR:
 		n := n.(*ir.ForStmt)
+		base.Assert(!n.DistinctVars)	// Should all be rewritten before escape analysis
 		e.loopDepth++
 		e.discard(n.Cond)
 		e.stmt(n.Post)
@@ -89,9 +90,11 @@ func (e *escape) stmt(n ir.Node) {
 	case ir.ORANGE:
 		// for Key, Value = range X { Body }
 		n := n.(*ir.RangeStmt)
+		base.Assert(!n.DistinctVars)	// Should all be rewritten before escape analysis
 
-		// X is evaluated outside the loop.
-		tmp := e.newLoc(nil, false)
+		// X is evaluated outside the loop and persists until the loop
+		// terminates.
+		tmp := e.newLoc(nil, true)
 		e.expr(tmp.asHole(), n.X)
 
 		e.loopDepth++
@@ -114,7 +117,7 @@ func (e *escape) stmt(n ir.Node) {
 			if guard.Tag != nil {
 				for _, cas := range n.Cases {
 					cv := cas.Var
-					k := e.dcl(cv) // type switch variables have no ODCL.
+					k := e.dcl(cv)	// type switch variables have no ODCL.
 					if cv.Type().HasPointers() {
 						ks = append(ks, k.dotType(cv.Type(), cas, "switch case"))
 					}
@@ -139,7 +142,7 @@ func (e *escape) stmt(n ir.Node) {
 	case ir.ORECV:
 		// TODO(mdempsky): Consider e.discard(n.Left).
 		n := n.(*ir.UnaryExpr)
-		e.exprSkipInit(e.discardHole(), n) // already visited n.Ninit
+		e.exprSkipInit(e.discardHole(), n)	// already visited n.Ninit
 	case ir.OSEND:
 		n := n.(*ir.SendStmt)
 		e.discard(n.Chan)
@@ -156,13 +159,13 @@ func (e *escape) stmt(n ir.Node) {
 		n := n.(*ir.AssignListStmt)
 		e.assignList(n.Lhs, n.Rhs, "assign-pair", n)
 
-	case ir.OAS2DOTTYPE: // v, ok = x.(type)
+	case ir.OAS2DOTTYPE:	// v, ok = x.(type)
 		n := n.(*ir.AssignListStmt)
 		e.assignList(n.Lhs, n.Rhs, "assign-pair-dot-type", n)
-	case ir.OAS2MAPR: // v, ok = m[k]
+	case ir.OAS2MAPR:	// v, ok = m[k]
 		n := n.(*ir.AssignListStmt)
 		e.assignList(n.Lhs, n.Rhs, "assign-pair-mapr", n)
-	case ir.OAS2RECV, ir.OSELRECV2: // v, ok = <-ch
+	case ir.OAS2RECV, ir.OSELRECV2:	// v, ok = <-ch
 		n := n.(*ir.AssignListStmt)
 		e.assignList(n.Lhs, n.Rhs, "assign-pair-receive", n)
 
@@ -174,13 +177,13 @@ func (e *escape) stmt(n ir.Node) {
 		e.reassigned(ks, n)
 	case ir.ORETURN:
 		n := n.(*ir.ReturnStmt)
-		results := e.curfn.Type().Results().FieldSlice()
+		results := e.curfn.Type().Results()
 		dsts := make([]ir.Node, len(results))
 		for i, res := range results {
 			dsts[i] = res.Nname.(*ir.Name)
 		}
 		e.assignList(dsts, n.Results, "return", n)
-	case ir.OCALLFUNC, ir.OCALLMETH, ir.OCALLINTER, ir.OINLCALL, ir.OCLOSE, ir.OCOPY, ir.ODELETE, ir.OPANIC, ir.OPRINT, ir.OPRINTN, ir.ORECOVER:
+	case ir.OCALLFUNC, ir.OCALLMETH, ir.OCALLINTER, ir.OINLCALL, ir.OCLEAR, ir.OCLOSE, ir.OCOPY, ir.ODELETE, ir.OPANIC, ir.OPRINT, ir.OPRINTLN, ir.ORECOVERFP:
 		e.call(nil, n)
 	case ir.OGO, ir.ODEFER:
 		n := n.(*ir.GoDeferStmt)

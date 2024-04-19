@@ -33,6 +33,7 @@ import (
 	"github.com/bir3/gocompiler/src/cmd/internal/obj"
 	"github.com/bir3/gocompiler/src/cmd/internal/objabi"
 	"github.com/bir3/gocompiler/src/cmd/internal/sys"
+	"github.com/bir3/gocompiler/src/internal/abi"
 	"log"
 	"math"
 )
@@ -56,7 +57,7 @@ func progedit(ctxt *obj.Link, p *obj.Prog, newprog obj.ProgAlloc) {
 	case AFMOVS:
 		if p.From.Type == obj.TYPE_FCONST {
 			f32 := float32(p.From.Val.(float64))
-			if math.Float32bits(f32) == 0 { // +0
+			if math.Float32bits(f32) == 0 {	// +0
 				break
 			}
 			p.From.Type = obj.TYPE_MEM
@@ -68,7 +69,7 @@ func progedit(ctxt *obj.Link, p *obj.Prog, newprog obj.ProgAlloc) {
 	case AFMOVD:
 		if p.From.Type == obj.TYPE_FCONST {
 			f64 := p.From.Val.(float64)
-			if math.Float64bits(f64) == 0 { // +0
+			if math.Float64bits(f64) == 0 {	// +0
 				break
 			}
 			p.From.Type = obj.TYPE_MEM
@@ -313,7 +314,7 @@ func preprocess(ctxt *obj.Link, cursym *obj.LSym, newprog obj.ProgAlloc) {
 				autosize += int32(c.ctxt.Arch.FixedFrameSize)
 			}
 
-			if p.Mark&LEAF != 0 && autosize < objabi.StackSmall {
+			if p.Mark&LEAF != 0 && autosize < abi.StackSmall {
 				// A leaf function with a small stack can be marked
 				// NOSPLIT, avoiding a stack check.
 				p.From.Sym.Set(obj.AttrNoSplit, true)
@@ -324,10 +325,10 @@ func preprocess(ctxt *obj.Link, cursym *obj.LSym, newprog obj.ProgAlloc) {
 			q := p
 
 			if !p.From.Sym.NoSplit() {
-				p, pPreempt, pCheck = c.stacksplitPre(p, autosize) // emit pre part of split check
+				p, pPreempt, pCheck = c.stacksplitPre(p, autosize)	// emit pre part of split check
 				pPre = p
 				p = c.ctxt.EndUnsafePoint(p, c.newprog, -1)
-				wasSplit = true //need post part of split
+				wasSplit = true	//need post part of split
 			}
 
 			if autosize != 0 {
@@ -352,7 +353,7 @@ func preprocess(ctxt *obj.Link, cursym *obj.LSym, newprog obj.ProgAlloc) {
 				q.As = AMOVD
 				q.From.Type = obj.TYPE_ADDR
 				q.From.Offset = int64(-autosize)
-				q.From.Reg = REGSP // not actually needed - REGSP is assumed if no reg is provided
+				q.From.Reg = REGSP	// not actually needed - REGSP is assumed if no reg is provided
 				q.To.Type = obj.TYPE_REG
 				q.To.Reg = REGSP
 				q.Spadj = autosize
@@ -406,7 +407,7 @@ func preprocess(ctxt *obj.Link, cursym *obj.LSym, newprog obj.ProgAlloc) {
 				q.As = AMOVD
 				q.From.Type = obj.TYPE_MEM
 				q.From.Reg = REGG
-				q.From.Offset = 4 * int64(c.ctxt.Arch.PtrSize) // G.panic
+				q.From.Offset = 4 * int64(c.ctxt.Arch.PtrSize)	// G.panic
 				q.To.Type = obj.TYPE_REG
 				q.To.Reg = REG_R3
 
@@ -426,7 +427,7 @@ func preprocess(ctxt *obj.Link, cursym *obj.LSym, newprog obj.ProgAlloc) {
 				q.As = AMOVD
 				q.From.Type = obj.TYPE_MEM
 				q.From.Reg = REG_R3
-				q.From.Offset = 0 // Panic.argp
+				q.From.Offset = 0	// Panic.argp
 				q.To.Type = obj.TYPE_REG
 				q.To.Reg = REG_R4
 
@@ -464,7 +465,7 @@ func preprocess(ctxt *obj.Link, cursym *obj.LSym, newprog obj.ProgAlloc) {
 				q.From.Reg = REG_R6
 				q.To.Type = obj.TYPE_MEM
 				q.To.Reg = REG_R3
-				q.To.Offset = 0 // Panic.argp
+				q.To.Offset = 0	// Panic.argp
 
 				q = obj.Appendp(q, c.newprog)
 
@@ -518,8 +519,8 @@ func preprocess(ctxt *obj.Link, cursym *obj.LSym, newprog obj.ProgAlloc) {
 			p.From.Reg = REGSP
 			p.From.Offset = 0
 			p.To = obj.Addr{
-				Type: obj.TYPE_REG,
-				Reg:  REG_LR,
+				Type:	obj.TYPE_REG,
+				Reg:	REG_LR,
 			}
 
 			q = p
@@ -568,8 +569,8 @@ func preprocess(ctxt *obj.Link, cursym *obj.LSym, newprog obj.ProgAlloc) {
 
 		if p.To.Type == obj.TYPE_REG && p.To.Reg == REGSP && p.Spadj == 0 {
 			f := c.cursym.Func()
-			if f.FuncFlag&objabi.FuncFlag_SPWRITE == 0 {
-				c.cursym.Func().FuncFlag |= objabi.FuncFlag_SPWRITE
+			if f.FuncFlag&abi.FuncFlagSPWrite == 0 {
+				c.cursym.Func().FuncFlag |= abi.FuncFlagSPWrite
 				if ctxt.Debugvlog || !ctxt.IsAsm {
 					ctxt.Logf("auto-SPWRITE: %s\n", c.cursym.Name)
 					if !ctxt.IsAsm {
@@ -582,7 +583,7 @@ func preprocess(ctxt *obj.Link, cursym *obj.LSym, newprog obj.ProgAlloc) {
 		}
 	}
 	if wasSplit {
-		c.stacksplitPost(pLast, pPre, pPreempt, pCheck, autosize) // emit post part of split check
+		c.stacksplitPost(pLast, pPre, pPreempt, pCheck, autosize)	// emit post part of split check
 	}
 }
 
@@ -649,9 +650,9 @@ func (c *ctxtz) stacksplitPre(p *obj.Prog, framesize int32) (pPre, pPreempt, pCh
 	p.As = AMOVD
 	p.From.Type = obj.TYPE_MEM
 	p.From.Reg = REGG
-	p.From.Offset = 2 * int64(c.ctxt.Arch.PtrSize) // G.stackguard0
+	p.From.Offset = 2 * int64(c.ctxt.Arch.PtrSize)	// G.stackguard0
 	if c.cursym.CFunc() {
-		p.From.Offset = 3 * int64(c.ctxt.Arch.PtrSize) // G.stackguard1
+		p.From.Offset = 3 * int64(c.ctxt.Arch.PtrSize)	// G.stackguard1
 	}
 	p.To.Type = obj.TYPE_REG
 	p.To.Reg = REG_R3
@@ -662,7 +663,7 @@ func (c *ctxtz) stacksplitPre(p *obj.Prog, framesize int32) (pPre, pPreempt, pCh
 	// unnecessarily. See issue #35470.
 	p = c.ctxt.StartUnsafePoint(p, c.newprog)
 
-	if framesize <= objabi.StackSmall {
+	if framesize <= abi.StackSmall {
 		// small stack: SP < stackguard
 		//	CMPUBGE	stackguard, SP, label-of-call-to-morestack
 
@@ -678,8 +679,8 @@ func (c *ctxtz) stacksplitPre(p *obj.Prog, framesize int32) (pPre, pPreempt, pCh
 
 	// large stack: SP-framesize < stackguard-StackSmall
 
-	offset := int64(framesize) - objabi.StackSmall
-	if framesize > objabi.StackBig {
+	offset := int64(framesize) - abi.StackSmall
+	if framesize > abi.StackBig {
 		// Such a large stack we need to protect against underflow.
 		// The runtime guarantees SP > objabi.StackBig, but
 		// framesize is large enough that SP-framesize may
@@ -781,22 +782,22 @@ func (c *ctxtz) stacksplitPost(p *obj.Prog, pPre, pPreempt, pCheck *obj.Prog, fr
 }
 
 var unaryDst = map[obj.As]bool{
-	ASTCK:  true,
-	ASTCKC: true,
-	ASTCKE: true,
-	ASTCKF: true,
-	ANEG:   true,
-	ANEGW:  true,
-	AVONE:  true,
-	AVZERO: true,
+	ASTCK:	true,
+	ASTCKC:	true,
+	ASTCKE:	true,
+	ASTCKF:	true,
+	ANEG:	true,
+	ANEGW:	true,
+	AVONE:	true,
+	AVZERO:	true,
 }
 
 var Links390x = obj.LinkArch{
-	Arch:           sys.ArchS390X,
-	Init:           buildop,
-	Preprocess:     preprocess,
-	Assemble:       spanz,
-	Progedit:       progedit,
-	UnaryDst:       unaryDst,
-	DWARFRegisters: S390XDWARFRegisters,
+	Arch:		sys.ArchS390X,
+	Init:		buildop,
+	Preprocess:	preprocess,
+	Assemble:	spanz,
+	Progedit:	progedit,
+	UnaryDst:	unaryDst,
+	DWARFRegisters:	S390XDWARFRegisters,
 }

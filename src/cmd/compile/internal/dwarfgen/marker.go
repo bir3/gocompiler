@@ -13,8 +13,8 @@ import (
 // A ScopeMarker tracks scope nesting and boundaries for later use
 // during DWARF generation.
 type ScopeMarker struct {
-	parents []ir.ScopeID
-	marks   []ir.Mark
+	parents	[]ir.ScopeID
+	marks	[]ir.Mark
 }
 
 // checkPos validates the given position and returns the current scope.

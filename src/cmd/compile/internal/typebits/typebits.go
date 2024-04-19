@@ -37,14 +37,14 @@ func set(t *types.Type, off int64, bv bitvec.BitVec, skip bool) {
 		if off&int64(types.PtrSize-1) != 0 {
 			base.Fatalf("typebits.Set: invalid alignment, %v", t)
 		}
-		bv.Set(int32(off / int64(types.PtrSize))) // pointer
+		bv.Set(int32(off / int64(types.PtrSize)))	// pointer
 
 	case types.TSTRING:
 		// struct { byte *str; intgo len; }
 		if off&int64(types.PtrSize-1) != 0 {
 			base.Fatalf("typebits.Set: invalid alignment, %v", t)
 		}
-		bv.Set(int32(off / int64(types.PtrSize))) //pointer in first slot
+		bv.Set(int32(off / int64(types.PtrSize)))	//pointer in first slot
 
 	case types.TINTER:
 		// struct { Itab *tab;	void *data; }
@@ -65,14 +65,14 @@ func set(t *types.Type, off int64, bv bitvec.BitVec, skip bool) {
 		//      the underlying type so it won't be GCd.
 		// If we ever have a moving GC, we need to change this for 2b (as
 		// well as scan itabs to update their itab._type fields).
-		bv.Set(int32(off/int64(types.PtrSize) + 1)) // pointer in second slot
+		bv.Set(int32(off/int64(types.PtrSize) + 1))	// pointer in second slot
 
 	case types.TSLICE:
 		// struct { byte *array; uintgo len; uintgo cap; }
 		if off&int64(types.PtrSize-1) != 0 {
 			base.Fatalf("typebits.Set: invalid TARRAY alignment, %v", t)
 		}
-		bv.Set(int32(off / int64(types.PtrSize))) // pointer in first slot (BitsPointer)
+		bv.Set(int32(off / int64(types.PtrSize)))	// pointer in first slot (BitsPointer)
 
 	case types.TARRAY:
 		elt := t.Elem()
@@ -86,7 +86,7 @@ func set(t *types.Type, off int64, bv bitvec.BitVec, skip bool) {
 		}
 
 	case types.TSTRUCT:
-		for _, f := range t.Fields().Slice() {
+		for _, f := range t.Fields() {
 			set(f.Type, off+f.Offset, bv, skip)
 		}
 

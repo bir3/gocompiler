@@ -15,9 +15,10 @@ import (
 	"io"
 	"log"
 	"os"
-	"os/exec"
+	"github.com/bir3/gocompiler/exec"
 	"path/filepath"
 	"regexp"
+	"slices"
 	"strconv"
 	"strings"
 
@@ -30,9 +31,9 @@ import (
 )
 
 var CmdGenerate = &base.Command{
-	Run:       runGenerate,
-	UsageLine: "go generate [-run regexp] [-n] [-v] [-x] [build flags] [file.go... | packages]",
-	Short:     "generate Go files by processing source",
+	Run:		runGenerate,
+	UsageLine:	"go generate [-run regexp] [-n] [-v] [-x] [build flags] [file.go... | packages]",
+	Short:		"generate Go files by processing source",
 	Long: `
 Generate runs commands described by directives within existing
 files. Those commands can run any process but the intent is to
@@ -166,11 +167,11 @@ For more about specifying packages, see 'go help packages'.
 }
 
 var (
-	generateRunFlag string         // generate -run flag
-	generateRunRE   *regexp.Regexp // compiled expression for -run
+	generateRunFlag	string		// generate -run flag
+	generateRunRE	*regexp.Regexp	// compiled expression for -run
 
-	generateSkipFlag string         // generate -skip flag
-	generateSkipRE   *regexp.Regexp // compiled expression for -skip
+	generateSkipFlag	string		// generate -skip flag
+	generateSkipRE		*regexp.Regexp	// compiled expression for -skip
 )
 
 func init() {
@@ -180,6 +181,8 @@ func init() {
 }
 
 func runGenerate(ctx context.Context, cmd *base.Command, args []string) {
+	modload.InitWorkfile()
+
 	if generateRunFlag != "" {
 		var err error
 		generateRunRE, err = regexp.Compile(generateRunFlag)
@@ -209,6 +212,13 @@ func runGenerate(ctx context.Context, cmd *base.Command, args []string) {
 			continue
 		}
 
+		if pkg.Error != nil && len(pkg.InternalAllGoFiles()) == 0 {
+			// A directory only contains a Go package if it has at least
+			// one .go source file, so the fact that there are no files
+			// implies that the package couldn't be found.
+			base.Errorf("%v", pkg.Error)
+		}
+
 		for _, file := range pkg.InternalGoFiles() {
 			if !generate(file) {
 				break
@@ -221,6 +231,7 @@ func runGenerate(ctx context.Context, cmd *base.Command, args []string) {
 			}
 		}
 	}
+	base.ExitIfErrors()
 }
 
 // generate runs the generation directives for a single file.
@@ -238,10 +249,10 @@ func generate(absFile string) bool {
 	}
 
 	g := &Generator{
-		r:        bytes.NewReader(src),
-		path:     absFile,
-		pkg:      filePkg.Name.String(),
-		commands: make(map[string][]string),
+		r:		bytes.NewReader(src),
+		path:		absFile,
+		pkg:		filePkg.Name.String(),
+		commands:	make(map[string][]string),
 	}
 	return g.run()
 }
@@ -249,14 +260,14 @@ func generate(absFile string) bool {
 // A Generator represents the state of a single Go source file
 // being scanned for generator commands.
 type Generator struct {
-	r        io.Reader
-	path     string // full rooted path name.
-	dir      string // full rooted directory of file.
-	file     string // base name of file.
-	pkg      string
-	commands map[string][]string
-	lineNum  int // current line number.
-	env      []string
+	r		io.Reader
+	path		string	// full rooted path name.
+	dir		string	// full rooted directory of file.
+	file		string	// base name of file.
+	pkg		string
+	commands	map[string][]string
+	lineNum		int	// current line number.
+	env		[]string
 }
 
 // run runs the generators in the current file.
@@ -274,7 +285,7 @@ func (g *Generator) run() (ok bool) {
 		}
 	}()
 	g.dir, g.file = filepath.Split(g.path)
-	g.dir = filepath.Clean(g.dir) // No final separator please.
+	g.dir = filepath.Clean(g.dir)	// No final separator please.
 	if cfg.BuildV {
 		fmt.Fprintf(os.Stderr, "%s\n", base.ShortPath(g.path))
 	}
@@ -286,7 +297,7 @@ func (g *Generator) run() (ok bool) {
 	var err error
 	// One line per loop.
 	for {
-		g.lineNum++ // 1-indexed.
+		g.lineNum++	// 1-indexed.
 		var buf []byte
 		buf, err = input.ReadSlice('\n')
 		if err == bufio.ErrBufferFull {
@@ -372,7 +383,7 @@ func (g *Generator) setEnv() {
 func (g *Generator) split(line string) []string {
 	// Parse line, obeying quoted strings.
 	var words []string
-	line = line[len("//go:generate ") : len(line)-1] // Drop preamble and final newline.
+	line = line[len("//go:generate ") : len(line)-1]	// Drop preamble and final newline.
 	// There may still be a carriage return.
 	if len(line) > 0 && line[len(line)-1] == '\r' {
 		line = line[:len(line)-1]
@@ -386,13 +397,13 @@ Words:
 		}
 		if line[0] == '"' {
 			for i := 1; i < len(line); i++ {
-				c := line[i] // Only looking for ASCII so this is OK.
+				c := line[i]	// Only looking for ASCII so this is OK.
 				switch c {
 				case '\\':
 					if i+1 == len(line) {
 						g.errorf("bad backslash")
 					}
-					i++ // Absorb next byte (If it's a multibyte we'll get an error in Unquote).
+					i++	// Absorb next byte (If it's a multibyte we'll get an error in Unquote).
 				case '"':
 					word, err := strconv.Unquote(line[0 : i+1])
 					if err != nil {
@@ -466,7 +477,7 @@ func (g *Generator) setShorthand(words []string) {
 	if g.commands[command] != nil {
 		g.errorf("command %q multiply defined", command)
 	}
-	g.commands[command] = words[2:len(words):len(words)] // force later append to make copy
+	g.commands[command] = slices.Clip(words[2:])
 }
 
 // exec runs the command specified by the argument. The first word is
@@ -478,13 +489,13 @@ func (g *Generator) exec(words []string) {
 		// intends to use the same 'go' as 'go generate' itself.
 		// Prefer to resolve the binary from GOROOT/bin, and for consistency
 		// prefer to resolve any other commands there too.
-		gorootBinPath, err := exec.LookPath(filepath.Join(cfg.GOROOTbin, path))
+		gorootBinPath, err := cfg.LookPath(filepath.Join(cfg.GOROOTbin, path))
 		if err == nil {
 			path = gorootBinPath
 		}
 	}
 	cmd := exec.Command(path, words[1:]...)
-	cmd.Args[0] = words[0] // Overwrite with the original in case it was rewritten above.
+	cmd.Args[0] = words[0]	// Overwrite with the original in case it was rewritten above.
 
 	// Standard in and out of generator should be the usual.
 	cmd.Stdout = os.Stdout

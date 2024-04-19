@@ -20,7 +20,7 @@ import (
 // If bufSize == 0, FindAndHash uses a reasonable default.
 func FindAndHash(r io.Reader, id string, bufSize int) (matches []int64, hash [32]byte, err error) {
 	if bufSize == 0 {
-		bufSize = 31 * 1024 // bufSize+little will likely fit in 32 kB
+		bufSize = 31 * 1024	// bufSize+little will likely fit in 32 kB
 	}
 	if len(id) == 0 {
 		return nil, [32]byte{}, fmt.Errorf("buildid.FindAndHash: no id specified")
@@ -43,7 +43,7 @@ func FindAndHash(r io.Reader, id string, bufSize int) (matches []int64, hash [32
 	// next to each other in memory and then copy the tail of
 	// one read into the tiny buffer before reading new data into the big buffer.
 	// The search for id is over the entire tiny+big buffer.
-	tiny := (len(id) + 127) &^ 127 // round up to 128-aligned
+	tiny := (len(id) + 127) &^ 127	// round up to 128-aligned
 	buf := make([]byte, tiny+bufSize)
 	h := sha256.New()
 	start := tiny
@@ -128,9 +128,9 @@ func excludeMachoCodeSignature(r io.Reader) io.Reader {
 // the underlying reader, except that when the byte offset is within the
 // range between start and end, it returns zero bytes.
 type excludedReader struct {
-	r          io.Reader
-	off        int64 // current offset
-	start, end int64 // the range to be excluded (read as zero)
+	r		io.Reader
+	off		int64	// current offset
+	start, end	int64	// the range to be excluded (read as zero)
 }
 
 func (r *excludedReader) Read(p []byte) (int, error) {

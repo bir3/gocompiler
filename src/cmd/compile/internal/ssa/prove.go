@@ -13,7 +13,7 @@ import (
 type branch int
 
 const (
-	unknown branch = iota
+	unknown	branch	= iota
 	positive
 	negative
 	// The outedges from a jump table are jumpTable0,
@@ -45,14 +45,14 @@ const (
 type relation uint
 
 const (
-	lt relation = 1 << iota
+	lt	relation	= 1 << iota
 	eq
 	gt
 )
 
 var relationStrings = [...]string{
-	0: "none", lt: "<", eq: "==", lt | eq: "<=",
-	gt: ">", gt | lt: "!=", gt | eq: ">=", gt | eq | lt: "any",
+	0:	"none", lt: "<", eq: "==", lt | eq: "<=",
+	gt:	">", gt | lt: "!=", gt | eq: ">=", gt | eq | lt: "any",
 }
 
 func (r relation) String() string {
@@ -69,7 +69,7 @@ func (r relation) String() string {
 type domain uint
 
 const (
-	signed domain = 1 << iota
+	signed	domain	= 1 << iota
 	unsigned
 	pointer
 	boolean
@@ -100,22 +100,23 @@ func (d domain) String() string {
 }
 
 type pair struct {
-	v, w *Value // a pair of values, ordered by ID.
+	// a pair of values, ordered by ID.
 	// v can be nil, to mean the zero value.
 	// for booleans the zero value (v == nil) is false.
-	d domain
+	v, w	*Value
+	d	domain
 }
 
 // fact is a pair plus a relation for that pair.
 type fact struct {
-	p pair
-	r relation
+	p	pair
+	r	relation
 }
 
 // a limit records known upper and lower bounds for a value.
 type limit struct {
-	min, max   int64  // min <= value <= max, signed
-	umin, umax uint64 // umin <= value <= umax, unsigned
+	min, max	int64	// min <= value <= max, signed
+	umin, umax	uint64	// umin <= value <= umax, unsigned
 }
 
 func (l limit) String() string {
@@ -142,8 +143,8 @@ var noLimit = limit{math.MinInt64, math.MaxInt64, 0, math.MaxUint64}
 
 // a limitFact is a limit known for a particular value.
 type limitFact struct {
-	vid   ID
-	limit limit
+	vid	ID
+	limit	limit
 }
 
 // factsTable keeps track of relations between pairs of values.
@@ -159,30 +160,30 @@ type factsTable struct {
 	// Note that the factsTable logic is incomplete, so if unsat
 	// is false, the assertions in factsTable could be satisfiable
 	// *or* unsatisfiable.
-	unsat      bool // true if facts contains a contradiction
-	unsatDepth int  // number of unsat checkpoints
+	unsat		bool	// true if facts contains a contradiction
+	unsatDepth	int	// number of unsat checkpoints
 
-	facts map[pair]relation // current known set of relation
-	stack []fact            // previous sets of relations
+	facts	map[pair]relation	// current known set of relation
+	stack	[]fact			// previous sets of relations
 
-	// order is a couple of partial order sets that record information
+	// order* is a couple of partial order sets that record information
 	// about relations between SSA values in the signed and unsigned
 	// domain.
-	orderS *poset
-	orderU *poset
+	orderS	*poset
+	orderU	*poset
 
 	// known lower and upper bounds on individual values.
-	limits     map[ID]limit
-	limitStack []limitFact // previous entries
+	limits		map[ID]limit
+	limitStack	[]limitFact	// previous entries
 
 	// For each slice s, a map from s to a len(s)/cap(s) value (if any)
 	// TODO: check if there are cases that matter where we have
 	// more than one len(s) for a slice. We could keep a list if necessary.
-	lens map[ID]*Value
-	caps map[ID]*Value
+	lens	map[ID]*Value
+	caps	map[ID]*Value
 
 	// zero is a zero-valued constant
-	zero *Value
+	zero	*Value
 }
 
 // checkpointFact is an invalid value used for checkpointing
@@ -580,18 +581,18 @@ func (ft *factsTable) update(parent *Block, v, w *Value, d domain, r relation) {
 }
 
 var opMin = map[Op]int64{
-	OpAdd64: math.MinInt64, OpSub64: math.MinInt64,
-	OpAdd32: math.MinInt32, OpSub32: math.MinInt32,
+	OpAdd64:	math.MinInt64, OpSub64: math.MinInt64,
+	OpAdd32:	math.MinInt32, OpSub32: math.MinInt32,
 }
 
 var opMax = map[Op]int64{
-	OpAdd64: math.MaxInt64, OpSub64: math.MaxInt64,
-	OpAdd32: math.MaxInt32, OpSub32: math.MaxInt32,
+	OpAdd64:	math.MaxInt64, OpSub64: math.MaxInt64,
+	OpAdd32:	math.MaxInt32, OpSub32: math.MaxInt32,
 }
 
 var opUMax = map[Op]uint64{
-	OpAdd64: math.MaxUint64, OpSub64: math.MaxUint64,
-	OpAdd32: math.MaxUint32, OpSub32: math.MaxUint32,
+	OpAdd64:	math.MaxUint64, OpSub64: math.MaxUint64,
+	OpAdd32:	math.MaxUint32, OpSub32: math.MaxUint32,
 }
 
 // isNonNegative reports whether v is known to be non-negative.
@@ -677,7 +678,7 @@ func (ft *factsTable) restore() {
 	for {
 		old := ft.limitStack[len(ft.limitStack)-1]
 		ft.limitStack = ft.limitStack[:len(ft.limitStack)-1]
-		if old.vid == 0 { // checkpointBound
+		if old.vid == 0 {	// checkpointBound
 			break
 		}
 		if old.limit == noLimit {
@@ -702,7 +703,7 @@ func lessByID(v, w *Value) bool {
 }
 
 var (
-	reverseBits = [...]relation{0, 4, 2, 6, 1, 5, 3, 7}
+	reverseBits	= [...]relation{0, 4, 2, 6, 1, 5, 3, 7}
 
 	// maps what we learn when the positive branch is taken.
 	// For example:
@@ -710,45 +711,45 @@ var (
 	//	v1 = (OpLess8 v2 v3).
 	// If v1 branch is taken then we learn that the rangeMask
 	// can be at most lt.
-	domainRelationTable = map[Op]struct {
-		d domain
-		r relation
+	domainRelationTable	= map[Op]struct {
+		d	domain
+		r	relation
 	}{
-		OpEq8:   {signed | unsigned, eq},
-		OpEq16:  {signed | unsigned, eq},
-		OpEq32:  {signed | unsigned, eq},
-		OpEq64:  {signed | unsigned, eq},
-		OpEqPtr: {pointer, eq},
+		OpEq8:		{signed | unsigned, eq},
+		OpEq16:		{signed | unsigned, eq},
+		OpEq32:		{signed | unsigned, eq},
+		OpEq64:		{signed | unsigned, eq},
+		OpEqPtr:	{pointer, eq},
 
-		OpNeq8:   {signed | unsigned, lt | gt},
-		OpNeq16:  {signed | unsigned, lt | gt},
-		OpNeq32:  {signed | unsigned, lt | gt},
-		OpNeq64:  {signed | unsigned, lt | gt},
-		OpNeqPtr: {pointer, lt | gt},
+		OpNeq8:		{signed | unsigned, lt | gt},
+		OpNeq16:	{signed | unsigned, lt | gt},
+		OpNeq32:	{signed | unsigned, lt | gt},
+		OpNeq64:	{signed | unsigned, lt | gt},
+		OpNeqPtr:	{pointer, lt | gt},
 
-		OpLess8:   {signed, lt},
-		OpLess8U:  {unsigned, lt},
-		OpLess16:  {signed, lt},
-		OpLess16U: {unsigned, lt},
-		OpLess32:  {signed, lt},
-		OpLess32U: {unsigned, lt},
-		OpLess64:  {signed, lt},
-		OpLess64U: {unsigned, lt},
+		OpLess8:	{signed, lt},
+		OpLess8U:	{unsigned, lt},
+		OpLess16:	{signed, lt},
+		OpLess16U:	{unsigned, lt},
+		OpLess32:	{signed, lt},
+		OpLess32U:	{unsigned, lt},
+		OpLess64:	{signed, lt},
+		OpLess64U:	{unsigned, lt},
 
-		OpLeq8:   {signed, lt | eq},
-		OpLeq8U:  {unsigned, lt | eq},
-		OpLeq16:  {signed, lt | eq},
-		OpLeq16U: {unsigned, lt | eq},
-		OpLeq32:  {signed, lt | eq},
-		OpLeq32U: {unsigned, lt | eq},
-		OpLeq64:  {signed, lt | eq},
-		OpLeq64U: {unsigned, lt | eq},
+		OpLeq8:		{signed, lt | eq},
+		OpLeq8U:	{unsigned, lt | eq},
+		OpLeq16:	{signed, lt | eq},
+		OpLeq16U:	{unsigned, lt | eq},
+		OpLeq32:	{signed, lt | eq},
+		OpLeq32U:	{unsigned, lt | eq},
+		OpLeq64:	{signed, lt | eq},
+		OpLeq64U:	{unsigned, lt | eq},
 
 		// For these ops, the negative branch is different: we can only
 		// prove signed/GE (signed/GT) if we can prove that arg0 is non-negative.
 		// See the special case in addBranchRestrictions.
-		OpIsInBounds:      {signed | unsigned, lt},      // 0 <= arg0 < arg1
-		OpIsSliceInBounds: {signed | unsigned, lt | eq}, // 0 <= arg0 <= arg1
+		OpIsInBounds:		{signed | unsigned, lt},	// 0 <= arg0 < arg1
+		OpIsSliceInBounds:	{signed | unsigned, lt | eq},	// 0 <= arg0 <= arg1
 	}
 )
 
@@ -798,10 +799,171 @@ func (ft *factsTable) cleanup(f *Func) {
 // its negation. If either leads to a contradiction, it can trim that
 // successor.
 func prove(f *Func) {
+	// Find induction variables. Currently, findIndVars
+	// is limited to one induction variable per block.
+	var indVars map[*Block]indVar
+	for _, v := range findIndVar(f) {
+		ind := v.ind
+		if len(ind.Args) != 2 {
+			// the rewrite code assumes there is only ever two parents to loops
+			panic("unexpected induction with too many parents")
+		}
+
+		nxt := v.nxt
+		if !(ind.Uses == 2 &&	// 2 used by comparison and next
+			nxt.Uses == 1) {	// 1 used by induction
+			// ind or nxt is used inside the loop, add it for the facts table
+			if indVars == nil {
+				indVars = make(map[*Block]indVar)
+			}
+			indVars[v.entry] = v
+			continue
+		} else {
+			// Since this induction variable is not used for anything but counting the iterations,
+			// no point in putting it into the facts table.
+		}
+
+		// try to rewrite to a downward counting loop checking against start if the
+		// loop body does not depends on ind or nxt and end is known before the loop.
+		// This reduce pressure on the register allocator because this do not need
+		// to use end on each iteration anymore. We compare against the start constant instead.
+		// That means this code:
+		//
+		//	loop:
+		//		ind = (Phi (Const [x]) nxt),
+		//		if ind < end
+		//		then goto enter_loop
+		//		else goto exit_loop
+		//
+		//	enter_loop:
+		//		do something without using ind nor nxt
+		//		nxt = inc + ind
+		//		goto loop
+		//
+		//	exit_loop:
+		//
+		// is rewritten to:
+		//
+		//	loop:
+		//		ind = (Phi end nxt)
+		//		if (Const [x]) < ind
+		//		then goto enter_loop
+		//		else goto exit_loop
+		//
+		//	enter_loop:
+		//		do something without using ind nor nxt
+		//		nxt = ind - inc
+		//		goto loop
+		//
+		//	exit_loop:
+		//
+		// this is better because it only require to keep ind then nxt alive while looping,
+		// while the original form keeps ind then nxt and end alive
+		start, end := v.min, v.max
+		if v.flags&indVarCountDown != 0 {
+			start, end = end, start
+		}
+
+		if !(start.Op == OpConst8 || start.Op == OpConst16 || start.Op == OpConst32 || start.Op == OpConst64) {
+			// if start is not a constant we would be winning nothing from inverting the loop
+			continue
+		}
+		if end.Op == OpConst8 || end.Op == OpConst16 || end.Op == OpConst32 || end.Op == OpConst64 {
+			// TODO: if both start and end are constants we should rewrite such that the comparison
+			// is against zero and nxt is ++ or -- operation
+			// That means:
+			//	for i := 2; i < 11; i += 2 {
+			// should be rewritten to:
+			//	for i := 5; 0 < i; i-- {
+			continue
+		}
+
+		header := ind.Block
+		check := header.Controls[0]
+		if check == nil {
+			// we don't know how to rewrite a loop that not simple comparison
+			continue
+		}
+		switch check.Op {
+		case OpLeq64, OpLeq32, OpLeq16, OpLeq8,
+			OpLess64, OpLess32, OpLess16, OpLess8:
+		default:
+			// we don't know how to rewrite a loop that not simple comparison
+			continue
+		}
+		if !((check.Args[0] == ind && check.Args[1] == end) ||
+			(check.Args[1] == ind && check.Args[0] == end)) {
+			// we don't know how to rewrite a loop that not simple comparison
+			continue
+		}
+		if end.Block == ind.Block {
+			// we can't rewrite loops where the condition depends on the loop body
+			// this simple check is forced to work because if this is true a Phi in ind.Block must exists
+			continue
+		}
+
+		// invert the check
+		check.Args[0], check.Args[1] = check.Args[1], check.Args[0]
+
+		// invert start and end in the loop
+		for i, v := range check.Args {
+			if v != end {
+				continue
+			}
+
+			check.SetArg(i, start)
+			goto replacedEnd
+		}
+		panic(fmt.Sprintf("unreachable, ind: %v, start: %v, end: %v", ind, start, end))
+	replacedEnd:
+
+		for i, v := range ind.Args {
+			if v != start {
+				continue
+			}
+
+			ind.SetArg(i, end)
+			goto replacedStart
+		}
+		panic(fmt.Sprintf("unreachable, ind: %v, start: %v, end: %v", ind, start, end))
+	replacedStart:
+
+		if nxt.Args[0] != ind {
+			// unlike additions subtractions are not commutative so be sure we get it right
+			nxt.Args[0], nxt.Args[1] = nxt.Args[1], nxt.Args[0]
+		}
+
+		switch nxt.Op {
+		case OpAdd8:
+			nxt.Op = OpSub8
+		case OpAdd16:
+			nxt.Op = OpSub16
+		case OpAdd32:
+			nxt.Op = OpSub32
+		case OpAdd64:
+			nxt.Op = OpSub64
+		case OpSub8:
+			nxt.Op = OpAdd8
+		case OpSub16:
+			nxt.Op = OpAdd16
+		case OpSub32:
+			nxt.Op = OpAdd32
+		case OpSub64:
+			nxt.Op = OpAdd64
+		default:
+			panic("unreachable")
+		}
+
+		if f.pass.debug > 0 {
+			f.Warnl(ind.Pos, "Inverted loop iteration")
+		}
+	}
+
 	ft := newFactsTable(f)
 	ft.checkpoint()
 
 	var lensVars map[*Block][]*Value
+	var logicVars map[*Block][]*Value
 
 	// Find length and capacity ops.
 	for _, b := range f.Blocks {
@@ -856,6 +1018,33 @@ func prove(f *Func) {
 			case OpAnd64, OpAnd32, OpAnd16, OpAnd8:
 				ft.update(b, v, v.Args[1], unsigned, lt|eq)
 				ft.update(b, v, v.Args[0], unsigned, lt|eq)
+				for i := 0; i < 2; i++ {
+					if isNonNegative(v.Args[i]) {
+						ft.update(b, v, v.Args[i], signed, lt|eq)
+						ft.update(b, v, ft.zero, signed, gt|eq)
+					}
+				}
+				if logicVars == nil {
+					logicVars = make(map[*Block][]*Value)
+				}
+				logicVars[b] = append(logicVars[b], v)
+			case OpOr64, OpOr32, OpOr16, OpOr8:
+				// TODO: investigate how to always add facts without much slowdown, see issue #57959.
+				if v.Args[0].isGenericIntConst() {
+					ft.update(b, v, v.Args[0], unsigned, gt|eq)
+				}
+				if v.Args[1].isGenericIntConst() {
+					ft.update(b, v, v.Args[1], unsigned, gt|eq)
+				}
+			case OpDiv64u, OpDiv32u, OpDiv16u, OpDiv8u,
+				OpRsh8Ux64, OpRsh8Ux32, OpRsh8Ux16, OpRsh8Ux8,
+				OpRsh16Ux64, OpRsh16Ux32, OpRsh16Ux16, OpRsh16Ux8,
+				OpRsh32Ux64, OpRsh32Ux32, OpRsh32Ux16, OpRsh32Ux8,
+				OpRsh64Ux64, OpRsh64Ux32, OpRsh64Ux16, OpRsh64Ux8:
+				ft.update(b, v, v.Args[0], unsigned, lt|eq)
+			case OpMod64u, OpMod32u, OpMod16u, OpMod8u:
+				ft.update(b, v, v.Args[0], unsigned, lt|eq)
+				ft.update(b, v, v.Args[1], unsigned, lt)
 			case OpPhi:
 				// Determine the min and max value of OpPhi composed entirely of integer constants.
 				//
@@ -899,37 +1088,28 @@ func prove(f *Func) {
 				}
 				// One might be tempted to create a v >= ft.zero relation for
 				// all OpPhi's composed of only provably-positive values
-				// but that bloats up the facts table for a very neglible gain.
+				// but that bloats up the facts table for a very negligible gain.
 				// In Go itself, very few functions get improved (< 5) at a cost of 5-7% total increase
 				// of compile time.
 			}
 		}
 	}
-	// Find induction variables. Currently, findIndVars
-	// is limited to one induction variable per block.
-	var indVars map[*Block]indVar
-	for _, v := range findIndVar(f) {
-		if indVars == nil {
-			indVars = make(map[*Block]indVar)
-		}
-		indVars[v.entry] = v
-	}
 
 	// current node state
 	type walkState int
 	const (
-		descend walkState = iota
+		descend	walkState	= iota
 		simplify
 	)
 	// work maintains the DFS stack.
 	type bp struct {
-		block *Block    // current handled block
-		state walkState // what's to do
+		block	*Block		// current handled block
+		state	walkState	// what's to do
 	}
 	work := make([]bp, 0, 256)
 	work = append(work, bp{
-		block: f.Entry,
-		state: descend,
+		block:	f.Entry,
+		state:	descend,
 	})
 
 	idom := f.Idom()
@@ -973,6 +1153,21 @@ func prove(f *Func) {
 
 			if branch != unknown {
 				addBranchRestrictions(ft, parent, branch)
+				// After we add the branch restriction, re-check the logic operations in the parent block,
+				// it may give us more info to omit some branches
+				if logic, ok := logicVars[parent]; ok {
+					for _, v := range logic {
+						// we only have OpAnd for now
+						ft.update(parent, v, v.Args[1], unsigned, lt|eq)
+						ft.update(parent, v, v.Args[0], unsigned, lt|eq)
+						for i := 0; i < 2; i++ {
+							if isNonNegative(v.Args[i]) {
+								ft.update(parent, v, v.Args[i], signed, lt|eq)
+								ft.update(parent, v, ft.zero, signed, gt|eq)
+							}
+						}
+					}
+				}
 				if ft.unsat {
 					// node.block is unreachable.
 					// Remove it and don't visit
@@ -990,13 +1185,13 @@ func prove(f *Func) {
 			addLocalInductiveFacts(ft, node.block)
 
 			work = append(work, bp{
-				block: node.block,
-				state: simplify,
+				block:	node.block,
+				state:	simplify,
 			})
 			for s := sdom.Child(node.block); s != nil; s = sdom.Sibling(s) {
 				work = append(work, bp{
-					block: s,
-					state: descend,
+					block:	s,
+					state:	descend,
 				})
 			}
 
@@ -1152,7 +1347,7 @@ func addBranchRestrictions(ft *factsTable, b *Block, br branch) {
 func addRestrictions(parent *Block, ft *factsTable, t domain, v, w *Value, r relation) {
 	if t == 0 {
 		// Trivial case: nothing to do.
-		// Shoult not happen, but just in case.
+		// Should not happen, but just in case.
 		return
 	}
 	for i := domain(1); i <= t; i <<= 1 {
@@ -1275,12 +1470,12 @@ func addLocalInductiveFacts(ft *factsTable, b *Block) {
 
 var ctzNonZeroOp = map[Op]Op{OpCtz8: OpCtz8NonZero, OpCtz16: OpCtz16NonZero, OpCtz32: OpCtz32NonZero, OpCtz64: OpCtz64NonZero}
 var mostNegativeDividend = map[Op]int64{
-	OpDiv16: -1 << 15,
-	OpMod16: -1 << 15,
-	OpDiv32: -1 << 31,
-	OpMod32: -1 << 31,
-	OpDiv64: -1 << 63,
-	OpMod64: -1 << 63}
+	OpDiv16:	-1 << 15,
+	OpMod16:	-1 << 15,
+	OpDiv32:	-1 << 31,
+	OpMod32:	-1 << 31,
+	OpDiv64:	-1 << 63,
+	OpMod64:	-1 << 63}
 
 // simplifyBlock simplifies some constant values in b and evaluates
 // branches to non-uniquely dominated successors of b.
@@ -1349,7 +1544,7 @@ func simplifyBlock(sdom SparseTree, ft *factsTable, b *Block) {
 					panic("unexpected integer size")
 				}
 				v.AuxInt = 0
-				break // Be sure not to fallthrough - this is no longer OpRsh.
+				break	// Be sure not to fallthrough - this is no longer OpRsh.
 			}
 			// If the Rsh hasn't been replaced with 0, still check if it is bounded.
 			fallthrough
@@ -1370,7 +1565,7 @@ func simplifyBlock(sdom SparseTree, ft *factsTable, b *Block) {
 			}
 			bits := 8 * v.Args[0].Type.Size()
 			if lim.umax < uint64(bits) || (lim.max < bits && ft.isNonNegative(by)) {
-				v.AuxInt = 1 // see shiftIsBounded
+				v.AuxInt = 1	// see shiftIsBounded
 				if b.Func.pass.debug > 0 {
 					b.Func.Warnl(v.Pos, "Proved %v bounded", v.Op)
 				}
@@ -1592,7 +1787,7 @@ func isConstDelta(v *Value) (w *Value, delta int64) {
 	case OpSub64, OpSub32, OpSub16, OpSub8:
 		if v.Args[1].Op == cop {
 			aux := v.Args[1].AuxInt
-			if aux != -aux { // Overflow; too bad
+			if aux != -aux {	// Overflow; too bad
 				return v.Args[0], -aux
 			}
 		}

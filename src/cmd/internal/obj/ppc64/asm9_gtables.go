@@ -8,7 +8,7 @@ import (
 )
 
 const (
-	AXXSETACCZ = ALASTAOUT + iota
+	AXXSETACCZ	= ALASTAOUT + iota
 	AXXMTACC
 	AXXMFACC
 	AXXGENPCVWM
@@ -257,7 +257,7 @@ const (
 	APLBZ
 	APADDI
 	ALASTGEN
-	AFIRSTGEN = AXXSETACCZ
+	AFIRSTGEN	= AXXSETACCZ
 )
 
 var GenAnames = []string{
@@ -512,321 +512,321 @@ var GenAnames = []string{
 }
 
 var GenOpcodes = [...]uint32{
-	0x7c030162, // AXXSETACCZ
-	0x7c010162, // AXXMTACC
-	0x7c000162, // AXXMFACC
-	0xf0000768, // AXXGENPCVWM
-	0xf000072a, // AXXGENPCVHM
-	0xf000076a, // AXXGENPCVDM
-	0xf0000728, // AXXGENPCVBM
-	0xf002076c, // AXVTLSBB
-	0xec000318, // AXVI8GER4SPP
-	0xec000010, // AXVI8GER4PP
-	0xec000018, // AXVI8GER4
-	0xec000110, // AXVI4GER8PP
-	0xec000118, // AXVI4GER8
-	0xec000150, // AXVI16GER2SPP
-	0xec000158, // AXVI16GER2S
-	0xec000358, // AXVI16GER2PP
-	0xec000258, // AXVI16GER2
-	0xec0001d0, // AXVF64GERPP
-	0xec0005d0, // AXVF64GERPN
-	0xec0003d0, // AXVF64GERNP
-	0xec0007d0, // AXVF64GERNN
-	0xec0001d8, // AXVF64GER
-	0xec0000d0, // AXVF32GERPP
-	0xec0004d0, // AXVF32GERPN
-	0xec0002d0, // AXVF32GERNP
-	0xec0006d0, // AXVF32GERNN
-	0xec0000d8, // AXVF32GER
-	0xec000090, // AXVF16GER2PP
-	0xec000490, // AXVF16GER2PN
-	0xec000290, // AXVF16GER2NP
-	0xec000690, // AXVF16GER2NN
-	0xec000098, // AXVF16GER2
-	0xf011076c, // AXVCVSPBF16
-	0xf010076c, // AXVCVBF16SPN
-	0xec000190, // AXVBF16GER2PP
-	0xec000590, // AXVBF16GER2PN
-	0xec000390, // AXVBF16GER2NP
-	0xec000790, // AXVBF16GER2NN
-	0xec000198, // AXVBF16GER2
-	0xfc0005c8, // AXSMINCQP
-	0xfc000548, // AXSMAXCQP
-	0xfc030688, // AXSCVUQQP
-	0xfc0b0688, // AXSCVSQQP
-	0xfc000688, // AXSCVQPUQZ
-	0xfc080688, // AXSCVQPSQZ
-	0xfc0001c8, // AXSCMPGTQP
-	0xfc000188, // AXSCMPGEQP
-	0xfc000088, // AXSCMPEQQP
-	0x1003040d, // AVSTRIHRCC
-	0x1003000d, // AVSTRIHR
-	0x1002040d, // AVSTRIHLCC
-	0x1002000d, // AVSTRIHL
-	0x1001040d, // AVSTRIBRCC
-	0x1001000d, // AVSTRIBR
-	0x1000040d, // AVSTRIBLCC
-	0x1000000d, // AVSTRIBL
-	0x10000205, // AVSRQ
-	0x10000216, // AVSRDBI
-	0x10000305, // AVSRAQ
-	0x10000105, // AVSLQ
-	0x10000016, // AVSLDBI
-	0x10000145, // AVRLQNM
-	0x10000045, // AVRLQMI
-	0x10000005, // AVRLQ
-	0x1000058d, // AVPEXTD
-	0x100005cd, // AVPDEPD
-	0x100000c8, // AVMULOUD
-	0x100001c8, // AVMULOSD
-	0x100001c9, // AVMULLD
-	0x10000289, // AVMULHUW
-	0x100002c9, // AVMULHUD
-	0x10000389, // AVMULHSW
-	0x100003c9, // AVMULHSD
-	0x100002c8, // AVMULEUD
-	0x100003c8, // AVMULESD
-	0x10000017, // AVMSUMCUD
-	0x1000068b, // AVMODUW
-	0x1000060b, // AVMODUQ
-	0x100006cb, // AVMODUD
-	0x1000078b, // AVMODSW
-	0x1000070b, // AVMODSQ
-	0x100007cb, // AVMODSD
-	0x1000018f, // AVINSWVRX
-	0x1000008f, // AVINSWVLX
-	0x1000038f, // AVINSWRX
-	0x1000028f, // AVINSWLX
-	0x100000cf, // AVINSW
-	0x1000014f, // AVINSHVRX
-	0x1000004f, // AVINSHVLX
-	0x1000034f, // AVINSHRX
-	0x1000024f, // AVINSHLX
-	0x100003cf, // AVINSDRX
-	0x100002cf, // AVINSDLX
-	0x100001cf, // AVINSD
-	0x1000010f, // AVINSBVRX
-	0x1000000f, // AVINSBVLX
-	0x1000030f, // AVINSBRX
-	0x1000020f, // AVINSBLX
-	0x100004cc, // AVGNB
-	0x101b0602, // AVEXTSD2Q
-	0x100a0642, // AVEXTRACTWM
-	0x100c0642, // AVEXTRACTQM
-	0x10090642, // AVEXTRACTHM
-	0x100b0642, // AVEXTRACTDM
-	0x10080642, // AVEXTRACTBM
-	0x1000001d, // AVEXTDUWVRX
-	0x1000001c, // AVEXTDUWVLX
-	0x1000001b, // AVEXTDUHVRX
-	0x1000001a, // AVEXTDUHVLX
-	0x10000019, // AVEXTDUBVRX
-	0x10000018, // AVEXTDUBVLX
-	0x1000001f, // AVEXTDDVRX
-	0x1000001e, // AVEXTDDVLX
-	0x10020642, // AVEXPANDWM
-	0x10040642, // AVEXPANDQM
-	0x10010642, // AVEXPANDHM
-	0x10030642, // AVEXPANDDM
-	0x10000642, // AVEXPANDBM
-	0x1000008b, // AVDIVUW
-	0x1000000b, // AVDIVUQ
-	0x100000cb, // AVDIVUD
-	0x1000018b, // AVDIVSW
-	0x1000010b, // AVDIVSQ
-	0x100001cb, // AVDIVSD
-	0x1000028b, // AVDIVEUW
-	0x1000020b, // AVDIVEUQ
-	0x100002cb, // AVDIVEUD
-	0x1000038b, // AVDIVESW
-	0x1000030b, // AVDIVESQ
-	0x100003cb, // AVDIVESD
-	0x100007c4, // AVCTZDM
-	0x101c0642, // AVCNTMBW
-	0x101a0642, // AVCNTMBH
-	0x101e0642, // AVCNTMBD
-	0x10180642, // AVCNTMBB
-	0x10000101, // AVCMPUQ
-	0x10000141, // AVCMPSQ
-	0x10000687, // AVCMPGTUQCC
-	0x10000287, // AVCMPGTUQ
-	0x10000787, // AVCMPGTSQCC
-	0x10000387, // AVCMPGTSQ
-	0x100005c7, // AVCMPEQUQCC
-	0x100001c7, // AVCMPEQUQ
-	0x10000784, // AVCLZDM
-	0x100001cd, // AVCLRRB
-	0x1000018d, // AVCLRLB
-	0x1000054d, // AVCFUGED
-	0x7c00019a, // ASTXVRWX
-	0x7c00015a, // ASTXVRHX
-	0x7c0001da, // ASTXVRDX
-	0x7c00011a, // ASTXVRBX
-	0x7c00039a, // ASTXVPX
-	0x18000001, // ASTXVP
-	0x7c0003c0, // ASETNBCR
-	0x7c000380, // ASETNBC
-	0x7c000340, // ASETBCR
-	0x7c000300, // ASETBC
-	0x7c000178, // APEXTD
-	0x7c000138, // APDEPD
-	0x10120642, // AMTVSRWM
-	0x10140642, // AMTVSRQM
-	0x10110642, // AMTVSRHM
-	0x10130642, // AMTVSRDM
-	0x10000014, // AMTVSRBMI
-	0x10100642, // AMTVSRBM
-	0x7c00009a, // ALXVRWX
-	0x7c00005a, // ALXVRHX
-	0x7c0000da, // ALXVRDX
-	0x7c00001a, // ALXVRBX
-	0x7c00029a, // ALXVPX
-	0x18000000, // ALXVP
-	0xf01f02d0, // ALXVKQ
-	0xfc0107c4, // ADCTFIXQQ
-	0xfc0007c4, // ADCFFIXQQ
-	0x7c000476, // ACNTTZDM
-	0x7c000076, // ACNTLZDM
-	0x7c0001b8, // ACFUGED
-	0x7c000136, // ABRW
-	0x7c0001b6, // ABRH
-	0x7c000176, // ABRD
-	0x7c000524, // AHASHSTP
-	0x7c0005a4, // AHASHST
-	0x7c000564, // AHASHCHKP
-	0x7c0005e4, // AHASHCHK
-	0x80060000, // AXXSPLTIW
-	0x80040000, // AXXSPLTIDP
-	0x80000000, // AXXSPLTI32DX
-	0x88000000, // AXXPERMX
-	0x88000010, // AXXEVAL
-	0x84000020, // AXXBLENDVW
-	0x84000010, // AXXBLENDVH
-	0x84000030, // AXXBLENDVD
-	0x84000000, // AXXBLENDVB
-	0xf8000000, // APSTXVP
-	0xd8000000, // APSTXV
-	0xbc000000, // APSTXSSP
-	0xb8000000, // APSTXSD
-	0x90000000, // APSTW
-	0xf0000000, // APSTQ
-	0xb0000000, // APSTH
-	0xd0000000, // APSTFS
-	0xd8000000, // APSTFD
-	0xf4000000, // APSTD
-	0x98000000, // APSTB
-	0x00000000, // APNOP
-	0xec000318, // APMXVI8GER4SPP
-	0xec000010, // APMXVI8GER4PP
-	0xec000018, // APMXVI8GER4
-	0xec000110, // APMXVI4GER8PP
-	0xec000118, // APMXVI4GER8
-	0xec000150, // APMXVI16GER2SPP
-	0xec000158, // APMXVI16GER2S
-	0xec000358, // APMXVI16GER2PP
-	0xec000258, // APMXVI16GER2
-	0xec0001d0, // APMXVF64GERPP
-	0xec0005d0, // APMXVF64GERPN
-	0xec0003d0, // APMXVF64GERNP
-	0xec0007d0, // APMXVF64GERNN
-	0xec0001d8, // APMXVF64GER
-	0xec0000d0, // APMXVF32GERPP
-	0xec0004d0, // APMXVF32GERPN
-	0xec0002d0, // APMXVF32GERNP
-	0xec0006d0, // APMXVF32GERNN
-	0xec0000d8, // APMXVF32GER
-	0xec000090, // APMXVF16GER2PP
-	0xec000490, // APMXVF16GER2PN
-	0xec000290, // APMXVF16GER2NP
-	0xec000690, // APMXVF16GER2NN
-	0xec000098, // APMXVF16GER2
-	0xec000190, // APMXVBF16GER2PP
-	0xec000590, // APMXVBF16GER2PN
-	0xec000390, // APMXVBF16GER2NP
-	0xec000790, // APMXVBF16GER2NN
-	0xec000198, // APMXVBF16GER2
-	0xe8000000, // APLXVP
-	0xc8000000, // APLXV
-	0xac000000, // APLXSSP
-	0xa8000000, // APLXSD
-	0x80000000, // APLWZ
-	0xa4000000, // APLWA
-	0xe0000000, // APLQ
-	0xa0000000, // APLHZ
-	0xa8000000, // APLHA
-	0xc0000000, // APLFS
-	0xc8000000, // APLFD
-	0xe4000000, // APLD
-	0x88000000, // APLBZ
-	0x38000000, // APADDI
+	0x7c030162,	// AXXSETACCZ
+	0x7c010162,	// AXXMTACC
+	0x7c000162,	// AXXMFACC
+	0xf0000768,	// AXXGENPCVWM
+	0xf000072a,	// AXXGENPCVHM
+	0xf000076a,	// AXXGENPCVDM
+	0xf0000728,	// AXXGENPCVBM
+	0xf002076c,	// AXVTLSBB
+	0xec000318,	// AXVI8GER4SPP
+	0xec000010,	// AXVI8GER4PP
+	0xec000018,	// AXVI8GER4
+	0xec000110,	// AXVI4GER8PP
+	0xec000118,	// AXVI4GER8
+	0xec000150,	// AXVI16GER2SPP
+	0xec000158,	// AXVI16GER2S
+	0xec000358,	// AXVI16GER2PP
+	0xec000258,	// AXVI16GER2
+	0xec0001d0,	// AXVF64GERPP
+	0xec0005d0,	// AXVF64GERPN
+	0xec0003d0,	// AXVF64GERNP
+	0xec0007d0,	// AXVF64GERNN
+	0xec0001d8,	// AXVF64GER
+	0xec0000d0,	// AXVF32GERPP
+	0xec0004d0,	// AXVF32GERPN
+	0xec0002d0,	// AXVF32GERNP
+	0xec0006d0,	// AXVF32GERNN
+	0xec0000d8,	// AXVF32GER
+	0xec000090,	// AXVF16GER2PP
+	0xec000490,	// AXVF16GER2PN
+	0xec000290,	// AXVF16GER2NP
+	0xec000690,	// AXVF16GER2NN
+	0xec000098,	// AXVF16GER2
+	0xf011076c,	// AXVCVSPBF16
+	0xf010076c,	// AXVCVBF16SPN
+	0xec000190,	// AXVBF16GER2PP
+	0xec000590,	// AXVBF16GER2PN
+	0xec000390,	// AXVBF16GER2NP
+	0xec000790,	// AXVBF16GER2NN
+	0xec000198,	// AXVBF16GER2
+	0xfc0005c8,	// AXSMINCQP
+	0xfc000548,	// AXSMAXCQP
+	0xfc030688,	// AXSCVUQQP
+	0xfc0b0688,	// AXSCVSQQP
+	0xfc000688,	// AXSCVQPUQZ
+	0xfc080688,	// AXSCVQPSQZ
+	0xfc0001c8,	// AXSCMPGTQP
+	0xfc000188,	// AXSCMPGEQP
+	0xfc000088,	// AXSCMPEQQP
+	0x1003040d,	// AVSTRIHRCC
+	0x1003000d,	// AVSTRIHR
+	0x1002040d,	// AVSTRIHLCC
+	0x1002000d,	// AVSTRIHL
+	0x1001040d,	// AVSTRIBRCC
+	0x1001000d,	// AVSTRIBR
+	0x1000040d,	// AVSTRIBLCC
+	0x1000000d,	// AVSTRIBL
+	0x10000205,	// AVSRQ
+	0x10000216,	// AVSRDBI
+	0x10000305,	// AVSRAQ
+	0x10000105,	// AVSLQ
+	0x10000016,	// AVSLDBI
+	0x10000145,	// AVRLQNM
+	0x10000045,	// AVRLQMI
+	0x10000005,	// AVRLQ
+	0x1000058d,	// AVPEXTD
+	0x100005cd,	// AVPDEPD
+	0x100000c8,	// AVMULOUD
+	0x100001c8,	// AVMULOSD
+	0x100001c9,	// AVMULLD
+	0x10000289,	// AVMULHUW
+	0x100002c9,	// AVMULHUD
+	0x10000389,	// AVMULHSW
+	0x100003c9,	// AVMULHSD
+	0x100002c8,	// AVMULEUD
+	0x100003c8,	// AVMULESD
+	0x10000017,	// AVMSUMCUD
+	0x1000068b,	// AVMODUW
+	0x1000060b,	// AVMODUQ
+	0x100006cb,	// AVMODUD
+	0x1000078b,	// AVMODSW
+	0x1000070b,	// AVMODSQ
+	0x100007cb,	// AVMODSD
+	0x1000018f,	// AVINSWVRX
+	0x1000008f,	// AVINSWVLX
+	0x1000038f,	// AVINSWRX
+	0x1000028f,	// AVINSWLX
+	0x100000cf,	// AVINSW
+	0x1000014f,	// AVINSHVRX
+	0x1000004f,	// AVINSHVLX
+	0x1000034f,	// AVINSHRX
+	0x1000024f,	// AVINSHLX
+	0x100003cf,	// AVINSDRX
+	0x100002cf,	// AVINSDLX
+	0x100001cf,	// AVINSD
+	0x1000010f,	// AVINSBVRX
+	0x1000000f,	// AVINSBVLX
+	0x1000030f,	// AVINSBRX
+	0x1000020f,	// AVINSBLX
+	0x100004cc,	// AVGNB
+	0x101b0602,	// AVEXTSD2Q
+	0x100a0642,	// AVEXTRACTWM
+	0x100c0642,	// AVEXTRACTQM
+	0x10090642,	// AVEXTRACTHM
+	0x100b0642,	// AVEXTRACTDM
+	0x10080642,	// AVEXTRACTBM
+	0x1000001d,	// AVEXTDUWVRX
+	0x1000001c,	// AVEXTDUWVLX
+	0x1000001b,	// AVEXTDUHVRX
+	0x1000001a,	// AVEXTDUHVLX
+	0x10000019,	// AVEXTDUBVRX
+	0x10000018,	// AVEXTDUBVLX
+	0x1000001f,	// AVEXTDDVRX
+	0x1000001e,	// AVEXTDDVLX
+	0x10020642,	// AVEXPANDWM
+	0x10040642,	// AVEXPANDQM
+	0x10010642,	// AVEXPANDHM
+	0x10030642,	// AVEXPANDDM
+	0x10000642,	// AVEXPANDBM
+	0x1000008b,	// AVDIVUW
+	0x1000000b,	// AVDIVUQ
+	0x100000cb,	// AVDIVUD
+	0x1000018b,	// AVDIVSW
+	0x1000010b,	// AVDIVSQ
+	0x100001cb,	// AVDIVSD
+	0x1000028b,	// AVDIVEUW
+	0x1000020b,	// AVDIVEUQ
+	0x100002cb,	// AVDIVEUD
+	0x1000038b,	// AVDIVESW
+	0x1000030b,	// AVDIVESQ
+	0x100003cb,	// AVDIVESD
+	0x100007c4,	// AVCTZDM
+	0x101c0642,	// AVCNTMBW
+	0x101a0642,	// AVCNTMBH
+	0x101e0642,	// AVCNTMBD
+	0x10180642,	// AVCNTMBB
+	0x10000101,	// AVCMPUQ
+	0x10000141,	// AVCMPSQ
+	0x10000687,	// AVCMPGTUQCC
+	0x10000287,	// AVCMPGTUQ
+	0x10000787,	// AVCMPGTSQCC
+	0x10000387,	// AVCMPGTSQ
+	0x100005c7,	// AVCMPEQUQCC
+	0x100001c7,	// AVCMPEQUQ
+	0x10000784,	// AVCLZDM
+	0x100001cd,	// AVCLRRB
+	0x1000018d,	// AVCLRLB
+	0x1000054d,	// AVCFUGED
+	0x7c00019a,	// ASTXVRWX
+	0x7c00015a,	// ASTXVRHX
+	0x7c0001da,	// ASTXVRDX
+	0x7c00011a,	// ASTXVRBX
+	0x7c00039a,	// ASTXVPX
+	0x18000001,	// ASTXVP
+	0x7c0003c0,	// ASETNBCR
+	0x7c000380,	// ASETNBC
+	0x7c000340,	// ASETBCR
+	0x7c000300,	// ASETBC
+	0x7c000178,	// APEXTD
+	0x7c000138,	// APDEPD
+	0x10120642,	// AMTVSRWM
+	0x10140642,	// AMTVSRQM
+	0x10110642,	// AMTVSRHM
+	0x10130642,	// AMTVSRDM
+	0x10000014,	// AMTVSRBMI
+	0x10100642,	// AMTVSRBM
+	0x7c00009a,	// ALXVRWX
+	0x7c00005a,	// ALXVRHX
+	0x7c0000da,	// ALXVRDX
+	0x7c00001a,	// ALXVRBX
+	0x7c00029a,	// ALXVPX
+	0x18000000,	// ALXVP
+	0xf01f02d0,	// ALXVKQ
+	0xfc0107c4,	// ADCTFIXQQ
+	0xfc0007c4,	// ADCFFIXQQ
+	0x7c000476,	// ACNTTZDM
+	0x7c000076,	// ACNTLZDM
+	0x7c0001b8,	// ACFUGED
+	0x7c000136,	// ABRW
+	0x7c0001b6,	// ABRH
+	0x7c000176,	// ABRD
+	0x7c000524,	// AHASHSTP
+	0x7c0005a4,	// AHASHST
+	0x7c000564,	// AHASHCHKP
+	0x7c0005e4,	// AHASHCHK
+	0x80060000,	// AXXSPLTIW
+	0x80040000,	// AXXSPLTIDP
+	0x80000000,	// AXXSPLTI32DX
+	0x88000000,	// AXXPERMX
+	0x88000010,	// AXXEVAL
+	0x84000020,	// AXXBLENDVW
+	0x84000010,	// AXXBLENDVH
+	0x84000030,	// AXXBLENDVD
+	0x84000000,	// AXXBLENDVB
+	0xf8000000,	// APSTXVP
+	0xd8000000,	// APSTXV
+	0xbc000000,	// APSTXSSP
+	0xb8000000,	// APSTXSD
+	0x90000000,	// APSTW
+	0xf0000000,	// APSTQ
+	0xb0000000,	// APSTH
+	0xd0000000,	// APSTFS
+	0xd8000000,	// APSTFD
+	0xf4000000,	// APSTD
+	0x98000000,	// APSTB
+	0x00000000,	// APNOP
+	0xec000318,	// APMXVI8GER4SPP
+	0xec000010,	// APMXVI8GER4PP
+	0xec000018,	// APMXVI8GER4
+	0xec000110,	// APMXVI4GER8PP
+	0xec000118,	// APMXVI4GER8
+	0xec000150,	// APMXVI16GER2SPP
+	0xec000158,	// APMXVI16GER2S
+	0xec000358,	// APMXVI16GER2PP
+	0xec000258,	// APMXVI16GER2
+	0xec0001d0,	// APMXVF64GERPP
+	0xec0005d0,	// APMXVF64GERPN
+	0xec0003d0,	// APMXVF64GERNP
+	0xec0007d0,	// APMXVF64GERNN
+	0xec0001d8,	// APMXVF64GER
+	0xec0000d0,	// APMXVF32GERPP
+	0xec0004d0,	// APMXVF32GERPN
+	0xec0002d0,	// APMXVF32GERNP
+	0xec0006d0,	// APMXVF32GERNN
+	0xec0000d8,	// APMXVF32GER
+	0xec000090,	// APMXVF16GER2PP
+	0xec000490,	// APMXVF16GER2PN
+	0xec000290,	// APMXVF16GER2NP
+	0xec000690,	// APMXVF16GER2NN
+	0xec000098,	// APMXVF16GER2
+	0xec000190,	// APMXVBF16GER2PP
+	0xec000590,	// APMXVBF16GER2PN
+	0xec000390,	// APMXVBF16GER2NP
+	0xec000790,	// APMXVBF16GER2NN
+	0xec000198,	// APMXVBF16GER2
+	0xe8000000,	// APLXVP
+	0xc8000000,	// APLXV
+	0xac000000,	// APLXSSP
+	0xa8000000,	// APLXSD
+	0x80000000,	// APLWZ
+	0xa4000000,	// APLWA
+	0xe0000000,	// APLQ
+	0xa0000000,	// APLHZ
+	0xa8000000,	// APLHA
+	0xc0000000,	// APLFS
+	0xc8000000,	// APLFD
+	0xe4000000,	// APLD
+	0x88000000,	// APLBZ
+	0x38000000,	// APADDI
 }
 
 var GenPfxOpcodes = [...]uint32{
-	0x05000000, // AXXSPLTIW
-	0x05000000, // AXXSPLTIDP
-	0x05000000, // AXXSPLTI32DX
-	0x05000000, // AXXPERMX
-	0x05000000, // AXXEVAL
-	0x05000000, // AXXBLENDVW
-	0x05000000, // AXXBLENDVH
-	0x05000000, // AXXBLENDVD
-	0x05000000, // AXXBLENDVB
-	0x04000000, // APSTXVP
-	0x04000000, // APSTXV
-	0x04000000, // APSTXSSP
-	0x04000000, // APSTXSD
-	0x06000000, // APSTW
-	0x04000000, // APSTQ
-	0x06000000, // APSTH
-	0x06000000, // APSTFS
-	0x06000000, // APSTFD
-	0x04000000, // APSTD
-	0x06000000, // APSTB
-	0x07000000, // APNOP
-	0x07900000, // APMXVI8GER4SPP
-	0x07900000, // APMXVI8GER4PP
-	0x07900000, // APMXVI8GER4
-	0x07900000, // APMXVI4GER8PP
-	0x07900000, // APMXVI4GER8
-	0x07900000, // APMXVI16GER2SPP
-	0x07900000, // APMXVI16GER2S
-	0x07900000, // APMXVI16GER2PP
-	0x07900000, // APMXVI16GER2
-	0x07900000, // APMXVF64GERPP
-	0x07900000, // APMXVF64GERPN
-	0x07900000, // APMXVF64GERNP
-	0x07900000, // APMXVF64GERNN
-	0x07900000, // APMXVF64GER
-	0x07900000, // APMXVF32GERPP
-	0x07900000, // APMXVF32GERPN
-	0x07900000, // APMXVF32GERNP
-	0x07900000, // APMXVF32GERNN
-	0x07900000, // APMXVF32GER
-	0x07900000, // APMXVF16GER2PP
-	0x07900000, // APMXVF16GER2PN
-	0x07900000, // APMXVF16GER2NP
-	0x07900000, // APMXVF16GER2NN
-	0x07900000, // APMXVF16GER2
-	0x07900000, // APMXVBF16GER2PP
-	0x07900000, // APMXVBF16GER2PN
-	0x07900000, // APMXVBF16GER2NP
-	0x07900000, // APMXVBF16GER2NN
-	0x07900000, // APMXVBF16GER2
-	0x04000000, // APLXVP
-	0x04000000, // APLXV
-	0x04000000, // APLXSSP
-	0x04000000, // APLXSD
-	0x06000000, // APLWZ
-	0x04000000, // APLWA
-	0x04000000, // APLQ
-	0x06000000, // APLHZ
-	0x06000000, // APLHA
-	0x06000000, // APLFS
-	0x06000000, // APLFD
-	0x04000000, // APLD
-	0x06000000, // APLBZ
-	0x06000000, // APADDI
+	0x05000000,	// AXXSPLTIW
+	0x05000000,	// AXXSPLTIDP
+	0x05000000,	// AXXSPLTI32DX
+	0x05000000,	// AXXPERMX
+	0x05000000,	// AXXEVAL
+	0x05000000,	// AXXBLENDVW
+	0x05000000,	// AXXBLENDVH
+	0x05000000,	// AXXBLENDVD
+	0x05000000,	// AXXBLENDVB
+	0x04000000,	// APSTXVP
+	0x04000000,	// APSTXV
+	0x04000000,	// APSTXSSP
+	0x04000000,	// APSTXSD
+	0x06000000,	// APSTW
+	0x04000000,	// APSTQ
+	0x06000000,	// APSTH
+	0x06000000,	// APSTFS
+	0x06000000,	// APSTFD
+	0x04000000,	// APSTD
+	0x06000000,	// APSTB
+	0x07000000,	// APNOP
+	0x07900000,	// APMXVI8GER4SPP
+	0x07900000,	// APMXVI8GER4PP
+	0x07900000,	// APMXVI8GER4
+	0x07900000,	// APMXVI4GER8PP
+	0x07900000,	// APMXVI4GER8
+	0x07900000,	// APMXVI16GER2SPP
+	0x07900000,	// APMXVI16GER2S
+	0x07900000,	// APMXVI16GER2PP
+	0x07900000,	// APMXVI16GER2
+	0x07900000,	// APMXVF64GERPP
+	0x07900000,	// APMXVF64GERPN
+	0x07900000,	// APMXVF64GERNP
+	0x07900000,	// APMXVF64GERNN
+	0x07900000,	// APMXVF64GER
+	0x07900000,	// APMXVF32GERPP
+	0x07900000,	// APMXVF32GERPN
+	0x07900000,	// APMXVF32GERNP
+	0x07900000,	// APMXVF32GERNN
+	0x07900000,	// APMXVF32GER
+	0x07900000,	// APMXVF16GER2PP
+	0x07900000,	// APMXVF16GER2PN
+	0x07900000,	// APMXVF16GER2NP
+	0x07900000,	// APMXVF16GER2NN
+	0x07900000,	// APMXVF16GER2
+	0x07900000,	// APMXVBF16GER2PP
+	0x07900000,	// APMXVBF16GER2PN
+	0x07900000,	// APMXVBF16GER2NP
+	0x07900000,	// APMXVBF16GER2NN
+	0x07900000,	// APMXVBF16GER2
+	0x04000000,	// APLXVP
+	0x04000000,	// APLXV
+	0x04000000,	// APLXSSP
+	0x04000000,	// APLXSD
+	0x06000000,	// APLWZ
+	0x04000000,	// APLWA
+	0x04000000,	// APLQ
+	0x06000000,	// APLHZ
+	0x06000000,	// APLHA
+	0x06000000,	// APLFS
+	0x06000000,	// APLFD
+	0x04000000,	// APLD
+	0x06000000,	// APLBZ
+	0x06000000,	// APADDI
 }
 
 var optabGen = []Optab{
@@ -893,18 +893,18 @@ var optabGen = []Optab{
 // brw RA,RS
 func type_brw(c *ctxt9, p *obj.Prog, t *Optab, out *[5]uint32) {
 	o0 := GenOpcodes[p.As-AXXSETACCZ]
-	o0 |= uint32(p.To.Reg&0x1f) << 16   // RA
-	o0 |= uint32(p.From.Reg&0x1f) << 21 // RS
+	o0 |= uint32(p.To.Reg&0x1f) << 16	// RA
+	o0 |= uint32(p.From.Reg&0x1f) << 21	// RS
 	out[0] = o0
 }
 
 // hashchkp RB,offset(RA)
 func type_hashchkp(c *ctxt9, p *obj.Prog, t *Optab, out *[5]uint32) {
 	o0 := GenOpcodes[p.As-AXXSETACCZ]
-	o0 |= uint32(p.To.Reg&0x1f) << 11           // RB
-	o0 |= uint32((p.From.Offset>>8)&0x1) << 0   // DX
-	o0 |= uint32((p.From.Offset>>3)&0x1f) << 21 // D
-	o0 |= uint32(p.From.Reg&0x1f) << 16         // RA
+	o0 |= uint32(p.To.Reg&0x1f) << 11		// RB
+	o0 |= uint32((p.From.Offset>>8)&0x1) << 0	// DX
+	o0 |= uint32((p.From.Offset>>3)&0x1f) << 21	// D
+	o0 |= uint32(p.From.Reg&0x1f) << 16		// RA
 	if p.From.Offset&0xfffffe07 != 0xfffffe00 {
 		c.ctxt.Diag("Constant(%d) must within the range of [-512,-8] in steps of 8\n%v", p.From.Offset, p)
 	}
@@ -914,10 +914,10 @@ func type_hashchkp(c *ctxt9, p *obj.Prog, t *Optab, out *[5]uint32) {
 // hashstp RB,offset(RA)
 func type_hashstp(c *ctxt9, p *obj.Prog, t *Optab, out *[5]uint32) {
 	o0 := GenOpcodes[p.As-AXXSETACCZ]
-	o0 |= uint32(p.From.Reg&0x1f) << 11       // RB
-	o0 |= uint32((p.To.Offset>>8)&0x1) << 0   // DX
-	o0 |= uint32((p.To.Offset>>3)&0x1f) << 21 // D
-	o0 |= uint32(p.To.Reg&0x1f) << 16         // RA
+	o0 |= uint32(p.From.Reg&0x1f) << 11		// RB
+	o0 |= uint32((p.To.Offset>>8)&0x1) << 0		// DX
+	o0 |= uint32((p.To.Offset>>3)&0x1f) << 21	// D
+	o0 |= uint32(p.To.Reg&0x1f) << 16		// RA
 	if p.To.Offset&0xfffffe07 != 0xfffffe00 {
 		c.ctxt.Diag("Constant(%d) must within the range of [-512,-8] in steps of 8\n%v", p.To.Offset, p)
 	}
@@ -927,19 +927,19 @@ func type_hashstp(c *ctxt9, p *obj.Prog, t *Optab, out *[5]uint32) {
 // lxvkq XT,UIM
 func type_lxvkq(c *ctxt9, p *obj.Prog, t *Optab, out *[5]uint32) {
 	o0 := GenOpcodes[p.As-AXXSETACCZ]
-	o0 |= uint32((p.To.Reg>>5)&0x1) << 0   // TX
-	o0 |= uint32(p.To.Reg&0x1f) << 21      // T
-	o0 |= uint32(p.From.Offset&0x1f) << 11 // UIM
+	o0 |= uint32((p.To.Reg>>5)&0x1) << 0	// TX
+	o0 |= uint32(p.To.Reg&0x1f) << 21	// T
+	o0 |= uint32(p.From.Offset&0x1f) << 11	// UIM
 	out[0] = o0
 }
 
 // lxvp XTp,DQ(RA)
 func type_lxvp(c *ctxt9, p *obj.Prog, t *Optab, out *[5]uint32) {
 	o0 := GenOpcodes[p.As-AXXSETACCZ]
-	o0 |= uint32((p.To.Reg>>5)&0x1) << 21       // TX
-	o0 |= uint32((p.To.Reg>>1)&0xf) << 22       // Tp
-	o0 |= uint32((p.From.Offset>>4)&0xfff) << 4 // DQ
-	o0 |= uint32(p.From.Reg&0x1f) << 16         // RA
+	o0 |= uint32((p.To.Reg>>5)&0x1) << 21		// TX
+	o0 |= uint32((p.To.Reg>>1)&0xf) << 22		// Tp
+	o0 |= uint32((p.From.Offset>>4)&0xfff) << 4	// DQ
+	o0 |= uint32(p.From.Reg&0x1f) << 16		// RA
 	if p.From.Offset&0xf != 0 {
 		c.ctxt.Diag("Constant 0x%x (%d) is not a multiple of 16\n%v", p.From.Offset, p.From.Offset, p)
 	}
@@ -949,30 +949,30 @@ func type_lxvp(c *ctxt9, p *obj.Prog, t *Optab, out *[5]uint32) {
 // lxvpx XTp,RA,RB
 func type_lxvpx(c *ctxt9, p *obj.Prog, t *Optab, out *[5]uint32) {
 	o0 := GenOpcodes[p.As-AXXSETACCZ]
-	o0 |= uint32((p.To.Reg>>5)&0x1) << 21 // TX
-	o0 |= uint32((p.To.Reg>>1)&0xf) << 22 // Tp
-	o0 |= uint32(p.From.Index&0x1f) << 16 // RA
-	o0 |= uint32(p.From.Reg&0x1f) << 11   // RB
+	o0 |= uint32((p.To.Reg>>5)&0x1) << 21	// TX
+	o0 |= uint32((p.To.Reg>>1)&0xf) << 22	// Tp
+	o0 |= uint32(p.From.Index&0x1f) << 16	// RA
+	o0 |= uint32(p.From.Reg&0x1f) << 11	// RB
 	out[0] = o0
 }
 
 // lxvrwx XT,RA,RB
 func type_lxvrwx(c *ctxt9, p *obj.Prog, t *Optab, out *[5]uint32) {
 	o0 := GenOpcodes[p.As-AXXSETACCZ]
-	o0 |= uint32((p.To.Reg>>5)&0x1) << 0  // TX
-	o0 |= uint32(p.To.Reg&0x1f) << 21     // T
-	o0 |= uint32(p.From.Index&0x1f) << 16 // RA
-	o0 |= uint32(p.From.Reg&0x1f) << 11   // RB
+	o0 |= uint32((p.To.Reg>>5)&0x1) << 0	// TX
+	o0 |= uint32(p.To.Reg&0x1f) << 21	// T
+	o0 |= uint32(p.From.Index&0x1f) << 16	// RA
+	o0 |= uint32(p.From.Reg&0x1f) << 11	// RB
 	out[0] = o0
 }
 
 // mtvsrbmi VRT,bm
 func type_mtvsrbmi(c *ctxt9, p *obj.Prog, t *Optab, out *[5]uint32) {
 	o0 := GenOpcodes[p.As-AXXSETACCZ]
-	o0 |= uint32(p.To.Reg&0x1f) << 21           // VRT
-	o0 |= uint32((p.From.Offset>>6)&0x3ff) << 6 // b0
-	o0 |= uint32((p.From.Offset>>1)&0x1f) << 16 // b1
-	o0 |= uint32(p.From.Offset&0x1) << 0        // b2
+	o0 |= uint32(p.To.Reg&0x1f) << 21		// VRT
+	o0 |= uint32((p.From.Offset>>6)&0x3ff) << 6	// b0
+	o0 |= uint32((p.From.Offset>>1)&0x1f) << 16	// b1
+	o0 |= uint32(p.From.Offset&0x1) << 0		// b2
 	out[0] = o0
 }
 
@@ -980,11 +980,11 @@ func type_mtvsrbmi(c *ctxt9, p *obj.Prog, t *Optab, out *[5]uint32) {
 func type_paddi(c *ctxt9, p *obj.Prog, t *Optab, out *[5]uint32) {
 	o0 := GenPfxOpcodes[p.As-AXXSPLTIW]
 	o1 := GenOpcodes[p.As-AXXSETACCZ]
-	o1 |= uint32(p.To.Reg&0x1f) << 21                          // RT
-	o1 |= uint32(p.From.Reg&0x1f) << 16                        // RA
-	o0 |= uint32((p.RestArgs[0].Addr.Offset>>16)&0x3ffff) << 0 // si0
-	o1 |= uint32(p.RestArgs[0].Addr.Offset&0xffff) << 0        // si1
-	o0 |= uint32(p.RestArgs[1].Addr.Offset&0x1) << 20          // R
+	o1 |= uint32(p.To.Reg&0x1f) << 21				// RT
+	o1 |= uint32(p.From.Reg&0x1f) << 16				// RA
+	o0 |= uint32((p.RestArgs[0].Addr.Offset>>16)&0x3ffff) << 0	// si0
+	o1 |= uint32(p.RestArgs[0].Addr.Offset&0xffff) << 0		// si1
+	o0 |= uint32(p.RestArgs[1].Addr.Offset&0x1) << 20		// R
 	out[1] = o1
 	out[0] = o0
 }
@@ -992,9 +992,9 @@ func type_paddi(c *ctxt9, p *obj.Prog, t *Optab, out *[5]uint32) {
 // pextd RA,RS,RB
 func type_pextd(c *ctxt9, p *obj.Prog, t *Optab, out *[5]uint32) {
 	o0 := GenOpcodes[p.As-AXXSETACCZ]
-	o0 |= uint32(p.To.Reg&0x1f) << 16   // RA
-	o0 |= uint32(p.From.Reg&0x1f) << 21 // RS
-	o0 |= uint32(p.Reg&0x1f) << 11      // RB
+	o0 |= uint32(p.To.Reg&0x1f) << 16	// RA
+	o0 |= uint32(p.From.Reg&0x1f) << 21	// RS
+	o0 |= uint32(p.Reg&0x1f) << 11		// RB
 	out[0] = o0
 }
 
@@ -1002,11 +1002,11 @@ func type_pextd(c *ctxt9, p *obj.Prog, t *Optab, out *[5]uint32) {
 func type_plxssp(c *ctxt9, p *obj.Prog, t *Optab, out *[5]uint32) {
 	o0 := GenPfxOpcodes[p.As-AXXSPLTIW]
 	o1 := GenOpcodes[p.As-AXXSETACCZ]
-	o1 |= uint32(p.To.Reg&0x1f) << 21                 // VRT
-	o0 |= uint32((p.From.Offset>>16)&0x3ffff) << 0    // d0
-	o1 |= uint32(p.From.Offset&0xffff) << 0           // d1
-	o1 |= uint32(p.From.Reg&0x1f) << 16               // RA
-	o0 |= uint32(p.RestArgs[0].Addr.Offset&0x1) << 20 // R
+	o1 |= uint32(p.To.Reg&0x1f) << 21			// VRT
+	o0 |= uint32((p.From.Offset>>16)&0x3ffff) << 0		// d0
+	o1 |= uint32(p.From.Offset&0xffff) << 0			// d1
+	o1 |= uint32(p.From.Reg&0x1f) << 16			// RA
+	o0 |= uint32(p.RestArgs[0].Addr.Offset&0x1) << 20	// R
 	out[1] = o1
 	out[0] = o0
 }
@@ -1015,12 +1015,12 @@ func type_plxssp(c *ctxt9, p *obj.Prog, t *Optab, out *[5]uint32) {
 func type_plxv(c *ctxt9, p *obj.Prog, t *Optab, out *[5]uint32) {
 	o0 := GenPfxOpcodes[p.As-AXXSPLTIW]
 	o1 := GenOpcodes[p.As-AXXSETACCZ]
-	o1 |= uint32((p.To.Reg>>5)&0x1) << 26             // TX
-	o1 |= uint32(p.To.Reg&0x1f) << 21                 // T
-	o0 |= uint32((p.From.Offset>>16)&0x3ffff) << 0    // d0
-	o1 |= uint32(p.From.Offset&0xffff) << 0           // d1
-	o1 |= uint32(p.From.Reg&0x1f) << 16               // RA
-	o0 |= uint32(p.RestArgs[0].Addr.Offset&0x1) << 20 // R
+	o1 |= uint32((p.To.Reg>>5)&0x1) << 26			// TX
+	o1 |= uint32(p.To.Reg&0x1f) << 21			// T
+	o0 |= uint32((p.From.Offset>>16)&0x3ffff) << 0		// d0
+	o1 |= uint32(p.From.Offset&0xffff) << 0			// d1
+	o1 |= uint32(p.From.Reg&0x1f) << 16			// RA
+	o0 |= uint32(p.RestArgs[0].Addr.Offset&0x1) << 20	// R
 	out[1] = o1
 	out[0] = o0
 }
@@ -1029,12 +1029,12 @@ func type_plxv(c *ctxt9, p *obj.Prog, t *Optab, out *[5]uint32) {
 func type_plxvp(c *ctxt9, p *obj.Prog, t *Optab, out *[5]uint32) {
 	o0 := GenPfxOpcodes[p.As-AXXSPLTIW]
 	o1 := GenOpcodes[p.As-AXXSETACCZ]
-	o1 |= uint32((p.To.Reg>>5)&0x1) << 21             // TX
-	o1 |= uint32((p.To.Reg>>1)&0xf) << 22             // Tp
-	o0 |= uint32((p.From.Offset>>16)&0x3ffff) << 0    // d0
-	o1 |= uint32(p.From.Offset&0xffff) << 0           // d1
-	o1 |= uint32(p.From.Reg&0x1f) << 16               // RA
-	o0 |= uint32(p.RestArgs[0].Addr.Offset&0x1) << 20 // R
+	o1 |= uint32((p.To.Reg>>5)&0x1) << 21			// TX
+	o1 |= uint32((p.To.Reg>>1)&0xf) << 22			// Tp
+	o0 |= uint32((p.From.Offset>>16)&0x3ffff) << 0		// d0
+	o1 |= uint32(p.From.Offset&0xffff) << 0			// d1
+	o1 |= uint32(p.From.Reg&0x1f) << 16			// RA
+	o0 |= uint32(p.RestArgs[0].Addr.Offset&0x1) << 20	// R
 	out[1] = o1
 	out[0] = o0
 }
@@ -1043,13 +1043,13 @@ func type_plxvp(c *ctxt9, p *obj.Prog, t *Optab, out *[5]uint32) {
 func type_pmxvf32gerpp(c *ctxt9, p *obj.Prog, t *Optab, out *[5]uint32) {
 	o0 := GenPfxOpcodes[p.As-AXXSPLTIW]
 	o1 := GenOpcodes[p.As-AXXSETACCZ]
-	o1 |= uint32(p.To.Reg&0x7) << 23                 // AT
-	o1 |= uint32((p.From.Reg>>5)&0x1) << 2           // AX
-	o1 |= uint32(p.From.Reg&0x1f) << 16              // A
-	o1 |= uint32((p.Reg>>5)&0x1) << 1                // BX
-	o1 |= uint32(p.Reg&0x1f) << 11                   // B
-	o0 |= uint32(p.RestArgs[0].Addr.Offset&0xf) << 4 // XMSK
-	o0 |= uint32(p.RestArgs[1].Addr.Offset&0xf) << 0 // YMSK
+	o1 |= uint32(p.To.Reg&0x7) << 23			// AT
+	o1 |= uint32((p.From.Reg>>5)&0x1) << 2			// AX
+	o1 |= uint32(p.From.Reg&0x1f) << 16			// A
+	o1 |= uint32((p.Reg>>5)&0x1) << 1			// BX
+	o1 |= uint32(p.Reg&0x1f) << 11				// B
+	o0 |= uint32(p.RestArgs[0].Addr.Offset&0xf) << 4	// XMSK
+	o0 |= uint32(p.RestArgs[1].Addr.Offset&0xf) << 0	// YMSK
 	out[1] = o1
 	out[0] = o0
 }
@@ -1058,13 +1058,13 @@ func type_pmxvf32gerpp(c *ctxt9, p *obj.Prog, t *Optab, out *[5]uint32) {
 func type_pmxvf64gerpp(c *ctxt9, p *obj.Prog, t *Optab, out *[5]uint32) {
 	o0 := GenPfxOpcodes[p.As-AXXSPLTIW]
 	o1 := GenOpcodes[p.As-AXXSETACCZ]
-	o1 |= uint32(p.To.Reg&0x7) << 23                 // AT
-	o1 |= uint32((p.From.Reg>>5)&0x1) << 2           // AX
-	o1 |= uint32(p.From.Reg&0x1f) << 16              // Ap
-	o1 |= uint32((p.Reg>>5)&0x1) << 1                // BX
-	o1 |= uint32(p.Reg&0x1f) << 11                   // B
-	o0 |= uint32(p.RestArgs[0].Addr.Offset&0xf) << 4 // XMSK
-	o0 |= uint32(p.RestArgs[1].Addr.Offset&0x3) << 2 // YMSK
+	o1 |= uint32(p.To.Reg&0x7) << 23			// AT
+	o1 |= uint32((p.From.Reg>>5)&0x1) << 2			// AX
+	o1 |= uint32(p.From.Reg&0x1f) << 16			// Ap
+	o1 |= uint32((p.Reg>>5)&0x1) << 1			// BX
+	o1 |= uint32(p.Reg&0x1f) << 11				// B
+	o0 |= uint32(p.RestArgs[0].Addr.Offset&0xf) << 4	// XMSK
+	o0 |= uint32(p.RestArgs[1].Addr.Offset&0x3) << 2	// YMSK
 	out[1] = o1
 	out[0] = o0
 }
@@ -1073,14 +1073,14 @@ func type_pmxvf64gerpp(c *ctxt9, p *obj.Prog, t *Optab, out *[5]uint32) {
 func type_pmxvi16ger2spp(c *ctxt9, p *obj.Prog, t *Optab, out *[5]uint32) {
 	o0 := GenPfxOpcodes[p.As-AXXSPLTIW]
 	o1 := GenOpcodes[p.As-AXXSETACCZ]
-	o1 |= uint32(p.To.Reg&0x7) << 23                  // AT
-	o1 |= uint32((p.From.Reg>>5)&0x1) << 2            // AX
-	o1 |= uint32(p.From.Reg&0x1f) << 16               // A
-	o1 |= uint32((p.Reg>>5)&0x1) << 1                 // BX
-	o1 |= uint32(p.Reg&0x1f) << 11                    // B
-	o0 |= uint32(p.RestArgs[0].Addr.Offset&0xf) << 4  // XMSK
-	o0 |= uint32(p.RestArgs[1].Addr.Offset&0xf) << 0  // YMSK
-	o0 |= uint32(p.RestArgs[2].Addr.Offset&0x3) << 14 // PMSK
+	o1 |= uint32(p.To.Reg&0x7) << 23			// AT
+	o1 |= uint32((p.From.Reg>>5)&0x1) << 2			// AX
+	o1 |= uint32(p.From.Reg&0x1f) << 16			// A
+	o1 |= uint32((p.Reg>>5)&0x1) << 1			// BX
+	o1 |= uint32(p.Reg&0x1f) << 11				// B
+	o0 |= uint32(p.RestArgs[0].Addr.Offset&0xf) << 4	// XMSK
+	o0 |= uint32(p.RestArgs[1].Addr.Offset&0xf) << 0	// YMSK
+	o0 |= uint32(p.RestArgs[2].Addr.Offset&0x3) << 14	// PMSK
 	out[1] = o1
 	out[0] = o0
 }
@@ -1089,14 +1089,14 @@ func type_pmxvi16ger2spp(c *ctxt9, p *obj.Prog, t *Optab, out *[5]uint32) {
 func type_pmxvi4ger8pp(c *ctxt9, p *obj.Prog, t *Optab, out *[5]uint32) {
 	o0 := GenPfxOpcodes[p.As-AXXSPLTIW]
 	o1 := GenOpcodes[p.As-AXXSETACCZ]
-	o1 |= uint32(p.To.Reg&0x7) << 23                  // AT
-	o1 |= uint32((p.From.Reg>>5)&0x1) << 2            // AX
-	o1 |= uint32(p.From.Reg&0x1f) << 16               // A
-	o1 |= uint32((p.Reg>>5)&0x1) << 1                 // BX
-	o1 |= uint32(p.Reg&0x1f) << 11                    // B
-	o0 |= uint32(p.RestArgs[0].Addr.Offset&0xf) << 4  // XMSK
-	o0 |= uint32(p.RestArgs[1].Addr.Offset&0xf) << 0  // YMSK
-	o0 |= uint32(p.RestArgs[2].Addr.Offset&0xff) << 8 // PMSK
+	o1 |= uint32(p.To.Reg&0x7) << 23			// AT
+	o1 |= uint32((p.From.Reg>>5)&0x1) << 2			// AX
+	o1 |= uint32(p.From.Reg&0x1f) << 16			// A
+	o1 |= uint32((p.Reg>>5)&0x1) << 1			// BX
+	o1 |= uint32(p.Reg&0x1f) << 11				// B
+	o0 |= uint32(p.RestArgs[0].Addr.Offset&0xf) << 4	// XMSK
+	o0 |= uint32(p.RestArgs[1].Addr.Offset&0xf) << 0	// YMSK
+	o0 |= uint32(p.RestArgs[2].Addr.Offset&0xff) << 8	// PMSK
 	out[1] = o1
 	out[0] = o0
 }
@@ -1105,14 +1105,14 @@ func type_pmxvi4ger8pp(c *ctxt9, p *obj.Prog, t *Optab, out *[5]uint32) {
 func type_pmxvi8ger4spp(c *ctxt9, p *obj.Prog, t *Optab, out *[5]uint32) {
 	o0 := GenPfxOpcodes[p.As-AXXSPLTIW]
 	o1 := GenOpcodes[p.As-AXXSETACCZ]
-	o1 |= uint32(p.To.Reg&0x7) << 23                  // AT
-	o1 |= uint32((p.From.Reg>>5)&0x1) << 2            // AX
-	o1 |= uint32(p.From.Reg&0x1f) << 16               // A
-	o1 |= uint32((p.Reg>>5)&0x1) << 1                 // BX
-	o1 |= uint32(p.Reg&0x1f) << 11                    // B
-	o0 |= uint32(p.RestArgs[0].Addr.Offset&0xf) << 4  // XMSK
-	o0 |= uint32(p.RestArgs[1].Addr.Offset&0xf) << 0  // YMSK
-	o0 |= uint32(p.RestArgs[2].Addr.Offset&0xf) << 12 // PMSK
+	o1 |= uint32(p.To.Reg&0x7) << 23			// AT
+	o1 |= uint32((p.From.Reg>>5)&0x1) << 2			// AX
+	o1 |= uint32(p.From.Reg&0x1f) << 16			// A
+	o1 |= uint32((p.Reg>>5)&0x1) << 1			// BX
+	o1 |= uint32(p.Reg&0x1f) << 11				// B
+	o0 |= uint32(p.RestArgs[0].Addr.Offset&0xf) << 4	// XMSK
+	o0 |= uint32(p.RestArgs[1].Addr.Offset&0xf) << 0	// YMSK
+	o0 |= uint32(p.RestArgs[2].Addr.Offset&0xf) << 12	// PMSK
 	out[1] = o1
 	out[0] = o0
 }
@@ -1129,11 +1129,11 @@ func type_pnop(c *ctxt9, p *obj.Prog, t *Optab, out *[5]uint32) {
 func type_pstxssp(c *ctxt9, p *obj.Prog, t *Optab, out *[5]uint32) {
 	o0 := GenPfxOpcodes[p.As-AXXSPLTIW]
 	o1 := GenOpcodes[p.As-AXXSETACCZ]
-	o1 |= uint32(p.From.Reg&0x1f) << 21               // VRS
-	o0 |= uint32((p.To.Offset>>16)&0x3ffff) << 0      // d0
-	o1 |= uint32(p.To.Offset&0xffff) << 0             // d1
-	o1 |= uint32(p.To.Reg&0x1f) << 16                 // RA
-	o0 |= uint32(p.RestArgs[0].Addr.Offset&0x1) << 20 // R
+	o1 |= uint32(p.From.Reg&0x1f) << 21			// VRS
+	o0 |= uint32((p.To.Offset>>16)&0x3ffff) << 0		// d0
+	o1 |= uint32(p.To.Offset&0xffff) << 0			// d1
+	o1 |= uint32(p.To.Reg&0x1f) << 16			// RA
+	o0 |= uint32(p.RestArgs[0].Addr.Offset&0x1) << 20	// R
 	out[1] = o1
 	out[0] = o0
 }
@@ -1142,12 +1142,12 @@ func type_pstxssp(c *ctxt9, p *obj.Prog, t *Optab, out *[5]uint32) {
 func type_pstxv(c *ctxt9, p *obj.Prog, t *Optab, out *[5]uint32) {
 	o0 := GenPfxOpcodes[p.As-AXXSPLTIW]
 	o1 := GenOpcodes[p.As-AXXSETACCZ]
-	o1 |= uint32((p.From.Reg>>5)&0x1) << 26           // SX
-	o1 |= uint32(p.From.Reg&0x1f) << 21               // S
-	o0 |= uint32((p.To.Offset>>16)&0x3ffff) << 0      // d0
-	o1 |= uint32(p.To.Offset&0xffff) << 0             // d1
-	o1 |= uint32(p.To.Reg&0x1f) << 16                 // RA
-	o0 |= uint32(p.RestArgs[0].Addr.Offset&0x1) << 20 // R
+	o1 |= uint32((p.From.Reg>>5)&0x1) << 26			// SX
+	o1 |= uint32(p.From.Reg&0x1f) << 21			// S
+	o0 |= uint32((p.To.Offset>>16)&0x3ffff) << 0		// d0
+	o1 |= uint32(p.To.Offset&0xffff) << 0			// d1
+	o1 |= uint32(p.To.Reg&0x1f) << 16			// RA
+	o0 |= uint32(p.RestArgs[0].Addr.Offset&0x1) << 20	// R
 	out[1] = o1
 	out[0] = o0
 }
@@ -1156,12 +1156,12 @@ func type_pstxv(c *ctxt9, p *obj.Prog, t *Optab, out *[5]uint32) {
 func type_pstxvp(c *ctxt9, p *obj.Prog, t *Optab, out *[5]uint32) {
 	o0 := GenPfxOpcodes[p.As-AXXSPLTIW]
 	o1 := GenOpcodes[p.As-AXXSETACCZ]
-	o1 |= uint32((p.From.Reg>>5)&0x1) << 21           // SX
-	o1 |= uint32((p.From.Reg>>1)&0xf) << 22           // Sp
-	o0 |= uint32((p.To.Offset>>16)&0x3ffff) << 0      // d0
-	o1 |= uint32(p.To.Offset&0xffff) << 0             // d1
-	o1 |= uint32(p.To.Reg&0x1f) << 16                 // RA
-	o0 |= uint32(p.RestArgs[0].Addr.Offset&0x1) << 20 // R
+	o1 |= uint32((p.From.Reg>>5)&0x1) << 21			// SX
+	o1 |= uint32((p.From.Reg>>1)&0xf) << 22			// Sp
+	o0 |= uint32((p.To.Offset>>16)&0x3ffff) << 0		// d0
+	o1 |= uint32(p.To.Offset&0xffff) << 0			// d1
+	o1 |= uint32(p.To.Reg&0x1f) << 16			// RA
+	o0 |= uint32(p.RestArgs[0].Addr.Offset&0x1) << 20	// R
 	out[1] = o1
 	out[0] = o0
 }
@@ -1169,18 +1169,18 @@ func type_pstxvp(c *ctxt9, p *obj.Prog, t *Optab, out *[5]uint32) {
 // setnbcr RT,BI
 func type_setnbcr(c *ctxt9, p *obj.Prog, t *Optab, out *[5]uint32) {
 	o0 := GenOpcodes[p.As-AXXSETACCZ]
-	o0 |= uint32(p.To.Reg&0x1f) << 21   // RT
-	o0 |= uint32(p.From.Reg&0x1f) << 16 // BI
+	o0 |= uint32(p.To.Reg&0x1f) << 21	// RT
+	o0 |= uint32(p.From.Reg&0x1f) << 16	// BI
 	out[0] = o0
 }
 
 // stxvp XSp,DQ(RA)
 func type_stxvp(c *ctxt9, p *obj.Prog, t *Optab, out *[5]uint32) {
 	o0 := GenOpcodes[p.As-AXXSETACCZ]
-	o0 |= uint32((p.From.Reg>>5)&0x1) << 21   // SX
-	o0 |= uint32((p.From.Reg>>1)&0xf) << 22   // Sp
-	o0 |= uint32((p.To.Offset>>4)&0xfff) << 4 // DQ
-	o0 |= uint32(p.To.Reg&0x1f) << 16         // RA
+	o0 |= uint32((p.From.Reg>>5)&0x1) << 21		// SX
+	o0 |= uint32((p.From.Reg>>1)&0xf) << 22		// Sp
+	o0 |= uint32((p.To.Offset>>4)&0xfff) << 4	// DQ
+	o0 |= uint32(p.To.Reg&0x1f) << 16		// RA
 	if p.To.Offset&0xf != 0 {
 		c.ctxt.Diag("Constant 0x%x (%d) is not a multiple of 16\n%v", p.To.Offset, p.To.Offset, p)
 	}
@@ -1190,123 +1190,123 @@ func type_stxvp(c *ctxt9, p *obj.Prog, t *Optab, out *[5]uint32) {
 // stxvpx XSp,RA,RB
 func type_stxvpx(c *ctxt9, p *obj.Prog, t *Optab, out *[5]uint32) {
 	o0 := GenOpcodes[p.As-AXXSETACCZ]
-	o0 |= uint32((p.From.Reg>>5)&0x1) << 21 // SX
-	o0 |= uint32((p.From.Reg>>1)&0xf) << 22 // Sp
-	o0 |= uint32(p.To.Index&0x1f) << 16     // RA
-	o0 |= uint32(p.To.Reg&0x1f) << 11       // RB
+	o0 |= uint32((p.From.Reg>>5)&0x1) << 21	// SX
+	o0 |= uint32((p.From.Reg>>1)&0xf) << 22	// Sp
+	o0 |= uint32(p.To.Index&0x1f) << 16	// RA
+	o0 |= uint32(p.To.Reg&0x1f) << 11	// RB
 	out[0] = o0
 }
 
 // stxvrwx XS,RA,RB
 func type_stxvrwx(c *ctxt9, p *obj.Prog, t *Optab, out *[5]uint32) {
 	o0 := GenOpcodes[p.As-AXXSETACCZ]
-	o0 |= uint32((p.From.Reg>>5)&0x1) << 0 // SX
-	o0 |= uint32(p.From.Reg&0x1f) << 21    // S
-	o0 |= uint32(p.To.Index&0x1f) << 16    // RA
-	o0 |= uint32(p.To.Reg&0x1f) << 11      // RB
+	o0 |= uint32((p.From.Reg>>5)&0x1) << 0	// SX
+	o0 |= uint32(p.From.Reg&0x1f) << 21	// S
+	o0 |= uint32(p.To.Index&0x1f) << 16	// RA
+	o0 |= uint32(p.To.Reg&0x1f) << 11	// RB
 	out[0] = o0
 }
 
 // vcmpuq BF,VRA,VRB
 func type_vcmpuq(c *ctxt9, p *obj.Prog, t *Optab, out *[5]uint32) {
 	o0 := GenOpcodes[p.As-AXXSETACCZ]
-	o0 |= uint32(p.To.Reg&0x7) << 23    // BF
-	o0 |= uint32(p.From.Reg&0x1f) << 16 // VRA
-	o0 |= uint32(p.Reg&0x1f) << 11      // VRB
+	o0 |= uint32(p.To.Reg&0x7) << 23	// BF
+	o0 |= uint32(p.From.Reg&0x1f) << 16	// VRA
+	o0 |= uint32(p.Reg&0x1f) << 11		// VRB
 	out[0] = o0
 }
 
 // vcntmbw RT,VRB,MP
 func type_vcntmbw(c *ctxt9, p *obj.Prog, t *Optab, out *[5]uint32) {
 	o0 := GenOpcodes[p.As-AXXSETACCZ]
-	o0 |= uint32(p.To.Reg&0x1f) << 21                 // RT
-	o0 |= uint32(p.From.Reg&0x1f) << 11               // VRB
-	o0 |= uint32(p.RestArgs[0].Addr.Offset&0x1) << 16 // MP
+	o0 |= uint32(p.To.Reg&0x1f) << 21			// RT
+	o0 |= uint32(p.From.Reg&0x1f) << 11			// VRB
+	o0 |= uint32(p.RestArgs[0].Addr.Offset&0x1) << 16	// MP
 	out[0] = o0
 }
 
 // vgnb RT,VRB,N
 func type_vgnb(c *ctxt9, p *obj.Prog, t *Optab, out *[5]uint32) {
 	o0 := GenOpcodes[p.As-AXXSETACCZ]
-	o0 |= uint32(p.To.Reg&0x1f) << 21                 // RT
-	o0 |= uint32(p.From.Reg&0x1f) << 11               // VRB
-	o0 |= uint32(p.RestArgs[0].Addr.Offset&0x7) << 16 // N
+	o0 |= uint32(p.To.Reg&0x1f) << 21			// RT
+	o0 |= uint32(p.From.Reg&0x1f) << 11			// VRB
+	o0 |= uint32(p.RestArgs[0].Addr.Offset&0x7) << 16	// N
 	out[0] = o0
 }
 
 // vinsw VRT,RB,UIM
 func type_vinsw(c *ctxt9, p *obj.Prog, t *Optab, out *[5]uint32) {
 	o0 := GenOpcodes[p.As-AXXSETACCZ]
-	o0 |= uint32(p.To.Reg&0x1f) << 21                 // VRT
-	o0 |= uint32(p.From.Reg&0x1f) << 11               // RB
-	o0 |= uint32(p.RestArgs[0].Addr.Offset&0xf) << 16 // UIM
+	o0 |= uint32(p.To.Reg&0x1f) << 21			// VRT
+	o0 |= uint32(p.From.Reg&0x1f) << 11			// RB
+	o0 |= uint32(p.RestArgs[0].Addr.Offset&0xf) << 16	// UIM
 	out[0] = o0
 }
 
 // vmsumcud VRT,VRA,VRB,VRC
 func type_vmsumcud(c *ctxt9, p *obj.Prog, t *Optab, out *[5]uint32) {
 	o0 := GenOpcodes[p.As-AXXSETACCZ]
-	o0 |= uint32(p.To.Reg&0x1f) << 21              // VRT
-	o0 |= uint32(p.From.Reg&0x1f) << 16            // VRA
-	o0 |= uint32(p.Reg&0x1f) << 11                 // VRB
-	o0 |= uint32(p.RestArgs[0].Addr.Reg&0x1f) << 6 // VRC
+	o0 |= uint32(p.To.Reg&0x1f) << 21		// VRT
+	o0 |= uint32(p.From.Reg&0x1f) << 16		// VRA
+	o0 |= uint32(p.Reg&0x1f) << 11			// VRB
+	o0 |= uint32(p.RestArgs[0].Addr.Reg&0x1f) << 6	// VRC
 	out[0] = o0
 }
 
 // vsrdbi VRT,VRA,VRB,SH
 func type_vsrdbi(c *ctxt9, p *obj.Prog, t *Optab, out *[5]uint32) {
 	o0 := GenOpcodes[p.As-AXXSETACCZ]
-	o0 |= uint32(p.To.Reg&0x1f) << 21                // VRT
-	o0 |= uint32(p.From.Reg&0x1f) << 16              // VRA
-	o0 |= uint32(p.Reg&0x1f) << 11                   // VRB
-	o0 |= uint32(p.RestArgs[0].Addr.Offset&0x7) << 6 // SH
+	o0 |= uint32(p.To.Reg&0x1f) << 21			// VRT
+	o0 |= uint32(p.From.Reg&0x1f) << 16			// VRA
+	o0 |= uint32(p.Reg&0x1f) << 11				// VRB
+	o0 |= uint32(p.RestArgs[0].Addr.Offset&0x7) << 6	// SH
 	out[0] = o0
 }
 
 // xscvuqqp VRT,VRB
 func type_xscvuqqp(c *ctxt9, p *obj.Prog, t *Optab, out *[5]uint32) {
 	o0 := GenOpcodes[p.As-AXXSETACCZ]
-	o0 |= uint32(p.To.Reg&0x1f) << 21   // VRT
-	o0 |= uint32(p.From.Reg&0x1f) << 11 // VRB
+	o0 |= uint32(p.To.Reg&0x1f) << 21	// VRT
+	o0 |= uint32(p.From.Reg&0x1f) << 11	// VRB
 	out[0] = o0
 }
 
 // xsmincqp VRT,VRA,VRB
 func type_xsmincqp(c *ctxt9, p *obj.Prog, t *Optab, out *[5]uint32) {
 	o0 := GenOpcodes[p.As-AXXSETACCZ]
-	o0 |= uint32(p.To.Reg&0x1f) << 21   // VRT
-	o0 |= uint32(p.From.Reg&0x1f) << 16 // VRA
-	o0 |= uint32(p.Reg&0x1f) << 11      // VRB
+	o0 |= uint32(p.To.Reg&0x1f) << 21	// VRT
+	o0 |= uint32(p.From.Reg&0x1f) << 16	// VRA
+	o0 |= uint32(p.Reg&0x1f) << 11		// VRB
 	out[0] = o0
 }
 
 // xvcvspbf16 XT,XB
 func type_xvcvspbf16(c *ctxt9, p *obj.Prog, t *Optab, out *[5]uint32) {
 	o0 := GenOpcodes[p.As-AXXSETACCZ]
-	o0 |= uint32((p.To.Reg>>5)&0x1) << 0   // TX
-	o0 |= uint32(p.To.Reg&0x1f) << 21      // T
-	o0 |= uint32((p.From.Reg>>5)&0x1) << 1 // BX
-	o0 |= uint32(p.From.Reg&0x1f) << 11    // B
+	o0 |= uint32((p.To.Reg>>5)&0x1) << 0	// TX
+	o0 |= uint32(p.To.Reg&0x1f) << 21	// T
+	o0 |= uint32((p.From.Reg>>5)&0x1) << 1	// BX
+	o0 |= uint32(p.From.Reg&0x1f) << 11	// B
 	out[0] = o0
 }
 
 // xvi8ger4spp AT,XA,XB
 func type_xvi8ger4spp(c *ctxt9, p *obj.Prog, t *Optab, out *[5]uint32) {
 	o0 := GenOpcodes[p.As-AXXSETACCZ]
-	o0 |= uint32(p.To.Reg&0x7) << 23       // AT
-	o0 |= uint32((p.From.Reg>>5)&0x1) << 2 // AX
-	o0 |= uint32(p.From.Reg&0x1f) << 16    // A
-	o0 |= uint32((p.Reg>>5)&0x1) << 1      // BX
-	o0 |= uint32(p.Reg&0x1f) << 11         // B
+	o0 |= uint32(p.To.Reg&0x7) << 23	// AT
+	o0 |= uint32((p.From.Reg>>5)&0x1) << 2	// AX
+	o0 |= uint32(p.From.Reg&0x1f) << 16	// A
+	o0 |= uint32((p.Reg>>5)&0x1) << 1	// BX
+	o0 |= uint32(p.Reg&0x1f) << 11		// B
 	out[0] = o0
 }
 
 // xvtlsbb BF,XB
 func type_xvtlsbb(c *ctxt9, p *obj.Prog, t *Optab, out *[5]uint32) {
 	o0 := GenOpcodes[p.As-AXXSETACCZ]
-	o0 |= uint32(p.To.Reg&0x7) << 23       // BF
-	o0 |= uint32((p.From.Reg>>5)&0x1) << 1 // BX
-	o0 |= uint32(p.From.Reg&0x1f) << 11    // B
+	o0 |= uint32(p.To.Reg&0x7) << 23	// BF
+	o0 |= uint32((p.From.Reg>>5)&0x1) << 1	// BX
+	o0 |= uint32(p.From.Reg&0x1f) << 11	// B
 	out[0] = o0
 }
 
@@ -1314,14 +1314,14 @@ func type_xvtlsbb(c *ctxt9, p *obj.Prog, t *Optab, out *[5]uint32) {
 func type_xxblendvw(c *ctxt9, p *obj.Prog, t *Optab, out *[5]uint32) {
 	o0 := GenPfxOpcodes[p.As-AXXSPLTIW]
 	o1 := GenOpcodes[p.As-AXXSETACCZ]
-	o1 |= uint32((p.To.Reg>>5)&0x1) << 0               // TX
-	o1 |= uint32(p.To.Reg&0x1f) << 21                  // T
-	o1 |= uint32((p.From.Reg>>5)&0x1) << 2             // AX
-	o1 |= uint32(p.From.Reg&0x1f) << 16                // A
-	o1 |= uint32((p.Reg>>5)&0x1) << 1                  // BX
-	o1 |= uint32(p.Reg&0x1f) << 11                     // B
-	o1 |= uint32((p.RestArgs[0].Addr.Reg>>5)&0x1) << 3 // CX
-	o1 |= uint32(p.RestArgs[0].Addr.Reg&0x1f) << 6     // C
+	o1 |= uint32((p.To.Reg>>5)&0x1) << 0			// TX
+	o1 |= uint32(p.To.Reg&0x1f) << 21			// T
+	o1 |= uint32((p.From.Reg>>5)&0x1) << 2			// AX
+	o1 |= uint32(p.From.Reg&0x1f) << 16			// A
+	o1 |= uint32((p.Reg>>5)&0x1) << 1			// BX
+	o1 |= uint32(p.Reg&0x1f) << 11				// B
+	o1 |= uint32((p.RestArgs[0].Addr.Reg>>5)&0x1) << 3	// CX
+	o1 |= uint32(p.RestArgs[0].Addr.Reg&0x1f) << 6		// C
 	out[1] = o1
 	out[0] = o0
 }
@@ -1330,15 +1330,15 @@ func type_xxblendvw(c *ctxt9, p *obj.Prog, t *Optab, out *[5]uint32) {
 func type_xxeval(c *ctxt9, p *obj.Prog, t *Optab, out *[5]uint32) {
 	o0 := GenPfxOpcodes[p.As-AXXSPLTIW]
 	o1 := GenOpcodes[p.As-AXXSETACCZ]
-	o1 |= uint32((p.To.Reg>>5)&0x1) << 0               // TX
-	o1 |= uint32(p.To.Reg&0x1f) << 21                  // T
-	o1 |= uint32((p.From.Reg>>5)&0x1) << 2             // AX
-	o1 |= uint32(p.From.Reg&0x1f) << 16                // A
-	o1 |= uint32((p.Reg>>5)&0x1) << 1                  // BX
-	o1 |= uint32(p.Reg&0x1f) << 11                     // B
-	o1 |= uint32((p.RestArgs[0].Addr.Reg>>5)&0x1) << 3 // CX
-	o1 |= uint32(p.RestArgs[0].Addr.Reg&0x1f) << 6     // C
-	o0 |= uint32(p.RestArgs[1].Addr.Offset&0xff) << 0  // IMM
+	o1 |= uint32((p.To.Reg>>5)&0x1) << 0			// TX
+	o1 |= uint32(p.To.Reg&0x1f) << 21			// T
+	o1 |= uint32((p.From.Reg>>5)&0x1) << 2			// AX
+	o1 |= uint32(p.From.Reg&0x1f) << 16			// A
+	o1 |= uint32((p.Reg>>5)&0x1) << 1			// BX
+	o1 |= uint32(p.Reg&0x1f) << 11				// B
+	o1 |= uint32((p.RestArgs[0].Addr.Reg>>5)&0x1) << 3	// CX
+	o1 |= uint32(p.RestArgs[0].Addr.Reg&0x1f) << 6		// C
+	o0 |= uint32(p.RestArgs[1].Addr.Offset&0xff) << 0	// IMM
 	out[1] = o1
 	out[0] = o0
 }
@@ -1346,10 +1346,10 @@ func type_xxeval(c *ctxt9, p *obj.Prog, t *Optab, out *[5]uint32) {
 // xxgenpcvwm XT,VRB,IMM
 func type_xxgenpcvwm(c *ctxt9, p *obj.Prog, t *Optab, out *[5]uint32) {
 	o0 := GenOpcodes[p.As-AXXSETACCZ]
-	o0 |= uint32((p.To.Reg>>5)&0x1) << 0               // TX
-	o0 |= uint32(p.To.Reg&0x1f) << 21                  // T
-	o0 |= uint32(p.From.Reg&0x1f) << 11                // VRB
-	o0 |= uint32(p.RestArgs[0].Addr.Offset&0x1f) << 16 // IMM
+	o0 |= uint32((p.To.Reg>>5)&0x1) << 0			// TX
+	o0 |= uint32(p.To.Reg&0x1f) << 21			// T
+	o0 |= uint32(p.From.Reg&0x1f) << 11			// VRB
+	o0 |= uint32(p.RestArgs[0].Addr.Offset&0x1f) << 16	// IMM
 	out[0] = o0
 }
 
@@ -1357,15 +1357,15 @@ func type_xxgenpcvwm(c *ctxt9, p *obj.Prog, t *Optab, out *[5]uint32) {
 func type_xxpermx(c *ctxt9, p *obj.Prog, t *Optab, out *[5]uint32) {
 	o0 := GenPfxOpcodes[p.As-AXXSPLTIW]
 	o1 := GenOpcodes[p.As-AXXSETACCZ]
-	o1 |= uint32((p.To.Reg>>5)&0x1) << 0               // TX
-	o1 |= uint32(p.To.Reg&0x1f) << 21                  // T
-	o1 |= uint32((p.From.Reg>>5)&0x1) << 2             // AX
-	o1 |= uint32(p.From.Reg&0x1f) << 16                // A
-	o1 |= uint32((p.Reg>>5)&0x1) << 1                  // BX
-	o1 |= uint32(p.Reg&0x1f) << 11                     // B
-	o1 |= uint32((p.RestArgs[0].Addr.Reg>>5)&0x1) << 3 // CX
-	o1 |= uint32(p.RestArgs[0].Addr.Reg&0x1f) << 6     // C
-	o0 |= uint32(p.RestArgs[1].Addr.Offset&0x7) << 0   // UIM
+	o1 |= uint32((p.To.Reg>>5)&0x1) << 0			// TX
+	o1 |= uint32(p.To.Reg&0x1f) << 21			// T
+	o1 |= uint32((p.From.Reg>>5)&0x1) << 2			// AX
+	o1 |= uint32(p.From.Reg&0x1f) << 16			// A
+	o1 |= uint32((p.Reg>>5)&0x1) << 1			// BX
+	o1 |= uint32(p.Reg&0x1f) << 11				// B
+	o1 |= uint32((p.RestArgs[0].Addr.Reg>>5)&0x1) << 3	// CX
+	o1 |= uint32(p.RestArgs[0].Addr.Reg&0x1f) << 6		// C
+	o0 |= uint32(p.RestArgs[1].Addr.Offset&0x7) << 0	// UIM
 	out[1] = o1
 	out[0] = o0
 }
@@ -1373,7 +1373,7 @@ func type_xxpermx(c *ctxt9, p *obj.Prog, t *Optab, out *[5]uint32) {
 // xxsetaccz AT
 func type_xxsetaccz(c *ctxt9, p *obj.Prog, t *Optab, out *[5]uint32) {
 	o0 := GenOpcodes[p.As-AXXSETACCZ]
-	o0 |= uint32(p.To.Reg&0x7) << 23 // AT
+	o0 |= uint32(p.To.Reg&0x7) << 23	// AT
 	out[0] = o0
 }
 
@@ -1381,11 +1381,11 @@ func type_xxsetaccz(c *ctxt9, p *obj.Prog, t *Optab, out *[5]uint32) {
 func type_xxsplti32dx(c *ctxt9, p *obj.Prog, t *Optab, out *[5]uint32) {
 	o0 := GenPfxOpcodes[p.As-AXXSPLTIW]
 	o1 := GenOpcodes[p.As-AXXSETACCZ]
-	o1 |= uint32((p.To.Reg>>5)&0x1) << 16                     // TX
-	o1 |= uint32(p.To.Reg&0x1f) << 21                         // T
-	o1 |= uint32(p.From.Offset&0x1) << 17                     // IX
-	o0 |= uint32((p.RestArgs[0].Addr.Offset>>16)&0xffff) << 0 // imm0
-	o1 |= uint32(p.RestArgs[0].Addr.Offset&0xffff) << 0       // imm1
+	o1 |= uint32((p.To.Reg>>5)&0x1) << 16				// TX
+	o1 |= uint32(p.To.Reg&0x1f) << 21				// T
+	o1 |= uint32(p.From.Offset&0x1) << 17				// IX
+	o0 |= uint32((p.RestArgs[0].Addr.Offset>>16)&0xffff) << 0	// imm0
+	o1 |= uint32(p.RestArgs[0].Addr.Offset&0xffff) << 0		// imm1
 	out[1] = o1
 	out[0] = o0
 }
@@ -1394,10 +1394,10 @@ func type_xxsplti32dx(c *ctxt9, p *obj.Prog, t *Optab, out *[5]uint32) {
 func type_xxspltiw(c *ctxt9, p *obj.Prog, t *Optab, out *[5]uint32) {
 	o0 := GenPfxOpcodes[p.As-AXXSPLTIW]
 	o1 := GenOpcodes[p.As-AXXSETACCZ]
-	o1 |= uint32((p.To.Reg>>5)&0x1) << 16         // TX
-	o1 |= uint32(p.To.Reg&0x1f) << 21             // T
-	o0 |= uint32((p.From.Offset>>16)&0xffff) << 0 // imm0
-	o1 |= uint32(p.From.Offset&0xffff) << 0       // imm1
+	o1 |= uint32((p.To.Reg>>5)&0x1) << 16		// TX
+	o1 |= uint32(p.To.Reg&0x1f) << 21		// T
+	o0 |= uint32((p.From.Offset>>16)&0xffff) << 0	// imm0
+	o1 |= uint32(p.From.Offset&0xffff) << 0		// imm1
 	out[1] = o1
 	out[0] = o0
 }

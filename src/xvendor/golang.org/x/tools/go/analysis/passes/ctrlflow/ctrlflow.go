@@ -22,28 +22,29 @@ import (
 )
 
 var Analyzer = &analysis.Analyzer{
-	Name:       "ctrlflow",
-	Doc:        "build a control-flow graph",
-	Run:        run,
-	ResultType: reflect.TypeOf(new(CFGs)),
-	FactTypes:  []analysis.Fact{new(noReturn)},
-	Requires:   []*analysis.Analyzer{inspect.Analyzer},
+	Name:		"ctrlflow",
+	Doc:		"build a control-flow graph",
+	URL:		"https://pkg.go.dev/golang.org/x/tools/go/analysis/passes/ctrlflow",
+	Run:		run,
+	ResultType:	reflect.TypeOf(new(CFGs)),
+	FactTypes:	[]analysis.Fact{new(noReturn)},
+	Requires:	[]*analysis.Analyzer{inspect.Analyzer},
 }
 
 // noReturn is a fact indicating that a function does not return.
 type noReturn struct{}
 
-func (*noReturn) AFact() {}
+func (*noReturn) AFact()	{}
 
-func (*noReturn) String() string { return "noReturn" }
+func (*noReturn) String() string	{ return "noReturn" }
 
 // A CFGs holds the control-flow graphs
 // for all the functions of the current package.
 type CFGs struct {
-	defs      map[*ast.Ident]types.Object // from Pass.TypesInfo.Defs
-	funcDecls map[*types.Func]*declInfo
-	funcLits  map[*ast.FuncLit]*litInfo
-	pass      *analysis.Pass // transient; nil after construction
+	defs		map[*ast.Ident]types.Object	// from Pass.TypesInfo.Defs
+	funcDecls	map[*types.Func]*declInfo
+	funcLits	map[*ast.FuncLit]*litInfo
+	pass		*analysis.Pass	// transient; nil after construction
 }
 
 // CFGs has two maps: funcDecls for named functions and funcLits for
@@ -53,15 +54,15 @@ type CFGs struct {
 // *types.Func but not the other way.
 
 type declInfo struct {
-	decl     *ast.FuncDecl
-	cfg      *cfg.CFG // iff decl.Body != nil
-	started  bool     // to break cycles
-	noReturn bool
+	decl		*ast.FuncDecl
+	cfg		*cfg.CFG	// iff decl.Body != nil
+	started		bool		// to break cycles
+	noReturn	bool
 }
 
 type litInfo struct {
-	cfg      *cfg.CFG
-	noReturn bool
+	cfg		*cfg.CFG
+	noReturn	bool
 }
 
 // FuncDecl returns the control-flow graph for a named function.
@@ -89,11 +90,11 @@ func run(pass *analysis.Pass) (interface{}, error) {
 	// but the benefit is marginal.)
 
 	// Pass 1. Map types.Funcs to ast.FuncDecls in this package.
-	funcDecls := make(map[*types.Func]*declInfo) // functions and methods
+	funcDecls := make(map[*types.Func]*declInfo)	// functions and methods
 	funcLits := make(map[*ast.FuncLit]*litInfo)
 
-	var decls []*types.Func // keys(funcDecls), in order
-	var lits []*ast.FuncLit // keys(funcLits), in order
+	var decls []*types.Func	// keys(funcDecls), in order
+	var lits []*ast.FuncLit	// keys(funcLits), in order
 
 	nodeFilter := []ast.Node{
 		(*ast.FuncDecl)(nil),
@@ -114,10 +115,10 @@ func run(pass *analysis.Pass) (interface{}, error) {
 	})
 
 	c := &CFGs{
-		defs:      pass.TypesInfo.Defs,
-		funcDecls: funcDecls,
-		funcLits:  funcLits,
-		pass:      pass,
+		defs:		pass.TypesInfo.Defs,
+		funcDecls:	funcDecls,
+		funcLits:	funcLits,
+		pass:		pass,
 	}
 
 	// Pass 2. Build CFGs.
@@ -157,7 +158,7 @@ func (c *CFGs) buildDecl(fn *types.Func, di *declInfo) {
 	// The buildDecl call tree thus resembles the static call graph.
 	// We mark each node when we start working on it to break cycles.
 
-	if !di.started { // break cycle
+	if !di.started {	// break cycle
 		di.started = true
 
 		if isIntrinsicNoReturn(fn) {
@@ -184,7 +185,7 @@ func (c *CFGs) buildDecl(fn *types.Func, di *declInfo) {
 // It is passed to the CFG builder.
 func (c *CFGs) callMayReturn(call *ast.CallExpr) (r bool) {
 	if id, ok := call.Fun.(*ast.Ident); ok && c.pass.TypesInfo.Uses[id] == panicBuiltin {
-		return false // panic never returns
+		return false	// panic never returns
 	}
 
 	// Is this a static call? Also includes static functions
@@ -194,7 +195,7 @@ func (c *CFGs) callMayReturn(call *ast.CallExpr) (r bool) {
 	// that out.
 	fn := typeutil.StaticCallee(c.pass.TypesInfo, call)
 	if fn == nil {
-		return true // callee not statically known; be conservative
+		return true	// callee not statically known; be conservative
 	}
 
 	// Function or method declared in this package?

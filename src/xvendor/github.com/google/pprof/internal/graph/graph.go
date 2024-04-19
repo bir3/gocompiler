@@ -30,19 +30,19 @@ import (
 var (
 	// Removes package name and method arguments for Java method names.
 	// See tests for examples.
-	javaRegExp = regexp.MustCompile(`^(?:[a-z]\w*\.)*([A-Z][\w\$]*\.(?:<init>|[a-z][\w\$]*(?:\$\d+)?))(?:(?:\()|$)`)
+	javaRegExp	= regexp.MustCompile(`^(?:[a-z]\w*\.)*([A-Z][\w\$]*\.(?:<init>|[a-z][\w\$]*(?:\$\d+)?))(?:(?:\()|$)`)
 	// Removes package name and method arguments for Go function names.
 	// See tests for examples.
-	goRegExp = regexp.MustCompile(`^(?:[\w\-\.]+\/)+(.+)`)
+	goRegExp	= regexp.MustCompile(`^(?:[\w\-\.]+\/)+([^.]+\..+)`)
 	// Removes potential module versions in a package path.
-	goVerRegExp = regexp.MustCompile(`^(.*?)/v(?:[2-9]|[1-9][0-9]+)([./].*)$`)
+	goVerRegExp	= regexp.MustCompile(`^(.*?)/v(?:[2-9]|[1-9][0-9]+)([./].*)$`)
 	// Strips C++ namespace prefix from a C++ function / method name.
 	// NOTE: Make sure to keep the template parameters in the name. Normally,
 	// template parameters are stripped from the C++ names but when
 	// -symbolize=demangle=templates flag is used, they will not be.
 	// See tests for examples.
-	cppRegExp                = regexp.MustCompile(`^(?:[_a-zA-Z]\w*::)+(_*[A-Z]\w*::~?[_a-zA-Z]\w*(?:<.*>)?)`)
-	cppAnonymousPrefixRegExp = regexp.MustCompile(`^\(anonymous namespace\)::`)
+	cppRegExp			= regexp.MustCompile(`^(?:[_a-zA-Z]\w*::)+(_*[A-Z]\w*::~?[_a-zA-Z]\w*(?:<.*>)?)`)
+	cppAnonymousPrefixRegExp	= regexp.MustCompile(`^\(anonymous namespace\)::`)
 )
 
 // Graph summarizes a performance profile into a format that is
@@ -53,16 +53,16 @@ type Graph struct {
 
 // Options encodes the options for constructing a graph
 type Options struct {
-	SampleValue       func(s []int64) int64      // Function to compute the value of a sample
-	SampleMeanDivisor func(s []int64) int64      // Function to compute the divisor for mean graphs, or nil
-	FormatTag         func(int64, string) string // Function to format a sample tag value into a string
-	ObjNames          bool                       // Always preserve obj filename
-	OrigFnNames       bool                       // Preserve original (eg mangled) function names
+	SampleValue		func(s []int64) int64		// Function to compute the value of a sample
+	SampleMeanDivisor	func(s []int64) int64		// Function to compute the divisor for mean graphs, or nil
+	FormatTag		func(int64, string) string	// Function to format a sample tag value into a string
+	ObjNames		bool				// Always preserve obj filename
+	OrigFnNames		bool				// Preserve original (eg mangled) function names
 
-	CallTree     bool // Build a tree instead of a graph
-	DropNegative bool // Drop nodes with overall negative values
+	CallTree	bool	// Build a tree instead of a graph
+	DropNegative	bool	// Drop nodes with overall negative values
 
-	KeptNodes NodeSet // If non-nil, only use nodes in this set
+	KeptNodes	NodeSet	// If non-nil, only use nodes in this set
 }
 
 // Nodes is an ordered collection of graph nodes.
@@ -72,31 +72,31 @@ type Nodes []*Node
 // program location.
 type Node struct {
 	// Info describes the source location associated to this node.
-	Info NodeInfo
+	Info	NodeInfo
 
 	// Function represents the function that this node belongs to. On
 	// graphs with sub-function resolution (eg line number or
 	// addresses), two nodes in a NodeMap that are part of the same
 	// function have the same value of Node.Function. If the Node
 	// represents the whole function, it points back to itself.
-	Function *Node
+	Function	*Node
 
 	// Values associated to this node. Flat is exclusive to this node,
 	// Cum includes all descendents.
-	Flat, FlatDiv, Cum, CumDiv int64
+	Flat, FlatDiv, Cum, CumDiv	int64
 
 	// In and out Contains the nodes immediately reaching or reached by
 	// this node.
-	In, Out EdgeMap
+	In, Out	EdgeMap
 
 	// LabelTags provide additional information about subsets of a sample.
-	LabelTags TagMap
+	LabelTags	TagMap
 
 	// NumericTags provide additional values for subsets of a sample.
 	// Numeric tags are optionally associated to a label tag. The key
 	// for NumericTags is the name of the LabelTag they are associated
 	// to, or "" for numeric tags not associated to a label tag.
-	NumericTags map[string]TagMap
+	NumericTags	map[string]TagMap
 }
 
 // FlatValue returns the exclusive value for this node, computing the
@@ -149,12 +149,12 @@ func (n *Node) AddToEdgeDiv(to *Node, dv, v int64, residual, inline bool) {
 
 // NodeInfo contains the attributes for a node.
 type NodeInfo struct {
-	Name              string
-	OrigName          string
-	Address           uint64
-	File              string
-	StartLine, Lineno int
-	Objfile           string
+	Name			string
+	OrigName		string
+	Address			uint64
+	File			string
+	StartLine, Lineno	int
+	Objfile			string
 }
 
 // PrintableName calls the Node's Formatter function with a single space separator.
@@ -223,11 +223,11 @@ func (nm NodeMap) FindOrInsertNode(info NodeInfo, kept NodeSet) *Node {
 	}
 
 	n := &Node{
-		Info:        info,
-		In:          make(EdgeMap),
-		Out:         make(EdgeMap),
-		LabelTags:   make(TagMap),
-		NumericTags: make(map[string]TagMap),
+		Info:		info,
+		In:		make(EdgeMap),
+		Out:		make(EdgeMap),
+		LabelTags:	make(TagMap),
+		NumericTags:	make(map[string]TagMap),
 	}
 	nm[info] = n
 	if info.Address == 0 && info.Lineno == 0 {
@@ -248,15 +248,15 @@ type EdgeMap map[*Node]*Edge
 
 // Edge contains any attributes to be represented about edges in a graph.
 type Edge struct {
-	Src, Dest *Node
+	Src, Dest	*Node
 	// The summary weight of the edge
-	Weight, WeightDiv int64
+	Weight, WeightDiv	int64
 
 	// residual edges connect nodes that were connected through a
 	// separate node, which has been removed from the report.
-	Residual bool
+	Residual	bool
 	// An inline edge represents a call that was inlined into the caller.
-	Inline bool
+	Inline	bool
 }
 
 // WeightValue returns the weight value for this edge, normalizing if a
@@ -270,11 +270,11 @@ func (e *Edge) WeightValue() int64 {
 
 // Tag represent sample annotations
 type Tag struct {
-	Name          string
-	Unit          string // Describe the value, "" for non-numeric tags
-	Value         int64
-	Flat, FlatDiv int64
-	Cum, CumDiv   int64
+	Name		string
+	Unit		string	// Describe the value, "" for non-numeric tags
+	Value		int64
+	Flat, FlatDiv	int64
+	Cum, CumDiv	int64
 }
 
 // FlatValue returns the exclusive value for this tag, computing the
@@ -414,7 +414,7 @@ func newTree(prof *profile.Profile, o *Options) (g *Graph) {
 			l := sample.Location[i]
 			lines := l.Line
 			if len(lines) == 0 {
-				lines = []profile.Line{{}} // Create empty line to include location info.
+				lines = []profile.Line{{}}	// Create empty line to include location info.
 			}
 			for lidx := len(lines) - 1; lidx >= 0; lidx-- {
 				nodeMap := parentNodeMap[parent]
@@ -556,7 +556,7 @@ func CreateNodes(prof *profile.Profile, o *Options) (Nodes, map[uint64]Nodes) {
 	for _, l := range prof.Location {
 		lines := l.Line
 		if len(lines) == 0 {
-			lines = []profile.Line{{}} // Create empty line to include location info.
+			lines = []profile.Line{{}}	// Create empty line to include location info.
 		}
 		nodes := make(Nodes, len(lines))
 		for ln := range lines {
@@ -592,9 +592,9 @@ func nodeInfo(l *profile.Location, line profile.Line, objfile string, o *Options
 		return &NodeInfo{Address: l.Address, Objfile: objfile}
 	}
 	ni := &NodeInfo{
-		Address: l.Address,
-		Lineno:  int(line.Line),
-		Name:    line.Function.Name,
+		Address:	l.Address,
+		Lineno:		int(line.Line),
+		Name:		line.Function.Name,
 	}
 	if fname := line.Function.Filename; fname != "" {
 		ni.File = filepath.Clean(fname)
@@ -610,12 +610,12 @@ func nodeInfo(l *profile.Location, line profile.Line, objfile string, o *Options
 }
 
 type tags struct {
-	t    []*Tag
-	flat bool
+	t	[]*Tag
+	flat	bool
 }
 
-func (t tags) Len() int      { return len(t.t) }
-func (t tags) Swap(i, j int) { t.t[i], t.t[j] = t.t[j], t.t[i] }
+func (t tags) Len() int		{ return len(t.t) }
+func (t tags) Swap(i, j int)	{ t.t[i], t.t[j] = t.t[j], t.t[i] }
 func (t tags) Less(i, j int) bool {
 	if !t.flat {
 		if t.t[i].Cum != t.t[j].Cum {
@@ -696,9 +696,9 @@ func (m TagMap) findOrAddTag(label, unit string, value int64) *Tag {
 	l := m[label]
 	if l == nil {
 		l = &Tag{
-			Name:  label,
-			Unit:  unit,
-			Value: value,
+			Name:	label,
+			Unit:	unit,
+			Value:	value,
 		}
 		m[label] = l
 	}
@@ -929,13 +929,13 @@ func isRedundantEdge(e *Edge) bool {
 // nodeSorter is a mechanism used to allow a report to be sorted
 // in different ways.
 type nodeSorter struct {
-	rs   Nodes
-	less func(l, r *Node) bool
+	rs	Nodes
+	less	func(l, r *Node) bool
 }
 
-func (s nodeSorter) Len() int           { return len(s.rs) }
-func (s nodeSorter) Swap(i, j int)      { s.rs[i], s.rs[j] = s.rs[j], s.rs[i] }
-func (s nodeSorter) Less(i, j int) bool { return s.less(s.rs[i], s.rs[j]) }
+func (s nodeSorter) Len() int		{ return len(s.rs) }
+func (s nodeSorter) Swap(i, j int)	{ s.rs[i], s.rs[j] = s.rs[j], s.rs[i] }
+func (s nodeSorter) Less(i, j int) bool	{ return s.less(s.rs[i], s.rs[j]) }
 
 // Sort reorders a slice of nodes based on the specified ordering
 // criteria. The result is sorted in decreasing order for (absolute)
@@ -1059,13 +1059,13 @@ func entropyScore(n *Node) int64 {
 	score := float64(0)
 
 	if len(n.In) == 0 {
-		score++ // Favor entry nodes
+		score++	// Favor entry nodes
 	} else {
 		score += edgeEntropyScore(n, n.In, 0)
 	}
 
 	if len(n.Out) == 0 {
-		score++ // Favor leaf nodes
+		score++	// Favor leaf nodes
 	} else {
 		score += edgeEntropyScore(n, n.Out, n.Flat)
 	}
@@ -1104,7 +1104,7 @@ type NodeOrder int
 
 // Sorting options for node sort.
 const (
-	FlatNameOrder NodeOrder = iota
+	FlatNameOrder	NodeOrder	= iota
 	FlatCumNameOrder
 	CumNameOrder
 	NameOrder

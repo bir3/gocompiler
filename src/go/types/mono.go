@@ -50,34 +50,34 @@ import (
 // are allowed because static instantiation will reach a fixed point.
 
 type monoGraph struct {
-	vertices []monoVertex
-	edges    []monoEdge
+	vertices	[]monoVertex
+	edges		[]monoEdge
 
 	// canon maps method receiver type parameters to their respective
 	// receiver type's type parameters.
-	canon map[*TypeParam]*TypeParam
+	canon	map[*TypeParam]*TypeParam
 
 	// nameIdx maps a defined type or (canonical) type parameter to its
 	// vertex index.
-	nameIdx map[*TypeName]int
+	nameIdx	map[*TypeName]int
 }
 
 type monoVertex struct {
-	weight int // weight of heaviest known path to this vertex
-	pre    int // previous edge (if any) in the above path
-	len    int // length of the above path
+	weight	int	// weight of heaviest known path to this vertex
+	pre	int	// previous edge (if any) in the above path
+	len	int	// length of the above path
 
 	// obj is the defined type or type parameter represented by this
 	// vertex.
-	obj *TypeName
+	obj	*TypeName
 }
 
 type monoEdge struct {
-	dst, src int
-	weight   int
+	dst, src	int
+	weight		int
 
-	pos token.Pos
-	typ Type
+	pos	token.Pos
+	typ	Type
 }
 
 func (check *Checker) monomorph() {
@@ -150,9 +150,9 @@ func (check *Checker) reportInstanceLoop(v int) {
 		default:
 			panic("unexpected type")
 		case *Named:
-			check.errorf(atPos(edge.pos), InvalidInstanceCycle, "\t%s implicitly parameterized by %s", obj.Name(), TypeString(edge.typ, qf)) // secondary error, \t indented
+			check.errorf(atPos(edge.pos), InvalidInstanceCycle, "\t%s implicitly parameterized by %s", obj.Name(), TypeString(edge.typ, qf))	// secondary error, \t indented
 		case *TypeParam:
-			check.errorf(atPos(edge.pos), InvalidInstanceCycle, "\t%s instantiated as %s", obj.Name(), TypeString(edge.typ, qf)) // secondary error, \t indented
+			check.errorf(atPos(edge.pos), InvalidInstanceCycle, "\t%s instantiated as %s", obj.Name(), TypeString(edge.typ, qf))	// secondary error, \t indented
 		}
 	}
 }
@@ -206,7 +206,7 @@ func (w *monoGraph) assign(pkg *Package, pos token.Pos, tpar *TypeParam, targ Ty
 	// type parameters.
 	var do func(typ Type)
 	do = func(typ Type) {
-		switch typ := typ.(type) {
+		switch typ := Unalias(typ).(type) {
 		default:
 			panic("unexpected type")
 
@@ -264,12 +264,12 @@ func (w *monoGraph) assign(pkg *Package, pos token.Pos, tpar *TypeParam, targ Ty
 func (w *monoGraph) localNamedVertex(pkg *Package, named *Named) int {
 	obj := named.Obj()
 	if obj.Pkg() != pkg {
-		return -1 // imported type
+		return -1	// imported type
 	}
 
 	root := pkg.Scope()
 	if obj.Parent() == root {
-		return -1 // package scope, no ambient type parameters
+		return -1	// package scope, no ambient type parameters
 	}
 
 	if idx, ok := w.nameIdx[obj]; ok {
@@ -282,7 +282,7 @@ func (w *monoGraph) localNamedVertex(pkg *Package, named *Named) int {
 	// parameters that it's implicitly parameterized by.
 	for scope := obj.Parent(); scope != root; scope = scope.Parent() {
 		for _, elem := range scope.elems {
-			if elem, ok := elem.(*TypeName); ok && !elem.IsAlias() && elem.Pos() < obj.Pos() {
+			if elem, ok := elem.(*TypeName); ok && !elem.IsAlias() && cmpPos(elem.Pos(), obj.Pos()) < 0 {
 				if tpar, ok := elem.Type().(*TypeParam); ok {
 					if idx < 0 {
 						idx = len(w.vertices)
@@ -327,11 +327,11 @@ func (w *monoGraph) typeParamVertex(tpar *TypeParam) int {
 func (w *monoGraph) addEdge(dst, src, weight int, pos token.Pos, typ Type) {
 	// TODO(mdempsky): Deduplicate redundant edges?
 	w.edges = append(w.edges, monoEdge{
-		dst:    dst,
-		src:    src,
-		weight: weight,
+		dst:	dst,
+		src:	src,
+		weight:	weight,
 
-		pos: pos,
-		typ: typ,
+		pos:	pos,
+		typ:	typ,
 	})
 }

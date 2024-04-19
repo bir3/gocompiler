@@ -12,8 +12,8 @@ import (
 )
 
 type unresolvedSymKey struct {
-	from loader.Sym // Symbol that referenced unresolved "to"
-	to   loader.Sym // Unresolved symbol referenced by "from"
+	from	loader.Sym	// Symbol that referenced unresolved "to"
+	to	loader.Sym	// Unresolved symbol referenced by "from"
 }
 
 type symNameFn func(s loader.Sym) string
@@ -21,9 +21,9 @@ type symNameFn func(s loader.Sym) string
 // ErrorReporter is used to make error reporting thread safe.
 type ErrorReporter struct {
 	loader.ErrorReporter
-	unresSyms  map[unresolvedSymKey]bool
-	unresMutex sync.Mutex
-	SymName    symNameFn
+	unresSyms	map[unresolvedSymKey]bool
+	unresMutex	sync.Mutex
+	SymName		symNameFn
 }
 
 // errorUnresolved prints unresolved symbol error for rs that is referenced from s.

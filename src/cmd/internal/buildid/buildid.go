@@ -17,12 +17,12 @@ import (
 )
 
 var (
-	errBuildIDMalformed = fmt.Errorf("malformed object file")
+	errBuildIDMalformed	= fmt.Errorf("malformed object file")
 
-	bangArch = []byte("!<arch>")
-	pkgdef   = []byte("__.PKGDEF")
-	goobject = []byte("go object ")
-	buildid  = []byte("build id ")
+	bangArch	= []byte("!<arch>")
+	pkgdef		= []byte("__.PKGDEF")
+	goobject	= []byte("go object ")
+	buildid		= []byte("build id ")
 )
 
 // ReadFile reads the build ID from an archive or executable file.
@@ -65,7 +65,7 @@ func ReadFile(name string) (id string, err error) {
 	}
 
 	// Archive header.
-	for i := 0; ; i++ { // returns during i==3
+	for i := 0; ; i++ {	// returns during i==3
 		j := bytes.IndexByte(data, '\n')
 		if j < 0 {
 			return tryGccgo()
@@ -238,12 +238,12 @@ func readGccgoBigArchive(name string, f *os.File) (string, error) {
 }
 
 var (
-	goBuildPrefix = []byte("\xff Go build ID: \"")
-	goBuildEnd    = []byte("\"\n \xff")
+	goBuildPrefix	= []byte("\xff Go build ID: \"")
+	goBuildEnd	= []byte("\"\n \xff")
 
-	elfPrefix = []byte("\x7fELF")
+	elfPrefix	= []byte("\x7fELF")
 
-	machoPrefixes = [][]byte{
+	machoPrefixes	= [][]byte{
 		{0xfe, 0xed, 0xfa, 0xce},
 		{0xfe, 0xed, 0xfa, 0xcf},
 		{0xce, 0xfa, 0xed, 0xfe},
@@ -251,7 +251,7 @@ var (
 	}
 )
 
-var readSize = 32 * 1024 // changed for testing
+var readSize = 32 * 1024	// changed for testing
 
 // readBinary reads the build ID from a binary.
 //

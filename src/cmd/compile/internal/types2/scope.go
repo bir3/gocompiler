@@ -20,13 +20,13 @@ import (
 // and looked up by name. The zero value for Scope is a ready-to-use
 // empty scope.
 type Scope struct {
-	parent   *Scope
-	children []*Scope
-	number   int               // parent.children[number-1] is this scope; 0 if there is no parent
-	elems    map[string]Object // lazily allocated
-	pos, end syntax.Pos        // scope extent; may be invalid
-	comment  string            // for debugging only
-	isFunc   bool              // set if this is a function scope (internal use only)
+	parent		*Scope
+	children	[]*Scope
+	number		int			// parent.children[number-1] is this scope; 0 if there is no parent
+	elems		map[string]Object	// lazily allocated
+	pos, end	syntax.Pos		// scope extent; may be invalid
+	comment		string			// for debugging only
+	isFunc		bool			// set if this is a function scope (internal use only)
 }
 
 // NewScope returns a new, empty scope contained in the given parent
@@ -42,10 +42,10 @@ func NewScope(parent *Scope, pos, end syntax.Pos, comment string) *Scope {
 }
 
 // Parent returns the scope's containing (parent) scope.
-func (s *Scope) Parent() *Scope { return s.parent }
+func (s *Scope) Parent() *Scope	{ return s.parent }
 
 // Len returns the number of scope elements.
-func (s *Scope) Len() int { return len(s.elems) }
+func (s *Scope) Len() int	{ return len(s.elems) }
 
 // Names returns the scope's element names in sorted order.
 func (s *Scope) Names() []string {
@@ -60,10 +60,10 @@ func (s *Scope) Names() []string {
 }
 
 // NumChildren returns the number of scopes nested in s.
-func (s *Scope) NumChildren() int { return len(s.children) }
+func (s *Scope) NumChildren() int	{ return len(s.children) }
 
 // Child returns the i'th child scope for 0 <= i < NumChildren().
-func (s *Scope) Child(i int) *Scope { return s.children[i] }
+func (s *Scope) Child(i int) *Scope	{ return s.children[i] }
 
 // Lookup returns the object in scope s with the given name if such an
 // object exists; otherwise the result is nil.
@@ -83,7 +83,7 @@ func (s *Scope) Lookup(name string) Object {
 // whose scope is the scope of the package that exported them.
 func (s *Scope) LookupParent(name string, pos syntax.Pos) (*Scope, Object) {
 	for ; s != nil; s = s.parent {
-		if obj := s.Lookup(name); obj != nil && (!pos.IsKnown() || obj.scopePos().Cmp(pos) <= 0) {
+		if obj := s.Lookup(name); obj != nil && (!pos.IsKnown() || cmpPos(obj.scopePos(), pos) <= 0) {
 			return s, obj
 		}
 	}
@@ -146,7 +146,7 @@ func (s *Scope) Squash(err func(obj, alt Object)) {
 		}
 	}
 
-	j := -1 // index of s in p.children
+	j := -1	// index of s in p.children
 	for i, ch := range p.children {
 		if ch == s {
 			j = i
@@ -168,14 +168,14 @@ func (s *Scope) Squash(err func(obj, alt Object)) {
 // The results are guaranteed to be valid only if the type-checked
 // AST has complete position information. The extent is undefined
 // for Universe and package scopes.
-func (s *Scope) Pos() syntax.Pos { return s.pos }
-func (s *Scope) End() syntax.Pos { return s.end }
+func (s *Scope) Pos() syntax.Pos	{ return s.pos }
+func (s *Scope) End() syntax.Pos	{ return s.end }
 
 // Contains reports whether pos is within the scope's extent.
 // The result is guaranteed to be valid only if the type-checked
 // AST has complete position information.
 func (s *Scope) Contains(pos syntax.Pos) bool {
-	return s.pos.Cmp(pos) <= 0 && pos.Cmp(s.end) < 0
+	return cmpPos(s.pos, pos) <= 0 && cmpPos(pos, s.end) < 0
 }
 
 // Innermost returns the innermost (child) scope containing
@@ -240,10 +240,10 @@ func (s *Scope) String() string {
 // A lazyObject represents an imported Object that has not been fully
 // resolved yet by its importer.
 type lazyObject struct {
-	parent  *Scope
-	resolve func() Object
-	obj     Object
-	once    sync.Once
+	parent	*Scope
+	resolve	func() Object
+	obj	Object
+	once	sync.Once
 }
 
 // resolve returns the Object represented by obj, resolving lazy
@@ -273,20 +273,20 @@ func resolve(name string, obj Object) Object {
 
 // stub implementations so *lazyObject implements Object and we can
 // store them directly into Scope.elems.
-func (*lazyObject) Parent() *Scope                        { panic("unreachable") }
-func (*lazyObject) Pos() syntax.Pos                       { panic("unreachable") }
-func (*lazyObject) Pkg() *Package                         { panic("unreachable") }
-func (*lazyObject) Name() string                          { panic("unreachable") }
-func (*lazyObject) Type() Type                            { panic("unreachable") }
-func (*lazyObject) Exported() bool                        { panic("unreachable") }
-func (*lazyObject) Id() string                            { panic("unreachable") }
-func (*lazyObject) String() string                        { panic("unreachable") }
-func (*lazyObject) order() uint32                         { panic("unreachable") }
-func (*lazyObject) color() color                          { panic("unreachable") }
-func (*lazyObject) setType(Type)                          { panic("unreachable") }
-func (*lazyObject) setOrder(uint32)                       { panic("unreachable") }
-func (*lazyObject) setColor(color color)                  { panic("unreachable") }
-func (*lazyObject) setParent(*Scope)                      { panic("unreachable") }
-func (*lazyObject) sameId(pkg *Package, name string) bool { panic("unreachable") }
-func (*lazyObject) scopePos() syntax.Pos                  { panic("unreachable") }
-func (*lazyObject) setScopePos(pos syntax.Pos)            { panic("unreachable") }
+func (*lazyObject) Parent() *Scope				{ panic("unreachable") }
+func (*lazyObject) Pos() syntax.Pos				{ panic("unreachable") }
+func (*lazyObject) Pkg() *Package				{ panic("unreachable") }
+func (*lazyObject) Name() string				{ panic("unreachable") }
+func (*lazyObject) Type() Type					{ panic("unreachable") }
+func (*lazyObject) Exported() bool				{ panic("unreachable") }
+func (*lazyObject) Id() string					{ panic("unreachable") }
+func (*lazyObject) String() string				{ panic("unreachable") }
+func (*lazyObject) order() uint32				{ panic("unreachable") }
+func (*lazyObject) color() color				{ panic("unreachable") }
+func (*lazyObject) setType(Type)				{ panic("unreachable") }
+func (*lazyObject) setOrder(uint32)				{ panic("unreachable") }
+func (*lazyObject) setColor(color color)			{ panic("unreachable") }
+func (*lazyObject) setParent(*Scope)				{ panic("unreachable") }
+func (*lazyObject) sameId(pkg *Package, name string) bool	{ panic("unreachable") }
+func (*lazyObject) scopePos() syntax.Pos			{ panic("unreachable") }
+func (*lazyObject) setScopePos(pos syntax.Pos)			{ panic("unreachable") }

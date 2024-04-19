@@ -7,7 +7,10 @@ package ssa
 import (
 	"github.com/bir3/gocompiler/src/cmd/compile/internal/abi"
 	"github.com/bir3/gocompiler/src/cmd/compile/internal/base"
+	"github.com/bir3/gocompiler/src/cmd/compile/internal/ir"
+	"github.com/bir3/gocompiler/src/cmd/compile/internal/typecheck"
 	"github.com/bir3/gocompiler/src/cmd/compile/internal/types"
+	"github.com/bir3/gocompiler/src/cmd/internal/obj"
 	"github.com/bir3/gocompiler/src/cmd/internal/src"
 	"fmt"
 	"math"
@@ -18,81 +21,83 @@ import (
 // This package compiles each Func independently.
 // Funcs are single-use; a new Func must be created for every compiled function.
 type Func struct {
-	Config *Config     // architecture information
-	Cache  *Cache      // re-usable cache
-	fe     Frontend    // frontend state associated with this Func, callbacks into compiler frontend
-	pass   *pass       // current pass information (name, options, etc.)
-	Name   string      // e.g. NewFunc or (*Func).NumBlocks (no package prefix)
-	Type   *types.Type // type signature of the function.
-	Blocks []*Block    // unordered set of all basic blocks (note: not indexable by ID)
-	Entry  *Block      // the entry basic block
+	Config	*Config		// architecture information
+	Cache	*Cache		// re-usable cache
+	fe	Frontend	// frontend state associated with this Func, callbacks into compiler frontend
+	pass	*pass		// current pass information (name, options, etc.)
+	Name	string		// e.g. NewFunc or (*Func).NumBlocks (no package prefix)
+	Type	*types.Type	// type signature of the function.
+	Blocks	[]*Block	// unordered set of all basic blocks (note: not indexable by ID)
+	Entry	*Block		// the entry basic block
 
-	bid idAlloc // block ID allocator
-	vid idAlloc // value ID allocator
+	bid	idAlloc	// block ID allocator
+	vid	idAlloc	// value ID allocator
 
-	HTMLWriter     *HTMLWriter    // html writer, for debugging
-	PrintOrHtmlSSA bool           // true if GOSSAFUNC matches, true even if fe.Log() (spew phase results to stdout) is false.  There's an odd dependence on this in debug.go for method logf.
-	ruleMatches    map[string]int // number of times countRule was called during compilation for any given string
-	ABI0           *abi.ABIConfig // A copy, for no-sync access
-	ABI1           *abi.ABIConfig // A copy, for no-sync access
-	ABISelf        *abi.ABIConfig // ABI for function being compiled
-	ABIDefault     *abi.ABIConfig // ABI for rtcall and other no-parsed-signature/pragma functions.
+	HTMLWriter	*HTMLWriter	// html writer, for debugging
+	PrintOrHtmlSSA	bool		// true if GOSSAFUNC matches, true even if fe.Log() (spew phase results to stdout) is false.  There's an odd dependence on this in debug.go for method logf.
+	ruleMatches	map[string]int	// number of times countRule was called during compilation for any given string
+	ABI0		*abi.ABIConfig	// A copy, for no-sync access
+	ABI1		*abi.ABIConfig	// A copy, for no-sync access
+	ABISelf		*abi.ABIConfig	// ABI for function being compiled
+	ABIDefault	*abi.ABIConfig	// ABI for rtcall and other no-parsed-signature/pragma functions.
 
-	scheduled   bool  // Values in Blocks are in final order
-	laidout     bool  // Blocks are ordered
-	NoSplit     bool  // true if function is marked as nosplit.  Used by schedule check pass.
-	dumpFileSeq uint8 // the sequence numbers of dump file. (%s_%02d__%s.dump", funcname, dumpFileSeq, phaseName)
+	scheduled	bool	// Values in Blocks are in final order
+	laidout		bool	// Blocks are ordered
+	NoSplit		bool	// true if function is marked as nosplit.  Used by schedule check pass.
+	dumpFileSeq	uint8	// the sequence numbers of dump file. (%s_%02d__%s.dump", funcname, dumpFileSeq, phaseName)
 
 	// when register allocation is done, maps value ids to locations
-	RegAlloc []Location
+	RegAlloc	[]Location
 
 	// temporary registers allocated to rare instructions
-	tempRegs map[ID]*Register
+	tempRegs	map[ID]*Register
 
 	// map from LocalSlot to set of Values that we want to store in that slot.
-	NamedValues map[LocalSlot][]*Value
+	NamedValues	map[LocalSlot][]*Value
 	// Names is a copy of NamedValues.Keys. We keep a separate list
 	// of keys to make iteration order deterministic.
-	Names []*LocalSlot
+	Names	[]*LocalSlot
 	// Canonicalize root/top-level local slots, and canonicalize their pieces.
 	// Because LocalSlot pieces refer to their parents with a pointer, this ensures that equivalent slots really are equal.
-	CanonicalLocalSlots  map[LocalSlot]*LocalSlot
-	CanonicalLocalSplits map[LocalSlotSplitKey]*LocalSlot
+	CanonicalLocalSlots	map[LocalSlot]*LocalSlot
+	CanonicalLocalSplits	map[LocalSlotSplitKey]*LocalSlot
 
 	// RegArgs is a slice of register-memory pairs that must be spilled and unspilled in the uncommon path of function entry.
-	RegArgs []Spill
-	// AuxCall describing parameters and results for this function.
-	OwnAux *AuxCall
+	RegArgs	[]Spill
+	// OwnAux describes parameters and results for this function.
+	OwnAux	*AuxCall
 
-	// WBLoads is a list of Blocks that branch on the write
-	// barrier flag. Safe-points are disabled from the OpLoad that
-	// reads the write-barrier flag until the control flow rejoins
-	// below the two successors of this block.
-	WBLoads []*Block
+	freeValues	*Value	// free Values linked by argstorage[0].  All other fields except ID are 0/nil.
+	freeBlocks	*Block	// free Blocks linked by succstorage[0].b.  All other fields except ID are 0/nil.
 
-	freeValues *Value // free Values linked by argstorage[0].  All other fields except ID are 0/nil.
-	freeBlocks *Block // free Blocks linked by succstorage[0].b.  All other fields except ID are 0/nil.
+	cachedPostorder		[]*Block	// cached postorder traversal
+	cachedIdom		[]*Block	// cached immediate dominators
+	cachedSdom		SparseTree	// cached dominator tree
+	cachedLoopnest		*loopnest	// cached loop nest information
+	cachedLineStarts	*xposmap	// cached map/set of xpos to integers
 
-	cachedPostorder  []*Block   // cached postorder traversal
-	cachedIdom       []*Block   // cached immediate dominators
-	cachedSdom       SparseTree // cached dominator tree
-	cachedLoopnest   *loopnest  // cached loop nest information
-	cachedLineStarts *xposmap   // cached map/set of xpos to integers
-
-	auxmap    auxmap             // map from aux values to opaque ids used by CSE
-	constants map[int64][]*Value // constants cache, keyed by constant value; users must check value's Op and Type
+	auxmap		auxmap			// map from aux values to opaque ids used by CSE
+	constants	map[int64][]*Value	// constants cache, keyed by constant value; users must check value's Op and Type
 }
 
 type LocalSlotSplitKey struct {
-	parent *LocalSlot
-	Off    int64       // offset of slot in N
-	Type   *types.Type // type of slot
+	parent	*LocalSlot
+	Off	int64		// offset of slot in N
+	Type	*types.Type	// type of slot
 }
 
 // NewFunc returns a new, empty function object.
-// Caller must set f.Config and f.Cache before using f.
-func NewFunc(fe Frontend) *Func {
-	return &Func{fe: fe, NamedValues: make(map[LocalSlot][]*Value), CanonicalLocalSlots: make(map[LocalSlot]*LocalSlot), CanonicalLocalSplits: make(map[LocalSlotSplitKey]*LocalSlot)}
+// Caller must reset cache before calling NewFunc.
+func (c *Config) NewFunc(fe Frontend, cache *Cache) *Func {
+	return &Func{
+		fe:	fe,
+		Config:	c,
+		Cache:	cache,
+
+		NamedValues:		make(map[LocalSlot][]*Value),
+		CanonicalLocalSlots:	make(map[LocalSlot]*LocalSlot),
+		CanonicalLocalSplits:	make(map[LocalSlotSplitKey]*LocalSlot),
+	}
 }
 
 // NumBlocks returns an integer larger than the id of any Block in the Func.
@@ -103,6 +108,21 @@ func (f *Func) NumBlocks() int {
 // NumValues returns an integer larger than the id of any Value in the Func.
 func (f *Func) NumValues() int {
 	return f.vid.num()
+}
+
+// NameABI returns the function name followed by comma and the ABI number.
+// This is intended for use with GOSSAFUNC and HTML dumps, and differs from
+// the linker's "<1>" convention because "<" and ">" require shell quoting
+// and are not legal file names (for use with GOSSADIR) on Windows.
+func (f *Func) NameABI() string {
+	return FuncNameABI(f.Name, f.ABISelf.Which())
+}
+
+// FuncNameABI returns n followed by a comma and the value of a.
+// This is a separate function to allow a single point encoding
+// of the format, which is used in places where there's not a Func yet.
+func FuncNameABI(n string, a obj.ABI) string {
+	return fmt.Sprintf("%s,%d", n, a)
 }
 
 // newSparseSet returns a sparse set that can store at least up to n integers.
@@ -157,7 +177,7 @@ func (f *Func) localSlotAddr(slot LocalSlot) *LocalSlot {
 	a, ok := f.CanonicalLocalSlots[slot]
 	if !ok {
 		a = new(LocalSlot)
-		*a = slot // don't escape slot
+		*a = slot	// don't escape slot
 		f.CanonicalLocalSlots[slot] = a
 	}
 	return a
@@ -181,7 +201,7 @@ func (f *Func) SplitInterface(name *LocalSlot) (*LocalSlot, *LocalSlot) {
 	if n.Type().IsEmptyInterface() {
 		sfx = ".type"
 	}
-	c := f.SplitSlot(name, sfx, 0, u) // see comment in typebits.Set
+	c := f.SplitSlot(name, sfx, 0, u)	// see comment in typebits.Set
 	d := f.SplitSlot(name, ".data", u.Size(), t)
 	return c, d
 }
@@ -296,7 +316,7 @@ func (f *Func) newValueNoBlock(op Op, t *types.Type, pos src.XPos) *Value {
 	}
 	v.Op = op
 	v.Type = t
-	v.Block = nil // caller must fix this.
+	v.Block = nil	// caller must fix this.
 	if notStmtBoundary(op) {
 		pos = pos.WithNotStmt()
 	}
@@ -648,10 +668,10 @@ func (f *Func) constVal(op Op, t *types.Type, c int64, setAuxInt bool) *Value {
 // These values are unlikely to occur in regular code and
 // are easy to grep for in case of bugs.
 const (
-	constSliceMagic       = 1122334455
-	constInterfaceMagic   = 2233445566
-	constNilMagic         = 3344556677
-	constEmptyStringMagic = 4455667788
+	constSliceMagic		= 1122334455
+	constInterfaceMagic	= 2233445566
+	constNilMagic		= 3344556677
+	constEmptyStringMagic	= 4455667788
 )
 
 // ConstBool returns an int constant representing its argument.
@@ -701,13 +721,12 @@ func (f *Func) ConstOffPtrSP(t *types.Type, c int64, sp *Value) *Value {
 		v.AddArg(sp)
 	}
 	return v
-
 }
 
-func (f *Func) Frontend() Frontend                                  { return f.fe }
-func (f *Func) Warnl(pos src.XPos, msg string, args ...interface{}) { f.fe.Warnl(pos, msg, args...) }
-func (f *Func) Logf(msg string, args ...interface{})                { f.fe.Logf(msg, args...) }
-func (f *Func) Log() bool                                           { return f.fe.Log() }
+func (f *Func) Frontend() Frontend					{ return f.fe }
+func (f *Func) Warnl(pos src.XPos, msg string, args ...interface{})	{ f.fe.Warnl(pos, msg, args...) }
+func (f *Func) Logf(msg string, args ...interface{})			{ f.fe.Logf(msg, args...) }
+func (f *Func) Log() bool						{ return f.fe.Log() }
 
 func (f *Func) Fatalf(msg string, args ...interface{}) {
 	stats := "crashed"
@@ -779,12 +798,12 @@ func (f *Func) DebugHashMatch() bool {
 	if !base.HasDebugHash() {
 		return true
 	}
-	name := f.fe.MyImportPath() + "." + f.Name
-	return base.DebugHashMatch(name)
+	sym := f.fe.Func().Sym()
+	return base.DebugHashMatchPkgFunc(sym.Pkg.Path, sym.Name)
 }
 
 func (f *Func) spSb() (sp, sb *Value) {
-	initpos := src.NoXPos // These are originally created with no position in ssa.go; if they are optimized out then recreated, should be the same.
+	initpos := src.NoXPos	// These are originally created with no position in ssa.go; if they are optimized out then recreated, should be the same.
 	for _, v := range f.Entry.Values {
 		if v.Op == OpSB {
 			sb = v
@@ -814,6 +833,10 @@ func (f *Func) useFMA(v *Value) bool {
 	if base.FmaHash == nil {
 		return true
 	}
-	ctxt := v.Block.Func.Config.Ctxt()
-	return base.FmaHash.DebugHashMatchPos(ctxt, v.Pos)
+	return base.FmaHash.MatchPos(v.Pos, nil)
+}
+
+// NewLocal returns a new anonymous local variable of the given type.
+func (f *Func) NewLocal(pos src.XPos, typ *types.Type) *ir.Name {
+	return typecheck.TempAt(pos, f.fe.Func(), typ)	// Note: adds new auto to fn.Dcl list
 }

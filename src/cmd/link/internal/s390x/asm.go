@@ -300,7 +300,7 @@ func elfreloc1(ctxt *ld.Link, out *ld.OutBuf, ldr *loader.Loader, s loader.Sym, 
 			}
 		}
 		if elfrel == elf.R_390_NONE {
-			return false // unsupported size/dbl combination
+			return false	// unsupported size/dbl combination
 		}
 		out.Write64(uint64(elfrel) | uint64(elfsym)<<32)
 	}
@@ -309,7 +309,7 @@ func elfreloc1(ctxt *ld.Link, out *ld.OutBuf, ldr *loader.Loader, s loader.Sym, 
 	return true
 }
 
-func elfsetupplt(ctxt *ld.Link, plt, got *loader.SymbolBuilder, dynamic loader.Sym) {
+func elfsetupplt(ctxt *ld.Link, ldr *loader.Loader, plt, got *loader.SymbolBuilder, dynamic loader.Sym) {
 	if plt.Size() == 0 {
 		// stg     %r1,56(%r15)
 		plt.AddUint8(0xe3)
@@ -405,7 +405,7 @@ func addpltsym(target *ld.Target, ldr *loader.Loader, syms *ld.ArchSyms, s loade
 		ldr.SetRelocVariant(plt.Sym(), pltrelocs.Count()-1, sym.RV_390_DBL)
 
 		// add to got: pointer to current pos in plt
-		got.AddAddrPlus(target.Arch, plt.Sym(), plt.Size()+8) // weird but correct
+		got.AddAddrPlus(target.Arch, plt.Sym(), plt.Size()+8)	// weird but correct
 		// lg      %r1,0(%r1)
 		plt.AddUint8(0xe3)
 		plt.AddUint8(0x10)
@@ -430,9 +430,9 @@ func addpltsym(target *ld.Target, ldr *loader.Loader, syms *ld.ArchSyms, s loade
 		plt.AddUint8(0xc0)
 		plt.AddUint8(0xf4)
 
-		plt.AddUint32(target.Arch, uint32(-((plt.Size() - 2) >> 1))) // roll-your-own relocation
+		plt.AddUint32(target.Arch, uint32(-((plt.Size() - 2) >> 1)))	// roll-your-own relocation
 		//.plt index
-		plt.AddUint32(target.Arch, uint32(rela.Size())) // rela size before current entry
+		plt.AddUint32(target.Arch, uint32(rela.Size()))	// rela size before current entry
 
 		// rela
 		rela.AddAddrPlus(target.Arch, got.Sym(), got.Size()-8)

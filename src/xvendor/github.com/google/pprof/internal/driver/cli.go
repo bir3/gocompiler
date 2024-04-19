@@ -18,26 +18,25 @@ import (
 	"errors"
 	"fmt"
 	"os"
-	"strings"
 
 	"github.com/bir3/gocompiler/src/xvendor/github.com/google/pprof/internal/binutils"
 	"github.com/bir3/gocompiler/src/xvendor/github.com/google/pprof/internal/plugin"
 )
 
 type source struct {
-	Sources   []string
-	ExecName  string
-	BuildID   string
-	Base      []string
-	DiffBase  bool
-	Normalize bool
+	Sources		[]string
+	ExecName	string
+	BuildID		string
+	Base		[]string
+	DiffBase	bool
+	Normalize	bool
 
-	Seconds            int
-	Timeout            int
-	Symbolize          string
-	HTTPHostport       string
-	HTTPDisableBrowser bool
-	Comment            string
+	Seconds			int
+	Timeout			int
+	Symbolize		string
+	HTTPHostport		string
+	HTTPDisableBrowser	bool
+	Comment			string
 }
 
 // parseFlags parses the command lines through the specified flags package
@@ -67,7 +66,7 @@ func parseFlags(o *plugin.Options) (*source, []string, error) {
 	flagTools := flag.String("tools", os.Getenv("PPROF_TOOLS"), "Path for object tool pathnames")
 
 	flagHTTP := flag.String("http", "", "Present interactive web UI at the specified http host:port")
-	flagNoBrowser := flag.Bool("no_browser", false, "Skip opening a browswer for the interactive web UI")
+	flagNoBrowser := flag.Bool("no_browser", false, "Skip opening a browser for the interactive web UI")
 
 	// Flags that set configuration properties.
 	cfg := currentConfig()
@@ -101,9 +100,6 @@ func parseFlags(o *plugin.Options) (*source, []string, error) {
 		if file, err := o.Obj.Open(arg0, 0, ^uint64(0), 0, ""); err == nil {
 			file.Close()
 			execName = arg0
-			args = args[1:]
-		} else if *flagBuildID == "" && isBuildID(arg0) {
-			*flagBuildID = arg0
 			args = args[1:]
 		}
 	}
@@ -140,15 +136,15 @@ func parseFlags(o *plugin.Options) (*source, []string, error) {
 	}
 
 	source := &source{
-		Sources:            args,
-		ExecName:           execName,
-		BuildID:            *flagBuildID,
-		Seconds:            *flagSeconds,
-		Timeout:            *flagTimeout,
-		Symbolize:          *flagSymbolize,
-		HTTPHostport:       *flagHTTP,
-		HTTPDisableBrowser: *flagNoBrowser,
-		Comment:            *flagAddComment,
+		Sources:		args,
+		ExecName:		execName,
+		BuildID:		*flagBuildID,
+		Seconds:		*flagSeconds,
+		Timeout:		*flagTimeout,
+		Symbolize:		*flagSymbolize,
+		HTTPHostport:		*flagHTTP,
+		HTTPDisableBrowser:	*flagNoBrowser,
+		Comment:		*flagAddComment,
 	}
 
 	if err := source.addBaseProfiles(*flagBase, *flagDiffBase); err != nil {
@@ -204,7 +200,7 @@ func dropEmpty(list []*string) []string {
 func installConfigFlags(flag plugin.FlagSet, cfg *config) func() error {
 	// List of functions for setting the different parts of a config.
 	var setters []func()
-	var err error // Holds any errors encountered while running setters.
+	var err error	// Holds any errors encountered while running setters.
 
 	for _, field := range configFields {
 		n := field.name
@@ -263,12 +259,6 @@ func installConfigFlags(flag plugin.FlagSet, cfg *config) func() error {
 		}
 		return nil
 	}
-}
-
-// isBuildID determines if the profile may contain a build ID, by
-// checking that it is a string of hex digits.
-func isBuildID(id string) bool {
-	return strings.Trim(id, "0123456789abcdefABCDEF") == ""
 }
 
 func sampleIndex(flag *bool, si string, sampleType, option string, ui plugin.UI) string {
@@ -364,5 +354,7 @@ var usageMsgVars = "\n\n" +
 	"   PPROF_BINARY_PATH  Search path for local binary files\n" +
 	"                      default: $HOME/pprof/binaries\n" +
 	"                      searches $buildid/$name, $buildid/*, $path/$buildid,\n" +
-	"                      ${buildid:0:2}/${buildid:2}.debug, $name, $path\n" +
+	"                      ${buildid:0:2}/${buildid:2}.debug, $name, $path,\n" +
+	"                      ${name}.debug, $dir/.debug/${name}.debug,\n" +
+	"                      usr/lib/debug/$dir/${name}.debug\n" +
 	"   * On Windows, %USERPROFILE% is used instead of $HOME"

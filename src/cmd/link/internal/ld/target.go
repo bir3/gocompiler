@@ -12,16 +12,16 @@ import (
 
 // Target holds the configuration we're building for.
 type Target struct {
-	Arch *sys.Arch
+	Arch	*sys.Arch
 
-	HeadType objabi.HeadType
+	HeadType	objabi.HeadType
 
-	LinkMode  LinkMode
-	BuildMode BuildMode
+	LinkMode	LinkMode
+	BuildMode	BuildMode
 
-	linkShared    bool
-	canUsePlugins bool
-	IsELF         bool
+	linkShared	bool
+	canUsePlugins	bool
+	IsELF		bool
 }
 
 //

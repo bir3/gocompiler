@@ -7,6 +7,7 @@ package noder
 import (
 	"errors"
 	"fmt"
+	"github.com/bir3/gocompiler/src/internal/buildcfg"
 	"os"
 	"path/filepath"
 	"runtime"
@@ -21,7 +22,6 @@ import (
 	"github.com/bir3/gocompiler/src/cmd/compile/internal/typecheck"
 	"github.com/bir3/gocompiler/src/cmd/compile/internal/types"
 	"github.com/bir3/gocompiler/src/cmd/internal/objabi"
-	"github.com/bir3/gocompiler/src/cmd/internal/src"
 )
 
 func LoadPackage(filenames []string) {
@@ -56,15 +56,16 @@ func LoadPackage(filenames []string) {
 				}
 				defer f.Close()
 
-				p.file, _ = syntax.Parse(fbase, f, p.error, p.pragma, syntax.CheckBranches) // errors are tracked via p.error
+				p.file, _ = syntax.Parse(fbase, f, p.error, p.pragma, syntax.CheckBranches)	// errors are tracked via p.error
 			}()
 		}
 	}()
 
 	var lines uint
+	var m posMap
 	for _, p := range noders {
 		for e := range p.err {
-			p.errorAt(e.Pos, "%s", e.Msg)
+			base.ErrorfAt(m.makeXPos(e.Pos), 0, "%s", e.Msg)
 		}
 		if p.file == nil {
 			base.ErrorExit()
@@ -73,17 +74,7 @@ func LoadPackage(filenames []string) {
 	}
 	base.Timer.AddEvent(int64(lines), "lines")
 
-	if base.Debug.Unified != 0 {
-		unified(noders)
-		return
-	}
-
-	// Use types2 to type-check and generate IR.
-	check2(noders)
-}
-
-func (p *noder) errorAt(pos syntax.Pos, format string, args ...interface{}) {
-	base.ErrorfAt(p.makeXPos(pos), format, args...)
+	unified(m, noders)
 }
 
 // trimFilename returns the "trimmed" filename of b, which is the
@@ -107,96 +98,53 @@ func trimFilename(b *syntax.PosBase) string {
 
 // noder transforms package syntax's AST into a Node tree.
 type noder struct {
-	posMap
-
-	file           *syntax.File
-	linknames      []linkname
-	pragcgobuf     [][]string
-	err            chan syntax.Error
-	importedUnsafe bool
-	importedEmbed  bool
+	file		*syntax.File
+	linknames	[]linkname
+	pragcgobuf	[][]string
+	err		chan syntax.Error
 }
 
 // linkname records a //go:linkname directive.
 type linkname struct {
-	pos    syntax.Pos
-	local  string
-	remote string
-}
-
-func (p *noder) processPragmas() {
-	for _, l := range p.linknames {
-		if !p.importedUnsafe {
-			p.errorAt(l.pos, "//go:linkname only allowed in Go files that import \"unsafe\"")
-			continue
-		}
-		n := ir.AsNode(typecheck.Lookup(l.local).Def)
-		if n == nil || n.Op() != ir.ONAME {
-			if types.AllowsGoVersion(1, 18) {
-				p.errorAt(l.pos, "//go:linkname must refer to declared function or variable")
-			}
-			continue
-		}
-		if n.Sym().Linkname != "" {
-			p.errorAt(l.pos, "duplicate //go:linkname for %s", l.local)
-			continue
-		}
-		n.Sym().Linkname = l.remote
-	}
-	typecheck.Target.CgoPragmas = append(typecheck.Target.CgoPragmas, p.pragcgobuf...)
+	pos	syntax.Pos
+	local	string
+	remote	string
 }
 
 var unOps = [...]ir.Op{
-	syntax.Recv: ir.ORECV,
-	syntax.Mul:  ir.ODEREF,
-	syntax.And:  ir.OADDR,
+	syntax.Recv:	ir.ORECV,
+	syntax.Mul:	ir.ODEREF,
+	syntax.And:	ir.OADDR,
 
-	syntax.Not: ir.ONOT,
-	syntax.Xor: ir.OBITNOT,
-	syntax.Add: ir.OPLUS,
-	syntax.Sub: ir.ONEG,
+	syntax.Not:	ir.ONOT,
+	syntax.Xor:	ir.OBITNOT,
+	syntax.Add:	ir.OPLUS,
+	syntax.Sub:	ir.ONEG,
 }
 
 var binOps = [...]ir.Op{
-	syntax.OrOr:   ir.OOROR,
-	syntax.AndAnd: ir.OANDAND,
+	syntax.OrOr:	ir.OOROR,
+	syntax.AndAnd:	ir.OANDAND,
 
-	syntax.Eql: ir.OEQ,
-	syntax.Neq: ir.ONE,
-	syntax.Lss: ir.OLT,
-	syntax.Leq: ir.OLE,
-	syntax.Gtr: ir.OGT,
-	syntax.Geq: ir.OGE,
+	syntax.Eql:	ir.OEQ,
+	syntax.Neq:	ir.ONE,
+	syntax.Lss:	ir.OLT,
+	syntax.Leq:	ir.OLE,
+	syntax.Gtr:	ir.OGT,
+	syntax.Geq:	ir.OGE,
 
-	syntax.Add: ir.OADD,
-	syntax.Sub: ir.OSUB,
-	syntax.Or:  ir.OOR,
-	syntax.Xor: ir.OXOR,
+	syntax.Add:	ir.OADD,
+	syntax.Sub:	ir.OSUB,
+	syntax.Or:	ir.OOR,
+	syntax.Xor:	ir.OXOR,
 
-	syntax.Mul:    ir.OMUL,
-	syntax.Div:    ir.ODIV,
-	syntax.Rem:    ir.OMOD,
-	syntax.And:    ir.OAND,
-	syntax.AndNot: ir.OANDNOT,
-	syntax.Shl:    ir.OLSH,
-	syntax.Shr:    ir.ORSH,
-}
-
-func wrapname(pos src.XPos, x ir.Node) ir.Node {
-	// These nodes do not carry line numbers.
-	// Introduce a wrapper node to give them the correct line.
-	switch x.Op() {
-	case ir.OTYPE, ir.OLITERAL:
-		if x.Sym() == nil {
-			break
-		}
-		fallthrough
-	case ir.ONAME, ir.ONONAME:
-		p := ir.NewParenExpr(pos, x)
-		p.SetImplicit(true)
-		return p
-	}
-	return x
+	syntax.Mul:	ir.OMUL,
+	syntax.Div:	ir.ODIV,
+	syntax.Rem:	ir.OMOD,
+	syntax.And:	ir.OAND,
+	syntax.AndNot:	ir.OANDNOT,
+	syntax.Shl:	ir.OLSH,
+	syntax.Shr:	ir.ORSH,
 }
 
 // error is called concurrently if files are parsed concurrently.
@@ -207,31 +155,39 @@ func (p *noder) error(err error) {
 // pragmas that are allowed in the std lib, but don't have
 // a syntax.Pragma value (see lex.go) associated with them.
 var allowedStdPragmas = map[string]bool{
-	"go:cgo_export_static":  true,
-	"go:cgo_export_dynamic": true,
-	"go:cgo_import_static":  true,
-	"go:cgo_import_dynamic": true,
-	"go:cgo_ldflag":         true,
-	"go:cgo_dynamic_linker": true,
-	"go:embed":              true,
-	"go:generate":           true,
+	"go:cgo_export_static":		true,
+	"go:cgo_export_dynamic":	true,
+	"go:cgo_import_static":		true,
+	"go:cgo_import_dynamic":	true,
+	"go:cgo_ldflag":		true,
+	"go:cgo_dynamic_linker":	true,
+	"go:embed":			true,
+	"go:generate":			true,
 }
 
 // *pragmas is the value stored in a syntax.pragmas during parsing.
 type pragmas struct {
-	Flag   ir.PragmaFlag // collected bits
-	Pos    []pragmaPos   // position of each individual flag
-	Embeds []pragmaEmbed
+	Flag		ir.PragmaFlag	// collected bits
+	Pos		[]pragmaPos	// position of each individual flag
+	Embeds		[]pragmaEmbed
+	WasmImport	*WasmImport
+}
+
+// WasmImport stores metadata associated with the //go:wasmimport pragma
+type WasmImport struct {
+	Pos	syntax.Pos
+	Module	string
+	Name	string
 }
 
 type pragmaPos struct {
-	Flag ir.PragmaFlag
-	Pos  syntax.Pos
+	Flag	ir.PragmaFlag
+	Pos	syntax.Pos
 }
 
 type pragmaEmbed struct {
-	Pos      syntax.Pos
-	Patterns []string
+	Pos		syntax.Pos
+	Patterns	[]string
 }
 
 func (p *noder) checkUnusedDuringParse(pragma *pragmas) {
@@ -244,6 +200,9 @@ func (p *noder) checkUnusedDuringParse(pragma *pragmas) {
 		for _, e := range pragma.Embeds {
 			p.error(syntax.Error{Pos: e.Pos, Msg: "misplaced go:embed directive"})
 		}
+	}
+	if pragma.WasmImport != nil {
+		p.error(syntax.Error{Pos: pragma.WasmImport.Pos, Msg: "misplaced go:wasmimport directive"})
 	}
 }
 
@@ -272,6 +231,21 @@ func (p *noder) pragma(pos syntax.Pos, blankLine bool, text string, old syntax.P
 	}
 
 	switch {
+	case strings.HasPrefix(text, "go:wasmimport "):
+		f := strings.Fields(text)
+		if len(f) != 3 {
+			p.error(syntax.Error{Pos: pos, Msg: "usage: //go:wasmimport importmodule importname"})
+			break
+		}
+
+		if buildcfg.GOARCH == "wasm" {
+			// Only actually use them if we're compiling to WASM though.
+			pragma.WasmImport = &WasmImport{
+				Pos:	pos,
+				Module:	f[1],
+				Name:	f[2],
+			}
+		}
 	case strings.HasPrefix(text, "go:linkname "):
 		f := strings.Fields(text)
 		if !(2 <= len(f) && len(f) <= 3) {
@@ -291,8 +265,7 @@ func (p *noder) pragma(pos syntax.Pos, blankLine bool, text string, old syntax.P
 			// user didn't provide one.
 			target = objabi.PathToPrefix(base.Ctxt.Pkgpath) + "." + f[1]
 		} else {
-			p.error(syntax.Error{Pos: pos, Msg: "//go:linkname requires linkname argument or -p compiler flag"})
-			break
+			panic("missing pkgpath")
 		}
 		p.linknames = append(p.linknames, linkname{pos, f[1], target})
 
@@ -329,7 +302,7 @@ func (p *noder) pragma(pos syntax.Pos, blankLine bool, text string, old syntax.P
 			p.error(syntax.Error{Pos: pos, Msg: fmt.Sprintf("//%s only allowed in cgo-generated code", text)})
 		}
 		p.pragcgo(pos, text)
-		fallthrough // because of //go:cgo_unsafe_args
+		fallthrough	// because of //go:cgo_unsafe_args
 	default:
 		verb := text
 		if i := strings.Index(text, " "); i >= 0 {
@@ -452,26 +425,6 @@ func Renameinit() *types.Sym {
 	s := typecheck.LookupNum("init.", renameinitgen)
 	renameinitgen++
 	return s
-}
-
-func varEmbed(makeXPos func(syntax.Pos) src.XPos, name *ir.Name, decl *syntax.VarDecl, pragma *pragmas, haveEmbed bool) {
-	pragmaEmbeds := pragma.Embeds
-	pragma.Embeds = nil
-	if len(pragmaEmbeds) == 0 {
-		return
-	}
-
-	if err := checkEmbed(decl, haveEmbed, typecheck.DeclContext != ir.PEXTERN); err != nil {
-		base.ErrorfAt(makeXPos(pragmaEmbeds[0].Pos), "%s", err)
-		return
-	}
-
-	var embeds []ir.Embed
-	for _, e := range pragmaEmbeds {
-		embeds = append(embeds, ir.Embed{Pos: makeXPos(e.Pos), Patterns: e.Patterns})
-	}
-	typecheck.Target.Embeds = append(typecheck.Target.Embeds, name)
-	name.Embed = &embeds
 }
 
 func checkEmbed(decl *syntax.VarDecl, haveEmbed, withinFunc bool) error {

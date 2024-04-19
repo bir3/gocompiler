@@ -59,8 +59,8 @@ func gentext(ctxt *ld.Link, ldr *loader.Loader) {
 	// Generate little thunks that load the PC of the next instruction into a register.
 	thunks := make([]loader.Sym, 0, 7+len(ctxt.Textp))
 	for _, r := range [...]struct {
-		name string
-		num  uint8
+		name	string
+		num	uint8
 	}{
 		{"ax", 0},
 		{"cx", 1},
@@ -87,7 +87,7 @@ func gentext(ctxt *ld.Link, ldr *loader.Loader) {
 
 		thunks = append(thunks, thunkfunc.Sym())
 	}
-	ctxt.Textp = append(thunks, ctxt.Textp...) // keep Textp in dependency order
+	ctxt.Textp = append(thunks, ctxt.Textp...)	// keep Textp in dependency order
 
 	initfunc, addmoduledata := ld.PrepareAddmoduledata(ctxt)
 	if initfunc == nil {
@@ -200,7 +200,7 @@ func adddynrel(target *ld.Target, ldr *loader.Loader, syms *ld.ArchSyms, s loade
 		}
 
 		ld.AddGotSym(target, ldr, syms, targ, uint32(elf.R_386_GLOB_DAT))
-		su.SetRelocType(rIdx, objabi.R_CONST) // write r->add during relocsym
+		su.SetRelocType(rIdx, objabi.R_CONST)	// write r->add during relocsym
 		su.SetRelocSym(rIdx, 0)
 		su.SetRelocAdd(rIdx, r.Add()+int64(ldr.SymGot(targ)))
 		return true
@@ -303,7 +303,7 @@ func adddynrel(target *ld.Target, ldr *loader.Loader, syms *ld.ArchSyms, s loade
 			rel.AddAddrPlus(target.Arch, s, int64(r.Off()))
 			rel.AddUint32(target.Arch, elf.R_INFO32(uint32(ldr.SymDynid(targ)), uint32(elf.R_386_32)))
 			su := ldr.MakeSymbolUpdater(s)
-			su.SetRelocType(rIdx, objabi.R_CONST) // write r->add during relocsym
+			su.SetRelocType(rIdx, objabi.R_CONST)	// write r->add during relocsym
 			su.SetRelocSym(rIdx, 0)
 			return true
 		}
@@ -399,6 +399,9 @@ func pereloc1(arch *sys.Arch, out *ld.OutBuf, ldr *loader.Loader, s loader.Sym, 
 	case objabi.R_ADDR:
 		v = ld.IMAGE_REL_I386_DIR32
 
+	case objabi.R_PEIMAGEOFF:
+		v = ld.IMAGE_REL_I386_DIR32NB
+
 	case objabi.R_CALL,
 		objabi.R_PCREL:
 		v = ld.IMAGE_REL_I386_REL32
@@ -418,7 +421,7 @@ func archrelocvariant(*ld.Target, *loader.Loader, loader.Reloc, sym.RelocVariant
 	return -1
 }
 
-func elfsetupplt(ctxt *ld.Link, plt, got *loader.SymbolBuilder, dynamic loader.Sym) {
+func elfsetupplt(ctxt *ld.Link, ldr *loader.Loader, plt, got *loader.SymbolBuilder, dynamic loader.Sym) {
 	if plt.Size() == 0 {
 		// pushl got+4
 		plt.AddUint8(0xff)

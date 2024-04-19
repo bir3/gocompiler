@@ -14,7 +14,7 @@ import (
 	"log"
 	urlpkg "net/url"
 	"os"
-	"os/exec"
+	"github.com/bir3/gocompiler/exec"
 	"path/filepath"
 	"regexp"
 	"strconv"
@@ -22,6 +22,7 @@ import (
 	"sync"
 	"time"
 
+	"github.com/bir3/gocompiler/src/cmd/gocmd/internal/base"
 	"github.com/bir3/gocompiler/src/cmd/gocmd/internal/cfg"
 	"github.com/bir3/gocompiler/src/cmd/gocmd/internal/search"
 	"github.com/bir3/gocompiler/src/cmd/gocmd/internal/str"
@@ -33,31 +34,31 @@ import (
 // A Cmd describes how to use a version control system
 // like Mercurial, Git, or Subversion.
 type Cmd struct {
-	Name      string
-	Cmd       string     // name of binary to invoke command
-	RootNames []rootName // filename and mode indicating the root of a checkout directory
+	Name		string
+	Cmd		string		// name of binary to invoke command
+	RootNames	[]rootName	// filename and mode indicating the root of a checkout directory
 
-	CreateCmd   []string // commands to download a fresh copy of a repository
-	DownloadCmd []string // commands to download updates into an existing repository
+	CreateCmd	[]string	// commands to download a fresh copy of a repository
+	DownloadCmd	[]string	// commands to download updates into an existing repository
 
-	TagCmd         []tagCmd // commands to list tags
-	TagLookupCmd   []tagCmd // commands to lookup tags before running tagSyncCmd
-	TagSyncCmd     []string // commands to sync to specific tag
-	TagSyncDefault []string // commands to sync to default tag
+	TagCmd		[]tagCmd	// commands to list tags
+	TagLookupCmd	[]tagCmd	// commands to lookup tags before running tagSyncCmd
+	TagSyncCmd	[]string	// commands to sync to specific tag
+	TagSyncDefault	[]string	// commands to sync to default tag
 
-	Scheme  []string
-	PingCmd string
+	Scheme	[]string
+	PingCmd	string
 
-	RemoteRepo  func(v *Cmd, rootDir string) (remoteRepo string, err error)
-	ResolveRepo func(v *Cmd, rootDir, remoteRepo string) (realRepo string, err error)
-	Status      func(v *Cmd, rootDir string) (Status, error)
+	RemoteRepo	func(v *Cmd, rootDir string) (remoteRepo string, err error)
+	ResolveRepo	func(v *Cmd, rootDir, remoteRepo string) (realRepo string, err error)
+	Status		func(v *Cmd, rootDir string) (Status, error)
 }
 
 // Status is the current state of a local repository.
 type Status struct {
-	Revision    string    // Optional.
-	CommitTime  time.Time // Optional.
-	Uncommitted bool      // Required.
+	Revision	string		// Optional.
+	CommitTime	time.Time	// Optional.
+	Uncommitted	bool		// Required.
 }
 
 var (
@@ -66,22 +67,22 @@ var (
 	//
 	// In tests, this is set to the URL of an httptest.Server hosting a
 	// cmd/go/internal/vcweb.Server.
-	VCSTestRepoURL string
+	VCSTestRepoURL	string
 
 	// VCSTestHosts is the set of hosts supported by the vcs-test server.
-	VCSTestHosts []string
+	VCSTestHosts	[]string
 
 	// VCSTestIsLocalHost reports whether the given URL refers to a local
 	// (loopback) host, such as "localhost" or "127.0.0.1:8080".
-	VCSTestIsLocalHost func(*urlpkg.URL) bool
+	VCSTestIsLocalHost	func(*urlpkg.URL) bool
 )
 
 var defaultSecureScheme = map[string]bool{
-	"https":   true,
-	"git+ssh": true,
-	"bzr+ssh": true,
-	"svn+ssh": true,
-	"ssh":     true,
+	"https":	true,
+	"git+ssh":	true,
+	"bzr+ssh":	true,
+	"svn+ssh":	true,
+	"ssh":		true,
 }
 
 func (v *Cmd) IsSecure(repo string) bool {
@@ -120,8 +121,8 @@ func (v *Cmd) isSecureScheme(scheme string) bool {
 // A tagCmd describes a command to list available tags
 // that can be passed to tagSyncCmd.
 type tagCmd struct {
-	cmd     string // command to list tags
-	pattern string // regexp to extract tags from list
+	cmd	string	// command to list tags
+	pattern	string	// regexp to extract tags from list
 }
 
 // vcsList lists the known version control systems
@@ -150,14 +151,14 @@ func vcsByCmd(cmd string) *Cmd {
 
 // vcsHg describes how to use Mercurial.
 var vcsHg = &Cmd{
-	Name: "Mercurial",
-	Cmd:  "hg",
+	Name:	"Mercurial",
+	Cmd:	"hg",
 	RootNames: []rootName{
 		{filename: ".hg", isDir: true},
 	},
 
-	CreateCmd:   []string{"clone -U -- {repo} {dir}"},
-	DownloadCmd: []string{"pull"},
+	CreateCmd:	[]string{"clone -U -- {repo} {dir}"},
+	DownloadCmd:	[]string{"pull"},
 
 	// We allow both tag and branch names as 'tags'
 	// for selecting a version. This lets people have
@@ -168,13 +169,13 @@ var vcsHg = &Cmd{
 		{"tags", `^(\S+)`},
 		{"branches", `^(\S+)`},
 	},
-	TagSyncCmd:     []string{"update -r {tag}"},
-	TagSyncDefault: []string{"update default"},
+	TagSyncCmd:	[]string{"update -r {tag}"},
+	TagSyncDefault:	[]string{"update default"},
 
-	Scheme:     []string{"https", "http", "ssh"},
-	PingCmd:    "identify -- {scheme}://{repo}",
-	RemoteRepo: hgRemoteRepo,
-	Status:     hgStatus,
+	Scheme:		[]string{"https", "http", "ssh"},
+	PingCmd:	"identify -- {scheme}://{repo}",
+	RemoteRepo:	hgRemoteRepo,
+	Status:		hgStatus,
 }
 
 func hgRemoteRepo(vcsHg *Cmd, rootDir string) (remoteRepo string, err error) {
@@ -214,9 +215,9 @@ func hgStatus(vcsHg *Cmd, rootDir string) (Status, error) {
 	uncommitted := len(out) > 0
 
 	return Status{
-		Revision:    rev,
-		CommitTime:  commitTime,
-		Uncommitted: uncommitted,
+		Revision:	rev,
+		CommitTime:	commitTime,
+		Uncommitted:	uncommitted,
 	}, nil
 }
 
@@ -240,14 +241,14 @@ func parseRevTime(out []byte) (string, time.Time, error) {
 
 // vcsGit describes how to use Git.
 var vcsGit = &Cmd{
-	Name: "Git",
-	Cmd:  "git",
+	Name:	"Git",
+	Cmd:	"git",
 	RootNames: []rootName{
 		{filename: ".git", isDir: true},
 	},
 
-	CreateCmd:   []string{"clone -- {repo} {dir}", "-go-internal-cd {dir} submodule update --init --recursive"},
-	DownloadCmd: []string{"pull --ff-only", "submodule update --init --recursive"},
+	CreateCmd:	[]string{"clone -- {repo} {dir}", "-go-internal-cd {dir} submodule update --init --recursive"},
+	DownloadCmd:	[]string{"pull --ff-only", "submodule update --init --recursive"},
 
 	TagCmd: []tagCmd{
 		// tags/xxx matches a git tag named xxx
@@ -257,24 +258,24 @@ var vcsGit = &Cmd{
 	TagLookupCmd: []tagCmd{
 		{"show-ref tags/{tag} origin/{tag}", `((?:tags|origin)/\S+)$`},
 	},
-	TagSyncCmd: []string{"checkout {tag}", "submodule update --init --recursive"},
+	TagSyncCmd:	[]string{"checkout {tag}", "submodule update --init --recursive"},
 	// both createCmd and downloadCmd update the working dir.
 	// No need to do more here. We used to 'checkout master'
 	// but that doesn't work if the default branch is not named master.
 	// DO NOT add 'checkout master' here.
 	// See golang.org/issue/9032.
-	TagSyncDefault: []string{"submodule update --init --recursive"},
+	TagSyncDefault:	[]string{"submodule update --init --recursive"},
 
-	Scheme: []string{"git", "https", "http", "git+ssh", "ssh"},
+	Scheme:	[]string{"git", "https", "http", "git+ssh", "ssh"},
 
 	// Leave out the '--' separator in the ls-remote command: git 2.7.4 does not
 	// support such a separator for that command, and this use should be safe
 	// without it because the {scheme} value comes from the predefined list above.
 	// See golang.org/issue/33836.
-	PingCmd: "ls-remote {scheme}://{repo}",
+	PingCmd:	"ls-remote {scheme}://{repo}",
 
-	RemoteRepo: gitRemoteRepo,
-	Status:     gitStatus,
+	RemoteRepo:	gitRemoteRepo,
+	Status:		gitStatus,
 }
 
 // scpSyntaxRe matches the SCP-like addresses used by Git to access
@@ -282,15 +283,13 @@ var vcsGit = &Cmd{
 var scpSyntaxRe = lazyregexp.New(`^(\w+)@([\w.-]+):(.*)$`)
 
 func gitRemoteRepo(vcsGit *Cmd, rootDir string) (remoteRepo string, err error) {
-	cmd := "config remote.origin.url"
-	errParse := errors.New("unable to parse output of git " + cmd)
-	errRemoteOriginNotFound := errors.New("remote origin not found")
+	const cmd = "config remote.origin.url"
 	outb, err := vcsGit.run1(rootDir, cmd, nil, false)
 	if err != nil {
 		// if it doesn't output any message, it means the config argument is correct,
 		// but the config value itself doesn't exist
 		if outb != nil && len(outb) == 0 {
-			return "", errRemoteOriginNotFound
+			return "", errors.New("remote origin not found")
 		}
 		return "", err
 	}
@@ -302,10 +301,10 @@ func gitRemoteRepo(vcsGit *Cmd, rootDir string) (remoteRepo string, err error) {
 		// Eg, "git@github.com:user/repo" becomes
 		// "ssh://git@github.com/user/repo".
 		repoURL = &urlpkg.URL{
-			Scheme: "ssh",
-			User:   urlpkg.User(m[1]),
-			Host:   m[2],
-			Path:   m[3],
+			Scheme:	"ssh",
+			User:	urlpkg.User(m[1]),
+			Host:	m[2],
+			Path:	m[3],
 		}
 	} else {
 		repoURL, err = urlpkg.Parse(out)
@@ -322,7 +321,7 @@ func gitRemoteRepo(vcsGit *Cmd, rootDir string) (remoteRepo string, err error) {
 			return repoURL.String(), nil
 		}
 	}
-	return "", errParse
+	return "", errors.New("unable to parse output of git " + cmd)
 }
 
 func gitStatus(vcsGit *Cmd, rootDir string) (Status, error) {
@@ -348,35 +347,35 @@ func gitStatus(vcsGit *Cmd, rootDir string) (Status, error) {
 	}
 
 	return Status{
-		Revision:    rev,
-		CommitTime:  commitTime,
-		Uncommitted: uncommitted,
+		Revision:	rev,
+		CommitTime:	commitTime,
+		Uncommitted:	uncommitted,
 	}, nil
 }
 
 // vcsBzr describes how to use Bazaar.
 var vcsBzr = &Cmd{
-	Name: "Bazaar",
-	Cmd:  "bzr",
+	Name:	"Bazaar",
+	Cmd:	"bzr",
 	RootNames: []rootName{
 		{filename: ".bzr", isDir: true},
 	},
 
-	CreateCmd: []string{"branch -- {repo} {dir}"},
+	CreateCmd:	[]string{"branch -- {repo} {dir}"},
 
 	// Without --overwrite bzr will not pull tags that changed.
 	// Replace by --overwrite-tags after http://pad.lv/681792 goes in.
-	DownloadCmd: []string{"pull --overwrite"},
+	DownloadCmd:	[]string{"pull --overwrite"},
 
-	TagCmd:         []tagCmd{{"tags", `^(\S+)`}},
-	TagSyncCmd:     []string{"update -r {tag}"},
-	TagSyncDefault: []string{"update -r revno:-1"},
+	TagCmd:		[]tagCmd{{"tags", `^(\S+)`}},
+	TagSyncCmd:	[]string{"update -r {tag}"},
+	TagSyncDefault:	[]string{"update -r revno:-1"},
 
-	Scheme:      []string{"https", "http", "bzr", "bzr+ssh"},
-	PingCmd:     "info -- {scheme}://{repo}",
-	RemoteRepo:  bzrRemoteRepo,
-	ResolveRepo: bzrResolveRepo,
-	Status:      bzrStatus,
+	Scheme:		[]string{"https", "http", "bzr", "bzr+ssh"},
+	PingCmd:	"info -- {scheme}://{repo}",
+	RemoteRepo:	bzrRemoteRepo,
+	ResolveRepo:	bzrResolveRepo,
+	Status:		bzrStatus,
 }
 
 func bzrRemoteRepo(vcsBzr *Cmd, rootDir string) (remoteRepo string, err error) {
@@ -471,29 +470,29 @@ func bzrStatus(vcsBzr *Cmd, rootDir string) (Status, error) {
 	uncommitted := len(outb) > 0
 
 	return Status{
-		Revision:    rev,
-		CommitTime:  commitTime,
-		Uncommitted: uncommitted,
+		Revision:	rev,
+		CommitTime:	commitTime,
+		Uncommitted:	uncommitted,
 	}, nil
 }
 
 // vcsSvn describes how to use Subversion.
 var vcsSvn = &Cmd{
-	Name: "Subversion",
-	Cmd:  "svn",
+	Name:	"Subversion",
+	Cmd:	"svn",
 	RootNames: []rootName{
 		{filename: ".svn", isDir: true},
 	},
 
-	CreateCmd:   []string{"checkout -- {repo} {dir}"},
-	DownloadCmd: []string{"update"},
+	CreateCmd:	[]string{"checkout -- {repo} {dir}"},
+	DownloadCmd:	[]string{"update"},
 
 	// There is no tag command in subversion.
 	// The branch information is all in the path names.
 
-	Scheme:     []string{"https", "http", "svn", "svn+ssh"},
-	PingCmd:    "info -- {scheme}://{repo}",
-	RemoteRepo: svnRemoteRepo,
+	Scheme:		[]string{"https", "http", "svn", "svn+ssh"},
+	PingCmd:	"info -- {scheme}://{repo}",
+	RemoteRepo:	svnRemoteRepo,
 }
 
 func svnRemoteRepo(vcsSvn *Cmd, rootDir string) (remoteRepo string, err error) {
@@ -532,23 +531,23 @@ const fossilRepoName = ".fossil"
 
 // vcsFossil describes how to use Fossil (fossil-scm.org)
 var vcsFossil = &Cmd{
-	Name: "Fossil",
-	Cmd:  "fossil",
+	Name:	"Fossil",
+	Cmd:	"fossil",
 	RootNames: []rootName{
 		{filename: ".fslckout", isDir: false},
 		{filename: "_FOSSIL_", isDir: false},
 	},
 
-	CreateCmd:   []string{"-go-internal-mkdir {dir} clone -- {repo} " + filepath.Join("{dir}", fossilRepoName), "-go-internal-cd {dir} open .fossil"},
-	DownloadCmd: []string{"up"},
+	CreateCmd:	[]string{"-go-internal-mkdir {dir} clone -- {repo} " + filepath.Join("{dir}", fossilRepoName), "-go-internal-cd {dir} open .fossil"},
+	DownloadCmd:	[]string{"up"},
 
-	TagCmd:         []tagCmd{{"tag ls", `(.*)`}},
-	TagSyncCmd:     []string{"up tag:{tag}"},
-	TagSyncDefault: []string{"up trunk"},
+	TagCmd:		[]tagCmd{{"tag ls", `(.*)`}},
+	TagSyncCmd:	[]string{"up tag:{tag}"},
+	TagSyncDefault:	[]string{"up trunk"},
 
-	Scheme:     []string{"https", "http"},
-	RemoteRepo: fossilRemoteRepo,
-	Status:     fossilStatus,
+	Scheme:		[]string{"https", "http"},
+	RemoteRepo:	fossilRemoteRepo,
+	Status:		fossilStatus,
 }
 
 func fossilRemoteRepo(vcsFossil *Cmd, rootDir string) (remoteRepo string, err error) {
@@ -607,9 +606,9 @@ func fossilStatus(vcsFossil *Cmd, rootDir string) (Status, error) {
 	uncommitted := len(outb) > 0
 
 	return Status{
-		Revision:    rev,
-		CommitTime:  commitTime,
-		Uncommitted: uncommitted,
+		Revision:	rev,
+		CommitTime:	commitTime,
+		Uncommitted:	uncommitted,
 	}, nil
 }
 
@@ -679,7 +678,7 @@ func (v *Cmd) run1(dir string, cmdline string, keyval []string, verbose bool) ([
 		args = args[2:]
 	}
 
-	_, err := exec.LookPath(v.Cmd)
+	_, err := cfg.LookPath(v.Cmd)
 	if err != nil {
 		fmt.Fprintf(os.Stderr,
 			"go: missing %s command. See https://golang.org/s/gogetcmd\n",
@@ -717,7 +716,13 @@ func (v *Cmd) Ping(scheme, repo string) error {
 	if !cfg.ModulesEnabled {
 		dir = filepath.Join(cfg.BuildContext.GOPATH, "src")
 	}
-	os.MkdirAll(dir, 0777) // Ignore errors — if unsuccessful, the command will likely fail.
+	os.MkdirAll(dir, 0777)	// Ignore errors — if unsuccessful, the command will likely fail.
+
+	release, err := base.AcquireNet()
+	if err != nil {
+		return err
+	}
+	defer release()
 
 	return v.runVerboseOnly(dir, v.PingCmd, "scheme", scheme, "repo", repo)
 }
@@ -725,6 +730,12 @@ func (v *Cmd) Ping(scheme, repo string) error {
 // Create creates a new copy of repo in dir.
 // The parent of dir must exist; dir must not.
 func (v *Cmd) Create(dir, repo string) error {
+	release, err := base.AcquireNet()
+	if err != nil {
+		return err
+	}
+	defer release()
+
 	for _, cmd := range v.CreateCmd {
 		if err := v.run(filepath.Dir(dir), cmd, "dir", dir, "repo", repo); err != nil {
 			return err
@@ -735,6 +746,12 @@ func (v *Cmd) Create(dir, repo string) error {
 
 // Download downloads any new changes for the repo in dir.
 func (v *Cmd) Download(dir string) error {
+	release, err := base.AcquireNet()
+	if err != nil {
+		return err
+	}
+	defer release()
+
 	for _, cmd := range v.DownloadCmd {
 		if err := v.run(dir, cmd); err != nil {
 			return err
@@ -759,7 +776,7 @@ func (v *Cmd) Tags(dir string) ([]string, error) {
 	return tags, nil
 }
 
-// tagSync syncs the repo in dir to the named tag,
+// TagSync syncs the repo in dir to the named tag,
 // which either is a tag returned by tags or is v.tagDefault.
 func (v *Cmd) TagSync(dir, tag string) error {
 	if v.TagSyncCmd == nil {
@@ -779,6 +796,12 @@ func (v *Cmd) TagSync(dir, tag string) error {
 			}
 		}
 	}
+
+	release, err := base.AcquireNet()
+	if err != nil {
+		return err
+	}
+	defer release()
 
 	if tag == "" && v.TagSyncDefault != nil {
 		for _, cmd := range v.TagSyncDefault {
@@ -800,12 +823,12 @@ func (v *Cmd) TagSync(dir, tag string) error {
 // A vcsPath describes how to convert an import path into a
 // version control system and repository name.
 type vcsPath struct {
-	pathPrefix     string                              // prefix this description applies to
-	regexp         *lazyregexp.Regexp                  // compiled pattern for import path
-	repo           string                              // repository to use (expand with match of re)
-	vcs            string                              // version control system to use (expand with match of re)
-	check          func(match map[string]string) error // additional checks
-	schemelessRepo bool                                // if true, the repo pattern lacks a scheme
+	pathPrefix	string					// prefix this description applies to
+	regexp		*lazyregexp.Regexp			// compiled pattern for import path
+	repo		string					// repository to use (expand with match of re)
+	vcs		string					// version control system to use (expand with match of re)
+	check		func(match map[string]string) error	// additional checks
+	schemelessRepo	bool					// if true, the repo pattern lacks a scheme
 }
 
 // FromDir inspects dir and its parents to determine the
@@ -871,8 +894,8 @@ func isVCSRoot(dir string, rootNames []rootName) bool {
 }
 
 type rootName struct {
-	filename string
-	isDir    bool
+	filename	string
+	isDir		bool
 }
 
 type vcsNotFoundError struct {
@@ -889,8 +912,8 @@ func (e *vcsNotFoundError) Is(err error) bool {
 
 // A govcsRule is a single GOVCS rule like private:hg|svn.
 type govcsRule struct {
-	pattern string
-	allowed []string
+	pattern	string
+	allowed	[]string
 }
 
 // A govcsConfig is a full GOVCS configuration.
@@ -968,9 +991,9 @@ func (c *govcsConfig) allow(path string, private bool, vcs string) bool {
 }
 
 var (
-	govcs     govcsConfig
-	govcsErr  error
-	govcsOnce sync.Once
+	govcs		govcsConfig
+	govcsErr	error
+	govcsOnce	sync.Once
 )
 
 // defaultGOVCS is the default setting for GOVCS.
@@ -990,11 +1013,11 @@ var defaultGOVCS = govcsConfig{
 	{"public", []string{"git", "hg"}},
 }
 
-// CheckGOVCS checks whether the policy defined by the environment variable
+// checkGOVCS checks whether the policy defined by the environment variable
 // GOVCS allows the given vcs command to be used with the given repository
 // root path. Note that root may not be a real package or module path; it's
 // the same as the root path in the go-import meta tag.
-func CheckGOVCS(vcs *Cmd, root string) error {
+func checkGOVCS(vcs *Cmd, root string) error {
 	if vcs == vcsMod {
 		// Direct module (proxy protocol) fetches don't
 		// involve an external version control system
@@ -1022,43 +1045,12 @@ func CheckGOVCS(vcs *Cmd, root string) error {
 	return nil
 }
 
-// CheckNested checks for an incorrectly-nested VCS-inside-VCS
-// situation for dir, checking parents up until srcRoot.
-func CheckNested(vcs *Cmd, dir, srcRoot string) error {
-	if len(dir) <= len(srcRoot) || dir[len(srcRoot)] != filepath.Separator {
-		return fmt.Errorf("directory %q is outside source root %q", dir, srcRoot)
-	}
-
-	otherDir := dir
-	for len(otherDir) > len(srcRoot) {
-		for _, otherVCS := range vcsList {
-			if isVCSRoot(otherDir, otherVCS.RootNames) {
-				// Allow expected vcs in original dir.
-				if otherDir == dir && otherVCS == vcs {
-					continue
-				}
-				// Otherwise, we have one VCS inside a different VCS.
-				return fmt.Errorf("directory %q uses %s, but parent %q uses %s", dir, vcs.Cmd, otherDir, otherVCS.Cmd)
-			}
-		}
-		// Move to parent.
-		newDir := filepath.Dir(otherDir)
-		if len(newDir) >= len(otherDir) {
-			// Shouldn't happen, but just in case, stop.
-			break
-		}
-		otherDir = newDir
-	}
-
-	return nil
-}
-
 // RepoRoot describes the repository root for a tree of source code.
 type RepoRoot struct {
-	Repo     string // repository URL, including scheme
-	Root     string // import path corresponding to root of repo
-	IsCustom bool   // defined by served <meta> tags (as opposed to hard-coded pattern)
-	VCS      *Cmd
+	Repo		string	// repository URL, including scheme
+	Root		string	// import path corresponding to root of repo
+	IsCustom	bool	// defined by served <meta> tags (as opposed to hard-coded pattern)
+	VCS		*Cmd
 }
 
 func httpPrefix(s string) string {
@@ -1074,7 +1066,7 @@ func httpPrefix(s string) string {
 type ModuleMode int
 
 const (
-	IgnoreMod ModuleMode = iota
+	IgnoreMod	ModuleMode	= iota
 	PreferMod
 )
 
@@ -1145,8 +1137,8 @@ func repoRootFromVCSPaths(importPath string, security web.SecurityMode, vcsPaths
 
 		// Build map of named subexpression matches for expand.
 		match := map[string]string{
-			"prefix": srv.pathPrefix + "/",
-			"import": importPath,
+			"prefix":	srv.pathPrefix + "/",
+			"import":	importPath,
 		}
 		for i, name := range srv.regexp.SubexpNames() {
 			if name != "" && match[name] == "" {
@@ -1168,7 +1160,7 @@ func repoRootFromVCSPaths(importPath string, security web.SecurityMode, vcsPaths
 		if vcs == nil {
 			return nil, fmt.Errorf("unknown version control system %q", match["vcs"])
 		}
-		if err := CheckGOVCS(vcs, match["root"]); err != nil {
+		if err := checkGOVCS(vcs, match["root"]); err != nil {
 			return nil, err
 		}
 		var repoURL string
@@ -1179,26 +1171,39 @@ func repoRootFromVCSPaths(importPath string, security web.SecurityMode, vcsPaths
 			var ok bool
 			repoURL, ok = interceptVCSTest(repo, vcs, security)
 			if !ok {
-				scheme := vcs.Scheme[0] // default to first scheme
-				if vcs.PingCmd != "" {
-					// If we know how to test schemes, scan to find one.
+				scheme, err := func() (string, error) {
 					for _, s := range vcs.Scheme {
 						if security == web.SecureOnly && !vcs.isSecureScheme(s) {
 							continue
 						}
-						if vcs.Ping(s, repo) == nil {
-							scheme = s
-							break
+
+						// If we know how to ping URL schemes for this VCS,
+						// check that this repo works.
+						// Otherwise, default to the first scheme
+						// that meets the requested security level.
+						if vcs.PingCmd == "" {
+							return s, nil
+						}
+						if err := vcs.Ping(s, repo); err == nil {
+							return s, nil
 						}
 					}
+					securityFrag := ""
+					if security == web.SecureOnly {
+						securityFrag = "secure "
+					}
+					return "", fmt.Errorf("no %sprotocol found for repository", securityFrag)
+				}()
+				if err != nil {
+					return nil, err
 				}
 				repoURL = scheme + "://" + repo
 			}
 		}
 		rr := &RepoRoot{
-			Repo: repoURL,
-			Root: match["root"],
-			VCS:  vcs,
+			Repo:	repoURL,
+			Root:	match["root"],
+			VCS:	vcs,
 		}
 		return rr, nil
 	}
@@ -1217,9 +1222,9 @@ func interceptVCSTest(repo string, vcs *Cmd, security web.SecurityMode) (repoURL
 
 	if scheme, path, ok := strings.Cut(repo, "://"); ok {
 		if security == web.SecureOnly && !vcs.isSecureScheme(scheme) {
-			return "", false // Let the caller reject the original URL.
+			return "", false	// Let the caller reject the original URL.
 		}
-		repo = path // Remove leading URL scheme if present.
+		repo = path	// Remove leading URL scheme if present.
 	}
 	for _, host := range VCSTestHosts {
 		if !str.HasPathPrefix(repo, host) {
@@ -1270,7 +1275,7 @@ func urlForImportPath(importPath string) (*urlpkg.URL, error) {
 }
 
 // repoRootForImportDynamic finds a *RepoRoot for a custom domain that's not
-// statically known by repoRootForImportPathStatic.
+// statically known by repoRootFromVCSPaths.
 //
 // This handles custom import paths like "name.tld/pkg/foo" or just "name.tld".
 func repoRootForImportDynamic(importPath string, mod ModuleMode, security web.SecurityMode) (*RepoRoot, error) {
@@ -1344,7 +1349,7 @@ func repoRootForImportDynamic(importPath string, mod ModuleMode, security web.Se
 		}
 	}
 
-	if err := CheckGOVCS(vcs, mmi.Prefix); err != nil {
+	if err := checkGOVCS(vcs, mmi.Prefix); err != nil {
 		return nil, err
 	}
 
@@ -1353,10 +1358,10 @@ func repoRootForImportDynamic(importPath string, mod ModuleMode, security web.Se
 		repoURL = mmi.RepoRoot
 	}
 	rr := &RepoRoot{
-		Repo:     repoURL,
-		Root:     mmi.Prefix,
-		IsCustom: true,
-		VCS:      vcs,
+		Repo:		repoURL,
+		Root:		mmi.Prefix,
+		IsCustom:	true,
+		VCS:		vcs,
 	}
 	return rr, nil
 }
@@ -1379,8 +1384,8 @@ func validateRepoRoot(repoRoot string) error {
 
 var fetchGroup singleflight.Group
 var (
-	fetchCacheMu sync.Mutex
-	fetchCache   = map[string]fetchResult{} // key is metaImportsForPrefix's importPrefix
+	fetchCacheMu	sync.Mutex
+	fetchCache	= map[string]fetchResult{}	// key is metaImportsForPrefix's importPrefix
 )
 
 // metaImportsForPrefix takes a package's root import path as declared in a <meta> tag
@@ -1438,9 +1443,9 @@ func metaImportsForPrefix(importPrefix string, mod ModuleMode, security web.Secu
 }
 
 type fetchResult struct {
-	url     *urlpkg.URL
-	imports []metaImport
-	err     error
+	url	*urlpkg.URL
+	imports	[]metaImport
+	err	error
 }
 
 // metaImport represents the parsed <meta name="go-import"
@@ -1449,11 +1454,11 @@ type metaImport struct {
 	Prefix, VCS, RepoRoot string
 }
 
-// A ImportMismatchError is returned where metaImport/s are present
+// An ImportMismatchError is returned where metaImport/s are present
 // but none match our import path.
 type ImportMismatchError struct {
-	importPath string
-	mismatches []string // the meta imports that were discarded for not matching our importPath
+	importPath	string
+	mismatches	[]string	// the meta imports that were discarded for not matching our importPath
 }
 
 func (m ImportMismatchError) Error() string {
@@ -1514,60 +1519,60 @@ func expand(match map[string]string, s string) string {
 var vcsPaths = []*vcsPath{
 	// GitHub
 	{
-		pathPrefix: "github.com",
-		regexp:     lazyregexp.New(`^(?P<root>github\.com/[\w.\-]+/[\w.\-]+)(/[\w.\-]+)*$`),
-		vcs:        "git",
-		repo:       "https://{root}",
-		check:      noVCSSuffix,
+		pathPrefix:	"github.com",
+		regexp:		lazyregexp.New(`^(?P<root>github\.com/[\w.\-]+/[\w.\-]+)(/[\w.\-]+)*$`),
+		vcs:		"git",
+		repo:		"https://{root}",
+		check:		noVCSSuffix,
 	},
 
 	// Bitbucket
 	{
-		pathPrefix: "bitbucket.org",
-		regexp:     lazyregexp.New(`^(?P<root>bitbucket\.org/(?P<bitname>[\w.\-]+/[\w.\-]+))(/[\w.\-]+)*$`),
-		vcs:        "git",
-		repo:       "https://{root}",
-		check:      noVCSSuffix,
+		pathPrefix:	"bitbucket.org",
+		regexp:		lazyregexp.New(`^(?P<root>bitbucket\.org/(?P<bitname>[\w.\-]+/[\w.\-]+))(/[\w.\-]+)*$`),
+		vcs:		"git",
+		repo:		"https://{root}",
+		check:		noVCSSuffix,
 	},
 
 	// IBM DevOps Services (JazzHub)
 	{
-		pathPrefix: "hub.jazz.net/git",
-		regexp:     lazyregexp.New(`^(?P<root>hub\.jazz\.net/git/[a-z0-9]+/[\w.\-]+)(/[\w.\-]+)*$`),
-		vcs:        "git",
-		repo:       "https://{root}",
-		check:      noVCSSuffix,
+		pathPrefix:	"hub.jazz.net/git",
+		regexp:		lazyregexp.New(`^(?P<root>hub\.jazz\.net/git/[a-z0-9]+/[\w.\-]+)(/[\w.\-]+)*$`),
+		vcs:		"git",
+		repo:		"https://{root}",
+		check:		noVCSSuffix,
 	},
 
 	// Git at Apache
 	{
-		pathPrefix: "git.apache.org",
-		regexp:     lazyregexp.New(`^(?P<root>git\.apache\.org/[a-z0-9_.\-]+\.git)(/[\w.\-]+)*$`),
-		vcs:        "git",
-		repo:       "https://{root}",
+		pathPrefix:	"git.apache.org",
+		regexp:		lazyregexp.New(`^(?P<root>git\.apache\.org/[a-z0-9_.\-]+\.git)(/[\w.\-]+)*$`),
+		vcs:		"git",
+		repo:		"https://{root}",
 	},
 
 	// Git at OpenStack
 	{
-		pathPrefix: "git.openstack.org",
-		regexp:     lazyregexp.New(`^(?P<root>git\.openstack\.org/[\w.\-]+/[\w.\-]+)(\.git)?(/[\w.\-]+)*$`),
-		vcs:        "git",
-		repo:       "https://{root}",
+		pathPrefix:	"git.openstack.org",
+		regexp:		lazyregexp.New(`^(?P<root>git\.openstack\.org/[\w.\-]+/[\w.\-]+)(\.git)?(/[\w.\-]+)*$`),
+		vcs:		"git",
+		repo:		"https://{root}",
 	},
 
 	// chiselapp.com for fossil
 	{
-		pathPrefix: "chiselapp.com",
-		regexp:     lazyregexp.New(`^(?P<root>chiselapp\.com/user/[A-Za-z0-9]+/repository/[\w.\-]+)$`),
-		vcs:        "fossil",
-		repo:       "https://{root}",
+		pathPrefix:	"chiselapp.com",
+		regexp:		lazyregexp.New(`^(?P<root>chiselapp\.com/user/[A-Za-z0-9]+/repository/[\w.\-]+)$`),
+		vcs:		"fossil",
+		repo:		"https://{root}",
 	},
 
 	// General syntax for any server.
 	// Must be last.
 	{
-		regexp:         lazyregexp.New(`(?P<root>(?P<repo>([a-z0-9.\-]+\.)+[a-z0-9.\-]+(:[0-9]+)?(/~?[\w.\-]+)+?)\.(?P<vcs>bzr|fossil|git|hg|svn))(/~?[\w.\-]+)*$`),
-		schemelessRepo: true,
+		regexp:		lazyregexp.New(`(?P<root>(?P<repo>([a-z0-9.\-]+\.)+[a-z0-9.\-]+(:[0-9]+)?(/~?[\w.\-]+)+?)\.(?P<vcs>bzr|fossil|git|hg|svn))(/~?[\w.\-]+)*$`),
+		schemelessRepo:	true,
 	},
 }
 
@@ -1578,11 +1583,11 @@ var vcsPaths = []*vcsPath{
 var vcsPathsAfterDynamic = []*vcsPath{
 	// Launchpad. See golang.org/issue/11436.
 	{
-		pathPrefix: "launchpad.net",
-		regexp:     lazyregexp.New(`^(?P<root>launchpad\.net/((?P<project>[\w.\-]+)(?P<series>/[\w.\-]+)?|~[\w.\-]+/(\+junk|[\w.\-]+)/[\w.\-]+))(/[\w.\-]+)*$`),
-		vcs:        "bzr",
-		repo:       "https://{root}",
-		check:      launchpadVCS,
+		pathPrefix:	"launchpad.net",
+		regexp:		lazyregexp.New(`^(?P<root>launchpad\.net/((?P<project>[\w.\-]+)(?P<series>/[\w.\-]+)?|~[\w.\-]+/(\+junk|[\w.\-]+)/[\w.\-]+))(/[\w.\-]+)*$`),
+		vcs:		"bzr",
+		repo:		"https://{root}",
+		check:		launchpadVCS,
 	},
 }
 
@@ -1608,9 +1613,9 @@ func launchpadVCS(match map[string]string) error {
 		return nil
 	}
 	url := &urlpkg.URL{
-		Scheme: "https",
-		Host:   "code.launchpad.net",
-		Path:   expand(match, "/{project}{series}/.bzr/branch-format"),
+		Scheme:	"https",
+		Host:	"code.launchpad.net",
+		Path:	expand(match, "/{project}{series}/.bzr/branch-format"),
 	}
 	_, err := web.GetBytes(url)
 	if err != nil {
@@ -1623,8 +1628,8 @@ func launchpadVCS(match map[string]string) error {
 // importError is a copy of load.importError, made to avoid a dependency cycle
 // on cmd/go/internal/load. It just needs to satisfy load.ImportPathError.
 type importError struct {
-	importPath string
-	err        error
+	importPath	string
+	err		error
 }
 
 func importErrorf(path, format string, args ...any) error {

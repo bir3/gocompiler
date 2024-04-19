@@ -33,6 +33,36 @@ import (
 
 // useSumDB reports whether to use the Go checksum database for the given module.
 func useSumDB(mod module.Version) bool {
+	if mod.Path == "golang.org/toolchain" {
+		must := true
+		// Downloaded toolchains cannot be listed in go.sum,
+		// so we require checksum database lookups even if
+		// GOSUMDB=off or GONOSUMDB matches the pattern.
+		// If GOSUMDB=off, then the eventual lookup will fail
+		// with a good error message.
+
+		// Exception #1: using GOPROXY=file:// to test a distpack.
+		if strings.HasPrefix(cfg.GOPROXY, "file://") && !strings.ContainsAny(cfg.GOPROXY, ",|") {
+			must = false
+		}
+		// Exception #2: the Go proxy+checksum database cannot check itself
+		// while doing the initial download.
+		if strings.Contains(os.Getenv("GIT_HTTP_USER_AGENT"), "proxy.golang.org") {
+			must = false
+		}
+
+		// Another potential exception would be GOPROXY=direct,
+		// but that would make toolchain downloads only as secure
+		// as HTTPS, and in particular they'd be susceptible to MITM
+		// attacks on systems with less-than-trustworthy root certificates.
+		// The checksum database provides a stronger guarantee,
+		// so we don't make that exception.
+
+		// Otherwise, require the checksum database.
+		if must {
+			return true
+		}
+	}
 	return cfg.GOSUMDB != "off" && !module.MatchPrefixPatterns(cfg.GONOSUMDB, mod.Path)
 }
 
@@ -50,10 +80,10 @@ func lookupSumDB(mod module.Version) (dbname string, lines []string, err error) 
 }
 
 var (
-	dbOnce sync.Once
-	dbName string
-	db     *sumdb.Client
-	dbErr  error
+	dbOnce	sync.Once
+	dbName	string
+	db	*sumdb.Client
+	dbErr	error
 )
 
 func dbDial() (dbName string, db *sumdb.Client, err error) {
@@ -68,6 +98,10 @@ func dbDial() (dbName string, db *sumdb.Client, err error) {
 	gosumdb := cfg.GOSUMDB
 	if gosumdb == "sum.golang.google.cn" {
 		gosumdb = "sum.golang.org https://sum.golang.google.cn"
+	}
+
+	if gosumdb == "off" {
+		return "", nil, fmt.Errorf("checksum database disabled by GOSUMDB=off")
 	}
 
 	key := strings.Fields(gosumdb)
@@ -110,13 +144,13 @@ func dbDial() (dbName string, db *sumdb.Client, err error) {
 }
 
 type dbClient struct {
-	key    string
-	name   string
-	direct *url.URL
+	key	string
+	name	string
+	direct	*url.URL
 
-	once    sync.Once
-	base    *url.URL
-	baseErr error
+	once	sync.Once
+	base	*url.URL
+	baseErr	error
 }
 
 func (c *dbClient) ReadRemote(path string) ([]byte, error) {

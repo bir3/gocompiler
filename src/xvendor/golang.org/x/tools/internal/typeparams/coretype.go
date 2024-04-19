@@ -14,18 +14,18 @@ import (
 func CoreType(T types.Type) types.Type {
 	U := T.Underlying()
 	if _, ok := U.(*types.Interface); !ok {
-		return U // for non-interface types,
+		return U	// for non-interface types,
 	}
 
 	terms, err := _NormalTerms(U)
 	if len(terms) == 0 || err != nil {
 		// len(terms) -> empty type set of interface.
 		// err != nil => U is invalid, exceeds complexity bounds, or has an empty type set.
-		return nil // no core type.
+		return nil	// no core type.
 	}
 
 	U = terms[0].Type().Underlying()
-	var identical int // i in [0,identical) => Identical(U, terms[i].Type().Underlying())
+	var identical int	// i in [0,identical) => Identical(U, terms[i].Type().Underlying())
 	for identical = 1; identical < len(terms); identical++ {
 		if !types.Identical(U, terms[identical].Type().Underlying()) {
 			break
@@ -39,7 +39,7 @@ func CoreType(T types.Type) types.Type {
 	}
 	ch, ok := U.(*types.Chan)
 	if !ok {
-		return nil // no core type as identical < len(terms) and U is not a channel.
+		return nil	// no core type as identical < len(terms) and U is not a channel.
 	}
 	// https://go.dev/ref/spec#Core_types
 	// "the type chan E if T contains only bidirectional channels, or the type chan<- E or
@@ -50,7 +50,7 @@ func CoreType(T types.Type) types.Type {
 			return nil
 		}
 		if !types.Identical(ch.Elem(), curr.Elem()) {
-			return nil // channel elements are not identical.
+			return nil	// channel elements are not identical.
 		}
 		if ch.Dir() == types.SendRecv {
 			// ch is bidirectional. We can safely always use curr's direction.
@@ -81,13 +81,13 @@ func CoreType(T types.Type) types.Type {
 // restrictions may be arbitrarily complex. For example, consider the
 // following:
 //
-//  type A interface{ ~string|~[]byte }
+//	type A interface{ ~string|~[]byte }
 //
-//  type B interface{ int|string }
+//	type B interface{ int|string }
 //
-//  type C interface { ~string|~int }
+//	type C interface { ~string|~int }
 //
-//  type T[P interface{ A|B; C }] int
+//	type T[P interface{ A|B; C }] int
 //
 // In this example, the structural type restriction of P is ~string|int: A|B
 // expands to ~string|~[]byte|int|string, which reduces to ~string|~[]byte|int,
@@ -108,15 +108,15 @@ func CoreType(T types.Type) types.Type {
 //
 // _NormalTerms makes no guarantees about the order of terms, except that it
 // is deterministic.
-func _NormalTerms(typ types.Type) ([]*Term, error) {
+func _NormalTerms(typ types.Type) ([]*types.Term, error) {
 	switch typ := typ.(type) {
-	case *TypeParam:
+	case *types.TypeParam:
 		return StructuralTerms(typ)
-	case *Union:
+	case *types.Union:
 		return UnionTermSet(typ)
 	case *types.Interface:
 		return InterfaceTermSet(typ)
 	default:
-		return []*Term{NewTerm(false, typ)}, nil
+		return []*types.Term{types.NewTerm(false, typ)}, nil
 	}
 }

@@ -12,10 +12,10 @@ import (
 )
 
 var CmdDoc = &base.Command{
-	Run:         runDoc,
-	UsageLine:   "go doc [doc flags] [package|[package.]symbol[.methodOrField]]",
-	CustomFlags: true,
-	Short:       "show documentation for package or symbol",
+	Run:		runDoc,
+	UsageLine:	"go doc [doc flags] [package|[package.]symbol[.methodOrField]]",
+	CustomFlags:	true,
+	Short:		"show documentation for package or symbol",
 	Long: `
 Doc prints the documentation comments associated with the item identified by its
 arguments (a package, const, func, type, var, method, or struct field)

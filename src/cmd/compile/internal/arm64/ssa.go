@@ -113,7 +113,7 @@ func genIndexedOperand(op ssa.Op, base, idx int16) obj.Addr {
 		mop.Index = arm64.REG_LSL | 2<<5 | idx&31
 	case ssa.OpARM64MOVHloadidx2, ssa.OpARM64MOVHUloadidx2, ssa.OpARM64MOVHstoreidx2, ssa.OpARM64MOVHstorezeroidx2:
 		mop.Index = arm64.REG_LSL | 1<<5 | idx&31
-	default: // not shifted
+	default:	// not shifted
 		mop.Index = idx
 	}
 	return mop
@@ -215,6 +215,10 @@ func ssaGenValue(s *ssagen.State, v *ssa.Value) {
 		ssa.OpARM64FNMULD,
 		ssa.OpARM64FDIVS,
 		ssa.OpARM64FDIVD,
+		ssa.OpARM64FMINS,
+		ssa.OpARM64FMIND,
+		ssa.OpARM64FMAXS,
+		ssa.OpARM64FMAXD,
 		ssa.OpARM64ROR,
 		ssa.OpARM64RORW:
 		r := v.Reg()
@@ -246,7 +250,7 @@ func ssaGenValue(s *ssagen.State, v *ssa.Value) {
 		p.Reg = ra
 		p.From.Type = obj.TYPE_REG
 		p.From.Reg = rm
-		p.SetFrom3Reg(rn)
+		p.AddRestSourceReg(rn)
 		p.To.Type = obj.TYPE_REG
 		p.To.Reg = rt
 	case ssa.OpARM64ADDconst,
@@ -309,7 +313,7 @@ func ssaGenValue(s *ssagen.State, v *ssa.Value) {
 		p := s.Prog(v.Op.Asm())
 		p.From.Type = obj.TYPE_CONST
 		p.From.Offset = v.AuxInt
-		p.SetFrom3Reg(v.Args[0].Reg())
+		p.AddRestSourceReg(v.Args[0].Reg())
 		p.Reg = v.Args[1].Reg()
 		p.To.Type = obj.TYPE_REG
 		p.To.Reg = v.Reg()
@@ -558,7 +562,7 @@ func ssaGenValue(s *ssagen.State, v *ssa.Value) {
 		p := s.Prog(v.Op.Asm())
 		p.From.Type = obj.TYPE_CONST
 		p.From.Offset = v.AuxInt >> 8
-		p.SetFrom3Const(v.AuxInt & 0xff)
+		p.AddRestSourceConst(v.AuxInt & 0xff)
 		p.Reg = v.Args[1].Reg()
 		p.To.Type = obj.TYPE_REG
 		p.To.Reg = v.Reg()
@@ -569,7 +573,7 @@ func ssaGenValue(s *ssagen.State, v *ssa.Value) {
 		p := s.Prog(v.Op.Asm())
 		p.From.Type = obj.TYPE_CONST
 		p.From.Offset = v.AuxInt >> 8
-		p.SetFrom3Const(v.AuxInt & 0xff)
+		p.AddRestSourceConst(v.AuxInt & 0xff)
 		p.Reg = v.Args[0].Reg()
 		p.To.Type = obj.TYPE_REG
 		p.To.Reg = v.Reg()
@@ -722,7 +726,7 @@ func ssaGenValue(s *ssagen.State, v *ssa.Value) {
 		p4.To.Type = obj.TYPE_BRANCH
 		p4.To.SetTarget(p)
 		p5 := s.Prog(arm64.ACSET)
-		p5.From.Type = obj.TYPE_SPECIAL // assembler encodes conditional bits in Offset
+		p5.From.Type = obj.TYPE_SPECIAL	// assembler encodes conditional bits in Offset
 		p5.From.Offset = int64(arm64.SPOP_EQ)
 		p5.To.Type = obj.TYPE_REG
 		p5.To.Reg = out
@@ -772,7 +776,7 @@ func ssaGenValue(s *ssagen.State, v *ssa.Value) {
 
 		// CSET 	EQ, Rout
 		p3 := s.Prog(arm64.ACSET)
-		p3.From.Type = obj.TYPE_SPECIAL // assembler encodes conditional bits in Offset
+		p3.From.Type = obj.TYPE_SPECIAL	// assembler encodes conditional bits in Offset
 		p3.From.Offset = int64(arm64.SPOP_EQ)
 		p3.To.Type = obj.TYPE_REG
 		p3.To.Reg = out
@@ -972,25 +976,25 @@ func ssaGenValue(s *ssagen.State, v *ssa.Value) {
 			r1 = v.Args[1].Reg()
 		}
 		p := s.Prog(v.Op.Asm())
-		p.From.Type = obj.TYPE_SPECIAL // assembler encodes conditional bits in Offset
+		p.From.Type = obj.TYPE_SPECIAL	// assembler encodes conditional bits in Offset
 		condCode := condBits[ssa.Op(v.AuxInt)]
 		p.From.Offset = int64(condCode)
 		p.Reg = v.Args[0].Reg()
-		p.SetFrom3Reg(r1)
+		p.AddRestSourceReg(r1)
 		p.To.Type = obj.TYPE_REG
 		p.To.Reg = v.Reg()
 	case ssa.OpARM64CSINC, ssa.OpARM64CSINV, ssa.OpARM64CSNEG:
 		p := s.Prog(v.Op.Asm())
-		p.From.Type = obj.TYPE_SPECIAL // assembler encodes conditional bits in Offset
+		p.From.Type = obj.TYPE_SPECIAL	// assembler encodes conditional bits in Offset
 		condCode := condBits[ssa.Op(v.AuxInt)]
 		p.From.Offset = int64(condCode)
 		p.Reg = v.Args[0].Reg()
-		p.SetFrom3Reg(v.Args[1].Reg())
+		p.AddRestSourceReg(v.Args[1].Reg())
 		p.To.Type = obj.TYPE_REG
 		p.To.Reg = v.Reg()
 	case ssa.OpARM64CSETM:
 		p := s.Prog(arm64.ACSETM)
-		p.From.Type = obj.TYPE_SPECIAL // assembler encodes conditional bits in Offset
+		p.From.Type = obj.TYPE_SPECIAL	// assembler encodes conditional bits in Offset
 		condCode := condBits[ssa.Op(v.AuxInt)]
 		p.From.Offset = int64(condCode)
 		p.To.Type = obj.TYPE_REG
@@ -1065,13 +1069,15 @@ func ssaGenValue(s *ssagen.State, v *ssa.Value) {
 		p := s.Prog(obj.ACALL)
 		p.To.Type = obj.TYPE_MEM
 		p.To.Name = obj.NAME_EXTERN
-		p.To.Sym = v.Aux.(*obj.LSym)
+		// AuxInt encodes how many buffer entries we need.
+		p.To.Sym = ir.Syms.GCWriteBarrier[v.AuxInt-1]
+
 	case ssa.OpARM64LoweredPanicBoundsA, ssa.OpARM64LoweredPanicBoundsB, ssa.OpARM64LoweredPanicBoundsC:
 		p := s.Prog(obj.ACALL)
 		p.To.Type = obj.TYPE_MEM
 		p.To.Name = obj.NAME_EXTERN
 		p.To.Sym = ssagen.BoundsCheckFunc[v.AuxInt]
-		s.UseArgs(16) // space used in callee args area by assembly stubs
+		s.UseArgs(16)	// space used in callee args area by assembly stubs
 	case ssa.OpARM64LoweredNilCheck:
 		// Issue a load which will fault if arg is nil.
 		p := s.Prog(arm64.AMOVB)
@@ -1083,7 +1089,7 @@ func ssaGenValue(s *ssagen.State, v *ssa.Value) {
 		if logopt.Enabled() {
 			logopt.LogOpt(v.Pos, "nilcheck", "genssa", v.Block.Func.Name)
 		}
-		if base.Debug.Nil != 0 && v.Pos.Line() > 1 { // v.Line==1 in generated wrappers
+		if base.Debug.Nil != 0 && v.Pos.Line() > 1 {	// v.Line==1 in generated wrappers
 			base.WarnfAt(v.Pos, "generated nil check")
 		}
 	case ssa.OpARM64Equal,
@@ -1103,10 +1109,12 @@ func ssaGenValue(s *ssagen.State, v *ssa.Value) {
 		ssa.OpARM64NotLessThanF,
 		ssa.OpARM64NotLessEqualF,
 		ssa.OpARM64NotGreaterThanF,
-		ssa.OpARM64NotGreaterEqualF:
+		ssa.OpARM64NotGreaterEqualF,
+		ssa.OpARM64LessThanNoov,
+		ssa.OpARM64GreaterEqualNoov:
 		// generate boolean values using CSET
 		p := s.Prog(arm64.ACSET)
-		p.From.Type = obj.TYPE_SPECIAL // assembler encodes conditional bits in Offset
+		p.From.Type = obj.TYPE_SPECIAL	// assembler encodes conditional bits in Offset
 		condCode := condBits[v.Op]
 		p.From.Offset = int64(condCode)
 		p.To.Type = obj.TYPE_REG
@@ -1174,65 +1182,68 @@ func ssaGenValue(s *ssagen.State, v *ssa.Value) {
 }
 
 var condBits = map[ssa.Op]arm64.SpecialOperand{
-	ssa.OpARM64Equal:         arm64.SPOP_EQ,
-	ssa.OpARM64NotEqual:      arm64.SPOP_NE,
-	ssa.OpARM64LessThan:      arm64.SPOP_LT,
-	ssa.OpARM64LessThanU:     arm64.SPOP_LO,
-	ssa.OpARM64LessEqual:     arm64.SPOP_LE,
-	ssa.OpARM64LessEqualU:    arm64.SPOP_LS,
-	ssa.OpARM64GreaterThan:   arm64.SPOP_GT,
-	ssa.OpARM64GreaterThanU:  arm64.SPOP_HI,
-	ssa.OpARM64GreaterEqual:  arm64.SPOP_GE,
-	ssa.OpARM64GreaterEqualU: arm64.SPOP_HS,
-	ssa.OpARM64LessThanF:     arm64.SPOP_MI, // Less than
-	ssa.OpARM64LessEqualF:    arm64.SPOP_LS, // Less than or equal to
-	ssa.OpARM64GreaterThanF:  arm64.SPOP_GT, // Greater than
-	ssa.OpARM64GreaterEqualF: arm64.SPOP_GE, // Greater than or equal to
+	ssa.OpARM64Equal:		arm64.SPOP_EQ,
+	ssa.OpARM64NotEqual:		arm64.SPOP_NE,
+	ssa.OpARM64LessThan:		arm64.SPOP_LT,
+	ssa.OpARM64LessThanU:		arm64.SPOP_LO,
+	ssa.OpARM64LessEqual:		arm64.SPOP_LE,
+	ssa.OpARM64LessEqualU:		arm64.SPOP_LS,
+	ssa.OpARM64GreaterThan:		arm64.SPOP_GT,
+	ssa.OpARM64GreaterThanU:	arm64.SPOP_HI,
+	ssa.OpARM64GreaterEqual:	arm64.SPOP_GE,
+	ssa.OpARM64GreaterEqualU:	arm64.SPOP_HS,
+	ssa.OpARM64LessThanF:		arm64.SPOP_MI,	// Less than
+	ssa.OpARM64LessEqualF:		arm64.SPOP_LS,	// Less than or equal to
+	ssa.OpARM64GreaterThanF:	arm64.SPOP_GT,	// Greater than
+	ssa.OpARM64GreaterEqualF:	arm64.SPOP_GE,	// Greater than or equal to
 
 	// The following condition codes have unordered to handle comparisons related to NaN.
-	ssa.OpARM64NotLessThanF:     arm64.SPOP_PL, // Greater than, equal to, or unordered
-	ssa.OpARM64NotLessEqualF:    arm64.SPOP_HI, // Greater than or unordered
-	ssa.OpARM64NotGreaterThanF:  arm64.SPOP_LE, // Less than, equal to or unordered
-	ssa.OpARM64NotGreaterEqualF: arm64.SPOP_LT, // Less than or unordered
+	ssa.OpARM64NotLessThanF:	arm64.SPOP_PL,	// Greater than, equal to, or unordered
+	ssa.OpARM64NotLessEqualF:	arm64.SPOP_HI,	// Greater than or unordered
+	ssa.OpARM64NotGreaterThanF:	arm64.SPOP_LE,	// Less than, equal to or unordered
+	ssa.OpARM64NotGreaterEqualF:	arm64.SPOP_LT,	// Less than or unordered
+
+	ssa.OpARM64LessThanNoov:	arm64.SPOP_MI,	// Less than but without honoring overflow
+	ssa.OpARM64GreaterEqualNoov:	arm64.SPOP_PL,	// Greater than or equal to but without honoring overflow
 }
 
 var blockJump = map[ssa.BlockKind]struct {
 	asm, invasm obj.As
 }{
-	ssa.BlockARM64EQ:     {arm64.ABEQ, arm64.ABNE},
-	ssa.BlockARM64NE:     {arm64.ABNE, arm64.ABEQ},
-	ssa.BlockARM64LT:     {arm64.ABLT, arm64.ABGE},
-	ssa.BlockARM64GE:     {arm64.ABGE, arm64.ABLT},
-	ssa.BlockARM64LE:     {arm64.ABLE, arm64.ABGT},
-	ssa.BlockARM64GT:     {arm64.ABGT, arm64.ABLE},
-	ssa.BlockARM64ULT:    {arm64.ABLO, arm64.ABHS},
-	ssa.BlockARM64UGE:    {arm64.ABHS, arm64.ABLO},
-	ssa.BlockARM64UGT:    {arm64.ABHI, arm64.ABLS},
-	ssa.BlockARM64ULE:    {arm64.ABLS, arm64.ABHI},
-	ssa.BlockARM64Z:      {arm64.ACBZ, arm64.ACBNZ},
-	ssa.BlockARM64NZ:     {arm64.ACBNZ, arm64.ACBZ},
-	ssa.BlockARM64ZW:     {arm64.ACBZW, arm64.ACBNZW},
-	ssa.BlockARM64NZW:    {arm64.ACBNZW, arm64.ACBZW},
-	ssa.BlockARM64TBZ:    {arm64.ATBZ, arm64.ATBNZ},
-	ssa.BlockARM64TBNZ:   {arm64.ATBNZ, arm64.ATBZ},
-	ssa.BlockARM64FLT:    {arm64.ABMI, arm64.ABPL},
-	ssa.BlockARM64FGE:    {arm64.ABGE, arm64.ABLT},
-	ssa.BlockARM64FLE:    {arm64.ABLS, arm64.ABHI},
-	ssa.BlockARM64FGT:    {arm64.ABGT, arm64.ABLE},
-	ssa.BlockARM64LTnoov: {arm64.ABMI, arm64.ABPL},
-	ssa.BlockARM64GEnoov: {arm64.ABPL, arm64.ABMI},
+	ssa.BlockARM64EQ:	{arm64.ABEQ, arm64.ABNE},
+	ssa.BlockARM64NE:	{arm64.ABNE, arm64.ABEQ},
+	ssa.BlockARM64LT:	{arm64.ABLT, arm64.ABGE},
+	ssa.BlockARM64GE:	{arm64.ABGE, arm64.ABLT},
+	ssa.BlockARM64LE:	{arm64.ABLE, arm64.ABGT},
+	ssa.BlockARM64GT:	{arm64.ABGT, arm64.ABLE},
+	ssa.BlockARM64ULT:	{arm64.ABLO, arm64.ABHS},
+	ssa.BlockARM64UGE:	{arm64.ABHS, arm64.ABLO},
+	ssa.BlockARM64UGT:	{arm64.ABHI, arm64.ABLS},
+	ssa.BlockARM64ULE:	{arm64.ABLS, arm64.ABHI},
+	ssa.BlockARM64Z:	{arm64.ACBZ, arm64.ACBNZ},
+	ssa.BlockARM64NZ:	{arm64.ACBNZ, arm64.ACBZ},
+	ssa.BlockARM64ZW:	{arm64.ACBZW, arm64.ACBNZW},
+	ssa.BlockARM64NZW:	{arm64.ACBNZW, arm64.ACBZW},
+	ssa.BlockARM64TBZ:	{arm64.ATBZ, arm64.ATBNZ},
+	ssa.BlockARM64TBNZ:	{arm64.ATBNZ, arm64.ATBZ},
+	ssa.BlockARM64FLT:	{arm64.ABMI, arm64.ABPL},
+	ssa.BlockARM64FGE:	{arm64.ABGE, arm64.ABLT},
+	ssa.BlockARM64FLE:	{arm64.ABLS, arm64.ABHI},
+	ssa.BlockARM64FGT:	{arm64.ABGT, arm64.ABLE},
+	ssa.BlockARM64LTnoov:	{arm64.ABMI, arm64.ABPL},
+	ssa.BlockARM64GEnoov:	{arm64.ABPL, arm64.ABMI},
 }
 
 // To model a 'LEnoov' ('<=' without overflow checking) branching.
 var leJumps = [2][2]ssagen.IndexJump{
-	{{Jump: arm64.ABEQ, Index: 0}, {Jump: arm64.ABPL, Index: 1}}, // next == b.Succs[0]
-	{{Jump: arm64.ABMI, Index: 0}, {Jump: arm64.ABEQ, Index: 0}}, // next == b.Succs[1]
+	{{Jump: arm64.ABEQ, Index: 0}, {Jump: arm64.ABPL, Index: 1}},	// next == b.Succs[0]
+	{{Jump: arm64.ABMI, Index: 0}, {Jump: arm64.ABEQ, Index: 0}},	// next == b.Succs[1]
 }
 
 // To model a 'GTnoov' ('>' without overflow checking) branching.
 var gtJumps = [2][2]ssagen.IndexJump{
-	{{Jump: arm64.ABMI, Index: 1}, {Jump: arm64.ABEQ, Index: 1}}, // next == b.Succs[0]
-	{{Jump: arm64.ABEQ, Index: 1}, {Jump: arm64.ABPL, Index: 0}}, // next == b.Succs[1]
+	{{Jump: arm64.ABMI, Index: 1}, {Jump: arm64.ABEQ, Index: 1}},	// next == b.Succs[0]
+	{{Jump: arm64.ABEQ, Index: 1}, {Jump: arm64.ABPL, Index: 0}},	// next == b.Succs[1]
 }
 
 func ssaGenBlock(s *ssagen.State, b, next *ssa.Block) {

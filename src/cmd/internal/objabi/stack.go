@@ -4,22 +4,14 @@
 
 package objabi
 
-import "github.com/bir3/gocompiler/src/internal/buildcfg"
-
-// For the linkers. Must match Go definitions.
-
-const (
-	STACKSYSTEM = 0
-	StackSystem = STACKSYSTEM
-	StackBig    = 4096
-	StackSmall  = 128
+import (
+	"github.com/bir3/gocompiler/src/internal/abi"
+	"github.com/bir3/gocompiler/src/internal/buildcfg"
 )
 
-func StackLimit(race bool) int {
-	// This arithmetic must match that in runtime/stack.go:{_StackGuard,_StackLimit}.
-	stackGuard := 928*stackGuardMultiplier(race) + StackSystem
-	stackLimit := stackGuard - StackSystem - StackSmall
-	return stackLimit
+func StackNosplit(race bool) int {
+	// This arithmetic must match that in runtime/stack.go:stackNosplit.
+	return abi.StackNosplitBase * stackGuardMultiplier(race)
 }
 
 // stackGuardMultiplier returns a multiplier to apply to the default

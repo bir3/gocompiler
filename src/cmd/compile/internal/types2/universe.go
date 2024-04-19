@@ -20,12 +20,12 @@ var Universe *Scope
 var Unsafe *Package
 
 var (
-	universeIota       Object
-	universeByte       Type // uint8 alias, but has name "byte"
-	universeRune       Type // int32 alias, but has name "rune"
-	universeAny        Object
-	universeError      Type
-	universeComparable Object
+	universeIota		Object
+	universeByte		Type	// uint8 alias, but has name "byte"
+	universeRune		Type	// int32 alias, but has name "rune"
+	universeAny		Object
+	universeError		Type
+	universeComparable	Object
 )
 
 // Typ contains the predeclared *Basic types indexed by their
@@ -35,34 +35,34 @@ var (
 // Use Universe.Lookup("byte").Type() to obtain the specific
 // alias basic type named "byte" (and analogous for "rune").
 var Typ = [...]*Basic{
-	Invalid: {Invalid, 0, "invalid type"},
+	Invalid:	{Invalid, 0, "invalid type"},
 
-	Bool:          {Bool, IsBoolean, "bool"},
-	Int:           {Int, IsInteger, "int"},
-	Int8:          {Int8, IsInteger, "int8"},
-	Int16:         {Int16, IsInteger, "int16"},
-	Int32:         {Int32, IsInteger, "int32"},
-	Int64:         {Int64, IsInteger, "int64"},
-	Uint:          {Uint, IsInteger | IsUnsigned, "uint"},
-	Uint8:         {Uint8, IsInteger | IsUnsigned, "uint8"},
-	Uint16:        {Uint16, IsInteger | IsUnsigned, "uint16"},
-	Uint32:        {Uint32, IsInteger | IsUnsigned, "uint32"},
-	Uint64:        {Uint64, IsInteger | IsUnsigned, "uint64"},
-	Uintptr:       {Uintptr, IsInteger | IsUnsigned, "uintptr"},
-	Float32:       {Float32, IsFloat, "float32"},
-	Float64:       {Float64, IsFloat, "float64"},
-	Complex64:     {Complex64, IsComplex, "complex64"},
-	Complex128:    {Complex128, IsComplex, "complex128"},
-	String:        {String, IsString, "string"},
-	UnsafePointer: {UnsafePointer, 0, "Pointer"},
+	Bool:		{Bool, IsBoolean, "bool"},
+	Int:		{Int, IsInteger, "int"},
+	Int8:		{Int8, IsInteger, "int8"},
+	Int16:		{Int16, IsInteger, "int16"},
+	Int32:		{Int32, IsInteger, "int32"},
+	Int64:		{Int64, IsInteger, "int64"},
+	Uint:		{Uint, IsInteger | IsUnsigned, "uint"},
+	Uint8:		{Uint8, IsInteger | IsUnsigned, "uint8"},
+	Uint16:		{Uint16, IsInteger | IsUnsigned, "uint16"},
+	Uint32:		{Uint32, IsInteger | IsUnsigned, "uint32"},
+	Uint64:		{Uint64, IsInteger | IsUnsigned, "uint64"},
+	Uintptr:	{Uintptr, IsInteger | IsUnsigned, "uintptr"},
+	Float32:	{Float32, IsFloat, "float32"},
+	Float64:	{Float64, IsFloat, "float64"},
+	Complex64:	{Complex64, IsComplex, "complex64"},
+	Complex128:	{Complex128, IsComplex, "complex128"},
+	String:		{String, IsString, "string"},
+	UnsafePointer:	{UnsafePointer, 0, "Pointer"},
 
-	UntypedBool:    {UntypedBool, IsBoolean | IsUntyped, "untyped bool"},
-	UntypedInt:     {UntypedInt, IsInteger | IsUntyped, "untyped int"},
-	UntypedRune:    {UntypedRune, IsInteger | IsUntyped, "untyped rune"},
-	UntypedFloat:   {UntypedFloat, IsFloat | IsUntyped, "untyped float"},
-	UntypedComplex: {UntypedComplex, IsComplex | IsUntyped, "untyped complex"},
-	UntypedString:  {UntypedString, IsString | IsUntyped, "untyped string"},
-	UntypedNil:     {UntypedNil, IsUntyped, "untyped nil"},
+	UntypedBool:	{UntypedBool, IsBoolean | IsUntyped, "untyped bool"},
+	UntypedInt:	{UntypedInt, IsInteger | IsUntyped, "untyped int"},
+	UntypedRune:	{UntypedRune, IsInteger | IsUntyped, "untyped rune"},
+	UntypedFloat:	{UntypedFloat, IsFloat | IsUntyped, "untyped float"},
+	UntypedComplex:	{UntypedComplex, IsComplex | IsUntyped, "untyped complex"},
+	UntypedString:	{UntypedString, IsString | IsUntyped, "untyped string"},
+	UntypedNil:	{UntypedNil, IsUntyped, "untyped nil"},
 }
 
 var aliases = [...]*Basic{
@@ -98,7 +98,7 @@ func defPredeclaredTypes() {
 
 		// interface{ Error() string }
 		ityp := &Interface{methods: []*Func{err}, complete: true}
-		computeInterfaceTypeSet(nil, nopos, ityp) // prevent races due to lazy computation of tset
+		computeInterfaceTypeSet(nil, nopos, ityp)	// prevent races due to lazy computation of tset
 
 		typ.SetUnderlying(ityp)
 		def(obj)
@@ -119,9 +119,9 @@ func defPredeclaredTypes() {
 }
 
 var predeclaredConsts = [...]struct {
-	name string
-	kind BasicKind
-	val  constant.Value
+	name	string
+	kind	BasicKind
+	val	constant.Value
 }{
 	{"true", UntypedBool, constant.MakeBool(true)},
 	{"false", UntypedBool, constant.MakeBool(false)},
@@ -143,7 +143,7 @@ type builtinId int
 
 const (
 	// universe scope
-	_Append builtinId = iota
+	_Append	builtinId	= iota
 	_Cap
 	_Clear
 	_Close
@@ -153,6 +153,8 @@ const (
 	_Imag
 	_Len
 	_Make
+	_Max
+	_Min
 	_New
 	_Panic
 	_Print
@@ -176,46 +178,49 @@ const (
 )
 
 var predeclaredFuncs = [...]struct {
-	name     string
-	nargs    int
-	variadic bool
-	kind     exprKind
+	name		string
+	nargs		int
+	variadic	bool
+	kind		exprKind
 }{
-	_Append:  {"append", 1, true, expression},
-	_Cap:     {"cap", 1, false, expression},
-	_Clear:   {"clear", 1, false, statement},
-	_Close:   {"close", 1, false, statement},
-	_Complex: {"complex", 2, false, expression},
-	_Copy:    {"copy", 2, false, statement},
-	_Delete:  {"delete", 2, false, statement},
-	_Imag:    {"imag", 1, false, expression},
-	_Len:     {"len", 1, false, expression},
-	_Make:    {"make", 1, true, expression},
-	_New:     {"new", 1, false, expression},
-	_Panic:   {"panic", 1, false, statement},
-	_Print:   {"print", 0, true, statement},
-	_Println: {"println", 0, true, statement},
-	_Real:    {"real", 1, false, expression},
-	_Recover: {"recover", 0, false, statement},
+	_Append:	{"append", 1, true, expression},
+	_Cap:		{"cap", 1, false, expression},
+	_Clear:		{"clear", 1, false, statement},
+	_Close:		{"close", 1, false, statement},
+	_Complex:	{"complex", 2, false, expression},
+	_Copy:		{"copy", 2, false, statement},
+	_Delete:	{"delete", 2, false, statement},
+	_Imag:		{"imag", 1, false, expression},
+	_Len:		{"len", 1, false, expression},
+	_Make:		{"make", 1, true, expression},
+	// To disable max/min, remove the next two lines.
+	_Max:		{"max", 1, true, expression},
+	_Min:		{"min", 1, true, expression},
+	_New:		{"new", 1, false, expression},
+	_Panic:		{"panic", 1, false, statement},
+	_Print:		{"print", 0, true, statement},
+	_Println:	{"println", 0, true, statement},
+	_Real:		{"real", 1, false, expression},
+	_Recover:	{"recover", 0, false, statement},
 
-	_Add:        {"Add", 2, false, expression},
-	_Alignof:    {"Alignof", 1, false, expression},
-	_Offsetof:   {"Offsetof", 1, false, expression},
-	_Sizeof:     {"Sizeof", 1, false, expression},
-	_Slice:      {"Slice", 2, false, expression},
-	_SliceData:  {"SliceData", 1, false, expression},
-	_String:     {"String", 2, false, expression},
-	_StringData: {"StringData", 1, false, expression},
+	_Add:		{"Add", 2, false, expression},
+	_Alignof:	{"Alignof", 1, false, expression},
+	_Offsetof:	{"Offsetof", 1, false, expression},
+	_Sizeof:	{"Sizeof", 1, false, expression},
+	_Slice:		{"Slice", 2, false, expression},
+	_SliceData:	{"SliceData", 1, false, expression},
+	_String:	{"String", 2, false, expression},
+	_StringData:	{"StringData", 1, false, expression},
 
-	_Assert: {"assert", 1, false, statement},
-	_Trace:  {"trace", 0, true, statement},
+	_Assert:	{"assert", 1, false, statement},
+	_Trace:		{"trace", 0, true, statement},
 }
 
 func defPredeclaredFuncs() {
 	for i := range predeclaredFuncs {
 		id := builtinId(i)
 		if id == _Assert || id == _Trace {
-			continue // only define these in testing environment
+			continue	// only define these in testing environment
 		}
 		def(newBuiltin(id))
 	}
@@ -226,7 +231,7 @@ func defPredeclaredFuncs() {
 // package only.
 func DefPredeclaredTestFuncs() {
 	if Universe.Lookup("assert") != nil {
-		return // already defined
+		return	// already defined
 	}
 	def(newBuiltin(_Assert))
 	def(newBuiltin(_Trace))
@@ -257,10 +262,10 @@ func def(obj Object) {
 	assert(obj.color() == black)
 	name := obj.Name()
 	if strings.Contains(name, " ") {
-		return // nothing to do
+		return	// nothing to do
 	}
 	// fix Obj link for named types
-	if typ, _ := obj.Type().(*Named); typ != nil {
+	if typ := asNamed(obj.Type()); typ != nil {
 		typ.obj = obj.(*TypeName)
 	}
 	// exported identifiers go into package unsafe

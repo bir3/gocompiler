@@ -6,7 +6,6 @@ package lex
 
 import (
 	"fmt"
-	"github.com/bir3/gocompiler/src/internal/buildcfg"
 	"os"
 	"path/filepath"
 	"strconv"
@@ -23,44 +22,29 @@ import (
 // and parses and instantiates macro definitions.
 type Input struct {
 	Stack
-	includes        []string
-	beginningOfLine bool
-	ifdefStack      []bool
-	macros          map[string]*Macro
-	text            string // Text of last token returned by Next.
-	peek            bool
-	peekToken       ScanToken
-	peekText        string
+	includes	[]string
+	beginningOfLine	bool
+	ifdefStack	[]bool
+	macros		map[string]*Macro
+	text		string	// Text of last token returned by Next.
+	peek		bool
+	peekToken	ScanToken
+	peekText	string
 }
 
 // NewInput returns an Input from the given path.
 func NewInput(name string) *Input {
 	return &Input{
 		// include directories: look in source dir, then -I directories.
-		includes:        append([]string{filepath.Dir(name)}, flags.I...),
-		beginningOfLine: true,
-		macros:          predefine(flags.D),
+		includes:		append([]string{filepath.Dir(name)}, flags.I...),
+		beginningOfLine:	true,
+		macros:			predefine(flags.D),
 	}
 }
 
 // predefine installs the macros set by the -D flag on the command line.
 func predefine(defines flags.MultiFlag) map[string]*Macro {
 	macros := make(map[string]*Macro)
-
-	// Set macros for GOEXPERIMENTs so we can easily switch
-	// runtime assembly code based on them.
-	if *flags.CompilingRuntime {
-		for _, exp := range buildcfg.Experiment.Enabled() {
-			// Define macro.
-			name := "GOEXPERIMENT_" + exp
-			macros[name] = &Macro{
-				name:   name,
-				args:   nil,
-				tokens: Tokenize("1"),
-			}
-		}
-	}
-
 	for _, name := range defines {
 		value := "1"
 		i := strings.IndexRune(name, '=')
@@ -73,15 +57,15 @@ func predefine(defines flags.MultiFlag) map[string]*Macro {
 			flags.Usage()
 		}
 		macros[name] = &Macro{
-			name:   name,
-			args:   nil,
-			tokens: Tokenize(value),
+			name:	name,
+			args:	nil,
+			tokens:	Tokenize(value),
 		}
 	}
 	return macros
 }
 
-var panicOnError bool // For testing.
+var panicOnError bool	// For testing.
 
 func (in *Input) Error(args ...interface{}) {
 	if panicOnError {
@@ -223,9 +207,9 @@ func (in *Input) defineMacro(name string, args []string, tokens []Token) {
 		in.Error("redefinition of macro:", name)
 	}
 	in.macros[name] = &Macro{
-		name:   name,
-		args:   args,
-		tokens: tokens,
+		name:	name,
+		args:	args,
+		tokens:	tokens,
 	}
 }
 
@@ -236,7 +220,7 @@ func (in *Input) macroDefinition(name string) ([]string, []Token) {
 	prevCol := in.Stack.Col()
 	tok := in.Stack.Next()
 	if tok == '\n' || tok == scanner.EOF {
-		return nil, nil // No definition for macro
+		return nil, nil	// No definition for macro
 	}
 	var args []string
 	// The C preprocessor treats
@@ -250,13 +234,13 @@ func (in *Input) macroDefinition(name string) ([]string, []Token) {
 	if tok == '(' && in.Stack.Col() == prevCol+1 {
 		// Macro has arguments. Scan list of formals.
 		acceptArg := true
-		args = []string{} // Zero length but not nil.
+		args = []string{}	// Zero length but not nil.
 	Loop:
 		for {
 			tok = in.Stack.Next()
 			switch tok {
 			case ')':
-				tok = in.Stack.Next() // First token of macro definition.
+				tok = in.Stack.Next()	// First token of macro definition.
 				break Loop
 			case ',':
 				if acceptArg {
@@ -473,7 +457,7 @@ func (in *Input) line() {
 	if tok != '\n' {
 		in.Error("unexpected token at end of #line: ", tok)
 	}
-	pos := src.MakePos(in.Base(), uint(in.Line())+1, 1) // +1 because #line nnn means line nnn starts on next line
+	pos := src.MakePos(in.Base(), uint(in.Line())+1, 1)	// +1 because #line nnn means line nnn starts on next line
 	in.Stack.SetBase(src.NewLinePragmaBase(pos, file, objabi.AbsFile(objabi.WorkingDir(), file, *flags.TrimPath), uint(line), 1))
 }
 

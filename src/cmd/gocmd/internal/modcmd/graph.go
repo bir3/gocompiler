@@ -13,14 +13,16 @@ import (
 
 	"github.com/bir3/gocompiler/src/cmd/gocmd/internal/base"
 	"github.com/bir3/gocompiler/src/cmd/gocmd/internal/cfg"
+	"github.com/bir3/gocompiler/src/cmd/gocmd/internal/gover"
 	"github.com/bir3/gocompiler/src/cmd/gocmd/internal/modload"
+	"github.com/bir3/gocompiler/src/cmd/gocmd/internal/toolchain"
 
 	"github.com/bir3/gocompiler/src/xvendor/golang.org/x/mod/module"
 )
 
 var cmdGraph = &base.Command{
-	UsageLine: "go mod graph [-go=version] [-x]",
-	Short:     "print module requirement graph",
+	UsageLine:	"go mod graph [-go=version] [-x]",
+	Short:		"print module requirement graph",
 	Long: `
 Graph prints the module requirement graph (with replacements applied)
 in text form. Each line in the output has two space-separated fields: a module
@@ -35,7 +37,7 @@ The -x flag causes graph to print the commands graph executes.
 
 See https://golang.org/ref/mod#go-mod-graph for more about 'go mod graph'.
 	`,
-	Run: runGraph,
+	Run:	runGraph,
 }
 
 var (
@@ -57,7 +59,19 @@ func runGraph(ctx context.Context, cmd *base.Command, args []string) {
 	}
 	modload.ForceUseModules = true
 	modload.RootMode = modload.NeedRoot
-	mg := modload.LoadModGraph(ctx, graphGo.String())
+
+	goVersion := graphGo.String()
+	if goVersion != "" && gover.Compare(gover.Local(), goVersion) < 0 {
+		toolchain.SwitchOrFatal(ctx, &gover.TooNewError{
+			What:		"-go flag",
+			GoVersion:	goVersion,
+		})
+	}
+
+	mg, err := modload.LoadModGraph(ctx, goVersion)
+	if err != nil {
+		base.Fatal(err)
+	}
 
 	w := bufio.NewWriter(os.Stdout)
 	defer w.Flush()

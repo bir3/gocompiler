@@ -34,15 +34,15 @@ import "github.com/bir3/gocompiler/src/cmd/internal/obj"
 //go:generate go run ../stringer.go -i $GOFILE -o anames.go -p s390x
 
 const (
-	NSNAME = 8
-	NSYM   = 50
-	NREG   = 16 // number of general purpose registers
-	NFREG  = 16 // number of floating point registers
+	NSNAME	= 8
+	NSYM	= 50
+	NREG	= 16	// number of general purpose registers
+	NFREG	= 16	// number of floating point registers
 )
 
 const (
 	// General purpose registers (GPRs).
-	REG_R0 = obj.RBaseS390X + iota
+	REG_R0	= obj.RBaseS390X + iota
 	REG_R1
 	REG_R2
 	REG_R3
@@ -136,17 +136,17 @@ const (
 	REG_AR14
 	REG_AR15
 
-	REG_RESERVED // end of allocated registers
+	REG_RESERVED	// end of allocated registers
 
-	REGARG  = -1      // -1 disables passing the first argument in register
-	REGRT1  = REG_R3  // used during zeroing of the stack - not reserved
-	REGRT2  = REG_R4  // used during zeroing of the stack - not reserved
-	REGTMP  = REG_R10 // scratch register used in the assembler and linker
-	REGTMP2 = REG_R11 // scratch register used in the assembler and linker
-	REGCTXT = REG_R12 // context for closures
-	REGG    = REG_R13 // G
-	REG_LR  = REG_R14 // link register
-	REGSP   = REG_R15 // stack pointer
+	REGARG	= -1		// -1 disables passing the first argument in register
+	REGRT1	= REG_R3	// used during zeroing of the stack - not reserved
+	REGRT2	= REG_R4	// used during zeroing of the stack - not reserved
+	REGTMP	= REG_R10	// scratch register used in the assembler and linker
+	REGTMP2	= REG_R11	// scratch register used in the assembler and linker
+	REGCTXT	= REG_R12	// context for closures
+	REGG	= REG_R13	// G
+	REG_LR	= REG_R14	// link register
+	REGSP	= REG_R15	// stack pointer
 )
 
 // LINUX for zSeries ELF Application Binary Interface Supplement
@@ -167,8 +167,8 @@ func init() {
 	f(REG_F8, 2, REG_F14, 24)
 	f(REG_F9, 2, REG_F15, 28)
 
-	f(REG_V0, 2, REG_V6, 16) // V0:15 aliased to F0:15
-	f(REG_V1, 2, REG_V7, 20) // TODO what about V16:31?
+	f(REG_V0, 2, REG_V6, 16)	// V0:15 aliased to F0:15
+	f(REG_V1, 2, REG_V7, 20)	// TODO what about V16:31?
 	f(REG_V8, 2, REG_V14, 24)
 	f(REG_V9, 2, REG_V15, 28)
 
@@ -176,56 +176,56 @@ func init() {
 }
 
 const (
-	BIG    = 32768 - 8
-	DISP12 = 4096
-	DISP16 = 65536
-	DISP20 = 1048576
+	BIG	= 32768 - 8
+	DISP12	= 4096
+	DISP16	= 65536
+	DISP20	= 1048576
 )
 
 const (
 	// mark flags
-	LEAF = 1 << iota
+	LEAF	= 1 << iota
 	BRANCH
-	USETMP // generated code of this Prog uses REGTMP
+	USETMP	// generated code of this Prog uses REGTMP
 )
 
-const ( // comments from func aclass in asmz.go
-	C_NONE     = iota
-	C_REG      // general-purpose register (64-bit)
-	C_FREG     // floating-point register (64-bit)
-	C_VREG     // vector register (128-bit)
-	C_AREG     // access register (32-bit)
-	C_ZCON     // constant == 0
-	C_SCON     // 0 <= constant <= 0x7fff (positive int16)
-	C_UCON     // constant & 0xffff == 0 (int16 or uint16)
-	C_ADDCON   // 0 > constant >= -0x8000 (negative int16)
-	C_ANDCON   // constant <= 0xffff
-	C_LCON     // constant (int32 or uint32)
-	C_DCON     // constant (int64 or uint64)
-	C_SACON    // computed address, 16-bit displacement, possibly SP-relative
-	C_LACON    // computed address, 32-bit displacement, possibly SP-relative
-	C_DACON    // computed address, 64-bit displacement?
-	C_SBRA     // short branch
-	C_LBRA     // long branch
-	C_SAUTO    // short auto
-	C_LAUTO    // long auto
-	C_ZOREG    // heap address, register-based, displacement == 0
-	C_SOREG    // heap address, register-based, int16 displacement
-	C_LOREG    // heap address, register-based, int32 displacement
-	C_TLS_LE   // TLS - local exec model (for executables)
-	C_TLS_IE   // TLS - initial exec model (for shared libraries loaded at program startup)
-	C_GOK      // general address
-	C_ADDR     // relocation for extern or static symbols (loads and stores)
-	C_SYMADDR  // relocation for extern or static symbols (address taking)
-	C_GOTADDR  // GOT slot for a symbol in -dynlink mode
-	C_TEXTSIZE // text size
+const (	// comments from func aclass in asmz.go
+	C_NONE		= iota
+	C_REG		// general-purpose register (64-bit)
+	C_FREG		// floating-point register (64-bit)
+	C_VREG		// vector register (128-bit)
+	C_AREG		// access register (32-bit)
+	C_ZCON		// constant == 0
+	C_SCON		// 0 <= constant <= 0x7fff (positive int16)
+	C_UCON		// constant & 0xffff == 0 (int16 or uint16)
+	C_ADDCON	// 0 > constant >= -0x8000 (negative int16)
+	C_ANDCON	// constant <= 0xffff
+	C_LCON		// constant (int32 or uint32)
+	C_DCON		// constant (int64 or uint64)
+	C_SACON		// computed address, 16-bit displacement, possibly SP-relative
+	C_LACON		// computed address, 32-bit displacement, possibly SP-relative
+	C_DACON		// computed address, 64-bit displacement?
+	C_SBRA		// short branch
+	C_LBRA		// long branch
+	C_SAUTO		// short auto
+	C_LAUTO		// long auto
+	C_ZOREG		// heap address, register-based, displacement == 0
+	C_SOREG		// heap address, register-based, int16 displacement
+	C_LOREG		// heap address, register-based, int32 displacement
+	C_TLS_LE	// TLS - local exec model (for executables)
+	C_TLS_IE	// TLS - initial exec model (for shared libraries loaded at program startup)
+	C_GOK		// general address
+	C_ADDR		// relocation for extern or static symbols (loads and stores)
+	C_SYMADDR	// relocation for extern or static symbols (address taking)
+	C_GOTADDR	// GOT slot for a symbol in -dynlink mode
+	C_TEXTSIZE	// text size
 	C_ANY
-	C_NCLASS // must be the last
+	C_NCLASS	// must be the last
 )
 
 const (
 	// integer arithmetic
-	AADD = obj.ABaseS390X + obj.A_ARCHSPECIFIC + iota
+	AADD	= obj.ABaseS390X + obj.A_ARCHSPECIFIC + iota
 	AADDC
 	AADDE
 	AADDW
@@ -479,6 +479,15 @@ const (
 
 	// macros
 	ACLEAR
+
+	// crypto
+	AKM
+	AKMC
+	AKLMD
+	AKIMD
+	AKDSA
+	AKMA
+	AKMCTR
 
 	// vector
 	AVA
@@ -987,17 +996,20 @@ const (
 	AVMSLOG
 	AVMSLEOG
 
-	ANOPH // NOP
+	ANOPH	// NOP
 
 	// binary
 	ABYTE
 	AWORD
 	ADWORD
 
+	// Breakpoint
+	ABRRK
+
 	// end marker
 	ALAST
 
 	// aliases
-	ABR = obj.AJMP
-	ABL = obj.ACALL
+	ABR	= obj.AJMP
+	ABL	= obj.ACALL
 )

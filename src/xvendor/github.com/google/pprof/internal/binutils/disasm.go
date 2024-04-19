@@ -26,11 +26,11 @@ import (
 )
 
 var (
-	nmOutputRE                = regexp.MustCompile(`^\s*([[:xdigit:]]+)\s+(.)\s+(.*)`)
-	objdumpAsmOutputRE        = regexp.MustCompile(`^\s*([[:xdigit:]]+):\s+(.*)`)
-	objdumpOutputFileLine     = regexp.MustCompile(`^;?\s?(.*):([0-9]+)`)
-	objdumpOutputFunction     = regexp.MustCompile(`^;?\s?(\S.*)\(\):`)
-	objdumpOutputFunctionLLVM = regexp.MustCompile(`^([[:xdigit:]]+)?\s?(.*):`)
+	nmOutputRE			= regexp.MustCompile(`^\s*([[:xdigit:]]+)\s+(.)\s+(.*)`)
+	objdumpAsmOutputRE		= regexp.MustCompile(`^\s*([[:xdigit:]]+):\s+(.*)`)
+	objdumpOutputFileLine		= regexp.MustCompile(`^;?\s?(.*):([0-9]+)`)
+	objdumpOutputFunction		= regexp.MustCompile(`^;?\s?(\S.*)\(\):`)
+	objdumpOutputFunctionLLVM	= regexp.MustCompile(`^([[:xdigit:]]+)?\s?(.*):`)
 )
 
 func findSymbols(syms []byte, file string, r *regexp.Regexp, address uint64) ([]*plugin.Sym, error) {
@@ -95,8 +95,8 @@ func matchSymbol(names []string, start, end uint64, r *regexp.Regexp, address ui
 		// Match all possible demangled versions of the name.
 		for _, o := range [][]demangle.Option{
 			{demangle.NoClones},
-			{demangle.NoParams},
-			{demangle.NoParams, demangle.NoTemplateParams},
+			{demangle.NoParams, demangle.NoEnclosingParams},
+			{demangle.NoParams, demangle.NoEnclosingParams, demangle.NoTemplateParams},
 		} {
 			if demangled, err := demangle.ToString(name, o...); err == nil && r.MatchString(demangled) {
 				return []string{demangled}
@@ -128,11 +128,11 @@ func disassemble(asm []byte) ([]plugin.Inst, error) {
 			if address, err := strconv.ParseUint(fields[1], 16, 64); err == nil {
 				assembly = append(assembly,
 					plugin.Inst{
-						Addr:     address,
-						Text:     fields[2],
-						Function: function,
-						File:     file,
-						Line:     line,
+						Addr:		address,
+						Text:		fields[2],
+						Function:	function,
+						File:		file,
+						Line:		line,
 					})
 				continue
 			}

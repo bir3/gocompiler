@@ -35,12 +35,12 @@ import (
 
 // webInterface holds the state needed for serving a browser based interface.
 type webInterface struct {
-	prof         *profile.Profile
-	copier       profileCopier
-	options      *plugin.Options
-	help         map[string]string
-	templates    *template.Template
-	settingsFile string
+	prof		*profile.Profile
+	copier		profileCopier
+	options		*plugin.Options
+	help		map[string]string
+	templates	*template.Template
+	settingsFile	string
 }
 
 func makeWebInterface(p *profile.Profile, copier profileCopier, opt *plugin.Options) (*webInterface, error) {
@@ -52,12 +52,12 @@ func makeWebInterface(p *profile.Profile, copier profileCopier, opt *plugin.Opti
 	addTemplates(templates)
 	report.AddSourceTemplates(templates)
 	return &webInterface{
-		prof:         p,
-		copier:       copier,
-		options:      opt,
-		help:         make(map[string]string),
-		templates:    templates,
-		settingsFile: settingsFile,
+		prof:		p,
+		copier:		copier,
+		options:	opt,
+		help:		make(map[string]string),
+		templates:	templates,
+		settingsFile:	settingsFile,
 	}, nil
 }
 
@@ -67,7 +67,7 @@ const maxEntries = 50
 // errorCatcher is a UI that captures errors for reporting to the browser.
 type errorCatcher struct {
 	plugin.UI
-	errors []string
+	errors	[]string
 }
 
 func (ec *errorCatcher) PrintErr(args ...interface{}) {
@@ -77,19 +77,19 @@ func (ec *errorCatcher) PrintErr(args ...interface{}) {
 
 // webArgs contains arguments passed to templates in webhtml.go.
 type webArgs struct {
-	Title       string
-	Errors      []string
-	Total       int64
-	SampleTypes []string
-	Legend      []string
-	Help        map[string]string
-	Nodes       []string
-	HTMLBody    template.HTML
-	TextBody    string
-	Top         []report.TextItem
-	FlameGraph  template.JS
-	Stacks      template.JS
-	Configs     []configMenuEntry
+	Title		string
+	Errors		[]string
+	Total		int64
+	SampleTypes	[]string
+	Legend		[]string
+	Help		map[string]string
+	Nodes		[]string
+	HTMLBody	template.HTML
+	TextBody	string
+	Top		[]report.TextItem
+	FlameGraph	template.JS
+	Stacks		template.JS
+	Configs		[]configMenuEntry
 }
 
 func serveWebInterface(hostport string, p *profile.Profile, o *plugin.Options, disableBrowser bool) error {
@@ -112,7 +112,7 @@ func serveWebInterface(hostport string, p *profile.Profile, o *plugin.Options, d
 	ui.help["details"] = "Show information about the profile and this view"
 	ui.help["graph"] = "Display profile as a directed graph"
 	ui.help["flamegraph"] = "Display profile as a flame graph"
-	ui.help["flamegraph2"] = "Display profile as a flame graph (experimental version that can display caller info on selection)"
+	ui.help["flamegraphold"] = "Display profile as a flame graph (old version; slated for removal)"
 	ui.help["reset"] = "Show the entire profile"
 	ui.help["save_config"] = "Save current settings"
 
@@ -121,19 +121,20 @@ func serveWebInterface(hostport string, p *profile.Profile, o *plugin.Options, d
 		server = defaultWebServer
 	}
 	args := &plugin.HTTPServerArgs{
-		Hostport: net.JoinHostPort(host, strconv.Itoa(port)),
-		Host:     host,
-		Port:     port,
+		Hostport:	net.JoinHostPort(host, strconv.Itoa(port)),
+		Host:		host,
+		Port:		port,
 		Handlers: map[string]http.Handler{
-			"/":             http.HandlerFunc(ui.dot),
-			"/top":          http.HandlerFunc(ui.top),
-			"/disasm":       http.HandlerFunc(ui.disasm),
-			"/source":       http.HandlerFunc(ui.source),
-			"/peek":         http.HandlerFunc(ui.peek),
-			"/flamegraph":   http.HandlerFunc(ui.flamegraph),
-			"/flamegraph2":  http.HandlerFunc(ui.stackView), // Experimental
-			"/saveconfig":   http.HandlerFunc(ui.saveConfig),
-			"/deleteconfig": http.HandlerFunc(ui.deleteConfig),
+			"/":			http.HandlerFunc(ui.dot),
+			"/top":			http.HandlerFunc(ui.top),
+			"/disasm":		http.HandlerFunc(ui.disasm),
+			"/source":		http.HandlerFunc(ui.source),
+			"/peek":		http.HandlerFunc(ui.peek),
+			"/flamegraphold":	http.HandlerFunc(ui.flamegraph),
+			"/flamegraph":		http.HandlerFunc(ui.stackView),
+			"/flamegraph2":		http.HandlerFunc(ui.stackView),	// Support older URL
+			"/saveconfig":		http.HandlerFunc(ui.saveConfig),
+			"/deleteconfig":	http.HandlerFunc(ui.deleteConfig),
 			"/download": http.HandlerFunc(func(w http.ResponseWriter, req *http.Request) {
 				w.Header().Set("Content-Type", "application/vnd.google.protobuf+gzip")
 				w.Header().Set("Content-Disposition", "attachment;filename=profile.pb.gz")
@@ -305,7 +306,7 @@ func (ui *webInterface) render(w http.ResponseWriter, req *http.Request, tmpl st
 func (ui *webInterface) dot(w http.ResponseWriter, req *http.Request) {
 	rpt, errList := ui.makeReport(w, req, []string{"svg"}, nil)
 	if rpt == nil {
-		return // error already reported
+		return	// error already reported
 	}
 
 	// Generate dot graph.
@@ -325,14 +326,14 @@ func (ui *webInterface) dot(w http.ResponseWriter, req *http.Request) {
 	}
 
 	// Get all node names into an array.
-	nodes := []string{""} // dot starts with node numbered 1
+	nodes := []string{""}	// dot starts with node numbered 1
 	for _, n := range g.Nodes {
 		nodes = append(nodes, n.Info.Name)
 	}
 
 	ui.render(w, req, "graph", rpt, errList, legend, webArgs{
-		HTMLBody: template.HTML(string(svg)),
-		Nodes:    nodes,
+		HTMLBody:	template.HTML(string(svg)),
+		Nodes:		nodes,
 	})
 }
 
@@ -359,7 +360,7 @@ func (ui *webInterface) top(w http.ResponseWriter, req *http.Request) {
 		cfg.NodeCount = 500
 	})
 	if rpt == nil {
-		return // error already reported
+		return	// error already reported
 	}
 	top, legend := report.TextItems(rpt)
 	var nodes []string
@@ -368,8 +369,8 @@ func (ui *webInterface) top(w http.ResponseWriter, req *http.Request) {
 	}
 
 	ui.render(w, req, "top", rpt, errList, legend, webArgs{
-		Top:   top,
-		Nodes: nodes,
+		Top:	top,
+		Nodes:	nodes,
 	})
 }
 
@@ -378,7 +379,7 @@ func (ui *webInterface) disasm(w http.ResponseWriter, req *http.Request) {
 	args := []string{"disasm", req.URL.Query().Get("f")}
 	rpt, errList := ui.makeReport(w, req, args, nil)
 	if rpt == nil {
-		return // error already reported
+		return	// error already reported
 	}
 
 	out := &bytes.Buffer{}
@@ -401,7 +402,7 @@ func (ui *webInterface) source(w http.ResponseWriter, req *http.Request) {
 	args := []string{"weblist", req.URL.Query().Get("f")}
 	rpt, errList := ui.makeReport(w, req, args, nil)
 	if rpt == nil {
-		return // error already reported
+		return	// error already reported
 	}
 
 	// Generate source listing.
@@ -425,7 +426,7 @@ func (ui *webInterface) peek(w http.ResponseWriter, req *http.Request) {
 		cfg.Granularity = "lines"
 	})
 	if rpt == nil {
-		return // error already reported
+		return	// error already reported
 	}
 
 	out := &bytes.Buffer{}

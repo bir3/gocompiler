@@ -28,13 +28,13 @@ import (
 )
 
 type transport struct {
-	cert       *string
-	key        *string
-	ca         *string
-	caCertPool *x509.CertPool
-	certs      []tls.Certificate
-	initOnce   sync.Once
-	initErr    error
+	cert		*string
+	key		*string
+	ca		*string
+	caCertPool	*x509.CertPool
+	certs		[]tls.Certificate
+	initOnce	sync.Once
+	initErr		error
 }
 
 const extraUsage = `    -tls_cert             TLS client certificate file for fetching profile and symbols
@@ -52,9 +52,9 @@ func New(flagset plugin.FlagSet) http.RoundTripper {
 	}
 	flagset.AddExtraUsage(extraUsage)
 	return &transport{
-		cert: flagset.String("tls_cert", "", "TLS client certificate file for fetching profile and symbols"),
-		key:  flagset.String("tls_key", "", "TLS private key file for fetching profile and symbols"),
-		ca:   flagset.String("tls_ca", "", "TLS CA certs file for fetching profile and symbols"),
+		cert:	flagset.String("tls_cert", "", "TLS client certificate file for fetching profile and symbols"),
+		key:	flagset.String("tls_key", "", "TLS private key file for fetching profile and symbols"),
+		ca:	flagset.String("tls_ca", "", "TLS CA certs file for fetching profile and symbols"),
 	}
 }
 
@@ -108,8 +108,8 @@ func (tr *transport) RoundTrip(req *http.Request) (*http.Response, error) {
 	}
 
 	tlsConfig := &tls.Config{
-		RootCAs:      tr.caCertPool,
-		Certificates: tr.certs,
+		RootCAs:	tr.caCertPool,
+		Certificates:	tr.certs,
 	}
 
 	if req.URL.Scheme == "https+insecure" {
@@ -123,8 +123,8 @@ func (tr *transport) RoundTrip(req *http.Request) (*http.Response, error) {
 	}
 
 	transport := http.Transport{
-		Proxy:           http.ProxyFromEnvironment,
-		TLSClientConfig: tlsConfig,
+		Proxy:			http.ProxyFromEnvironment,
+		TLSClientConfig:	tlsConfig,
 	}
 
 	return transport.RoundTrip(req)

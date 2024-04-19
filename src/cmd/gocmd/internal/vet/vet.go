@@ -24,9 +24,9 @@ func init() {
 }
 
 var CmdVet = &base.Command{
-	CustomFlags: true,
-	UsageLine:   "go vet [-C dir] [-n] [-x] [-vettool prog] [build flags] [vet flags] [packages]",
-	Short:       "report likely mistakes in packages",
+	CustomFlags:	true,
+	UsageLine:	"go vet [build flags] [-vettool prog] [vet flags] [packages]",
+	Short:		"report likely mistakes in packages",
 	Long: `
 Vet runs the Go vet command on the packages named by the import paths.
 
@@ -34,10 +34,6 @@ For more about vet and its flags, see 'go doc cmd/vet'.
 For more about specifying packages, see 'go help packages'.
 For a list of checkers and their flags, see 'go tool vet help'.
 For details of a specific checker such as 'printf', see 'go tool vet help printf'.
-
-The -C flag changes to dir before running the 'go vet' command.
-The -n flag prints commands that would be executed.
-The -x flag prints commands as they are executed.
 
 The -vettool=prog flag selects a different analysis tool with alternative
 or additional checks.
@@ -47,7 +43,7 @@ For example, the 'shadow' analyzer can be built and run using these commands:
   go vet -vettool=$(which shadow)
 
 The build flags supported by go vet are those that control package resolution
-and execution, such as -n, -x, -v, -tags, and -toolexec.
+and execution, such as -C, -n, -x, -v, -tags, and -toolexec.
 For more about these flags, see 'go help build'.
 
 See also: go fmt, go fix.
@@ -56,7 +52,7 @@ See also: go fmt, go fix.
 
 func runVet(ctx context.Context, cmd *base.Command, args []string) {
 	vetFlags, pkgArgs := vetFlags(args)
-	modload.InitWorkfile() // The vet command does custom flag processing; initialize workspaces after that.
+	modload.InitWorkfile()	// The vet command does custom flag processing; initialize workspaces after that.
 
 	if cfg.DebugTrace != "" {
 		var close func() error
@@ -98,7 +94,7 @@ func runVet(ctx context.Context, cmd *base.Command, args []string) {
 	b := work.NewBuilder("")
 	defer func() {
 		if err := b.Close(); err != nil {
-			base.Fatalf("go: %v", err)
+			base.Fatal(err)
 		}
 	}()
 

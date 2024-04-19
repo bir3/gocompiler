@@ -27,7 +27,7 @@ func (check *Checker) labels(body *ast.BlockStmt) {
 		name := jmp.Label.Name
 		if alt := all.Lookup(name); alt != nil {
 			msg = "goto %s jumps into block"
-			alt.(*Label).used = true // avoid another error
+			alt.(*Label).used = true	// avoid another error
 			code = JumpIntoBlock
 		} else {
 			msg = "label %s not declared"
@@ -47,9 +47,9 @@ func (check *Checker) labels(body *ast.BlockStmt) {
 
 // A block tracks label declarations in a block and its enclosing blocks.
 type block struct {
-	parent *block                      // enclosing block
-	lstmt  *ast.LabeledStmt            // labeled statement to which this block belongs, or nil
-	labels map[string]*ast.LabeledStmt // allocated lazily
+	parent	*block				// enclosing block
+	lstmt	*ast.LabeledStmt		// labeled statement to which this block belongs, or nil
+	labels	map[string]*ast.LabeledStmt	// allocated lazily
 }
 
 // insert records a new label declaration for the current block.
@@ -96,8 +96,8 @@ func (check *Checker) blockBranches(all *Scope, parent *block, lstmt *ast.Labele
 	b := &block{parent: parent, lstmt: lstmt}
 
 	var (
-		varDeclPos         token.Pos
-		fwdJumps, badJumps []*ast.BranchStmt
+		varDeclPos		token.Pos
+		fwdJumps, badJumps	[]*ast.BranchStmt
 	)
 
 	// All forward jumps jumping over a variable declaration are possibly
@@ -105,7 +105,7 @@ func (check *Checker) blockBranches(all *Scope, parent *block, lstmt *ast.Labele
 	// recordVarDecl records them for the given position.
 	recordVarDecl := func(pos token.Pos) {
 		varDeclPos = pos
-		badJumps = append(badJumps[:0], fwdJumps...) // copy fwdJumps to badJumps
+		badJumps = append(badJumps[:0], fwdJumps...)	// copy fwdJumps to badJumps
 	}
 
 	jumpsOverVarDecl := func(jmp *ast.BranchStmt) bool {
@@ -175,7 +175,7 @@ func (check *Checker) blockBranches(all *Scope, parent *block, lstmt *ast.Labele
 
 		case *ast.BranchStmt:
 			if s.Label == nil {
-				return // checked in 1st pass (check.stmt)
+				return	// checked in 1st pass (check.stmt)
 			}
 
 			// determine and validate target

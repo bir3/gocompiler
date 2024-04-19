@@ -57,13 +57,13 @@ import (
 // If multiple rules match, the first one in file order is selected.
 
 var (
-	genLog  = flag.Bool("log", false, "generate code that logs; for debugging only")
-	addLine = flag.Bool("line", false, "add line number comment to generated rules; for debugging only")
+	genLog	= flag.Bool("log", false, "generate code that logs; for debugging only")
+	addLine	= flag.Bool("line", false, "add line number comment to generated rules; for debugging only")
 )
 
 type Rule struct {
-	Rule string
-	Loc  string // file name & line number
+	Rule	string
+	Loc	string	// file name & line number
 }
 
 func (r Rule) String() string {
@@ -87,9 +87,9 @@ func (r Rule) parse() (match, cond, result string) {
 	return match, cond, result
 }
 
-func genRules(arch arch)          { genRulesSuffix(arch, "") }
-func genSplitLoadRules(arch arch) { genRulesSuffix(arch, "splitload") }
-func genLateLowerRules(arch arch) { genRulesSuffix(arch, "latelower") }
+func genRules(arch arch)		{ genRulesSuffix(arch, "") }
+func genSplitLoadRules(arch arch)	{ genRulesSuffix(arch, "splitload") }
+func genLateLowerRules(arch arch)	{ genRulesSuffix(arch, "latelower") }
 
 func genRulesSuffix(arch arch, suff string) {
 	// Open input file.
@@ -111,7 +111,7 @@ func genRulesSuffix(arch arch, suff string) {
 	scanner := bufio.NewScanner(text)
 	rule := ""
 	var lineno int
-	var ruleLineno int // line number of "=>"
+	var ruleLineno int	// line number of "=>"
 	for scanner.Scan() {
 		lineno++
 		line := scanner.Text()
@@ -132,12 +132,12 @@ func genRulesSuffix(arch arch, suff string) {
 			ruleLineno = lineno
 		}
 		if strings.HasSuffix(rule, "=>") {
-			continue // continue on the next line
+			continue	// continue on the next line
 		}
 		if n := balance(rule); n > 0 {
-			continue // open parentheses remain, continue on the next line
+			continue	// open parentheses remain, continue on the next line
 		} else if n < 0 {
-			break // continuing the line can't help, and it will only make errors worse
+			break	// continuing the line can't help, and it will only make errors worse
 		}
 
 		loc := fmt.Sprintf("%s%s.rules:%d", arch.name, suff, ruleLineno)
@@ -192,7 +192,7 @@ func genRulesSuffix(arch arch, suff string) {
 		swc.add(stmtf("return rewriteValue%s%s_%s(v)", arch.name, suff, op))
 		sw.add(swc)
 	}
-	if len(sw.List) > 0 { // skip if empty
+	if len(sw.List) > 0 {	// skip if empty
 		fn.add(sw)
 	}
 	fn.add(stmtf("return false"))
@@ -211,9 +211,9 @@ func genRulesSuffix(arch arch, suff string) {
 		// that the previous rule wasn't unconditional.
 		var rr *RuleRewrite
 		fn := &Func{
-			Kind:   "Value",
-			Suffix: fmt.Sprintf("_%s", op),
-			ArgLen: opByName(arch, op).argLength,
+			Kind:	"Value",
+			Suffix:	fmt.Sprintf("_%s", op),
+			ArgLen:	opByName(arch, op).argLength,
 		}
 		fn.add(declReserved("b", "v.Block"))
 		fn.add(declReserved("config", "b.Func.Config"))
@@ -264,7 +264,7 @@ func genRulesSuffix(arch arch, suff string) {
 		}
 		sw.add(swc)
 	}
-	if len(sw.List) > 0 { // skip if empty
+	if len(sw.List) > 0 {	// skip if empty
 		fn.add(sw)
 	}
 	fn.add(stmtf("return false"))
@@ -348,16 +348,16 @@ type unusedInspector struct {
 	// scope is the current scope, which can never be nil when a declaration
 	// is encountered. That is, the unusedInspector.node entrypoint should
 	// generally be an entire file or block.
-	scope *scope
+	scope	*scope
 
 	// unused is the resulting set of unused declared names, indexed by the
 	// starting position of the node that declared the name.
-	unused map[token.Pos]bool
+	unused	map[token.Pos]bool
 
 	// defining is the object currently being defined; this is useful so
 	// that if "foo := bar" is unused and removed, we can then detect if
 	// "bar" becomes unused as well.
-	defining *object
+	defining	*object
 }
 
 // scoped opens a new scope when called, and returns a function which closes
@@ -409,8 +409,8 @@ func (u *unusedInspector) node(node ast.Node) {
 		impPath, _ := strconv.Unquote(node.Path.Value)
 		name := path.Base(impPath)
 		u.scope.objects[name] = &object{
-			name: name,
-			pos:  node.Pos(),
+			name:	name,
+			pos:	node.Pos(),
 		}
 	case *ast.FuncDecl:
 		u.node(node.Type)
@@ -493,8 +493,8 @@ func (u *unusedInspector) node(node ast.Node) {
 
 		name := lhs[0].(*ast.Ident)
 		obj := &object{
-			name: name.Name,
-			pos:  name.NamePos,
+			name:	name.Name,
+			pos:	name.NamePos,
 		}
 
 		old := u.defining
@@ -548,8 +548,8 @@ func (u *unusedInspector) node(node ast.Node) {
 // scope keeps track of a certain scope and its declared names, as well as the
 // outer (parent) scope.
 type scope struct {
-	outer   *scope             // can be nil, if this is the top-level scope
-	objects map[string]*object // indexed by each declared name
+	outer	*scope			// can be nil, if this is the top-level scope
+	objects	map[string]*object	// indexed by each declared name
 }
 
 func (s *scope) Lookup(name string) *object {
@@ -564,11 +564,11 @@ func (s *scope) Lookup(name string) *object {
 
 // object keeps track of a declared name, such as a variable or import.
 type object struct {
-	name string
-	pos  token.Pos // start position of the node declaring the object
+	name	string
+	pos	token.Pos	// start position of the node declaring the object
 
-	numUses int       // number of times this object is used
-	used    []*object // objects that its declaration makes use of
+	numUses	int		// number of times this object is used
+	used	[]*object	// objects that its declaration makes use of
 }
 
 func fprint(w io.Writer, n Node) {
@@ -576,8 +576,7 @@ func fprint(w io.Writer, n Node) {
 	case *File:
 		file := n
 		seenRewrite := make(map[[3]string]string)
-		fmt.Fprintf(w, "// Code generated from _gen/%s%s.rules; DO NOT EDIT.\n", n.Arch.name, n.Suffix)
-		fmt.Fprintf(w, "// generated with: cd _gen; go run .\n")
+		fmt.Fprintf(w, "// Code generated from _gen/%s%s.rules using 'go generate'; DO NOT EDIT.\n", n.Arch.name, n.Suffix)
 		fmt.Fprintf(w, "\npackage ssa\n")
 		for _, path := range append([]string{
 			"fmt",
@@ -586,6 +585,7 @@ func fprint(w io.Writer, n Node) {
 			"cmd/internal/obj",
 			"cmd/compile/internal/base",
 			"cmd/compile/internal/types",
+			"cmd/compile/internal/ir",
 		}, n.Arch.imports...) {
 			fmt.Fprintf(w, "import %q\n", path)
 		}
@@ -688,7 +688,7 @@ func fprint(w io.Writer, n Node) {
 }
 
 var printConfig = printer.Config{
-	Mode: printer.RawFormat, // we use go/format later, so skip work here
+	Mode: printer.RawFormat,	// we use go/format later, so skip work here
 }
 
 var emptyFset = token.NewFileSet()
@@ -703,8 +703,8 @@ type Statement interface{}
 // BodyBase is shared by all of our statement pseudo-node types which can
 // contain other statements.
 type BodyBase struct {
-	List    []Statement
-	CanFail bool
+	List	[]Statement
+	CanFail	bool
 }
 
 func (w *BodyBase) add(node Statement) {
@@ -718,9 +718,9 @@ func (w *BodyBase) add(node Statement) {
 			// Add to the previous "if <cond> { break }" via a
 			// logical OR, which will save verbosity.
 			last.Cond = &ast.BinaryExpr{
-				Op: token.LOR,
-				X:  last.Cond,
-				Y:  node.Cond,
+				Op:	token.LOR,
+				X:	last.Cond,
+				Y:	node.Cond,
 			}
 			return
 		}
@@ -731,9 +731,9 @@ func (w *BodyBase) add(node Statement) {
 
 // predeclared contains globally known tokens that should not be redefined.
 var predeclared = map[string]bool{
-	"nil":   true,
-	"false": true,
-	"true":  true,
+	"nil":		true,
+	"false":	true,
+	"true":		true,
 }
 
 // declared reports if the body contains a Declare with the given name.
@@ -759,45 +759,45 @@ func (w *BodyBase) declared(name string) bool {
 // Note that ast.Expr is always used as-is; we don't declare our own expression
 // nodes.
 type (
-	File struct {
-		BodyBase // []*Func
-		Arch     arch
-		Suffix   string
+	File	struct {
+		BodyBase	// []*Func
+		Arch		arch
+		Suffix		string
 	}
-	Func struct {
+	Func	struct {
 		BodyBase
-		Kind   string // "Value" or "Block"
-		Suffix string
-		ArgLen int32 // if kind == "Value", number of args for this op
+		Kind	string	// "Value" or "Block"
+		Suffix	string
+		ArgLen	int32	// if kind == "Value", number of args for this op
 	}
-	Switch struct {
-		BodyBase // []*Case
-		Expr     ast.Expr
+	Switch	struct {
+		BodyBase	// []*Case
+		Expr		ast.Expr
 	}
-	Case struct {
+	Case	struct {
 		BodyBase
-		Expr ast.Expr
+		Expr	ast.Expr
 	}
-	RuleRewrite struct {
+	RuleRewrite	struct {
 		BodyBase
-		Match, Cond, Result string // top comments
-		Check               string // top-level boolean expression
+		Match, Cond, Result	string	// top comments
+		Check			string	// top-level boolean expression
 
-		Alloc        int    // for unique var names
-		Loc          string // file name & line number of the original rule
-		CommuteDepth int    // used to track depth of commute loops
+		Alloc		int	// for unique var names
+		Loc		string	// file name & line number of the original rule
+		CommuteDepth	int	// used to track depth of commute loops
 	}
-	Declare struct {
-		Name  string
-		Value ast.Expr
+	Declare	struct {
+		Name	string
+		Value	ast.Expr
 	}
-	CondBreak struct {
-		Cond              ast.Expr
-		InsideCommuteLoop bool
+	CondBreak	struct {
+		Cond			ast.Expr
+		InsideCommuteLoop	bool
 	}
-	StartCommuteLoop struct {
-		Depth int
-		V     string
+	StartCommuteLoop	struct {
+		Depth	int
+		V	string
 	}
 )
 
@@ -826,11 +826,11 @@ func stmtf(format string, a ...interface{}) Statement {
 }
 
 var reservedNames = map[string]bool{
-	"v":      true, // Values[i], etc
-	"b":      true, // v.Block
-	"config": true, // b.Func.Config
-	"fe":     true, // b.Func.fe
-	"typ":    true, // &b.Func.Config.Types
+	"v":		true,	// Values[i], etc
+	"b":		true,	// v.Block
+	"config":	true,	// b.Func.Config
+	"fe":		true,	// b.Func.fe
+	"typ":		true,	// &b.Func.Config.Types
 }
 
 // declf constructs a simple "name := value" declaration,
@@ -864,7 +864,7 @@ func breakf(format string, a ...interface{}) *CondBreak {
 func genBlockRewrite(rule Rule, arch arch, data blockData) *RuleRewrite {
 	rr := &RuleRewrite{Loc: rule.Loc}
 	rr.Match, rr.Cond, rr.Result = rule.parse()
-	_, _, auxint, aux, s := extract(rr.Match) // remove parens, then split
+	_, _, auxint, aux, s := extract(rr.Match)	// remove parens, then split
 
 	// check match of control values
 	if len(s) < data.controls {
@@ -880,7 +880,7 @@ func genBlockRewrite(rule Rule, arch arch, data blockData) *RuleRewrite {
 				vname = fmt.Sprintf("v_%v", i)
 			}
 			rr.add(declf(rr.Loc, vname, cname))
-			p, op := genMatch0(rr, arch, expr, vname, nil, false) // TODO: pass non-nil cnt?
+			p, op := genMatch0(rr, arch, expr, vname, nil, false)	// TODO: pass non-nil cnt?
 			if op != "" {
 				check := fmt.Sprintf("%s.Op == %s", cname, op)
 				if rr.Check == "" {
@@ -922,7 +922,7 @@ func genBlockRewrite(rule Rule, arch arch, data blockData) *RuleRewrite {
 	}
 
 	// Rule matches. Generate result.
-	outop, _, auxint, aux, t := extract(rr.Result) // remove parens, then split
+	outop, _, auxint, aux, t := extract(rr.Result)	// remove parens, then split
 	blockName, outdata := getBlockInfo(outop, arch)
 	if len(t) < outdata.controls {
 		log.Fatalf("incorrect number of output arguments in %s, got %v wanted at least %v", rule, len(s), outdata.controls)
@@ -954,7 +954,7 @@ func genBlockRewrite(rule Rule, arch arch, data blockData) *RuleRewrite {
 		// TODO: does it always make sense to use the source position
 		// of the original control values or should we be using the
 		// block's source position in some cases?
-		newpos := "b.Pos" // default to block's source position
+		newpos := "b.Pos"	// default to block's source position
 		if i < len(pos) && pos[i] != "" {
 			// Use the previous control value's source position.
 			newpos = pos[i]
@@ -1271,9 +1271,9 @@ func split(s string) []string {
 
 outer:
 	for s != "" {
-		d := 0               // depth of ({[<
-		var open, close byte // opening and closing markers ({[< or )}]>
-		nonsp := false       // found a non-space char so far
+		d := 0			// depth of ({[<
+		var open, close byte	// opening and closing markers ({[< or )}]>
+		nonsp := false		// found a non-space char so far
 		for i := 0; i < len(s); i++ {
 			switch {
 			case d == 0 && s[i] == '(':
@@ -1329,7 +1329,7 @@ func isBlock(name string, arch arch) bool {
 }
 
 func extract(val string) (op, typ, auxint, aux string, args []string) {
-	val = val[1 : len(val)-1] // remove ()
+	val = val[1 : len(val)-1]	// remove ()
 
 	// Split val up into regions.
 	// Split by spaces/tabs, except those contained in (), {}, [], or <>.
@@ -1340,11 +1340,11 @@ func extract(val string) (op, typ, auxint, aux string, args []string) {
 	for _, a := range s[1:] {
 		switch a[0] {
 		case '<':
-			typ = a[1 : len(a)-1] // remove <>
+			typ = a[1 : len(a)-1]	// remove <>
 		case '[':
-			auxint = a[1 : len(a)-1] // remove []
+			auxint = a[1 : len(a)-1]	// remove []
 		case '{':
-			aux = a[1 : len(a)-1] // remove {}
+			aux = a[1 : len(a)-1]	// remove {}
 		default:
 			args = append(args, a)
 		}
@@ -1400,7 +1400,7 @@ func parseValue(val string, arch arch, loc string) (op opData, oparch, typ, auxi
 	if op.name == "" {
 		// Failed to find the op.
 		// Run through everything again with strict=false
-		// to generate useful diagnosic messages before failing.
+		// to generate useful diagnostic messages before failing.
 		for _, x := range genericOps {
 			match(x, false, "generic")
 		}
@@ -1565,10 +1565,10 @@ func expandOr(r string) []string {
 			if excludeFromExpansion(r, idx) {
 				continue
 			}
-			buf.WriteString(r[x:idx[0]])              // write bytes we've skipped over so far
-			s := r[idx[0]+1 : idx[1]-1]               // remove leading "(" and trailing ")"
-			buf.WriteString(strings.Split(s, "|")[i]) // write the op component for this rule
-			x = idx[1]                                // note that we've written more bytes
+			buf.WriteString(r[x:idx[0]])			// write bytes we've skipped over so far
+			s := r[idx[0]+1 : idx[1]-1]			// remove leading "(" and trailing ")"
+			buf.WriteString(strings.Split(s, "|")[i])	// write the op component for this rule
+			x = idx[1]					// note that we've written more bytes
 		}
 		buf.WriteString(r[x:])
 		res[i] = buf.String()
@@ -1863,7 +1863,7 @@ func (b blockData) auxIntType() string {
 func title(s string) string {
 	if i := strings.Index(s, "."); i >= 0 {
 		switch strings.ToLower(s[:i]) {
-		case "s390x": // keep arch prefix for clarity
+		case "s390x":	// keep arch prefix for clarity
 			s = s[:i] + s[i+1:]
 		default:
 			s = s[i+1:]
@@ -1875,7 +1875,7 @@ func title(s string) string {
 func unTitle(s string) string {
 	if i := strings.Index(s, "."); i >= 0 {
 		switch strings.ToLower(s[:i]) {
-		case "s390x": // keep arch prefix for clarity
+		case "s390x":	// keep arch prefix for clarity
 			s = s[:i] + s[i+1:]
 		default:
 			s = s[i+1:]

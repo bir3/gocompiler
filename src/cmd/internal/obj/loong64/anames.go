@@ -5,7 +5,7 @@ package loong64
 import "github.com/bir3/gocompiler/src/cmd/internal/obj"
 
 var Anames = []string{
-	obj.A_ARCHSPECIFIC: "ABSD",
+	obj.A_ARCHSPECIFIC:	"ABSD",
 	"ABSF",
 	"ADD",
 	"ADDD",
@@ -33,6 +33,7 @@ var Anames = []string{
 	"LU12IW",
 	"LU32ID",
 	"LU52ID",
+	"PCALAU12I",
 	"PCADDU12I",
 	"JIRL",
 	"BGE",
@@ -130,5 +131,8 @@ var Anames = []string{
 	"MOVDV",
 	"MOVVF",
 	"MOVVD",
+	"RDTIMELW",
+	"RDTIMEHW",
+	"RDTIMED",
 	"LAST",
 }

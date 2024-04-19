@@ -22,9 +22,9 @@ import (
 )
 
 var (
-	viewBox  = regexp.MustCompile(`<svg\s*width="[^"]+"\s*height="[^"]+"\s*viewBox="[^"]+"`)
-	graphID  = regexp.MustCompile(`<g id="graph\d"`)
-	svgClose = regexp.MustCompile(`</svg>`)
+	viewBox		= regexp.MustCompile(`<svg\s*width="[^"]+"\s*height="[^"]+"\s*viewBox="[^"]+"`)
+	graphID		= regexp.MustCompile(`<g id="graph\d"`)
+	svgClose	= regexp.MustCompile(`</svg>`)
 )
 
 // massageSVG enhances the SVG output from DOT to provide better

@@ -41,9 +41,9 @@ func ForCompiler(fset *token.FileSet, compiler string, lookup Lookup) types.Impo
 	switch compiler {
 	case "gc":
 		return &gcimports{
-			fset:     fset,
-			packages: make(map[string]*types.Package),
-			lookup:   lookup,
+			fset:		fset,
+			packages:	make(map[string]*types.Package),
+			lookup:		lookup,
 		}
 
 	case "gccgo":
@@ -52,9 +52,9 @@ func ForCompiler(fset *token.FileSet, compiler string, lookup Lookup) types.Impo
 			return nil
 		}
 		return &gccgoimports{
-			packages: make(map[string]*types.Package),
-			importer: inst.GetImporter(nil, nil),
-			lookup:   lookup,
+			packages:	make(map[string]*types.Package),
+			importer:	inst.GetImporter(nil, nil),
+			lookup:		lookup,
 		}
 
 	case "source":
@@ -69,16 +69,16 @@ func ForCompiler(fset *token.FileSet, compiler string, lookup Lookup) types.Impo
 	return nil
 }
 
-// For calls ForCompiler with a new FileSet.
+// For calls [ForCompiler] with a new FileSet.
 //
-// Deprecated: Use ForCompiler, which populates a FileSet
+// Deprecated: Use [ForCompiler], which populates a FileSet
 // with the positions of objects created by the importer.
 func For(compiler string, lookup Lookup) types.Importer {
 	return ForCompiler(token.NewFileSet(), compiler, lookup)
 }
 
 // Default returns an Importer for the compiler that built the running binary.
-// If available, the result implements types.ImporterFrom.
+// If available, the result implements [types.ImporterFrom].
 func Default() types.Importer {
 	return For(runtime.Compiler, nil)
 }
@@ -86,9 +86,9 @@ func Default() types.Importer {
 // gc importer
 
 type gcimports struct {
-	fset     *token.FileSet
-	packages map[string]*types.Package
-	lookup   Lookup
+	fset		*token.FileSet
+	packages	map[string]*types.Package
+	lookup		Lookup
 }
 
 func (m *gcimports) Import(path string) (*types.Package, error) {
@@ -105,9 +105,9 @@ func (m *gcimports) ImportFrom(path, srcDir string, mode types.ImportMode) (*typ
 // gccgo importer
 
 type gccgoimports struct {
-	packages map[string]*types.Package
-	importer gccgoimporter.Importer
-	lookup   Lookup
+	packages	map[string]*types.Package
+	importer	gccgoimporter.Importer
+	lookup		Lookup
 }
 
 func (m *gccgoimports) Import(path string) (*types.Package, error) {

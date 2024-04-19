@@ -8,16 +8,15 @@ package cfg
 
 import (
 	"bytes"
+	"context"
 	"fmt"
 	"github.com/bir3/gocompiler/src/go/build"
 	"github.com/bir3/gocompiler/src/internal/buildcfg"
 	"github.com/bir3/gocompiler/src/internal/cfg"
 	"io"
 	"os"
-	"os/exec"
 	"path/filepath"
 	"runtime"
-"github.com/bir3/gocompiler/vfs"
 	"strings"
 	"sync"
 
@@ -26,15 +25,15 @@ import (
 
 // Global build parameters (used during package load)
 var (
-	Goos   = envOr("GOOS", build.Default.GOOS)
-	Goarch = envOr("GOARCH", build.Default.GOARCH)
+	Goos	= envOr("GOOS", build.Default.GOOS)
+	Goarch	= envOr("GOARCH", build.Default.GOARCH)
 
-	ExeSuffix = exeSuffix()
+	ExeSuffix	= exeSuffix()
 
 	// ModulesEnabled specifies whether the go command is running
 	// in module-aware mode (as opposed to GOPATH mode).
 	// It is equal to modload.Enabled, but not all packages can import modload.
-	ModulesEnabled bool
+	ModulesEnabled	bool
 )
 
 func exeSuffix() string {
@@ -50,8 +49,8 @@ func exeSuffix() string {
 // indicate the GOOS and GOARCH of the installed cmd/go
 // rather than the test binary.
 var (
-	installedGOOS   string
-	installedGOARCH string
+	installedGOOS	string
+	installedGOARCH	string
 )
 
 // ToolExeSuffix returns the suffix for executables installed
@@ -65,52 +64,52 @@ func ToolExeSuffix() string {
 
 // These are general "build flags" used by build and other commands.
 var (
-	BuildA                 bool     // -a flag
-	BuildBuildmode         string   // -buildmode flag
-	BuildBuildvcs          = "auto" // -buildvcs flag: "true", "false", or "auto"
-	BuildContext           = defaultContext()
-	BuildMod               string                  // -mod flag
-	BuildModExplicit       bool                    // whether -mod was set explicitly
-	BuildModReason         string                  // reason -mod was set, if set by default
-	BuildLinkshared        bool                    // -linkshared flag
-	BuildMSan              bool                    // -msan flag
-	BuildASan              bool                    // -asan flag
-	BuildCover             bool                    // -cover flag
-	BuildCoverMode         string                  // -covermode flag
-	BuildCoverPkg          []string                // -coverpkg flag
-	BuildN                 bool                    // -n flag
-	BuildO                 string                  // -o flag
-	BuildP                 = runtime.GOMAXPROCS(0) // -p flag
-	BuildPGO               string                  // -pgo flag
-	BuildPGOFile           string                  // profile selected by -pgo flag, an absolute path (if not empty)
-	BuildPkgdir            string                  // -pkgdir flag
-	BuildRace              bool                    // -race flag
-	BuildToolexec          []string                // -toolexec flag
-	BuildToolchainName     string
-	BuildToolchainCompiler func() string
-	BuildToolchainLinker   func() string
-	BuildTrimpath          bool // -trimpath flag
-	BuildV                 bool // -v flag
-	BuildWork              bool // -work flag
-	BuildX                 bool // -x flag
+	BuildA			bool		// -a flag
+	BuildBuildmode		string		// -buildmode flag
+	BuildBuildvcs		= "auto"	// -buildvcs flag: "true", "false", or "auto"
+	BuildContext		= defaultContext()
+	BuildMod		string			// -mod flag
+	BuildModExplicit	bool			// whether -mod was set explicitly
+	BuildModReason		string			// reason -mod was set, if set by default
+	BuildLinkshared		bool			// -linkshared flag
+	BuildMSan		bool			// -msan flag
+	BuildASan		bool			// -asan flag
+	BuildCover		bool			// -cover flag
+	BuildCoverMode		string			// -covermode flag
+	BuildCoverPkg		[]string		// -coverpkg flag
+	BuildN			bool			// -n flag
+	BuildO			string			// -o flag
+	BuildP			= runtime.GOMAXPROCS(0)	// -p flag
+	BuildPGO		string			// -pgo flag
+	BuildPkgdir		string			// -pkgdir flag
+	BuildRace		bool			// -race flag
+	BuildToolexec		[]string		// -toolexec flag
+	BuildToolchainName	string
+	BuildToolchainCompiler	func() string
+	BuildToolchainLinker	func() string
+	BuildTrimpath		bool	// -trimpath flag
+	BuildV			bool	// -v flag
+	BuildWork		bool	// -work flag
+	BuildX			bool	// -x flag
 
-	ModCacheRW bool   // -modcacherw flag
-	ModFile    string // -modfile flag
+	ModCacheRW	bool	// -modcacherw flag
+	ModFile		string	// -modfile flag
 
-	CmdName string // "build", "install", "list", "mod tidy", etc.
+	CmdName	string	// "build", "install", "list", "mod tidy", etc.
 
-	DebugActiongraph string // -debug-actiongraph flag (undocumented, unstable)
-	DebugTrace       string // -debug-trace flag
+	DebugActiongraph	string	// -debug-actiongraph flag (undocumented, unstable)
+	DebugTrace		string	// -debug-trace flag
+	DebugRuntimeTrace	string	// -debug-runtime-trace flag (undocumented, unstable)
 
 	// GoPathError is set when GOPATH is not set. it contains an
 	// explanation why GOPATH is unset.
-	GoPathError string
+	GoPathError	string
 )
 
 func defaultContext() build.Context {
 	ctxt := build.Default
 
-	ctxt.JoinPath = filepath.Join // back door to say "do not use go command"
+	ctxt.JoinPath = filepath.Join	// back door to say "do not use go command"
 
 	// Override defaults computed in go/build with defaults
 	// from go environment configuration file, if known.
@@ -142,6 +141,7 @@ func defaultContext() build.Context {
 		// (1) environment, (2) go/env file, (3) runtime constants,
 		// while go/build.Default.GOOS/GOARCH are derived from the preference list
 		// (1) environment, (2) runtime constants.
+		//
 		// We know ctxt.GOOS/GOARCH == runtime.GOOS/GOARCH;
 		// no matter how that happened, go/build.Default will make the
 		// same decision (either the environment variables are set explicitly
@@ -160,7 +160,7 @@ func defaultContext() build.Context {
 		if ctxt.CgoEnabled {
 			if os.Getenv("CC") == "" {
 				cc := DefaultCC(ctxt.GOOS, ctxt.GOARCH)
-				if _, err := exec.LookPath(cc); err != nil {
+				if _, err := LookPath(cc); err != nil {
 					ctxt.CgoEnabled = false
 				}
 			}
@@ -180,7 +180,7 @@ func defaultContext() build.Context {
 }
 
 func init() {
-	SetGOROOT(findGOROOT(), false)
+	SetGOROOT(Getenv("GOROOT"), false)
 	BuildToolchainCompiler = func() string { return "missing-compiler" }
 	BuildToolchainLinker = func() string { return "missing-linker" }
 }
@@ -238,13 +238,13 @@ func SetGOROOT(goroot string, isTestGo bool) {
 // Experiment configuration.
 var (
 	// RawGOEXPERIMENT is the GOEXPERIMENT value set by the user.
-	RawGOEXPERIMENT = envOr("GOEXPERIMENT", buildcfg.DefaultGOEXPERIMENT)
+	RawGOEXPERIMENT	= envOr("GOEXPERIMENT", buildcfg.DefaultGOEXPERIMENT)
 	// CleanGOEXPERIMENT is the minimal GOEXPERIMENT value needed to reproduce the
 	// experiments enabled by RawGOEXPERIMENT.
-	CleanGOEXPERIMENT = RawGOEXPERIMENT
+	CleanGOEXPERIMENT	= RawGOEXPERIMENT
 
-	Experiment    *buildcfg.ExperimentFlags
-	ExperimentErr error
+	Experiment	*buildcfg.ExperimentFlags
+	ExperimentErr	error
 )
 
 func init() {
@@ -267,8 +267,8 @@ func init() {
 
 // An EnvVar is an environment variable Name=Value.
 type EnvVar struct {
-	Name  string
-	Value string
+	Name	string
+	Value	string
 }
 
 // OrigEnv is the original environment of the program at startup.
@@ -280,8 +280,8 @@ var OrigEnv []string
 var CmdEnv []EnvVar
 
 var envCache struct {
-	once sync.Once
-	m    map[string]string
+	once	sync.Once
+	m	map[string]string
 }
 
 // EnvFile returns the name of the Go environment configuration file.
@@ -304,7 +304,22 @@ func EnvFile() (string, error) {
 
 func initEnvCache() {
 	envCache.m = make(map[string]string)
-	file, _ := EnvFile()
+	if file, _ := EnvFile(); file != "" {
+		readEnvFile(file, "user")
+	}
+	goroot := findGOROOT(envCache.m["GOROOT"])
+	if goroot != "" {
+		readEnvFile(filepath.Join(goroot, "go.env"), "GOROOT")
+	}
+
+	// Save the goroot for func init calling SetGOROOT,
+	// and also overwrite anything that might have been in go.env.
+	// It makes no sense for GOROOT/go.env to specify
+	// a different GOROOT.
+	envCache.m["GOROOT"] = goroot
+}
+
+func readEnvFile(file string, source string) {
 	if file == "" {
 		return
 	}
@@ -326,13 +341,21 @@ func initEnvCache() {
 		i = bytes.IndexByte(line, '=')
 		if i < 0 || line[0] < 'A' || 'Z' < line[0] {
 			// Line is missing = (or empty) or a comment or not a valid env name. Ignore.
-			// (This should not happen, since the file should be maintained almost
+			// This should not happen in the user file, since the file should be maintained almost
 			// exclusively by "go env -w", but better to silently ignore than to make
 			// the go command unusable just because somehow the env file has
-			// gotten corrupted.)
+			// gotten corrupted.
+			// In the GOROOT/go.env file, we expect comments.
 			continue
 		}
 		key, val := line[:i], line[i+1:]
+
+		if source == "GOROOT" {
+			// In the GOROOT/go.env file, do not overwrite fields loaded from the user's go/env file.
+			if _, ok := envCache.m[string(key)]; ok {
+				continue
+			}
+		}
 		envCache.m[string(key)] = string(val)
 	}
 }
@@ -363,34 +386,43 @@ func Getenv(key string) string {
 
 // CanGetenv reports whether key is a valid go/env configuration key.
 func CanGetenv(key string) bool {
+	envCache.once.Do(initEnvCache)
+	if _, ok := envCache.m[key]; ok {
+		// Assume anything in the user file or go.env file is valid.
+		return true
+	}
 	return strings.Contains(cfg.KnownEnv, "\t"+key+"\n")
 }
 
 var (
-	GOROOT       string
-	GOROOTbin    string
-	GOROOTpkg    string
-	GOROOTsrc    string
-	GOROOT_FINAL string
-	GOBIN        = Getenv("GOBIN")
-	GOMODCACHE   = envOr("GOMODCACHE", gopathDir("pkg/mod"))
+	GOROOT	string
+
+	// Either empty or produced by filepath.Join(GOROOT, …).
+	GOROOTbin	string
+	GOROOTpkg	string
+	GOROOTsrc	string
+
+	GOROOT_FINAL	string
+
+	GOBIN		= Getenv("GOBIN")
+	GOMODCACHE	= envOr("GOMODCACHE", gopathDir("pkg/mod"))
 
 	// Used in envcmd.MkEnv and build ID computations.
-	GOARM    = envOr("GOARM", fmt.Sprint(buildcfg.GOARM))
-	GO386    = envOr("GO386", buildcfg.GO386)
-	GOAMD64  = envOr("GOAMD64", fmt.Sprintf("%s%d", "v", buildcfg.GOAMD64))
-	GOMIPS   = envOr("GOMIPS", buildcfg.GOMIPS)
-	GOMIPS64 = envOr("GOMIPS64", buildcfg.GOMIPS64)
-	GOPPC64  = envOr("GOPPC64", fmt.Sprintf("%s%d", "power", buildcfg.GOPPC64))
-	GOWASM   = envOr("GOWASM", fmt.Sprint(buildcfg.GOWASM))
+	GOARM		= envOr("GOARM", fmt.Sprint(buildcfg.GOARM))
+	GO386		= envOr("GO386", buildcfg.GO386)
+	GOAMD64		= envOr("GOAMD64", fmt.Sprintf("%s%d", "v", buildcfg.GOAMD64))
+	GOMIPS		= envOr("GOMIPS", buildcfg.GOMIPS)
+	GOMIPS64	= envOr("GOMIPS64", buildcfg.GOMIPS64)
+	GOPPC64		= envOr("GOPPC64", fmt.Sprintf("%s%d", "power", buildcfg.GOPPC64))
+	GOWASM		= envOr("GOWASM", fmt.Sprint(buildcfg.GOWASM))
 
-	GOPROXY    = envOr("GOPROXY", "https://proxy.golang.org,direct")
-	GOSUMDB    = envOr("GOSUMDB", "sum.golang.org")
-	GOPRIVATE  = Getenv("GOPRIVATE")
-	GONOPROXY  = envOr("GONOPROXY", GOPRIVATE)
-	GONOSUMDB  = envOr("GONOSUMDB", GOPRIVATE)
-	GOINSECURE = Getenv("GOINSECURE")
-	GOVCS      = Getenv("GOVCS")
+	GOPROXY		= envOr("GOPROXY", "")
+	GOSUMDB		= envOr("GOSUMDB", "")
+	GOPRIVATE	= Getenv("GOPRIVATE")
+	GONOPROXY	= envOr("GONOPROXY", GOPRIVATE)
+	GONOSUMDB	= envOr("GONOSUMDB", GOPRIVATE)
+	GOINSECURE	= Getenv("GOINSECURE")
+	GOVCS		= Getenv("GOVCS")
 )
 
 var SumdbDir = gopathDir("pkg/sumdb")
@@ -435,11 +467,70 @@ func envOr(key, def string) string {
 // findGOROOT returns the GOROOT value, using either an explicitly
 // provided environment variable, a GOROOT that contains the current
 // os.Executable value, or else the GOROOT that the binary was built
-// with from vfs.GOROOT.
+// with from runtime.GOROOT().
 //
 // There is a copy of this code in x/tools/cmd/godoc/goroot.go.
-func findGOROOT() string {
-        return vfs.GOROOT
+func findGOROOT(env string) string {
+	if env == "" {
+		// Not using Getenv because findGOROOT is called
+		// to find the GOROOT/go.env file. initEnvCache
+		// has passed in the setting from the user go/env file.
+		env = os.Getenv("GOROOT")
+	}
+	if env != "" {
+		return filepath.Clean(env)
+	}
+	def := ""
+	if r := runtime.GOROOT(); r != "" {
+		def = filepath.Clean(r)
+	}
+	if runtime.Compiler == "gccgo" {
+		// gccgo has no real GOROOT, and it certainly doesn't
+		// depend on the executable's location.
+		return def
+	}
+
+	// canonical returns a directory path that represents
+	// the same directory as dir,
+	// preferring the spelling in def if the two are the same.
+	canonical := func(dir string) string {
+		if isSameDir(def, dir) {
+			return def
+		}
+		return dir
+	}
+
+	exe, err := os.Executable()
+	if err == nil {
+		exe, err = filepath.Abs(exe)
+		if err == nil {
+			// cmd/go may be installed in GOROOT/bin or GOROOT/bin/GOOS_GOARCH,
+			// depending on whether it was cross-compiled with a different
+			// GOHOSTOS (see https://go.dev/issue/62119). Try both.
+			if dir := filepath.Join(exe, "../.."); isGOROOT(dir) {
+				return canonical(dir)
+			}
+			if dir := filepath.Join(exe, "../../.."); isGOROOT(dir) {
+				return canonical(dir)
+			}
+
+			// Depending on what was passed on the command line, it is possible
+			// that os.Executable is a symlink (like /usr/local/bin/go) referring
+			// to a binary installed in a real GOROOT elsewhere
+			// (like /usr/lib/go/bin/go).
+			// Try to find that GOROOT by resolving the symlinks.
+			exe, err = filepath.EvalSymlinks(exe)
+			if err == nil {
+				if dir := filepath.Join(exe, "../.."); isGOROOT(dir) {
+					return canonical(dir)
+				}
+				if dir := filepath.Join(exe, "../../.."); isGOROOT(dir) {
+					return canonical(dir)
+				}
+			}
+		}
+	}
+	return def
 }
 
 func findGOROOT_FINAL(goroot string) string {
@@ -497,11 +588,31 @@ func gopath(ctxt build.Context) string {
 	}
 	if home := os.Getenv(env); home != "" {
 		def := filepath.Join(home, "go")
-		if filepath.Clean(def) == filepath.Clean(vfs.GOROOT) {
+		if filepath.Clean(def) == filepath.Clean(runtime.GOROOT()) {
 			GoPathError = "cannot set GOROOT as GOPATH"
 		}
 		return ""
 	}
 	GoPathError = fmt.Sprintf("%s is not set", env)
 	return ""
+}
+
+// WithBuildXWriter returns a Context in which BuildX output is written
+// to given io.Writer.
+func WithBuildXWriter(ctx context.Context, xLog io.Writer) context.Context {
+	return context.WithValue(ctx, buildXContextKey{}, xLog)
+}
+
+type buildXContextKey struct{}
+
+// BuildXWriter returns nil if BuildX is false, or
+// the writer to which BuildX output should be written otherwise.
+func BuildXWriter(ctx context.Context) (io.Writer, bool) {
+	if !BuildX {
+		return nil, false
+	}
+	if v := ctx.Value(buildXContextKey{}); v != nil {
+		return v.(io.Writer), true
+	}
+	return os.Stderr, true
 }

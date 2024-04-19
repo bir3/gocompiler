@@ -114,7 +114,7 @@ func format(
 	i, j := 0, 0
 	for j < len(src) && isSpace(src[j]) {
 		if src[j] == '\n' {
-			i = j + 1 // byte offset of last line in leading space
+			i = j + 1	// byte offset of last line in leading space
 		}
 		j++
 	}

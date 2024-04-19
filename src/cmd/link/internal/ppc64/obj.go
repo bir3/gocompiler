@@ -49,34 +49,37 @@ func Init() (*sys.Arch, ld.Arch) {
 	}
 
 	theArch := ld.Arch{
-		Funcalign:  funcAlign,
-		Maxalign:   maxAlign,
-		Minalign:   minAlign,
-		Dwarfregsp: dwarfRegSP,
-		Dwarfreglr: dwarfRegLR,
-		TrampLimit: 0x1c00000,
+		Funcalign:	funcAlign,
+		Maxalign:	maxAlign,
+		Minalign:	minAlign,
+		Dwarfregsp:	dwarfRegSP,
+		Dwarfreglr:	dwarfRegLR,
+		TrampLimit:	0x1c00000,
 
-		Adddynrel:        adddynrel,
-		Archinit:         archinit,
-		Archreloc:        archreloc,
-		Archrelocvariant: archrelocvariant,
-		Extreloc:         extreloc,
-		Elfreloc1:        elfreloc1,
-		ElfrelocSize:     24,
-		Elfsetupplt:      elfsetupplt,
-		Gentext:          gentext,
-		Trampoline:       trampoline,
-		Machoreloc1:      machoreloc1,
-		Xcoffreloc1:      xcoffreloc1,
+		Adddynrel:		adddynrel,
+		Archinit:		archinit,
+		Archreloc:		archreloc,
+		Archrelocvariant:	archrelocvariant,
+		Extreloc:		extreloc,
+		Gentext:		gentext,
+		Trampoline:		trampoline,
+		Machoreloc1:		machoreloc1,
+		Xcoffreloc1:		xcoffreloc1,
 
-		Linuxdynld:     dynld,
-		LinuxdynldMusl: musl,
+		ELF: ld.ELFArch{
+			Linuxdynld:	dynld,
+			LinuxdynldMusl:	musl,
 
-		Freebsddynld:   "XXX",
-		Openbsddynld:   "XXX",
-		Netbsddynld:    "XXX",
-		Dragonflydynld: "XXX",
-		Solarisdynld:   "XXX",
+			Freebsddynld:	"XXX",
+			Openbsddynld:	"/usr/libexec/ld.so",
+			Netbsddynld:	"XXX",
+			Dragonflydynld:	"XXX",
+			Solarisdynld:	"XXX",
+
+			Reloc1:		elfreloc1,
+			RelocSize:	24,
+			SetupPLT:	elfsetupplt,
+		},
 	}
 
 	return arch, theArch
@@ -87,24 +90,24 @@ func archinit(ctxt *ld.Link) {
 	default:
 		ld.Exitf("unknown -H option: %v", ctxt.HeadType)
 
-	case objabi.Hplan9: /* plan 9 */
+	case objabi.Hplan9:	/* plan 9 */
 		ld.HEADR = 32
-
-		if *ld.FlagTextAddr == -1 {
-			*ld.FlagTextAddr = 4128
-		}
 		if *ld.FlagRound == -1 {
 			*ld.FlagRound = 4096
 		}
+		if *ld.FlagTextAddr == -1 {
+			*ld.FlagTextAddr = ld.Rnd(4096, *ld.FlagRound) + int64(ld.HEADR)
+		}
 
-	case objabi.Hlinux: /* ppc64 elf */
+	case objabi.Hlinux,	/* ppc64 elf */
+		objabi.Hopenbsd:
 		ld.Elfinit(ctxt)
 		ld.HEADR = ld.ELFRESERVE
-		if *ld.FlagTextAddr == -1 {
-			*ld.FlagTextAddr = 0x10000 + int64(ld.HEADR)
-		}
 		if *ld.FlagRound == -1 {
 			*ld.FlagRound = 0x10000
+		}
+		if *ld.FlagTextAddr == -1 {
+			*ld.FlagTextAddr = ld.Rnd(0x10000, *ld.FlagRound) + int64(ld.HEADR)
 		}
 
 	case objabi.Haix:

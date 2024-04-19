@@ -2,12 +2,11 @@
 // Use of this source code is governed by a BSD-style
 // license that can be found in the LICENSE file.
 
-// Package printf defines an Analyzer that checks consistency
-// of Printf format strings and arguments.
 package printf
 
 import (
 	"bytes"
+	_ "embed"
 	"fmt"
 	"github.com/bir3/gocompiler/src/go/ast"
 	"github.com/bir3/gocompiler/src/go/constant"
@@ -32,51 +31,27 @@ func init() {
 	Analyzer.Flags.Var(isPrint, "funcs", "comma-separated list of print function names to check")
 }
 
+//go:embed doc.go
+var doc string
+
 var Analyzer = &analysis.Analyzer{
-	Name:       "printf",
-	Doc:        Doc,
-	Requires:   []*analysis.Analyzer{inspect.Analyzer},
-	Run:        run,
-	ResultType: reflect.TypeOf((*Result)(nil)),
-	FactTypes:  []analysis.Fact{new(isWrapper)},
+	Name:		"printf",
+	Doc:		analysisutil.MustExtractDoc(doc, "printf"),
+	URL:		"https://pkg.go.dev/golang.org/x/tools/go/analysis/passes/printf",
+	Requires:	[]*analysis.Analyzer{inspect.Analyzer},
+	Run:		run,
+	ResultType:	reflect.TypeOf((*Result)(nil)),
+	FactTypes:	[]analysis.Fact{new(isWrapper)},
 }
-
-const Doc = `check consistency of Printf format strings and arguments
-
-The check applies to known functions (for example, those in package fmt)
-as well as any detected wrappers of known functions.
-
-A function that wants to avail itself of printf checking but is not
-found by this analyzer's heuristics (for example, due to use of
-dynamic calls) can insert a bogus call:
-
-	if false {
-		_ = fmt.Sprintf(format, args...) // enable printf checking
-	}
-
-The -funcs flag specifies a comma-separated list of names of additional
-known formatting functions or methods. If the name contains a period,
-it must denote a specific function using one of the following forms:
-
-	dir/pkg.Function
-	dir/pkg.Type.Method
-	(*dir/pkg.Type).Method
-
-Otherwise the name is interpreted as a case-insensitive unqualified
-identifier such as "errorf". Either way, if a listed name ends in f, the
-function is assumed to be Printf-like, taking a format string before the
-argument list. Otherwise it is assumed to be Print-like, taking a list
-of arguments with no format string.
-`
 
 // Kind is a kind of fmt function behavior.
 type Kind int
 
 const (
-	KindNone   Kind = iota // not a fmt wrapper function
-	KindPrint              // function behaves like fmt.Print
-	KindPrintf             // function behaves like fmt.Printf
-	KindErrorf             // function behaves like fmt.Errorf
+	KindNone	Kind	= iota	// not a fmt wrapper function
+	KindPrint			// function behaves like fmt.Print
+	KindPrintf			// function behaves like fmt.Printf
+	KindErrorf			// function behaves like fmt.Errorf
 )
 
 func (kind Kind) String() string {
@@ -118,7 +93,7 @@ func (r *Result) Kind(fn *types.Func) Kind {
 // isWrapper is a fact indicating that a function is a print or printf wrapper.
 type isWrapper struct{ Kind Kind }
 
-func (f *isWrapper) AFact() {}
+func (f *isWrapper) AFact()	{}
 
 func (f *isWrapper) String() string {
 	switch f.Kind {
@@ -143,17 +118,17 @@ func run(pass *analysis.Pass) (interface{}, error) {
 }
 
 type printfWrapper struct {
-	obj     *types.Func
-	fdecl   *ast.FuncDecl
-	format  *types.Var
-	args    *types.Var
-	callers []printfCaller
-	failed  bool // if true, not a printf wrapper
+	obj	*types.Func
+	fdecl	*ast.FuncDecl
+	format	*types.Var
+	args	*types.Var
+	callers	[]printfCaller
+	failed	bool	// if true, not a printf wrapper
 }
 
 type printfCaller struct {
-	w    *printfWrapper
-	call *ast.CallExpr
+	w	*printfWrapper
+	call	*ast.CallExpr
 }
 
 // maybePrintfWrapper decides whether decl (a declared function) may be a wrapper
@@ -177,16 +152,16 @@ func maybePrintfWrapper(info *types.Info, decl ast.Decl) *printfWrapper {
 
 	sig := fn.Type().(*types.Signature)
 	if !sig.Variadic() {
-		return nil // not variadic
+		return nil	// not variadic
 	}
 
 	params := sig.Params()
-	nparams := params.Len() // variadic => nonzero
+	nparams := params.Len()	// variadic => nonzero
 
 	args := params.At(nparams - 1)
 	iface, ok := args.Type().(*types.Slice).Elem().(*types.Interface)
 	if !ok || !iface.Empty() {
-		return nil // final (args) param is not ...interface{}
+		return nil	// final (args) param is not ...interface{}
 	}
 
 	// Is second last param 'format string'?
@@ -198,10 +173,10 @@ func maybePrintfWrapper(info *types.Info, decl ast.Decl) *printfWrapper {
 	}
 
 	return &printfWrapper{
-		obj:    fn,
-		fdecl:  fdecl,
-		format: format,
-		args:   args,
+		obj:	fn,
+		fdecl:	fdecl,
+		format:	format,
+		args:	args,
 	}
 }
 
@@ -303,7 +278,7 @@ func checkPrintfFwd(pass *analysis.Pass, w *printfWrapper, call *ast.CallExpr, k
 			// print/printf function can take, adding an ellipsis
 			// would break the program. For example:
 			//
-			//   func foo(arg1 string, arg2 ...interface{} {
+			//   func foo(arg1 string, arg2 ...interface{}) {
 			//       fmt.Printf("%s %v", arg1, arg2)
 			//   }
 			return
@@ -340,59 +315,60 @@ func checkPrintfFwd(pass *analysis.Pass, w *printfWrapper, call *ast.CallExpr, k
 // example, fmt.Printf forwards to fmt.Fprintf. We avoid relying on the
 // driver applying analyzers to standard packages because "go vet" does
 // not do so with gccgo, and nor do some other build systems.
-// TODO(adonovan): eliminate the redundant facts once this restriction
-// is lifted.
 var isPrint = stringSet{
-	"fmt.Errorf":   true,
-	"fmt.Fprint":   true,
-	"fmt.Fprintf":  true,
-	"fmt.Fprintln": true,
-	"fmt.Print":    true,
-	"fmt.Printf":   true,
-	"fmt.Println":  true,
-	"fmt.Sprint":   true,
-	"fmt.Sprintf":  true,
-	"fmt.Sprintln": true,
+	"fmt.Appendf":	true,
+	"fmt.Append":	true,
+	"fmt.Appendln":	true,
+	"fmt.Errorf":	true,
+	"fmt.Fprint":	true,
+	"fmt.Fprintf":	true,
+	"fmt.Fprintln":	true,
+	"fmt.Print":	true,
+	"fmt.Printf":	true,
+	"fmt.Println":	true,
+	"fmt.Sprint":	true,
+	"fmt.Sprintf":	true,
+	"fmt.Sprintln":	true,
 
-	"runtime/trace.Logf": true,
+	"runtime/trace.Logf":	true,
 
-	"log.Print":             true,
-	"log.Printf":            true,
-	"log.Println":           true,
-	"log.Fatal":             true,
-	"log.Fatalf":            true,
-	"log.Fatalln":           true,
-	"log.Panic":             true,
-	"log.Panicf":            true,
-	"log.Panicln":           true,
-	"(*log.Logger).Fatal":   true,
-	"(*log.Logger).Fatalf":  true,
-	"(*log.Logger).Fatalln": true,
-	"(*log.Logger).Panic":   true,
-	"(*log.Logger).Panicf":  true,
-	"(*log.Logger).Panicln": true,
-	"(*log.Logger).Print":   true,
-	"(*log.Logger).Printf":  true,
-	"(*log.Logger).Println": true,
+	"log.Print":			true,
+	"log.Printf":			true,
+	"log.Println":			true,
+	"log.Fatal":			true,
+	"log.Fatalf":			true,
+	"log.Fatalln":			true,
+	"log.Panic":			true,
+	"log.Panicf":			true,
+	"log.Panicln":			true,
+	"(*log.Logger).Fatal":		true,
+	"(*log.Logger).Fatalf":		true,
+	"(*log.Logger).Fatalln":	true,
+	"(*log.Logger).Panic":		true,
+	"(*log.Logger).Panicf":		true,
+	"(*log.Logger).Panicln":	true,
+	"(*log.Logger).Print":		true,
+	"(*log.Logger).Printf":		true,
+	"(*log.Logger).Println":	true,
 
-	"(*testing.common).Error":  true,
-	"(*testing.common).Errorf": true,
-	"(*testing.common).Fatal":  true,
-	"(*testing.common).Fatalf": true,
-	"(*testing.common).Log":    true,
-	"(*testing.common).Logf":   true,
-	"(*testing.common).Skip":   true,
-	"(*testing.common).Skipf":  true,
+	"(*testing.common).Error":	true,
+	"(*testing.common).Errorf":	true,
+	"(*testing.common).Fatal":	true,
+	"(*testing.common).Fatalf":	true,
+	"(*testing.common).Log":	true,
+	"(*testing.common).Logf":	true,
+	"(*testing.common).Skip":	true,
+	"(*testing.common).Skipf":	true,
 	// *testing.T and B are detected by induction, but testing.TB is
 	// an interface and the inference can't follow dynamic calls.
-	"(testing.TB).Error":  true,
-	"(testing.TB).Errorf": true,
-	"(testing.TB).Fatal":  true,
-	"(testing.TB).Fatalf": true,
-	"(testing.TB).Log":    true,
-	"(testing.TB).Logf":   true,
-	"(testing.TB).Skip":   true,
-	"(testing.TB).Skipf":  true,
+	"(testing.TB).Error":	true,
+	"(testing.TB).Errorf":	true,
+	"(testing.TB).Fatal":	true,
+	"(testing.TB).Fatalf":	true,
+	"(testing.TB).Log":	true,
+	"(testing.TB).Logf":	true,
+	"(testing.TB).Skip":	true,
+	"(testing.TB).Skipf":	true,
 }
 
 // formatString returns the format string argument and its index within
@@ -535,31 +511,26 @@ func isFormatter(typ types.Type) bool {
 	sig := fn.Type().(*types.Signature)
 	return sig.Params().Len() == 2 &&
 		sig.Results().Len() == 0 &&
-		isNamed(sig.Params().At(0).Type(), "fmt", "State") &&
+		analysisutil.IsNamedType(sig.Params().At(0).Type(), "fmt", "State") &&
 		types.Identical(sig.Params().At(1).Type(), types.Typ[types.Rune])
-}
-
-func isNamed(T types.Type, pkgpath, name string) bool {
-	named, ok := T.(*types.Named)
-	return ok && named.Obj().Pkg().Path() == pkgpath && named.Obj().Name() == name
 }
 
 // formatState holds the parsed representation of a printf directive such as "%3.*[4]d".
 // It is constructed by parsePrintfVerb.
 type formatState struct {
-	verb     rune   // the format verb: 'd' for "%d"
-	format   string // the full format directive from % through verb, "%.3d".
-	name     string // Printf, Sprintf etc.
-	flags    []byte // the list of # + etc.
-	argNums  []int  // the successive argument numbers that are consumed, adjusted to refer to actual arg in call
-	firstArg int    // Index of first argument after the format in the Printf call.
+	verb		rune	// the format verb: 'd' for "%d"
+	format		string	// the full format directive from % through verb, "%.3d".
+	name		string	// Printf, Sprintf etc.
+	flags		[]byte	// the list of # + etc.
+	argNums		[]int	// the successive argument numbers that are consumed, adjusted to refer to actual arg in call
+	firstArg	int	// Index of first argument after the format in the Printf call.
 	// Used only during parse.
-	pass         *analysis.Pass
-	call         *ast.CallExpr
-	argNum       int  // Which argument we're expecting to format now.
-	hasIndex     bool // Whether the argument is indexed.
-	indexPending bool // Whether we have an indexed argument that has not resolved.
-	nbytes       int  // number of bytes of the format string consumed.
+	pass		*analysis.Pass
+	call		*ast.CallExpr
+	argNum		int	// Which argument we're expecting to format now.
+	hasIndex	bool	// Whether the argument is indexed.
+	indexPending	bool	// Whether we have an indexed argument that has not resolved.
+	nbytes		int	// number of bytes of the format string consumed.
 }
 
 // checkPrintf checks a call to a formatted print routine such as Printf.
@@ -572,7 +543,7 @@ func checkPrintf(pass *analysis.Pass, kind Kind, call *ast.CallExpr, fn *types.F
 		return
 	}
 
-	firstArg := idx + 1 // Arguments are immediately after format string.
+	firstArg := idx + 1	// Arguments are immediately after format string.
 	if !strings.Contains(format, "%") {
 		if len(call.Args) > firstArg {
 			pass.Reportf(call.Lparen, "%s call has arguments but no formatting directives", fn.FullName())
@@ -593,7 +564,7 @@ func checkPrintf(pass *analysis.Pass, kind Kind, call *ast.CallExpr, fn *types.F
 			return
 		}
 		w = len(state.format)
-		if !okPrintfArg(pass, call, state) { // One error per format is enough.
+		if !okPrintfArg(pass, call, state) {	// One error per format is enough.
 			return
 		}
 		if state.hasIndex {
@@ -661,12 +632,12 @@ func (s *formatState) parseIndex() bool {
 		return true
 	}
 	// Argument index present.
-	s.nbytes++ // skip '['
+	s.nbytes++	// skip '['
 	start := s.nbytes
 	s.scanNum()
 	ok := true
 	if s.nbytes == len(s.format) || s.nbytes == start || s.format[s.nbytes] != ']' {
-		ok = false // syntax error is either missing "]" or invalid index.
+		ok = false	// syntax error is either missing "]" or invalid index.
 		s.nbytes = strings.Index(s.format[start:], "]")
 		if s.nbytes < 0 {
 			s.pass.ReportRangef(s.call, "%s format %s is missing closing ]", s.name, s.format)
@@ -679,9 +650,9 @@ func (s *formatState) parseIndex() bool {
 		s.pass.ReportRangef(s.call, "%s format has invalid argument index [%s]", s.name, s.format[start:s.nbytes])
 		return false
 	}
-	s.nbytes++ // skip ']'
+	s.nbytes++	// skip ']'
 	arg := int(arg32)
-	arg += s.firstArg - 1 // We want to zero-index the actual arguments.
+	arg += s.firstArg - 1	// We want to zero-index the actual arguments.
 	s.argNum = arg
 	s.hasIndex = true
 	s.indexPending = true
@@ -691,7 +662,7 @@ func (s *formatState) parseIndex() bool {
 // parseNum scans a width or precision (or *). It returns false if there's a bad index expression.
 func (s *formatState) parseNum() bool {
 	if s.nbytes < len(s.format) && s.format[s.nbytes] == '*' {
-		if s.indexPending { // Absorb it.
+		if s.indexPending {	// Absorb it.
 			s.indexPending = false
 		}
 		s.nbytes++
@@ -707,7 +678,7 @@ func (s *formatState) parseNum() bool {
 func (s *formatState) parsePrecision() bool {
 	// If there's a period, there may be a precision.
 	if s.nbytes < len(s.format) && s.format[s.nbytes] == '.' {
-		s.flags = append(s.flags, '.') // Treat precision as a flag.
+		s.flags = append(s.flags, '.')	// Treat precision as a flag.
 		s.nbytes++
 		if !s.parseIndex() {
 			return false
@@ -724,15 +695,15 @@ func (s *formatState) parsePrecision() bool {
 // at the actual arguments present in the call. The result is nil if there is an error.
 func parsePrintfVerb(pass *analysis.Pass, call *ast.CallExpr, name, format string, firstArg, argNum int) *formatState {
 	state := &formatState{
-		format:   format,
-		name:     name,
-		flags:    make([]byte, 0, 5),
-		argNum:   argNum,
-		argNums:  make([]int, 0, 1),
-		nbytes:   1, // There's guaranteed to be a percent sign.
-		firstArg: firstArg,
-		pass:     pass,
-		call:     call,
+		format:		format,
+		name:		name,
+		flags:		make([]byte, 0, 5),
+		argNum:		argNum,
+		argNums:	make([]int, 0, 1),
+		nbytes:		1,	// There's guaranteed to be a percent sign.
+		firstArg:	firstArg,
+		pass:		pass,
+		call:		call,
 	}
 	// There may be flags.
 	state.parseFlags()
@@ -770,7 +741,7 @@ func parsePrintfVerb(pass *analysis.Pass, call *ast.CallExpr, name, format strin
 type printfArgType int
 
 const (
-	argBool printfArgType = 1 << iota
+	argBool	printfArgType	= 1 << iota
 	argInt
 	argRune
 	argString
@@ -778,21 +749,21 @@ const (
 	argComplex
 	argPointer
 	argError
-	anyType printfArgType = ^0
+	anyType	printfArgType	= ^0
 )
 
 type printVerb struct {
-	verb  rune   // User may provide verb through Formatter; could be a rune.
-	flags string // known flags are all ASCII
-	typ   printfArgType
+	verb	rune	// User may provide verb through Formatter; could be a rune.
+	flags	string	// known flags are all ASCII
+	typ	printfArgType
 }
 
 // Common flag sets for printf verbs.
 const (
-	noFlag       = ""
-	numFlag      = " -+.0"
-	sharpNumFlag = " -+.0#"
-	allFlags     = " -+.0#"
+	noFlag		= ""
+	numFlag		= " -+.0"
+	sharpNumFlag	= " -+.0#"
+	allFlags	= " -+.0#"
 )
 
 // printVerbs identifies which flags are known to printf for each verb.
@@ -967,7 +938,7 @@ func recursiveStringer(pass *analysis.Pass, e ast.Expr) (string, bool) {
 
 	// Is it the receiver r, or &r?
 	if u, ok := e.(*ast.UnaryExpr); ok && u.Op == token.AND {
-		e = u.X // strip off & from &r
+		e = u.X	// strip off & from &r
 	}
 	if id, ok := e.(*ast.Ident); ok {
 		if pass.TypesInfo.Uses[id] == sig.Recv() {
@@ -1004,17 +975,17 @@ func argCanBeChecked(pass *analysis.Pass, call *ast.CallExpr, formatArg int, sta
 		panic("negative arg num")
 	}
 	if argNum < len(call.Args)-1 {
-		return true // Always OK.
+		return true	// Always OK.
 	}
 	if call.Ellipsis.IsValid() {
-		return false // We just can't tell; there could be many more arguments.
+		return false	// We just can't tell; there could be many more arguments.
 	}
 	if argNum < len(call.Args) {
 		return true
 	}
 	// There are bad indexes in the format or there are fewer arguments than the format needs.
 	// This is the argument number relative to the format: Printf("%s", "hi") will give 1 for the "hi".
-	arg := argNum - state.firstArg + 1 // People think of arguments as 1-indexed.
+	arg := argNum - state.firstArg + 1	// People think of arguments as 1-indexed.
 	pass.ReportRangef(call, "%s format %s reads arg #%d, but call has %v", state.name, state.format, arg, count(len(call.Args)-state.firstArg, "arg"))
 	return false
 }
@@ -1025,10 +996,10 @@ func argCanBeChecked(pass *analysis.Pass, call *ast.CallExpr, formatArg int, sta
 var printFormatRE = regexp.MustCompile(`%` + flagsRE + numOptRE + `\.?` + numOptRE + indexOptRE + verbRE)
 
 const (
-	flagsRE    = `[+\-#]*`
-	indexOptRE = `(\[[0-9]+\])?`
-	numOptRE   = `([0-9]+|` + indexOptRE + `\*)?`
-	verbRE     = `[bcdefgopqstvxEFGTUX]`
+	flagsRE		= `[+\-#]*`
+	indexOptRE	= `(\[[0-9]+\])?`
+	numOptRE	= `([0-9]+|` + indexOptRE + `\*)?`
+	verbRE		= `[bcdefgopqstvxEFGTUX]`
 )
 
 // checkPrint checks a call to an unformatted print routine such as Println.
@@ -1080,7 +1051,7 @@ func checkPrint(pass *analysis.Pass, call *ast.CallExpr, fn *types.Func) {
 		if strings.Contains(s, "%") {
 			m := printFormatRE.FindStringSubmatch(s)
 			if m != nil {
-				pass.ReportRangef(call, "%s call has possible formatting directive %s", fn.FullName(), m[0])
+				pass.ReportRangef(call, "%s call has possible Printf formatting directive %s", fn.FullName(), m[0])
 			}
 		}
 	}

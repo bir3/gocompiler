@@ -49,7 +49,7 @@ var validCompilerFlags = []*lazyregexp.Regexp{
 	re(`-O`),
 	re(`-O([^@\-].*)`),
 	re(`-W`),
-	re(`-W([^@,]+)`), // -Wall but not -Wa,-foo.
+	re(`-W([^@,]+)`),	// -Wall but not -Wa,-foo.
 	re(`-Wa,-mbig-obj`),
 	re(`-Wp,-D([A-Za-z_][A-Za-z0-9_]*)(=[^@,\-]*)?`),
 	re(`-Wp,-U([A-Za-z_][A-Za-z0-9_]*)`),
@@ -59,7 +59,10 @@ var validCompilerFlags = []*lazyregexp.Regexp{
 	re(`-f(no-)builtin-[a-zA-Z0-9_]*`),
 	re(`-f(no-)?common`),
 	re(`-f(no-)?constant-cfstrings`),
+	re(`-fdebug-prefix-map=([^@]+)=([^@]+)`),
 	re(`-fdiagnostics-show-note-include-stack`),
+	re(`-ffile-prefix-map=([^@]+)=([^@]+)`),
+	re(`-fno-canonical-system-headers`),
 	re(`-f(no-)?eliminate-unused-debug-types`),
 	re(`-f(no-)?exceptions`),
 	re(`-f(no-)?fast-math`),
@@ -84,7 +87,7 @@ var validCompilerFlags = []*lazyregexp.Regexp{
 	re(`-f(no-)?stack-(.+)`),
 	re(`-f(no-)?strict-aliasing`),
 	re(`-f(un)signed-char`),
-	re(`-f(no-)?use-linker-plugin`), // safe if -B is not used; we don't permit -B
+	re(`-f(no-)?use-linker-plugin`),	// safe if -B is not used; we don't permit -B
 	re(`-f(no-)?visibility-inlines-hidden`),
 	re(`-fsanitize=(.+)`),
 	re(`-ftemplate-depth-(.+)`),
@@ -114,6 +117,7 @@ var validCompilerFlags = []*lazyregexp.Regexp{
 	re(`-mthumb(-interwork)?`),
 	re(`-mthreads`),
 	re(`-mwindows`),
+	re(`-no-canonical-prefixes`),
 	re(`--param=ssp-buffer-size=[0-9]*`),
 	re(`-pedantic(-errors)?`),
 	re(`-pipe`),
@@ -209,7 +213,7 @@ var validLinkerFlags = []*lazyregexp.Regexp{
 	re(`-Wl,-z,(no)?execstack`),
 	re(`-Wl,-z,relro`),
 
-	re(`[a-zA-Z0-9_/].*\.(a|o|obj|dll|dylib|so|tbd)`), // direct linker inputs: x.o or libfoo.so (but not -foo.o or @foo.o)
+	re(`[a-zA-Z0-9_/].*\.(a|o|obj|dll|dylib|so|tbd)`),	// direct linker inputs: x.o or libfoo.so (but not -foo.o or @foo.o)
 	re(`\./.*\.(a|o|obj|dll|dylib|so|tbd)`),
 }
 
@@ -261,8 +265,8 @@ func checkCompilerFlagsForInternalLink(name, source string, list []string) error
 func checkFlags(name, source string, list []string, valid []*lazyregexp.Regexp, validNext []string, checkOverrides bool) error {
 	// Let users override rules with $CGO_CFLAGS_ALLOW, $CGO_CFLAGS_DISALLOW, etc.
 	var (
-		allow    *regexp.Regexp
-		disallow *regexp.Regexp
+		allow		*regexp.Regexp
+		disallow	*regexp.Regexp
 	)
 	if checkOverrides {
 		if env := cfg.Getenv("CGO_" + name + "_ALLOW"); env != "" {
@@ -291,7 +295,7 @@ Args:
 			continue Args
 		}
 		for _, re := range valid {
-			if re.FindString(arg) == arg { // must be complete match
+			if re.FindString(arg) == arg {	// must be complete match
 				continue Args
 			}
 		}

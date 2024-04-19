@@ -135,67 +135,67 @@ func printWebSource(w io.Writer, rpt *Report, obj plugin.ObjTool) error {
 
 // sourcePrinter holds state needed for generating source+asm HTML listing.
 type sourcePrinter struct {
-	reader     *sourceReader
-	synth      *synthCode
-	objectTool plugin.ObjTool
-	objects    map[string]plugin.ObjFile  // Opened object files
-	sym        *regexp.Regexp             // May be nil
-	files      map[string]*sourceFile     // Set of files to print.
-	insts      map[uint64]instructionInfo // Instructions of interest (keyed by address).
+	reader		*sourceReader
+	synth		*synthCode
+	objectTool	plugin.ObjTool
+	objects		map[string]plugin.ObjFile	// Opened object files
+	sym		*regexp.Regexp			// May be nil
+	files		map[string]*sourceFile		// Set of files to print.
+	insts		map[uint64]instructionInfo	// Instructions of interest (keyed by address).
 
 	// Set of function names that we are interested in (because they had
 	// a sample and match sym).
-	interest map[string]bool
+	interest	map[string]bool
 
 	// Mapping from system function names to printable names.
-	prettyNames map[string]string
+	prettyNames	map[string]string
 }
 
 // addrInfo holds information for an address we are interested in.
 type addrInfo struct {
-	loc *profile.Location // Always non-nil
-	obj plugin.ObjFile    // May be nil
+	loc	*profile.Location	// Always non-nil
+	obj	plugin.ObjFile		// May be nil
 }
 
 // instructionInfo holds collected information for an instruction.
 type instructionInfo struct {
-	objAddr   uint64 // Address in object file (with base subtracted out)
-	length    int    // Instruction length in bytes
-	disasm    string // Disassembly of instruction
-	file      string // For top-level function in which instruction occurs
-	line      int    // For top-level function in which instruction occurs
-	flat, cum int64  // Samples to report (divisor already applied)
+	objAddr		uint64	// Address in object file (with base subtracted out)
+	length		int	// Instruction length in bytes
+	disasm		string	// Disassembly of instruction
+	file		string	// For top-level function in which instruction occurs
+	line		int	// For top-level function in which instruction occurs
+	flat, cum	int64	// Samples to report (divisor already applied)
 }
 
 // sourceFile contains collected information for files we will print.
 type sourceFile struct {
-	fname    string
-	cum      int64
-	flat     int64
-	lines    map[int][]sourceInst // Instructions to show per line
-	funcName map[int]string       // Function name per line
+	fname		string
+	cum		int64
+	flat		int64
+	lines		map[int][]sourceInst	// Instructions to show per line
+	funcName	map[int]string		// Function name per line
 }
 
 // sourceInst holds information for an instruction to be displayed.
 type sourceInst struct {
-	addr  uint64
-	stack []callID // Inlined call-stack
+	addr	uint64
+	stack	[]callID	// Inlined call-stack
 }
 
 // sourceFunction contains information for a contiguous range of lines per function we
 // will print.
 type sourceFunction struct {
-	name       string
-	begin, end int // Line numbers (end is not included in the range)
-	flat, cum  int64
+	name		string
+	begin, end	int	// Line numbers (end is not included in the range)
+	flat, cum	int64
 }
 
 // addressRange is a range of addresses plus the object file that contains it.
 type addressRange struct {
-	begin, end uint64
-	obj        plugin.ObjFile
-	mapping    *profile.Mapping
-	score      int64 // Used to order ranges for processing
+	begin, end	uint64
+	obj		plugin.ObjFile
+	mapping		*profile.Mapping
+	score		int64	// Used to order ranges for processing
 }
 
 // PrintWebList prints annotated source listing of rpt to w.
@@ -220,15 +220,15 @@ func PrintWebList(w io.Writer, rpt *Report, obj plugin.ObjTool, maxFiles int) er
 
 func newSourcePrinter(rpt *Report, obj plugin.ObjTool, sourcePath string) *sourcePrinter {
 	sp := &sourcePrinter{
-		reader:      newSourceReader(sourcePath, rpt.options.TrimPath),
-		synth:       newSynthCode(rpt.prof.Mapping),
-		objectTool:  obj,
-		objects:     map[string]plugin.ObjFile{},
-		sym:         rpt.options.Symbol,
-		files:       map[string]*sourceFile{},
-		insts:       map[uint64]instructionInfo{},
-		prettyNames: map[string]string{},
-		interest:    map[string]bool{},
+		reader:		newSourceReader(sourcePath, rpt.options.TrimPath),
+		synth:		newSynthCode(rpt.prof.Mapping),
+		objectTool:	obj,
+		objects:	map[string]plugin.ObjFile{},
+		sym:		rpt.options.Symbol,
+		files:		map[string]*sourceFile{},
+		insts:		map[uint64]instructionInfo{},
+		prettyNames:	map[string]string{},
+		interest:	map[string]bool{},
 	}
 
 	// If the regexp source can be parsed as an address, also match
@@ -401,7 +401,7 @@ func (sp *sourcePrinter) expandAddresses(rpt *Report, addrs map[uint64]addrInfo,
 				// we stick with just the inner-most location (i.e., H).
 				// In the future we will consider changing the display to
 				// make caller info more visible.
-				index := 0 // Inner-most frame
+				index := 0	// Inner-most frame
 				x.file = frames[index].File
 				x.line = frames[index].Line
 			}
@@ -435,18 +435,18 @@ func (sp *sourcePrinter) addStack(addr uint64, frames []plugin.Frame) {
 		file := sp.files[fname]
 		if file == nil {
 			file = &sourceFile{
-				fname:    fname,
-				lines:    map[int][]sourceInst{},
-				funcName: map[int]string{},
+				fname:		fname,
+				lines:		map[int][]sourceInst{},
+				funcName:	map[int]string{},
 			}
 			sp.files[fname] = file
 		}
 		callees := frames[:i]
 		stack := make([]callID, 0, len(callees))
-		for j := len(callees) - 1; j >= 0; j-- { // Reverse so caller is first
+		for j := len(callees) - 1; j >= 0; j-- {	// Reverse so caller is first
 			stack = append(stack, callID{
-				file: callees[j].File,
-				line: callees[j].Line,
+				file:	callees[j].File,
+				line:	callees[j].Line,
 			})
 		}
 		file.lines[f.Line] = append(file.lines[f.Line], sourceInst{addr, stack})
@@ -477,9 +477,9 @@ func (sp *sourcePrinter) handleUnprocessed(addrs map[uint64]addrInfo, unprocesse
 				continue
 			}
 			stack = append(stack, plugin.Frame{
-				Func: fn.Name,
-				File: fn.Filename,
-				Line: int(line.Line),
+				Func:	fn.Name,
+				File:	fn.Filename,
+				Line:	int(line.Line),
 			})
 		}
 		return stack
@@ -488,9 +488,9 @@ func (sp *sourcePrinter) handleUnprocessed(addrs map[uint64]addrInfo, unprocesse
 	for _, addr := range unprocessed {
 		frames := makeFrames(addr)
 		x := instructionInfo{
-			objAddr: addr,
-			length:  1,
-			disasm:  synthAsm,
+			objAddr:	addr,
+			length:		1,
+			disasm:		synthAsm,
 		}
 		if len(frames) > 0 {
 			x.file = frames[0].File
@@ -517,7 +517,7 @@ func (sp *sourcePrinter) splitIntoRanges(prof *profile.Profile, addrMap map[uint
 	}
 	sort.Slice(addrs, func(i, j int) bool { return addrs[i] < addrs[j] })
 
-	const expand = 500 // How much to expand range to pick up nearby addresses.
+	const expand = 500	// How much to expand range to pick up nearby addresses.
 	var result []addressRange
 	for i, n := 0, len(addrs); i < n; {
 		begin, end := addrs[i], addrs[i]
@@ -526,7 +526,7 @@ func (sp *sourcePrinter) splitIntoRanges(prof *profile.Profile, addrMap map[uint
 
 		info := addrMap[begin]
 		m := info.loc.Mapping
-		obj := info.obj // Non-nil because of the partitioning done above.
+		obj := info.obj	// Non-nil because of the partitioning done above.
 
 		// Find following addresses that are close enough to addrs[i].
 		for i < n && addrs[i] <= end+2*expand && addrs[i] < m.Limit {
@@ -642,15 +642,15 @@ func (sp *sourcePrinter) printFile(w io.Writer, f *sourceFile, rpt *Report) {
 
 				// divisors already applied, so leave flatDiv,cumDiv as 0
 				asm = append(asm, assemblyInstruction{
-					address:     x.objAddr,
-					instruction: x.disasm,
-					function:    fn.name,
-					file:        x.file,
-					line:        x.line,
-					flat:        x.flat,
-					cum:         x.cum,
-					startsBlock: startsBlock,
-					inlineCalls: inst.stack,
+					address:	x.objAddr,
+					instruction:	x.disasm,
+					function:	fn.name,
+					file:		x.file,
+					line:		x.line,
+					flat:		x.flat,
+					cum:		x.cum,
+					startsBlock:	startsBlock,
+					inlineCalls:	inst.stack,
 				})
 			}
 
@@ -742,13 +742,13 @@ func (sp *sourcePrinter) objectFile(m *profile.Mapping) plugin.ObjFile {
 		return nil
 	}
 	if object, ok := sp.objects[m.File]; ok {
-		return object // May be nil if we detected an error earlier.
+		return object	// May be nil if we detected an error earlier.
 	}
 	object, err := sp.objectTool.Open(m.File, m.Start, m.Limit, m.Offset, m.KernelRelocationSymbol)
 	if err != nil {
 		object = nil
 	}
-	sp.objects[m.File] = object // Cache even on error.
+	sp.objects[m.File] = object	// Cache even on error.
 	return object
 }
 
@@ -884,7 +884,7 @@ func getSourceFromFile(file string, reader *sourceReader, fns graph.Nodes, start
 	lineNodes := make(map[int]graph.Nodes)
 
 	// Collect source coordinates from profile.
-	const margin = 5 // Lines before first/after last sample.
+	const margin = 5	// Lines before first/after last sample.
 	if start == 0 {
 		if fns[0].Info.StartLine != 0 {
 			start = fns[0].Info.StartLine
@@ -925,11 +925,11 @@ func getSourceFromFile(file string, reader *sourceReader, fns graph.Nodes, start
 		flat, cum := lineNodes[lineno].Sum()
 		src = append(src, &graph.Node{
 			Info: graph.NodeInfo{
-				Name:   strings.TrimRight(line, "\n"),
-				Lineno: lineno,
+				Name:	strings.TrimRight(line, "\n"),
+				Lineno:	lineno,
 			},
-			Flat: flat,
-			Cum:  cum,
+			Flat:	flat,
+			Cum:	cum,
 		})
 	}
 	if err := reader.fileError(file); err != nil {
@@ -942,18 +942,18 @@ func getSourceFromFile(file string, reader *sourceReader, fns graph.Nodes, start
 type sourceReader struct {
 	// searchPath is a filepath.ListSeparator-separated list of directories where
 	// source files should be searched.
-	searchPath string
+	searchPath	string
 
 	// trimPath is a filepath.ListSeparator-separated list of paths to trim.
-	trimPath string
+	trimPath	string
 
 	// files maps from path name to a list of lines.
 	// files[*][0] is unused since line numbering starts at 1.
-	files map[string][]string
+	files	map[string][]string
 
 	// errors collects errors encountered per file. These errors are
 	// consulted before returning out of these module.
-	errors map[string]error
+	errors	map[string]error
 }
 
 func newSourceReader(searchPath, trimPath string) *sourceReader {
@@ -974,7 +974,7 @@ func (reader *sourceReader) line(path string, lineno int) (string, bool) {
 	lines, ok := reader.files[path]
 	if !ok {
 		// Read and cache file contents.
-		lines = []string{""} // Skip 0th line
+		lines = []string{""}	// Skip 0th line
 		f, err := openSourceFile(path, reader.searchPath, reader.trimPath)
 		if err != nil {
 			reader.errors[path] = err

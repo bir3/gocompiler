@@ -63,9 +63,9 @@ func ToHTML(w io.Writer, text string, words map[string]string) {
 func ToText(w io.Writer, text string, prefix, codePrefix string, width int) {
 	d := new(Package).Parser().Parse(text)
 	pr := &comment.Printer{
-		TextPrefix:     prefix,
-		TextCodePrefix: codePrefix,
-		TextWidth:      width,
+		TextPrefix:	prefix,
+		TextCodePrefix:	codePrefix,
+		TextWidth:	width,
 	}
 	w.Write(pr.Text(d))
 }

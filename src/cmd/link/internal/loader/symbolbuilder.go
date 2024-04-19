@@ -15,9 +15,9 @@ import (
 // SymbolBuilder is a helper designed to help with the construction
 // of new symbol contents.
 type SymbolBuilder struct {
-	*extSymPayload         // points to payload being updated
-	symIdx         Sym     // index of symbol being updated/constructed
-	l              *Loader // loader
+	*extSymPayload		// points to payload being updated
+	symIdx		Sym	// index of symbol being updated/constructed
+	l		*Loader	// loader
 }
 
 // MakeSymbolBuilder creates a symbol builder for use in constructing
@@ -61,50 +61,50 @@ func (l *Loader) CreateSymForUpdate(name string, version int) *SymbolBuilder {
 
 // Getters for properties of the symbol we're working on.
 
-func (sb *SymbolBuilder) Sym() Sym               { return sb.symIdx }
-func (sb *SymbolBuilder) Name() string           { return sb.name }
-func (sb *SymbolBuilder) Version() int           { return sb.ver }
-func (sb *SymbolBuilder) Type() sym.SymKind      { return sb.kind }
-func (sb *SymbolBuilder) Size() int64            { return sb.size }
-func (sb *SymbolBuilder) Data() []byte           { return sb.data }
-func (sb *SymbolBuilder) Value() int64           { return sb.l.SymValue(sb.symIdx) }
-func (sb *SymbolBuilder) Align() int32           { return sb.l.SymAlign(sb.symIdx) }
-func (sb *SymbolBuilder) Localentry() uint8      { return sb.l.SymLocalentry(sb.symIdx) }
-func (sb *SymbolBuilder) OnList() bool           { return sb.l.AttrOnList(sb.symIdx) }
-func (sb *SymbolBuilder) External() bool         { return sb.l.AttrExternal(sb.symIdx) }
-func (sb *SymbolBuilder) Extname() string        { return sb.l.SymExtname(sb.symIdx) }
-func (sb *SymbolBuilder) CgoExportDynamic() bool { return sb.l.AttrCgoExportDynamic(sb.symIdx) }
-func (sb *SymbolBuilder) Dynimplib() string      { return sb.l.SymDynimplib(sb.symIdx) }
-func (sb *SymbolBuilder) Dynimpvers() string     { return sb.l.SymDynimpvers(sb.symIdx) }
-func (sb *SymbolBuilder) SubSym() Sym            { return sb.l.SubSym(sb.symIdx) }
-func (sb *SymbolBuilder) GoType() Sym            { return sb.l.SymGoType(sb.symIdx) }
-func (sb *SymbolBuilder) VisibilityHidden() bool { return sb.l.AttrVisibilityHidden(sb.symIdx) }
-func (sb *SymbolBuilder) Sect() *sym.Section     { return sb.l.SymSect(sb.symIdx) }
+func (sb *SymbolBuilder) Sym() Sym			{ return sb.symIdx }
+func (sb *SymbolBuilder) Name() string			{ return sb.name }
+func (sb *SymbolBuilder) Version() int			{ return sb.ver }
+func (sb *SymbolBuilder) Type() sym.SymKind		{ return sb.kind }
+func (sb *SymbolBuilder) Size() int64			{ return sb.size }
+func (sb *SymbolBuilder) Data() []byte			{ return sb.data }
+func (sb *SymbolBuilder) Value() int64			{ return sb.l.SymValue(sb.symIdx) }
+func (sb *SymbolBuilder) Align() int32			{ return sb.l.SymAlign(sb.symIdx) }
+func (sb *SymbolBuilder) Localentry() uint8		{ return sb.l.SymLocalentry(sb.symIdx) }
+func (sb *SymbolBuilder) OnList() bool			{ return sb.l.AttrOnList(sb.symIdx) }
+func (sb *SymbolBuilder) External() bool		{ return sb.l.AttrExternal(sb.symIdx) }
+func (sb *SymbolBuilder) Extname() string		{ return sb.l.SymExtname(sb.symIdx) }
+func (sb *SymbolBuilder) CgoExportDynamic() bool	{ return sb.l.AttrCgoExportDynamic(sb.symIdx) }
+func (sb *SymbolBuilder) Dynimplib() string		{ return sb.l.SymDynimplib(sb.symIdx) }
+func (sb *SymbolBuilder) Dynimpvers() string		{ return sb.l.SymDynimpvers(sb.symIdx) }
+func (sb *SymbolBuilder) SubSym() Sym			{ return sb.l.SubSym(sb.symIdx) }
+func (sb *SymbolBuilder) GoType() Sym			{ return sb.l.SymGoType(sb.symIdx) }
+func (sb *SymbolBuilder) VisibilityHidden() bool	{ return sb.l.AttrVisibilityHidden(sb.symIdx) }
+func (sb *SymbolBuilder) Sect() *sym.Section		{ return sb.l.SymSect(sb.symIdx) }
 
 // Setters for symbol properties.
 
-func (sb *SymbolBuilder) SetType(kind sym.SymKind)   { sb.kind = kind }
-func (sb *SymbolBuilder) SetSize(size int64)         { sb.size = size }
-func (sb *SymbolBuilder) SetData(data []byte)        { sb.data = data }
-func (sb *SymbolBuilder) SetOnList(v bool)           { sb.l.SetAttrOnList(sb.symIdx, v) }
-func (sb *SymbolBuilder) SetExternal(v bool)         { sb.l.SetAttrExternal(sb.symIdx, v) }
-func (sb *SymbolBuilder) SetValue(v int64)           { sb.l.SetSymValue(sb.symIdx, v) }
-func (sb *SymbolBuilder) SetAlign(align int32)       { sb.l.SetSymAlign(sb.symIdx, align) }
-func (sb *SymbolBuilder) SetLocalentry(value uint8)  { sb.l.SetSymLocalentry(sb.symIdx, value) }
-func (sb *SymbolBuilder) SetExtname(value string)    { sb.l.SetSymExtname(sb.symIdx, value) }
-func (sb *SymbolBuilder) SetDynimplib(value string)  { sb.l.SetSymDynimplib(sb.symIdx, value) }
-func (sb *SymbolBuilder) SetDynimpvers(value string) { sb.l.SetSymDynimpvers(sb.symIdx, value) }
-func (sb *SymbolBuilder) SetPlt(value int32)         { sb.l.SetPlt(sb.symIdx, value) }
-func (sb *SymbolBuilder) SetGot(value int32)         { sb.l.SetGot(sb.symIdx, value) }
-func (sb *SymbolBuilder) SetSpecial(value bool)      { sb.l.SetAttrSpecial(sb.symIdx, value) }
-func (sb *SymbolBuilder) SetLocal(value bool)        { sb.l.SetAttrLocal(sb.symIdx, value) }
+func (sb *SymbolBuilder) SetType(kind sym.SymKind)	{ sb.kind = kind }
+func (sb *SymbolBuilder) SetSize(size int64)		{ sb.size = size }
+func (sb *SymbolBuilder) SetData(data []byte)		{ sb.data = data }
+func (sb *SymbolBuilder) SetOnList(v bool)		{ sb.l.SetAttrOnList(sb.symIdx, v) }
+func (sb *SymbolBuilder) SetExternal(v bool)		{ sb.l.SetAttrExternal(sb.symIdx, v) }
+func (sb *SymbolBuilder) SetValue(v int64)		{ sb.l.SetSymValue(sb.symIdx, v) }
+func (sb *SymbolBuilder) SetAlign(align int32)		{ sb.l.SetSymAlign(sb.symIdx, align) }
+func (sb *SymbolBuilder) SetLocalentry(value uint8)	{ sb.l.SetSymLocalentry(sb.symIdx, value) }
+func (sb *SymbolBuilder) SetExtname(value string)	{ sb.l.SetSymExtname(sb.symIdx, value) }
+func (sb *SymbolBuilder) SetDynimplib(value string)	{ sb.l.SetSymDynimplib(sb.symIdx, value) }
+func (sb *SymbolBuilder) SetDynimpvers(value string)	{ sb.l.SetSymDynimpvers(sb.symIdx, value) }
+func (sb *SymbolBuilder) SetPlt(value int32)		{ sb.l.SetPlt(sb.symIdx, value) }
+func (sb *SymbolBuilder) SetGot(value int32)		{ sb.l.SetGot(sb.symIdx, value) }
+func (sb *SymbolBuilder) SetSpecial(value bool)		{ sb.l.SetAttrSpecial(sb.symIdx, value) }
+func (sb *SymbolBuilder) SetLocal(value bool)		{ sb.l.SetAttrLocal(sb.symIdx, value) }
 func (sb *SymbolBuilder) SetVisibilityHidden(value bool) {
 	sb.l.SetAttrVisibilityHidden(sb.symIdx, value)
 }
 func (sb *SymbolBuilder) SetNotInSymbolTable(value bool) {
 	sb.l.SetAttrNotInSymbolTable(sb.symIdx, value)
 }
-func (sb *SymbolBuilder) SetSect(sect *sym.Section) { sb.l.SetSymSect(sb.symIdx, sect) }
+func (sb *SymbolBuilder) SetSect(sect *sym.Section)	{ sb.l.SetSymSect(sb.symIdx, sect) }
 
 func (sb *SymbolBuilder) AddBytes(data []byte) {
 	if sb.kind == 0 {
@@ -162,8 +162,8 @@ func (sb *SymbolBuilder) SortRelocs() {
 // Implement sort.Interface
 type relocsByOff extSymPayload
 
-func (p *relocsByOff) Len() int           { return len(p.relocs) }
-func (p *relocsByOff) Less(i, j int) bool { return p.relocs[i].Off() < p.relocs[j].Off() }
+func (p *relocsByOff) Len() int			{ return len(p.relocs) }
+func (p *relocsByOff) Less(i, j int) bool	{ return p.relocs[i].Off() < p.relocs[j].Off() }
 func (p *relocsByOff) Swap(i, j int) {
 	p.relocs[i], p.relocs[j] = p.relocs[j], p.relocs[i]
 }
@@ -174,10 +174,6 @@ func (sb *SymbolBuilder) Reachable() bool {
 
 func (sb *SymbolBuilder) SetReachable(v bool) {
 	sb.l.SetAttrReachable(sb.symIdx, v)
-}
-
-func (sb *SymbolBuilder) setReachable() {
-	sb.SetReachable(true)
 }
 
 func (sb *SymbolBuilder) ReadOnly() bool {
@@ -332,10 +328,6 @@ func (sb *SymbolBuilder) Addstring(str string) int64 {
 		sb.kind = sym.SNOPTRDATA
 	}
 	r := sb.size
-	if sb.name == ".shstrtab" {
-		// FIXME: find a better mechanism for this
-		sb.l.elfsetstring(str, int(r))
-	}
 	sb.data = append(sb.data, str...)
 	sb.data = append(sb.data, 0)
 	sb.size = int64(len(sb.data))
@@ -387,6 +379,10 @@ func (sb *SymbolBuilder) AddAddr(arch *sys.Arch, tgt Sym) int64 {
 	return sb.AddAddrPlus(arch, tgt, 0)
 }
 
+func (sb *SymbolBuilder) AddPEImageRelativeAddrPlus(arch *sys.Arch, tgt Sym, add int64) int64 {
+	return sb.addSymRef(tgt, add, objabi.R_PEIMAGEOFF, 4)
+}
+
 func (sb *SymbolBuilder) AddPCRelPlus(arch *sys.Arch, tgt Sym, add int64) int64 {
 	return sb.addSymRef(tgt, add, objabi.R_PCREL, 4)
 }
@@ -428,7 +424,7 @@ func (sb *SymbolBuilder) MakeWritable() {
 }
 
 func (sb *SymbolBuilder) AddUleb(v uint64) {
-	if v < 128 { // common case: 1 byte
+	if v < 128 {	// common case: 1 byte
 		sb.AddUint8(uint8(v))
 		return
 	}

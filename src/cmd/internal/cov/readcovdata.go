@@ -24,12 +24,12 @@ import (
 // merging or intersecting data files, analyzing data files, or
 // dumping data files.
 type CovDataReader struct {
-	vis            CovDataVisitor
-	indirs         []string
-	matchpkg       func(name string) bool
-	flags          CovDataReaderFlags
-	err            error
-	verbosityLevel int
+	vis		CovDataVisitor
+	indirs		[]string
+	matchpkg	func(name string) bool
+	flags		CovDataReaderFlags
+	err		error
+	verbosityLevel	int
 }
 
 // MakeCovDataReader creates a CovDataReader object to process the
@@ -43,11 +43,11 @@ type CovDataReader struct {
 // packages by name (if nil, then all packages are included).
 func MakeCovDataReader(vis CovDataVisitor, indirs []string, verbosityLevel int, flags CovDataReaderFlags, matchpkg func(name string) bool) *CovDataReader {
 	return &CovDataReader{
-		vis:            vis,
-		indirs:         indirs,
-		matchpkg:       matchpkg,
-		verbosityLevel: verbosityLevel,
-		flags:          flags,
+		vis:		vis,
+		indirs:		indirs,
+		matchpkg:	matchpkg,
+		verbosityLevel:	verbosityLevel,
+		flags:		flags,
 	}
 }
 
@@ -108,7 +108,7 @@ type CovDataVisitor interface {
 	EndCounters()
 
 	// Invoked for each package in the meta-data file for the pod,
-	// first the 'begin' method when processinf of hte package starts,
+	// first the 'begin' method when processing of the package starts,
 	// then the 'end' method when we're done
 	BeginPackage(pd *decodemeta.CoverageMetaDataDecoder, pkgIdx uint32)
 	EndPackage(pd *decodemeta.CoverageMetaDataDecoder, pkgIdx uint32)
@@ -123,8 +123,8 @@ type CovDataVisitor interface {
 type CovDataReaderFlags uint32
 
 const (
-	CovDataReaderNoFlags CovDataReaderFlags = 0
-	PanicOnError                            = 1 << iota
+	CovDataReaderNoFlags	CovDataReaderFlags	= 0
+	PanicOnError					= 1 << iota
 	PanicOnWarning
 )
 

@@ -26,11 +26,11 @@ const debugPhi = false
 
 // fwdRefAux wraps an arbitrary ir.Node as an ssa.Aux for use with OpFwdref.
 type fwdRefAux struct {
-	_ [0]func() // ensure ir.Node isn't compared for equality
-	N ir.Node
+	_	[0]func()	// ensure ir.Node isn't compared for equality
+	N	ir.Node
 }
 
-func (fwdRefAux) CanBeAnSSAAux() {}
+func (fwdRefAux) CanBeAnSSAAux()	{}
 
 // insertPhis finds all the places in the function where a phi is
 // necessary and inserts them.
@@ -50,26 +50,26 @@ func (s *state) insertPhis() {
 }
 
 type phiState struct {
-	s       *state                   // SSA state
-	f       *ssa.Func                // function to work on
-	defvars []map[ir.Node]*ssa.Value // defined variables at end of each block
+	s	*state				// SSA state
+	f	*ssa.Func			// function to work on
+	defvars	[]map[ir.Node]*ssa.Value	// defined variables at end of each block
 
-	varnum map[ir.Node]int32 // variable numbering
+	varnum	map[ir.Node]int32	// variable numbering
 
 	// properties of the dominator tree
-	idom  []*ssa.Block // dominator parents
-	tree  []domBlock   // dominator child+sibling
-	level []int32      // level in dominator tree (0 = root or unreachable, 1 = children of root, ...)
+	idom	[]*ssa.Block	// dominator parents
+	tree	[]domBlock	// dominator child+sibling
+	level	[]int32		// level in dominator tree (0 = root or unreachable, 1 = children of root, ...)
 
 	// scratch locations
-	priq   blockHeap    // priority queue of blocks, higher level (toward leaves) = higher priority
-	q      []*ssa.Block // inner loop queue
-	queued *sparseSet   // has been put in q
-	hasPhi *sparseSet   // has a phi
-	hasDef *sparseSet   // has a write of the variable we're processing
+	priq	blockHeap	// priority queue of blocks, higher level (toward leaves) = higher priority
+	q	[]*ssa.Block	// inner loop queue
+	queued	*sparseSet	// has been put in q
+	hasPhi	*sparseSet	// has a phi
+	hasDef	*sparseSet	// has a write of the variable we're processing
 
 	// miscellaneous
-	placeholder *ssa.Value // value to use as a "not set yet" placeholder.
+	placeholder	*ssa.Value	// value to use as a "not set yet" placeholder.
 }
 
 func (s *phiState) insertPhis() {
@@ -121,7 +121,7 @@ func (s *phiState) insertPhis() {
 	// defs[n] contains all the blocks in which variable number n is assigned.
 	defs := make([][]*ssa.Block, len(vartypes))
 	for _, b := range s.f.Blocks {
-		for var_ := range s.defvars[b.ID] { // TODO: encode defvars some other way (explicit ops)? make defvars[n] a slice instead of a map.
+		for var_ := range s.defvars[b.ID] {	// TODO: encode defvars some other way (explicit ops)? make defvars[n] a slice instead of a map.
 			if n, ok := s.varnum[var_]; ok {
 				defs[n] = append(defs[n], b)
 			}
@@ -253,13 +253,13 @@ func (s *phiState) insertVarPhis(n int, var_ ir.Node, defs []*ssa.Block, typ *ty
 				}
 				// Add a phi to block c for variable n.
 				hasPhi.add(c.ID)
-				v := c.NewValue0I(currentRoot.Pos, ssa.OpPhi, typ, int64(n)) // TODO: line number right?
+				v := c.NewValue0I(currentRoot.Pos, ssa.OpPhi, typ, int64(n))	// TODO: line number right?
 				// Note: we store the variable number in the phi's AuxInt field. Used temporarily by phi building.
 				if var_.Op() == ir.ONAME {
 					s.s.addNamedValue(var_.(*ir.Name), v)
 				}
 				for range c.Preds {
-					v.AddArg(s.placeholder) // Actual args will be filled in by resolveFwdRefs.
+					v.AddArg(s.placeholder)	// Actual args will be filled in by resolveFwdRefs.
 				}
 				if debugPhi {
 					fmt.Printf("new phi for var%d in %s: %s\n", n, c, v)
@@ -296,11 +296,11 @@ func (s *phiState) resolveFwdRefs() {
 
 	// Stack of work to do.
 	type stackEntry struct {
-		b *ssa.Block // block to explore
+		b	*ssa.Block	// block to explore
 
 		// variable/value pair to reinstate on exit
-		n int32 // variable ID
-		v *ssa.Value
+		n	int32	// variable ID
+		v	*ssa.Value
 
 		// Note: only one of b or n,v will be set.
 	}
@@ -360,7 +360,7 @@ func (s *phiState) resolveFwdRefs() {
 			for j := len(c.Values) - 1; j >= 0; j-- {
 				v := c.Values[j]
 				if v.Op != ssa.OpPhi {
-					break // All phis will be at the end of the block during phi building.
+					break	// All phis will be at the end of the block during phi building.
 				}
 				// Only set arguments that have been resolved.
 				// For very wide CFGs, this significantly speeds up phi resolution.
@@ -380,8 +380,8 @@ func (s *phiState) resolveFwdRefs() {
 
 // domBlock contains extra per-block information to record the dominator tree.
 type domBlock struct {
-	firstChild *ssa.Block // first child of block in dominator tree
-	sibling    *ssa.Block // next child of parent in dominator tree
+	firstChild	*ssa.Block	// first child of block in dominator tree
+	sibling		*ssa.Block	// next child of parent in dominator tree
 }
 
 // A block heap is used as a priority queue to implement the PiggyBank
@@ -389,12 +389,12 @@ type domBlock struct {
 // asymptotically but worse in the common case when the PiggyBank
 // holds a sparse set of blocks.
 type blockHeap struct {
-	a     []*ssa.Block // block IDs in heap
-	level []int32      // depth in dominator tree (static, used for determining priority)
+	a	[]*ssa.Block	// block IDs in heap
+	level	[]int32		// depth in dominator tree (static, used for determining priority)
 }
 
-func (h *blockHeap) Len() int      { return len(h.a) }
-func (h *blockHeap) Swap(i, j int) { a := h.a; a[i], a[j] = a[j], a[i] }
+func (h *blockHeap) Len() int		{ return len(h.a) }
+func (h *blockHeap) Swap(i, j int)	{ a := h.a; a[i], a[j] = a[j], a[i] }
 
 func (h *blockHeap) Push(x interface{}) {
 	v := x.(*ssa.Block)
@@ -419,8 +419,8 @@ func (h *blockHeap) Less(i, j int) bool {
 // copy of ../ssa/sparseset.go
 // TODO: move this file to ../ssa, then use sparseSet there.
 type sparseSet struct {
-	dense  []ssa.ID
-	sparse []int32
+	dense	[]ssa.ID
+	sparse	[]int32
 }
 
 // newSparseSet returns a sparseSet that can represent
@@ -449,11 +449,11 @@ func (s *sparseSet) clear() {
 
 // Variant to use for small functions.
 type simplePhiState struct {
-	s         *state                   // SSA state
-	f         *ssa.Func                // function to work on
-	fwdrefs   []*ssa.Value             // list of FwdRefs to be processed
-	defvars   []map[ir.Node]*ssa.Value // defined variables at end of each block
-	reachable []bool                   // which blocks are reachable
+	s		*state				// SSA state
+	f		*ssa.Func			// function to work on
+	fwdrefs		[]*ssa.Value			// list of FwdRefs to be processed
+	defvars		[]map[ir.Node]*ssa.Value	// defined variables at end of each block
+	reachable	[]bool				// which blocks are reachable
 }
 
 func (s *simplePhiState) insertPhis() {
@@ -468,7 +468,7 @@ func (s *simplePhiState) insertPhis() {
 			s.fwdrefs = append(s.fwdrefs, v)
 			var_ := v.Aux.(fwdRefAux).N
 			if _, ok := s.defvars[b.ID][var_]; !ok {
-				s.defvars[b.ID][var_] = v // treat FwdDefs as definitions.
+				s.defvars[b.ID][var_] = v	// treat FwdDefs as definitions.
 			}
 		}
 	}
@@ -503,10 +503,10 @@ loop:
 		var w *ssa.Value
 		for _, a := range args {
 			if a == v {
-				continue // self-reference
+				continue	// self-reference
 			}
 			if a == w {
-				continue // already have this witness
+				continue	// already have this witness
 			}
 			if w != nil {
 				// two witnesses, need a phi value
@@ -515,7 +515,7 @@ loop:
 				v.Aux = nil
 				continue loop
 			}
-			w = a // save witness
+			w = a	// save witness
 		}
 		if w == nil {
 			s.s.Fatalf("no witness for reachable phi %s", v)

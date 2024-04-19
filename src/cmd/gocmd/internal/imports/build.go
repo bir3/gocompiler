@@ -29,14 +29,14 @@ import (
 )
 
 var (
-	bSlashSlash = []byte("//")
-	bStarSlash  = []byte("*/")
-	bSlashStar  = []byte("/*")
-	bPlusBuild  = []byte("+build")
+	bSlashSlash	= []byte("//")
+	bStarSlash	= []byte("*/")
+	bSlashStar	= []byte("/*")
+	bPlusBuild	= []byte("+build")
 
-	goBuildComment = []byte("//go:build")
+	goBuildComment	= []byte("//go:build")
 
-	errMultipleGoBuild = errors.New("multiple //go:build comments")
+	errMultipleGoBuild	= errors.New("multiple //go:build comments")
 )
 
 func isGoBuildComment(line []byte) bool {
@@ -118,8 +118,8 @@ func ShouldBuild(content []byte, tags map[string]bool) bool {
 func parseFileHeader(content []byte) (trimmed, goBuild []byte, sawBinaryOnly bool, err error) {
 	end := 0
 	p := content
-	ended := false       // found non-blank, non-// line, so stopped accepting // +build lines
-	inSlashStar := false // in /* */ comment
+	ended := false		// found non-blank, non-// line, so stopped accepting // +build lines
+	inSlashStar := false	// in /* */ comment
 
 Lines:
 	for len(p) > 0 {
@@ -130,7 +130,7 @@ Lines:
 			p = p[len(p):]
 		}
 		line = bytes.TrimSpace(line)
-		if len(line) == 0 && !ended { // Blank line
+		if len(line) == 0 && !ended {	// Blank line
 			// Remember position of most recent blank line.
 			// When we find the first non-blank, non-// line,
 			// this "end" position marks the latest file position
@@ -142,7 +142,7 @@ Lines:
 			end = len(content) - len(p)
 			continue Lines
 		}
-		if !bytes.HasPrefix(line, bSlashSlash) { // Not comment line
+		if !bytes.HasPrefix(line, bSlashSlash) {	// Not comment line
 			ended = true
 		}
 
@@ -288,7 +288,7 @@ func MatchFile(name string, tags map[string]bool) bool {
 	if i < 0 {
 		return true
 	}
-	name = name[i:] // ignore everything before first _
+	name = name[i:]	// ignore everything before first _
 
 	l := strings.Split(name, "_")
 	if n := len(l); n > 0 && l[n-1] == "test" {
@@ -308,66 +308,67 @@ func MatchFile(name string, tags map[string]bool) bool {
 }
 
 var KnownOS = map[string]bool{
-	"aix":       true,
-	"android":   true,
-	"darwin":    true,
-	"dragonfly": true,
-	"freebsd":   true,
-	"hurd":      true,
-	"illumos":   true,
-	"ios":       true,
-	"js":        true,
-	"linux":     true,
-	"nacl":      true, // legacy; don't remove
-	"netbsd":    true,
-	"openbsd":   true,
-	"plan9":     true,
-	"solaris":   true,
-	"windows":   true,
-	"zos":       true,
+	"aix":		true,
+	"android":	true,
+	"darwin":	true,
+	"dragonfly":	true,
+	"freebsd":	true,
+	"hurd":		true,
+	"illumos":	true,
+	"ios":		true,
+	"js":		true,
+	"linux":	true,
+	"nacl":		true,	// legacy; don't remove
+	"netbsd":	true,
+	"openbsd":	true,
+	"plan9":	true,
+	"solaris":	true,
+	"wasip1":	true,
+	"windows":	true,
+	"zos":		true,
 }
 
 // unixOS is the set of GOOS values matched by the "unix" build tag.
 // This is not used for filename matching.
 // This is the same list as in go/build/syslist.go and cmd/dist/build.go.
 var unixOS = map[string]bool{
-	"aix":       true,
-	"android":   true,
-	"darwin":    true,
-	"dragonfly": true,
-	"freebsd":   true,
-	"hurd":      true,
-	"illumos":   true,
-	"ios":       true,
-	"linux":     true,
-	"netbsd":    true,
-	"openbsd":   true,
-	"solaris":   true,
+	"aix":		true,
+	"android":	true,
+	"darwin":	true,
+	"dragonfly":	true,
+	"freebsd":	true,
+	"hurd":		true,
+	"illumos":	true,
+	"ios":		true,
+	"linux":	true,
+	"netbsd":	true,
+	"openbsd":	true,
+	"solaris":	true,
 }
 
 var KnownArch = map[string]bool{
-	"386":         true,
-	"amd64":       true,
-	"amd64p32":    true, // legacy; don't remove
-	"arm":         true,
-	"armbe":       true,
-	"arm64":       true,
-	"arm64be":     true,
-	"ppc64":       true,
-	"ppc64le":     true,
-	"mips":        true,
-	"mipsle":      true,
-	"mips64":      true,
-	"mips64le":    true,
-	"mips64p32":   true,
-	"mips64p32le": true,
-	"loong64":     true,
-	"ppc":         true,
-	"riscv":       true,
-	"riscv64":     true,
-	"s390":        true,
-	"s390x":       true,
-	"sparc":       true,
-	"sparc64":     true,
-	"wasm":        true,
+	"386":		true,
+	"amd64":	true,
+	"amd64p32":	true,	// legacy; don't remove
+	"arm":		true,
+	"armbe":	true,
+	"arm64":	true,
+	"arm64be":	true,
+	"ppc64":	true,
+	"ppc64le":	true,
+	"mips":		true,
+	"mipsle":	true,
+	"mips64":	true,
+	"mips64le":	true,
+	"mips64p32":	true,
+	"mips64p32le":	true,
+	"loong64":	true,
+	"ppc":		true,
+	"riscv":	true,
+	"riscv64":	true,
+	"s390":		true,
+	"s390x":	true,
+	"sparc":	true,
+	"sparc64":	true,
+	"wasm":		true,
 }

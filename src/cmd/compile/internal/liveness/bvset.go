@@ -8,14 +8,14 @@ import "github.com/bir3/gocompiler/src/cmd/compile/internal/bitvec"
 
 // FNV-1 hash function constants.
 const (
-	h0 = 2166136261
-	hp = 16777619
+	h0	= 2166136261
+	hp	= 16777619
 )
 
 // bvecSet is a set of bvecs, in initial insertion order.
 type bvecSet struct {
-	index []int           // hash -> uniq index. -1 indicates empty slot.
-	uniq  []bitvec.BitVec // unique bvecs, in insertion order
+	index	[]int		// hash -> uniq index. -1 indicates empty slot.
+	uniq	[]bitvec.BitVec	// unique bvecs, in insertion order
 }
 
 func (m *bvecSet) grow() {

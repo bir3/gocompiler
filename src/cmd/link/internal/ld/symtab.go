@@ -45,14 +45,14 @@ import (
 // Symbol table.
 
 func putelfstr(s string) int {
-	if len(Elfstrdat) == 0 && s != "" {
+	if len(elfstrdat) == 0 && s != "" {
 		// first entry must be empty string
 		putelfstr("")
 	}
 
-	off := len(Elfstrdat)
-	Elfstrdat = append(Elfstrdat, s...)
-	Elfstrdat = append(Elfstrdat, 0)
+	off := len(elfstrdat)
+	elfstrdat = append(elfstrdat, s...)
+	elfstrdat = append(elfstrdat, 0)
 	return off
 }
 
@@ -137,14 +137,17 @@ func putelfsym(ctxt *Link, x loader.Sym, typ elf.SymType, curbind elf.SymBind) {
 		// externally linking, I don't think this makes a lot of sense.
 		other = int(elf.STV_HIDDEN)
 	}
-	if ctxt.IsPPC64() && typ == elf.STT_FUNC && ldr.AttrShared(x) && ldr.SymName(x) != "runtime.duffzero" && ldr.SymName(x) != "runtime.duffcopy" {
-		// On ppc64 the top three bits of the st_other field indicate how
-		// many instructions separate the global and local entry points. In
-		// our case it is two instructions, indicated by the value 3.
-		// The conditions here match those in preprocess in
-		// cmd/internal/obj/ppc64/obj9.go, which is where the
-		// instructions are inserted.
-		other |= 3 << 5
+	if ctxt.IsPPC64() && typ == elf.STT_FUNC && ldr.AttrShared(x) {
+		// On ppc64 the top three bits of the st_other field indicate how many
+		// bytes separate the global and local entry points. For non-PCrel shared
+		// symbols this is always 8 bytes except for some special functions.
+		hasPCrel := buildcfg.GOPPC64 >= 10 && buildcfg.GOOS == "linux"
+
+		// This should match the preprocessing behavior in cmd/internal/obj/ppc64/obj9.go
+		// where the distinct global entry is inserted.
+		if !hasPCrel && ldr.SymName(x) != "runtime.duffzero" && ldr.SymName(x) != "runtime.duffcopy" {
+			other |= 3 << 5
+		}
 	}
 
 	// When dynamically linking, we create Symbols by reading the names from
@@ -297,7 +300,7 @@ func putplan9sym(ctxt *Link, ldr *loader.Loader, s loader.Sym, char SymbolType) 
 	}
 
 	ctxt.Out.Write32b(uint32(addr))
-	ctxt.Out.Write8(uint8(t + 0x80)) /* 0x80 is variable length */
+	ctxt.Out.Write8(uint8(t + 0x80))	/* 0x80 is variable length */
 
 	name := ldr.SymName(s)
 	name = mangleABIName(ctxt, ldr, s, name)
@@ -329,7 +332,7 @@ func asmbPlan9Sym(ctxt *Link) {
 		if ldr.AttrNotInSymbolTable(s) {
 			return false
 		}
-		name := ldr.SymName(s) // TODO: try not to read the name
+		name := ldr.SymName(s)	// TODO: try not to read the name
 		if name == "" || name[0] == '.' {
 			return false
 		}
@@ -342,7 +345,7 @@ func asmbPlan9Sym(ctxt *Link) {
 			continue
 		}
 		t := ldr.SymType(s)
-		if t >= sym.SELFRXSECT && t < sym.SXREF { // data sections handled in dodata
+		if t >= sym.SELFRXSECT && t < sym.SXREF {	// data sections handled in dodata
 			if t == sym.STLSBSS {
 				continue
 			}
@@ -409,9 +412,9 @@ func textsectionmap(ctxt *Link) (loader.Sym, uint32) {
 		// The fields written should match runtime/symtab.go:textsect.
 		// They are designed to minimize runtime calculations.
 		vaddr := sect.Vaddr - textbase
-		off = t.SetUint(ctxt.Arch, off, vaddr) // field vaddr
+		off = t.SetUint(ctxt.Arch, off, vaddr)	// field vaddr
 		end := vaddr + sect.Length
-		off = t.SetUint(ctxt.Arch, off, end) // field end
+		off = t.SetUint(ctxt.Arch, off, end)	// field end
 		name := "runtime.text"
 		if n != 0 {
 			name = fmt.Sprintf("runtime.text.%d", n)
@@ -420,7 +423,7 @@ func textsectionmap(ctxt *Link) (loader.Sym, uint32) {
 		if s == 0 {
 			ctxt.Errorf(s, "Unable to find symbol %s\n", name)
 		}
-		off = t.SetAddr(ctxt.Arch, off, s) // field baseaddr
+		off = t.SetAddr(ctxt.Arch, off, s)	// field baseaddr
 		n++
 	}
 	return t.Sym(), uint32(n)
@@ -507,9 +510,9 @@ func (ctxt *Link) symtab(pcln *pclntab) []sym.SymKind {
 		return s.Sym()
 	}
 	var (
-		symgostring = groupSym("go:string.*", sym.SGOSTRING)
-		symgofunc   = groupSym("go:func.*", sym.SGOFUNC)
-		symgcbits   = groupSym("runtime.gcbits.*", sym.SGCBITS)
+		symgostring	= groupSym("go:string.*", sym.SGOSTRING)
+		symgofunc	= groupSym("go:func.*", sym.SGOFUNC)
+		symgcbits	= groupSym("runtime.gcbits.*", sym.SGCBITS)
 	)
 
 	symgofuncrel := symgofunc
@@ -568,7 +571,7 @@ func (ctxt *Link) symtab(pcln *pclntab) []sym.SymKind {
 		case strings.HasPrefix(name, "gcargs."),
 			strings.HasPrefix(name, "gclocals."),
 			strings.HasPrefix(name, "gclocals·"),
-			ldr.SymType(s) == sym.SGOFUNC && s != symgofunc, // inltree, see pcln.go
+			ldr.SymType(s) == sym.SGOFUNC && s != symgofunc,	// inltree, see pcln.go
 			strings.HasSuffix(name, ".opendefer"),
 			strings.HasSuffix(name, ".arginfo0"),
 			strings.HasSuffix(name, ".arginfo1"),
@@ -632,32 +635,44 @@ func (ctxt *Link) symtab(pcln *pclntab) []sym.SymKind {
 	// the definition of moduledata in runtime/symtab.go.
 	// This code uses several global variables that are set by pcln.go:pclntab.
 	moduledata := ldr.MakeSymbolUpdater(ctxt.Moduledata)
+
+	slice := func(sym loader.Sym, len uint64) {
+		moduledata.AddAddr(ctxt.Arch, sym)
+		moduledata.AddUint(ctxt.Arch, len)
+		moduledata.AddUint(ctxt.Arch, len)
+	}
+
+	sliceSym := func(sym loader.Sym) {
+		slice(sym, uint64(ldr.SymSize(sym)))
+	}
+
+	nilSlice := func() {
+		moduledata.AddUint(ctxt.Arch, 0)
+		moduledata.AddUint(ctxt.Arch, 0)
+		moduledata.AddUint(ctxt.Arch, 0)
+	}
+
 	// The pcHeader
 	moduledata.AddAddr(ctxt.Arch, pcln.pcheader)
+
 	// The function name slice
-	moduledata.AddAddr(ctxt.Arch, pcln.funcnametab)
-	moduledata.AddUint(ctxt.Arch, uint64(ldr.SymSize(pcln.funcnametab)))
-	moduledata.AddUint(ctxt.Arch, uint64(ldr.SymSize(pcln.funcnametab)))
+	sliceSym(pcln.funcnametab)
+
 	// The cutab slice
-	moduledata.AddAddr(ctxt.Arch, pcln.cutab)
-	moduledata.AddUint(ctxt.Arch, uint64(ldr.SymSize(pcln.cutab)))
-	moduledata.AddUint(ctxt.Arch, uint64(ldr.SymSize(pcln.cutab)))
+	sliceSym(pcln.cutab)
+
 	// The filetab slice
-	moduledata.AddAddr(ctxt.Arch, pcln.filetab)
-	moduledata.AddUint(ctxt.Arch, uint64(ldr.SymSize(pcln.filetab)))
-	moduledata.AddUint(ctxt.Arch, uint64(ldr.SymSize(pcln.filetab)))
+	sliceSym(pcln.filetab)
+
 	// The pctab slice
-	moduledata.AddAddr(ctxt.Arch, pcln.pctab)
-	moduledata.AddUint(ctxt.Arch, uint64(ldr.SymSize(pcln.pctab)))
-	moduledata.AddUint(ctxt.Arch, uint64(ldr.SymSize(pcln.pctab)))
+	sliceSym(pcln.pctab)
+
 	// The pclntab slice
-	moduledata.AddAddr(ctxt.Arch, pcln.pclntab)
-	moduledata.AddUint(ctxt.Arch, uint64(ldr.SymSize(pcln.pclntab)))
-	moduledata.AddUint(ctxt.Arch, uint64(ldr.SymSize(pcln.pclntab)))
+	slice(pcln.pclntab, uint64(ldr.SymSize(pcln.pclntab)))
+
 	// The ftab slice
-	moduledata.AddAddr(ctxt.Arch, pcln.pclntab)
-	moduledata.AddUint(ctxt.Arch, uint64(pcln.nfunc+1))
-	moduledata.AddUint(ctxt.Arch, uint64(pcln.nfunc+1))
+	slice(pcln.pclntab, uint64(pcln.nfunc+1))
+
 	// findfunctab
 	moduledata.AddAddr(ctxt.Arch, pcln.findfunctab)
 	// minpc, maxpc
@@ -708,37 +723,30 @@ func (ctxt *Link) symtab(pcln *pclntab) []sym.SymKind {
 	}
 
 	// text section information
-	moduledata.AddAddr(ctxt.Arch, textsectionmapSym)
-	moduledata.AddUint(ctxt.Arch, uint64(nsections))
-	moduledata.AddUint(ctxt.Arch, uint64(nsections))
+	slice(textsectionmapSym, uint64(nsections))
 
 	// The typelinks slice
 	typelinkSym := ldr.Lookup("runtime.typelink", 0)
 	ntypelinks := uint64(ldr.SymSize(typelinkSym)) / 4
-	moduledata.AddAddr(ctxt.Arch, typelinkSym)
-	moduledata.AddUint(ctxt.Arch, ntypelinks)
-	moduledata.AddUint(ctxt.Arch, ntypelinks)
+	slice(typelinkSym, ntypelinks)
+
 	// The itablinks slice
 	itablinkSym := ldr.Lookup("runtime.itablink", 0)
 	nitablinks := uint64(ldr.SymSize(itablinkSym)) / uint64(ctxt.Arch.PtrSize)
-	moduledata.AddAddr(ctxt.Arch, itablinkSym)
-	moduledata.AddUint(ctxt.Arch, nitablinks)
-	moduledata.AddUint(ctxt.Arch, nitablinks)
+	slice(itablinkSym, nitablinks)
+
 	// The ptab slice
 	if ptab := ldr.Lookup("go:plugin.tabs", 0); ptab != 0 && ldr.AttrReachable(ptab) {
 		ldr.SetAttrLocal(ptab, true)
 		if ldr.SymType(ptab) != sym.SRODATA {
 			panic(fmt.Sprintf("go:plugin.tabs is %v, not SRODATA", ldr.SymType(ptab)))
 		}
-		nentries := uint64(len(ldr.Data(ptab)) / 8) // sizeof(nameOff) + sizeof(typeOff)
-		moduledata.AddAddr(ctxt.Arch, ptab)
-		moduledata.AddUint(ctxt.Arch, nentries)
-		moduledata.AddUint(ctxt.Arch, nentries)
+		nentries := uint64(len(ldr.Data(ptab)) / 8)	// sizeof(nameOff) + sizeof(typeOff)
+		slice(ptab, nentries)
 	} else {
-		moduledata.AddUint(ctxt.Arch, 0)
-		moduledata.AddUint(ctxt.Arch, 0)
-		moduledata.AddUint(ctxt.Arch, 0)
+		nilSlice()
 	}
+
 	if ctxt.BuildMode == BuildModePlugin {
 		addgostring(ctxt, ldr, moduledata, "go:link.thispluginpath", objabi.PathToPrefix(*flagPluginPath))
 
@@ -755,16 +763,28 @@ func (ctxt *Link) symtab(pcln *pclntab) []sym.SymKind {
 			hash := ldr.Lookup("go:link.pkghash."+l.Pkg, 0)
 			pkghashes.AddAddr(ctxt.Arch, hash)
 		}
-		moduledata.AddAddr(ctxt.Arch, pkghashes.Sym())
-		moduledata.AddUint(ctxt.Arch, uint64(len(ctxt.Library)))
-		moduledata.AddUint(ctxt.Arch, uint64(len(ctxt.Library)))
+		slice(pkghashes.Sym(), uint64(len(ctxt.Library)))
 	} else {
-		moduledata.AddUint(ctxt.Arch, 0) // pluginpath
+		moduledata.AddUint(ctxt.Arch, 0)	// pluginpath
 		moduledata.AddUint(ctxt.Arch, 0)
-		moduledata.AddUint(ctxt.Arch, 0) // pkghashes slice
+		nilSlice()	// pkghashes slice
+	}
+	// Add inittasks slice
+	t := ctxt.mainInittasks
+	if t != 0 {
+		moduledata.AddAddr(ctxt.Arch, t)
+		moduledata.AddUint(ctxt.Arch, uint64(ldr.SymSize(t)/int64(ctxt.Arch.PtrSize)))
+		moduledata.AddUint(ctxt.Arch, uint64(ldr.SymSize(t)/int64(ctxt.Arch.PtrSize)))
+	} else {
+		// Some build modes have no inittasks, like a shared library.
+		// Its inittask list will be constructed by a higher-level
+		// linking step.
+		// This branch can also happen if there are no init tasks at all.
+		moduledata.AddUint(ctxt.Arch, 0)
 		moduledata.AddUint(ctxt.Arch, 0)
 		moduledata.AddUint(ctxt.Arch, 0)
 	}
+
 	if len(ctxt.Shlibs) > 0 {
 		thismodulename := filepath.Base(*flagOutfile)
 		switch ctxt.BuildMode {
@@ -793,15 +813,11 @@ func (ctxt *Link) symtab(pcln *pclntab) []sym.SymKind {
 			modulehashes.AddAddr(ctxt.Arch, abihash)
 		}
 
-		moduledata.AddAddr(ctxt.Arch, modulehashes.Sym())
-		moduledata.AddUint(ctxt.Arch, uint64(len(ctxt.Shlibs)))
-		moduledata.AddUint(ctxt.Arch, uint64(len(ctxt.Shlibs)))
+		slice(modulehashes.Sym(), uint64(len(ctxt.Shlibs)))
 	} else {
-		moduledata.AddUint(ctxt.Arch, 0) // modulename
+		moduledata.AddUint(ctxt.Arch, 0)	// modulename
 		moduledata.AddUint(ctxt.Arch, 0)
-		moduledata.AddUint(ctxt.Arch, 0) // moduleshashes slice
-		moduledata.AddUint(ctxt.Arch, 0)
-		moduledata.AddUint(ctxt.Arch, 0)
+		nilSlice()	// moduleshashes slice
 	}
 
 	hasmain := ctxt.BuildMode == BuildModeExe || ctxt.BuildMode == BuildModePIE
@@ -822,7 +838,7 @@ func (ctxt *Link) symtab(pcln *pclntab) []sym.SymKind {
 	lastmoduledatap := ldr.CreateSymForUpdate("runtime.lastmoduledatap", 0)
 	if lastmoduledatap.Type() != sym.SDYNIMPORT {
 		lastmoduledatap.SetType(sym.SNOPTRDATA)
-		lastmoduledatap.SetSize(0) // overwrite existing value
+		lastmoduledatap.SetSize(0)	// overwrite existing value
 		lastmoduledatap.SetData(nil)
 		lastmoduledatap.AddAddr(ctxt.Arch, moduledata.Sym())
 	}
@@ -831,8 +847,8 @@ func (ctxt *Link) symtab(pcln *pclntab) []sym.SymKind {
 
 // CarrierSymByType tracks carrier symbols and their sizes.
 var CarrierSymByType [sym.SXREF]struct {
-	Sym  loader.Sym
-	Size int64
+	Sym	loader.Sym
+	Size	int64
 }
 
 func setCarrierSym(typ sym.SymKind, s loader.Sym) {

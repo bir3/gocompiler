@@ -20,27 +20,27 @@ import (
 // during the executions of a coverage-instrumented binary.
 
 type CounterDataReader struct {
-	stab     *stringtab.Reader
-	args     map[string]string
-	osargs   []string
-	goarch   string // GOARCH setting from run that produced counter data
-	goos     string // GOOS setting from run that produced counter data
-	mr       io.ReadSeeker
-	hdr      coverage.CounterFileHeader
-	ftr      coverage.CounterFileFooter
-	shdr     coverage.CounterSegmentHeader
-	u32b     []byte
-	u8b      []byte
-	fcnCount uint32
-	segCount uint32
-	debug    bool
+	stab		*stringtab.Reader
+	args		map[string]string
+	osargs		[]string
+	goarch		string	// GOARCH setting from run that produced counter data
+	goos		string	// GOOS setting from run that produced counter data
+	mr		io.ReadSeeker
+	hdr		coverage.CounterFileHeader
+	ftr		coverage.CounterFileFooter
+	shdr		coverage.CounterSegmentHeader
+	u32b		[]byte
+	u8b		[]byte
+	fcnCount	uint32
+	segCount	uint32
+	debug		bool
 }
 
 func NewCounterDataReader(fn string, rs io.ReadSeeker) (*CounterDataReader, error) {
 	cdr := &CounterDataReader{
-		mr:   rs,
-		u32b: make([]byte, 4),
-		u8b:  make([]byte, 1),
+		mr:	rs,
+		u32b:	make([]byte, 4),
+		u8b:	make([]byte, 1),
 	}
 	// Read header
 	if err := binary.Read(rs, binary.LittleEndian, &cdr.hdr); err != nil {
@@ -226,9 +226,9 @@ func (cdr *CounterDataReader) Goarch() string {
 // FuncPayload encapsulates the counter data payload for a single
 // function as read from a counter data file.
 type FuncPayload struct {
-	PkgIdx   uint32
-	FuncIdx  uint32
-	Counters []uint32
+	PkgIdx		uint32
+	FuncIdx		uint32
+	Counters	[]uint32
 }
 
 // NumSegments returns the number of execution segments in the file.
@@ -236,7 +236,7 @@ func (cdr *CounterDataReader) NumSegments() uint32 {
 	return cdr.ftr.NumSegments
 }
 
-// BeginNextSegment sets up the the reader to read the next segment,
+// BeginNextSegment sets up the reader to read the next segment,
 // returning TRUE if we do have another segment to read, or FALSE
 // if we're done with all the segments (also an error if
 // something went wrong).

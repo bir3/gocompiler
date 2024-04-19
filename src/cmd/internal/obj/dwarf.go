@@ -18,10 +18,10 @@ import (
 // Generate a sequence of opcodes that is as short as possible.
 // See section 6.2.5
 const (
-	LINE_BASE   = -4
-	LINE_RANGE  = 10
-	PC_RANGE    = (255 - OPCODE_BASE) / LINE_RANGE
-	OPCODE_BASE = 11
+	LINE_BASE	= -4
+	LINE_RANGE	= 10
+	PC_RANGE	= (255 - OPCODE_BASE) / LINE_RANGE
+	OPCODE_BASE	= 11
 )
 
 // generateDebugLinesSymbol fills the debug lines symbol of a given function.
@@ -47,8 +47,8 @@ func (ctxt *Link) generateDebugLinesSymbol(s, lines *LSym) {
 	stmt := true
 	line := int64(1)
 	pc := s.Func().Text.Pc
-	var lastpc int64 // last PC written to line table, not last PC in func
-	name := ""
+	var lastpc int64	// last PC written to line table, not last PC in func
+	fileIndex := 1
 	prologue, wrotePrologue := false, false
 	// Walk the progs, generating the DWARF table.
 	for p := s.Func().Text; p != nil; p = p.Link {
@@ -58,15 +58,15 @@ func (ctxt *Link) generateDebugLinesSymbol(s, lines *LSym) {
 			continue
 		}
 		newStmt := p.Pos.IsStmt() != src.PosNotStmt
-		newName, newLine := ctxt.getFileSymbolAndLine(p.Pos)
+		newFileIndex, newLine := ctxt.getFileIndexAndLine(p.Pos)
+		newFileIndex++	// 1 indexing for the table
 
 		// Output debug info.
 		wrote := false
-		if name != newName {
-			newFile := ctxt.PosTable.FileIndex(newName) + 1 // 1 indexing for the table.
+		if newFileIndex != fileIndex {
 			dctxt.AddUint8(lines, dwarf.DW_LNS_set_file)
-			dwarf.Uleb128put(dctxt, lines, int64(newFile))
-			name = newName
+			dwarf.Uleb128put(dctxt, lines, int64(newFileIndex))
+			fileIndex = newFileIndex
 			wrote = true
 		}
 		if prologue && !wrotePrologue {
@@ -106,7 +106,7 @@ func (ctxt *Link) generateDebugLinesSymbol(s, lines *LSym) {
 	lastlen := uint64(s.Size - (lastpc - s.Func().Text.Pc))
 	dctxt.AddUint8(lines, dwarf.DW_LNS_advance_pc)
 	dwarf.Uleb128put(dctxt, lines, int64(lastlen))
-	dctxt.AddUint8(lines, 0) // start extended opcode
+	dctxt.AddUint8(lines, 0)	// start extended opcode
 	dwarf.Uleb128put(dctxt, lines, 1)
 	dctxt.AddUint8(lines, dwarf.DW_LNE_end_sequence)
 }
@@ -160,7 +160,7 @@ func putpclcdelta(linkctxt *Link, dctxt dwCtxt, s *LSym, deltaPC uint64, deltaLC
 				(1 << 35) - 1, (1 << 42) - 1, (1 << 49) - 1, (1 << 56) - 1, (1 << 63) - 1:
 				opcode = 255
 			default:
-				opcode = OPCODE_BASE + LINE_RANGE*PC_RANGE - 1 // 249
+				opcode = OPCODE_BASE + LINE_RANGE*PC_RANGE - 1	// 249
 			}
 		}
 	}
@@ -206,6 +206,9 @@ type dwCtxt struct{ *Link }
 
 func (c dwCtxt) PtrSize() int {
 	return c.Arch.PtrSize
+}
+func (c dwCtxt) Size(s dwarf.Sym) int64 {
+	return s.(*LSym).Size
 }
 func (c dwCtxt) AddInt(s dwarf.Sym, size int, i int64) {
 	ls := s.(*LSym)
@@ -256,16 +259,6 @@ func (c dwCtxt) AddDWARFAddrSectionOffset(s dwarf.Sym, t interface{}, ofs int64)
 	ls.WriteAddr(c.Link, ls.Size, size, rsym, ofs)
 	r := &ls.R[len(ls.R)-1]
 	r.Type = objabi.R_DWARFSECREF
-}
-
-func (c dwCtxt) AddFileRef(s dwarf.Sym, f interface{}) {
-	ls := s.(*LSym)
-	rsym := f.(*LSym)
-	fidx := c.Link.PosTable.FileIndex(rsym.Name)
-	// Note the +1 here -- the value we're writing is going to be an
-	// index into the DWARF line table file section, whose entries
-	// are numbered starting at 1, not 0.
-	ls.WriteInt(c.Link, ls.Size, 4, int64(fidx+1))
 }
 
 func (c dwCtxt) CurrentOffset(s dwarf.Sym) int64 {
@@ -325,27 +318,24 @@ func (ctxt *Link) dwarfSym(s *LSym) (dwarfInfoSym, dwarfLocSym, dwarfRangesSym, 
 	return fn.dwarfInfoSym, fn.dwarfLocSym, fn.dwarfRangesSym, fn.dwarfAbsFnSym, fn.dwarfDebugLinesSym
 }
 
-func (s *LSym) Length(dwarfContext interface{}) int64 {
-	return s.Size
-}
-
-// fileSymbol returns a symbol corresponding to the source file of the
-// first instruction (prog) of the specified function. This will
-// presumably be the file in which the function is defined.
-func (ctxt *Link) fileSymbol(fn *LSym) *LSym {
-	p := fn.Func().Text
-	if p != nil {
-		f, _ := ctxt.getFileSymbolAndLine(p.Pos)
-		fsym := ctxt.Lookup(f)
-		return fsym
+// textPos returns the source position of the first instruction (prog)
+// of the specified function.
+func textPos(fn *LSym) src.XPos {
+	if p := fn.Func().Text; p != nil {
+		return p.Pos
 	}
-	return nil
+	return src.NoXPos
 }
 
 // populateDWARF fills in the DWARF Debugging Information Entries for
 // TEXT symbol 's'. The various DWARF symbols must already have been
 // initialized in InitTextSym.
-func (ctxt *Link) populateDWARF(curfn interface{}, s *LSym, myimportpath string) {
+func (ctxt *Link) populateDWARF(curfn Func, s *LSym) {
+	myimportpath := ctxt.Pkgpath
+	if myimportpath == "" {
+		return
+	}
+
 	info, loc, ranges, absfunc, lines := ctxt.dwarfSym(s)
 	if info.Size != 0 {
 		ctxt.Diag("makeFuncDebugEntry double process %v", s)
@@ -357,21 +347,23 @@ func (ctxt *Link) populateDWARF(curfn interface{}, s *LSym, myimportpath string)
 	}
 	var err error
 	dwctxt := dwCtxt{ctxt}
-	filesym := ctxt.fileSymbol(s)
+	startPos := ctxt.InnermostPos(textPos(s))
+	if !startPos.IsKnown() || startPos.RelLine() != uint(s.Func().StartLine) {
+		panic("bad startPos")
+	}
 	fnstate := &dwarf.FnState{
-		Name:          s.Name,
-		Importpath:    myimportpath,
-		Info:          info,
-		Filesym:       filesym,
-		Loc:           loc,
-		Ranges:        ranges,
-		Absfn:         absfunc,
-		StartPC:       s,
-		Size:          s.Size,
-		External:      !s.Static(),
-		Scopes:        scopes,
-		InlCalls:      inlcalls,
-		UseBASEntries: ctxt.UseBASEntries,
+		Name:		s.Name,
+		Info:		info,
+		Loc:		loc,
+		Ranges:		ranges,
+		Absfn:		absfunc,
+		StartPC:	s,
+		Size:		s.Size,
+		StartPos:	startPos,
+		External:	!s.Static(),
+		Scopes:		scopes,
+		InlCalls:	inlcalls,
+		UseBASEntries:	ctxt.UseBASEntries,
 	}
 	if absfunc != nil {
 		err = dwarf.PutAbstractFunc(dwctxt, fnstate)
@@ -391,7 +383,8 @@ func (ctxt *Link) populateDWARF(curfn interface{}, s *LSym, myimportpath string)
 
 // DwarfIntConst creates a link symbol for an integer constant with the
 // given name, type and value.
-func (ctxt *Link) DwarfIntConst(myimportpath, name, typename string, val int64) {
+func (ctxt *Link) DwarfIntConst(name, typename string, val int64) {
+	myimportpath := ctxt.Pkgpath
 	if myimportpath == "" {
 		return
 	}
@@ -404,22 +397,22 @@ func (ctxt *Link) DwarfIntConst(myimportpath, name, typename string, val int64) 
 
 // DwarfGlobal creates a link symbol containing a DWARF entry for
 // a global variable.
-func (ctxt *Link) DwarfGlobal(myimportpath, typename string, varSym *LSym) {
+func (ctxt *Link) DwarfGlobal(typename string, varSym *LSym) {
+	myimportpath := ctxt.Pkgpath
 	if myimportpath == "" || varSym.Local() {
 		return
 	}
 	varname := varSym.Name
-	dieSymName := dwarf.InfoPrefix + varname
-	dieSym := ctxt.LookupInit(dieSymName, func(s *LSym) {
-		s.Type = objabi.SDWARFVAR
-		s.Set(AttrDuplicateOK, true) // needed for shared linkage
-		ctxt.Data = append(ctxt.Data, s)
-	})
+	dieSym := &LSym{
+		Type: objabi.SDWARFVAR,
+	}
+	varSym.NewVarInfo().dwarfInfoSym = dieSym
+	ctxt.Data = append(ctxt.Data, dieSym)
 	typeSym := ctxt.Lookup(dwarf.InfoPrefix + typename)
 	dwarf.PutGlobal(dwCtxt{ctxt}, dieSym, typeSym, varSym, varname)
 }
 
-func (ctxt *Link) DwarfAbstractFunc(curfn interface{}, s *LSym, myimportpath string) {
+func (ctxt *Link) DwarfAbstractFunc(curfn Func, s *LSym) {
 	absfn := ctxt.DwFixups.AbsFuncDwarfSym(s)
 	if absfn.Size != 0 {
 		ctxt.Diag("internal error: DwarfAbstractFunc double process %v", s)
@@ -429,16 +422,14 @@ func (ctxt *Link) DwarfAbstractFunc(curfn interface{}, s *LSym, myimportpath str
 	}
 	scopes, _ := ctxt.DebugInfo(s, absfn, curfn)
 	dwctxt := dwCtxt{ctxt}
-	filesym := ctxt.fileSymbol(s)
 	fnstate := dwarf.FnState{
-		Name:          s.Name,
-		Importpath:    myimportpath,
-		Info:          absfn,
-		Filesym:       filesym,
-		Absfn:         absfn,
-		External:      !s.Static(),
-		Scopes:        scopes,
-		UseBASEntries: ctxt.UseBASEntries,
+		Name:		s.Name,
+		Info:		absfn,
+		Absfn:		absfn,
+		StartPos:	ctxt.InnermostPos(curfn.Pos()),
+		External:	!s.Static(),
+		Scopes:		scopes,
+		UseBASEntries:	ctxt.UseBASEntries,
 	}
 	if err := dwarf.PutAbstractFunc(dwctxt, &fnstate); err != nil {
 		ctxt.Diag("emitting DWARF for %s failed: %v", s.Name, err)
@@ -480,56 +471,56 @@ func (ctxt *Link) DwarfAbstractFunc(curfn interface{}, s *LSym, myimportpath str
 // version of the function (to allow for the fact that each inlined
 // body may be optimized differently).
 type DwarfFixupTable struct {
-	ctxt      *Link
-	mu        sync.Mutex
-	symtab    map[*LSym]int // maps abstract fn LSYM to index in svec
-	svec      []symFixups
-	precursor map[*LSym]fnState // maps fn Lsym to precursor Node, absfn sym
+	ctxt		*Link
+	mu		sync.Mutex
+	symtab		map[*LSym]int	// maps abstract fn LSYM to index in svec
+	svec		[]symFixups
+	precursor	map[*LSym]fnState	// maps fn Lsym to precursor Node, absfn sym
 }
 
 type symFixups struct {
-	fixups   []relFixup
-	doffsets []declOffset
-	inlIndex int32
-	defseen  bool
+	fixups		[]relFixup
+	doffsets	[]declOffset
+	inlIndex	int32
+	defseen		bool
 }
 
 type declOffset struct {
 	// Index of variable within DCL list of pre-optimization function
-	dclIdx int32
+	dclIdx	int32
 	// Offset of var's child DIE with respect to containing subprogram DIE
-	offset int32
+	offset	int32
 }
 
 type relFixup struct {
-	refsym *LSym
-	relidx int32
-	dclidx int32
+	refsym	*LSym
+	relidx	int32
+	dclidx	int32
 }
 
 type fnState struct {
-	// precursor function (really *gc.Node)
-	precursor interface{}
+	// precursor function
+	precursor	Func
 	// abstract function symbol
-	absfn *LSym
+	absfn	*LSym
 }
 
 func NewDwarfFixupTable(ctxt *Link) *DwarfFixupTable {
 	return &DwarfFixupTable{
-		ctxt:      ctxt,
-		symtab:    make(map[*LSym]int),
-		precursor: make(map[*LSym]fnState),
+		ctxt:		ctxt,
+		symtab:		make(map[*LSym]int),
+		precursor:	make(map[*LSym]fnState),
 	}
 }
 
-func (ft *DwarfFixupTable) GetPrecursorFunc(s *LSym) interface{} {
+func (ft *DwarfFixupTable) GetPrecursorFunc(s *LSym) Func {
 	if fnstate, found := ft.precursor[s]; found {
 		return fnstate.precursor
 	}
 	return nil
 }
 
-func (ft *DwarfFixupTable) SetPrecursorFunc(s *LSym, fn interface{}) {
+func (ft *DwarfFixupTable) SetPrecursorFunc(s *LSym, fn Func) {
 	if _, found := ft.precursor[s]; found {
 		ft.ctxt.Diag("internal error: DwarfFixupTable.SetPrecursorFunc double call on %v", s)
 	}
@@ -704,6 +695,6 @@ func (ft *DwarfFixupTable) Finalize(myimportpath string, trace bool) {
 
 type BySymName []*LSym
 
-func (s BySymName) Len() int           { return len(s) }
-func (s BySymName) Less(i, j int) bool { return s[i].Name < s[j].Name }
-func (s BySymName) Swap(i, j int)      { s[i], s[j] = s[j], s[i] }
+func (s BySymName) Len() int		{ return len(s) }
+func (s BySymName) Less(i, j int) bool	{ return s[i].Name < s[j].Name }
+func (s BySymName) Swap(i, j int)	{ s[i], s[j] = s[j], s[i] }

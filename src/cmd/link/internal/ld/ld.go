@@ -53,7 +53,7 @@ func (ctxt *Link) readImportCfg(file string) {
 	}
 
 	for lineNum, line := range strings.Split(string(data), "\n") {
-		lineNum++ // 1-based
+		lineNum++	// 1-based
 		line = strings.TrimSpace(line)
 		if line == "" {
 			continue
@@ -62,15 +62,13 @@ func (ctxt *Link) readImportCfg(file string) {
 			continue
 		}
 
-		var verb, args string
-		if i := strings.Index(line, " "); i < 0 {
-			verb = line
-		} else {
-			verb, args = line[:i], strings.TrimSpace(line[i+1:])
+		verb, args, found := strings.Cut(line, " ")
+		if found {
+			args = strings.TrimSpace(args)
 		}
-		var before, after string
-		if i := strings.Index(args, "="); i >= 0 {
-			before, after = args[:i], args[i+1:]
+		before, after, exist := strings.Cut(args, "=")
+		if !exist {
+			before = ""
 		}
 		switch verb {
 		default:

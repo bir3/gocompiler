@@ -6,8 +6,8 @@ package goobj
 
 import (
 	"bytes"
-	"github.com/bir3/gocompiler/src/cmd/internal/objabi"
 	"encoding/binary"
+	"github.com/bir3/gocompiler/src/internal/abi"
 )
 
 // CUFileIndex is used to index the filenames that are stored in the
@@ -17,13 +17,13 @@ type CUFileIndex uint32
 // FuncInfo is serialized as a symbol (aux symbol). The symbol data is
 // the binary encoding of the struct below.
 type FuncInfo struct {
-	Args      uint32
-	Locals    uint32
-	FuncID    objabi.FuncID
-	FuncFlag  objabi.FuncFlag
-	StartLine int32
-	File      []CUFileIndex
-	InlTree   []InlTreeNode
+	Args		uint32
+	Locals		uint32
+	FuncID		abi.FuncID
+	FuncFlag	abi.FuncFlag
+	StartLine	int32
+	File		[]CUFileIndex
+	InlTree		[]InlTreeNode
 }
 
 func (a *FuncInfo) Write(w *bytes.Buffer) {
@@ -40,7 +40,7 @@ func (a *FuncInfo) Write(w *bytes.Buffer) {
 	writeUint32(a.Locals)
 	writeUint8(uint8(a.FuncID))
 	writeUint8(uint8(a.FuncFlag))
-	writeUint8(0) // pad to uint32 boundary
+	writeUint8(0)	// pad to uint32 boundary
 	writeUint8(0)
 	writeUint32(uint32(a.StartLine))
 
@@ -60,11 +60,11 @@ func (a *FuncInfo) Write(w *bytes.Buffer) {
 // corresponding "off" field stores the byte offset of the start of
 // the items in question.
 type FuncInfoLengths struct {
-	NumFile     uint32
-	FileOff     uint32
-	NumInlTree  uint32
-	InlTreeOff  uint32
-	Initialized bool
+	NumFile		uint32
+	FileOff		uint32
+	NumInlTree	uint32
+	InlTreeOff	uint32
+	Initialized	bool
 }
 
 func (*FuncInfo) ReadFuncInfoLengths(b []byte) FuncInfoLengths {
@@ -85,15 +85,15 @@ func (*FuncInfo) ReadFuncInfoLengths(b []byte) FuncInfoLengths {
 	return result
 }
 
-func (*FuncInfo) ReadArgs(b []byte) uint32 { return binary.LittleEndian.Uint32(b) }
+func (*FuncInfo) ReadArgs(b []byte) uint32	{ return binary.LittleEndian.Uint32(b) }
 
-func (*FuncInfo) ReadLocals(b []byte) uint32 { return binary.LittleEndian.Uint32(b[4:]) }
+func (*FuncInfo) ReadLocals(b []byte) uint32	{ return binary.LittleEndian.Uint32(b[4:]) }
 
-func (*FuncInfo) ReadFuncID(b []byte) objabi.FuncID { return objabi.FuncID(b[8]) }
+func (*FuncInfo) ReadFuncID(b []byte) abi.FuncID	{ return abi.FuncID(b[8]) }
 
-func (*FuncInfo) ReadFuncFlag(b []byte) objabi.FuncFlag { return objabi.FuncFlag(b[9]) }
+func (*FuncInfo) ReadFuncFlag(b []byte) abi.FuncFlag	{ return abi.FuncFlag(b[9]) }
 
-func (*FuncInfo) ReadStartLine(b []byte) int32 { return int32(binary.LittleEndian.Uint32(b[12:])) }
+func (*FuncInfo) ReadStartLine(b []byte) int32	{ return int32(binary.LittleEndian.Uint32(b[12:])) }
 
 func (*FuncInfo) ReadFile(b []byte, filesoff uint32, k uint32) CUFileIndex {
 	return CUFileIndex(binary.LittleEndian.Uint32(b[filesoff+4*k:]))
@@ -108,11 +108,11 @@ func (*FuncInfo) ReadInlTree(b []byte, inltreeoff uint32, k uint32) InlTreeNode 
 
 // InlTreeNode is the serialized form of FileInfo.InlTree.
 type InlTreeNode struct {
-	Parent   int32
-	File     CUFileIndex
-	Line     int32
-	Func     SymRef
-	ParentPC int32
+	Parent		int32
+	File		CUFileIndex
+	Line		int32
+	Func		SymRef
+	ParentPC	int32
 }
 
 func (inl *InlTreeNode) Write(w *bytes.Buffer) {

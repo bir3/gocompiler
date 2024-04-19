@@ -4,7 +4,7 @@
 
 // Package srcimporter implements importing directly
 // from source files rather than installed packages.
-package srcimporter // import "go/internal/srcimporter"
+package srcimporter	// import "go/internal/srcimporter"
 
 import (
 	"fmt"
@@ -19,15 +19,15 @@ import (
 	"path/filepath"
 	"strings"
 	"sync"
-	_ "unsafe" // for go:linkname
+	_ "unsafe"	// for go:linkname
 )
 
 // An Importer provides the context for importing packages from source code.
 type Importer struct {
-	ctxt     *build.Context
-	fset     *token.FileSet
-	sizes    types.Sizes
-	packages map[string]*types.Package
+	ctxt		*build.Context
+	fset		*token.FileSet
+	sizes		types.Sizes
+	packages	map[string]*types.Package
 }
 
 // New returns a new Importer for the given context, file set, and map
@@ -38,10 +38,10 @@ type Importer struct {
 // files; and imported packages are added to the packages map.
 func New(ctxt *build.Context, fset *token.FileSet, packages map[string]*types.Package) *Importer {
 	return &Importer{
-		ctxt:     ctxt,
-		fset:     fset,
-		sizes:    types.SizesFor(ctxt.Compiler, ctxt.GOARCH), // uses go/types default if GOARCH not found
-		packages: packages,
+		ctxt:		ctxt,
+		fset:		fset,
+		sizes:		types.SizesFor(ctxt.Compiler, ctxt.GOARCH),	// uses go/types default if GOARCH not found
+		packages:	packages,
 	}
 }
 
@@ -51,7 +51,7 @@ var importing types.Package
 
 // Import(path) is a shortcut for ImportFrom(path, ".", 0).
 func (p *Importer) Import(path string) (*types.Package, error) {
-	return p.ImportFrom(path, ".", 0) // use "." rather than "" (see issue #24441)
+	return p.ImportFrom(path, ".", 0)	// use "." rather than "" (see issue #24441)
 }
 
 // ImportFrom imports the package with the given import path resolved from the given srcDir,
@@ -65,12 +65,12 @@ func (p *Importer) ImportFrom(path, srcDir string, mode types.ImportMode) (*type
 		panic("non-zero import mode")
 	}
 
-	if abs, err := p.absPath(srcDir); err == nil { // see issue #14282
+	if abs, err := p.absPath(srcDir); err == nil {	// see issue #14282
 		srcDir = abs
 	}
 	bp, err := p.ctxt.Import(path, srcDir, 0)
 	if err != nil {
-		return nil, err // err may be *build.NoGoError - return as is
+		return nil, err	// err may be *build.NoGoError - return as is
 	}
 
 	// package unsafe is known to the type checker
@@ -117,15 +117,15 @@ func (p *Importer) ImportFrom(path, srcDir string, mode types.ImportMode) (*type
 	// type-check package files
 	var firstHardErr error
 	conf := types.Config{
-		IgnoreFuncBodies: true,
+		IgnoreFuncBodies:	true,
 		// continue type-checking after the first error
 		Error: func(err error) {
 			if firstHardErr == nil && !err.(types.Error).Soft {
 				firstHardErr = err
 			}
 		},
-		Importer: p,
-		Sizes:    p.sizes,
+		Importer:	p,
+		Sizes:		p.sizes,
 	}
 	if len(bp.CgoFiles) > 0 {
 		if p.ctxt.OpenFile != nil {
@@ -149,7 +149,7 @@ func (p *Importer) ImportFrom(path, srcDir string, mode types.ImportMode) (*type
 		// Do not return it (see also #20837, #20855).
 		if firstHardErr != nil {
 			pkg = nil
-			err = firstHardErr // give preference to first hard error over any soft error
+			err = firstHardErr	// give preference to first hard error over any soft error
 		}
 		return pkg, fmt.Errorf("type-checking package %q failed (%v)", bp.ImportPath, err)
 	}
@@ -179,11 +179,11 @@ func (p *Importer) parseFiles(dir string, filenames []string) ([]*ast.File, erro
 			defer wg.Done()
 			src, err := open(filepath)
 			if err != nil {
-				errors[i] = err // open provides operation and filename in error
+				errors[i] = err	// open provides operation and filename in error
 				return
 			}
 			files[i], errors[i] = parser.ParseFile(p.fset, filepath, src, parser.SkipObjectResolution)
-			src.Close() // ignore Close error - parsing may have succeeded which is all we need
+			src.Close()	// ignore Close error - parsing may have succeeded which is all we need
 		}(i, p.joinPath(dir, filename))
 	}
 	wg.Wait()

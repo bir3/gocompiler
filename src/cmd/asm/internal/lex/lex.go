@@ -22,18 +22,18 @@ type ScanToken rune
 const (
 	// Asm defines some two-character lexemes. We make up
 	// a rune/ScanToken value for them - ugly but simple.
-	LSH          ScanToken = -1000 - iota // << Left shift.
-	RSH                                   // >> Logical right shift.
-	ARR                                   // -> Used on ARM for shift type 3, arithmetic right shift.
-	ROT                                   // @> Used on ARM for shift type 4, rotate right.
-	Include                               // included file started here
-	BuildComment                          // //go:build or +build comment
-	macroName                             // name of macro that should not be expanded
+	LSH		ScanToken	= -1000 - iota	// << Left shift.
+	RSH						// >> Logical right shift.
+	ARR						// -> Used on ARM for shift type 3, arithmetic right shift.
+	ROT						// @> Used on ARM for shift type 4, rotate right.
+	Include						// included file started here
+	BuildComment					// //go:build or +build comment
+	macroName					// name of macro that should not be expanded
 )
 
 // IsRegisterShift reports whether the token is one of the ARM register shift operators.
 func IsRegisterShift(r ScanToken) bool {
-	return ROT <= r && r <= LSH // Order looks backwards because these are negative.
+	return ROT <= r && r <= LSH	// Order looks backwards because these are negative.
 }
 
 func (t ScanToken) String() string {
@@ -100,18 +100,14 @@ type TokenReader interface {
 // A macro is stored as a sequence of Tokens with spaces stripped.
 type Token struct {
 	ScanToken
-	text string
+	text	string
 }
 
 // Make returns a Token with the given rune (ScanToken) and text representation.
 func Make(token ScanToken, text string) Token {
-	// If the symbol starts with center dot, as in ·x, rewrite it as ""·x
-	if token == scanner.Ident && strings.HasPrefix(text, "\u00B7") {
-		text = `""` + text
-	}
 	// Substitute the substitutes for . and /.
-	text = strings.Replace(text, "\u00B7", ".", -1)
-	text = strings.Replace(text, "\u2215", "/", -1)
+	text = strings.ReplaceAll(text, "\u00B7", ".")
+	text = strings.ReplaceAll(text, "\u2215", "/")
 	return Token{ScanToken: token, text: text}
 }
 
@@ -121,9 +117,9 @@ func (l Token) String() string {
 
 // A Macro represents the definition of a #defined macro.
 type Macro struct {
-	name   string   // The #define name.
-	args   []string // Formal arguments.
-	tokens []Token  // Body of macro.
+	name	string		// The #define name.
+	args	[]string	// Formal arguments.
+	tokens	[]Token		// Body of macro.
 }
 
 // Tokenize turns a string into a list of Tokens; used to parse the -D flag and in tests.

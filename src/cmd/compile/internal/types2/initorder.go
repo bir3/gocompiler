@@ -107,11 +107,11 @@ func (check *Checker) initOrder() {
 		// but they all have the same initializer - emit only
 		// one, for the first variable seen
 		if emitted[info] {
-			continue // initializer already emitted, if any
+			continue	// initializer already emitted, if any
 		}
 		emitted[info] = true
 
-		infoLhs := info.lhs // possibly nil (see declInfo.lhs field comment)
+		infoLhs := info.lhs	// possibly nil (see declInfo.lhs field comment)
 		if infoLhs == nil {
 			infoLhs = []*Var{v}
 		}
@@ -190,10 +190,10 @@ type dependency interface {
 // s in n.succ represents an edge n->s; with a->b indicating that
 // a depends on b.
 type graphNode struct {
-	obj        dependency // object represented by this node
-	pred, succ nodeSet    // consumers and dependencies of this node (lazily initialized)
-	index      int        // node index in graph slice/priority queue
-	ndeps      int        // number of outstanding dependencies before this object can be initialized
+	obj		dependency	// object represented by this node
+	pred, succ	nodeSet		// consumers and dependencies of this node (lazily initialized)
+	index		int		// node index in graph slice/priority queue
+	ndeps		int		// number of outstanding dependencies before this object can be initialized
 }
 
 // cost returns the cost of removing this node, which involves copying each
@@ -239,7 +239,7 @@ func dependencyGraph(objMap map[Object]*declInfo) []*graphNode {
 		}
 	}
 
-	var G, funcG []*graphNode // separate non-functions and functions
+	var G, funcG []*graphNode	// separate non-functions and functions
 	for _, n := range M {
 		if _, ok := n.obj.(*Func); ok {
 			funcG = append(funcG, n)
@@ -276,11 +276,11 @@ func dependencyGraph(objMap map[Object]*declInfo) []*graphNode {
 						s.pred.add(p)
 					}
 				}
-				delete(p.succ, n) // remove edge to n
+				delete(p.succ, n)	// remove edge to n
 			}
 		}
 		for s := range n.succ {
-			delete(s.pred, n) // remove edge to n
+			delete(s.pred, n)	// remove edge to n
 		}
 	}
 
@@ -300,7 +300,7 @@ func dependencyGraph(objMap map[Object]*declInfo) []*graphNode {
 // a nodeQueue may be used as a priority queue.
 type nodeQueue []*graphNode
 
-func (a nodeQueue) Len() int { return len(a) }
+func (a nodeQueue) Len() int	{ return len(a) }
 
 func (a nodeQueue) Swap(i, j int) {
 	x, y := a[i], a[j]
@@ -322,7 +322,7 @@ func (a *nodeQueue) Push(x interface{}) {
 func (a *nodeQueue) Pop() interface{} {
 	n := len(*a)
 	x := (*a)[n-1]
-	x.index = -1 // for safety
+	x.index = -1	// for safety
 	*a = (*a)[:n-1]
 	return x
 }

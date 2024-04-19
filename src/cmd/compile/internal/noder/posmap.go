@@ -12,18 +12,18 @@ import (
 
 // A posMap handles mapping from syntax.Pos to src.XPos.
 type posMap struct {
-	bases map[*syntax.PosBase]*src.PosBase
-	cache struct {
-		last *syntax.PosBase
-		base *src.PosBase
+	bases	map[*syntax.PosBase]*src.PosBase
+	cache	struct {
+		last	*syntax.PosBase
+		base	*src.PosBase
 	}
 }
 
 type poser interface{ Pos() syntax.Pos }
 type ender interface{ End() syntax.Pos }
 
-func (m *posMap) pos(p poser) src.XPos { return m.makeXPos(p.Pos()) }
-func (m *posMap) end(p ender) src.XPos { return m.makeXPos(p.End()) }
+func (m *posMap) pos(p poser) src.XPos	{ return m.makeXPos(p.Pos()) }
+func (m *posMap) end(p ender) src.XPos	{ return m.makeXPos(p.End()) }
 
 func (m *posMap) makeXPos(pos syntax.Pos) src.XPos {
 	// Predeclared objects (e.g., the result parameter for error.Error)
@@ -71,16 +71,4 @@ func (m *posMap) makeSrcPosBase(b0 *syntax.PosBase) *src.PosBase {
 	m.cache.base = b1
 
 	return b1
-}
-
-func (m *posMap) join(other *posMap) {
-	if m.bases == nil {
-		m.bases = make(map[*syntax.PosBase]*src.PosBase)
-	}
-	for k, v := range other.bases {
-		if m.bases[k] != nil {
-			base.Fatalf("duplicate posmap bases")
-		}
-		m.bases[k] = v
-	}
 }

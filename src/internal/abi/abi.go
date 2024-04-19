@@ -27,21 +27,21 @@ type RegArgs struct {
 	// directly represented, but some architectures treat narrow
 	// width floating point values specially (e.g. they're promoted
 	// first, or they need to be NaN-boxed).
-	Ints   [IntArgRegs]uintptr  // untyped integer registers
-	Floats [FloatArgRegs]uint64 // untyped float registers
+	Ints	[IntArgRegs]uintptr	// untyped integer registers
+	Floats	[FloatArgRegs]uint64	// untyped float registers
 
 	// Fields above this point are known to assembly.
 
 	// Ptrs is a space that duplicates Ints but with pointer type,
 	// used to make pointers passed or returned  in registers
 	// visible to the GC by making the type unsafe.Pointer.
-	Ptrs [IntArgRegs]unsafe.Pointer
+	Ptrs	[IntArgRegs]unsafe.Pointer
 
 	// ReturnIsPtr is a bitmap that indicates which registers
 	// contain or will contain pointers on the return path from
 	// a reflectcall. The i'th bit indicates whether the i'th
 	// register contains or will contain a valid Go pointer.
-	ReturnIsPtr IntArgRegBitmap
+	ReturnIsPtr	IntArgRegBitmap
 }
 
 func (r *RegArgs) Dump() {
@@ -100,27 +100,3 @@ func (b *IntArgRegBitmap) Set(i int) {
 func (b *IntArgRegBitmap) Get(i int) bool {
 	return b[i/8]&(uint8(1)<<(i%8)) != 0
 }
-
-// FuncPC* intrinsics.
-//
-// CAREFUL: In programs with plugins, FuncPC* can return different values
-// for the same function (because there are actually multiple copies of
-// the same function in the address space). To be safe, don't use the
-// results of this function in any == expression. It is only safe to
-// use the result as an address at which to start executing code.
-
-// FuncPCABI0 returns the entry PC of the function f, which must be a
-// direct reference of a function defined as ABI0. Otherwise it is a
-// compile-time error.
-//
-// Implemented as a compile intrinsic.
-func FuncPCABI0(f any) uintptr
-
-// FuncPCABIInternal returns the entry PC of the function f. If f is a
-// direct reference of a function, it must be defined as ABIInternal.
-// Otherwise it is a compile-time error. If f is not a direct reference
-// of a defined function, it assumes that f is a func value. Otherwise
-// the behavior is undefined.
-//
-// Implemented as a compile intrinsic.
-func FuncPCABIInternal(f any) uintptr

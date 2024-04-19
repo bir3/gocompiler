@@ -136,8 +136,13 @@ func Command(env []string, args ...string) (*exec.Cmd, error) {
 	cmd.Env = make([]string, len(env), len(env)+10)
 	copy(cmd.Env, env)
 
+	goroot, err := vfs.PrivateGOROOT()
+	if err != nil {
+		return nil, err
+	}
 	cmd.Env = append(cmd.Env, fmt.Sprintf("BIR3_GOCOMPILER_TOOL=%s", args[0]))
 	cmd.Env = append(cmd.Env, fmt.Sprintf("GOCACHE=%s", privateCacheDir))
+	cmd.Env = append(cmd.Env, fmt.Sprintf("GOROOT=%s", goroot))
 	return cmd, nil
 }
 
@@ -169,5 +174,5 @@ func Run(args ...string) (Result, error) {
 }
 
 func GoVersion() string {
-	return "go1.20.10"
+	return "go1.22.2"
 }

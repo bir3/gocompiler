@@ -12,16 +12,16 @@ import (
 
 // A place that an ssa variable can reside.
 type Location interface {
-	String() string // name to use in assembly templates: AX, 16(SP), ...
+	String() string	// name to use in assembly templates: AX, 16(SP), ...
 }
 
 // A Register is a machine register, like AX.
 // They are numbered densely from 0 (for each architecture).
 type Register struct {
-	num    int32 // dense numbering
-	objNum int16 // register number from cmd/internal/obj/$ARCH
-	gcNum  int16 // GC register map number (dense numbering of registers that can contain pointers)
-	name   string
+	num	int32	// dense numbering
+	objNum	int16	// register number from cmd/internal/obj/$ARCH
+	gcNum	int16	// GC register map number (dense numbering of registers that can contain pointers)
+	name	string
 }
 
 func (r *Register) String() string {
@@ -60,12 +60,12 @@ func (r *Register) GCNum() int16 {
 //	                          { N: len, Type: int, Off: 0, SplitOf: parent, SplitOffset: 8}
 //	                          parent = &{N: s, Type: string}
 type LocalSlot struct {
-	N    *ir.Name    // an ONAME *ir.Name representing a stack location.
-	Type *types.Type // type of slot
-	Off  int64       // offset of slot in N
+	N	*ir.Name	// an ONAME *ir.Name representing a stack location.
+	Type	*types.Type	// type of slot
+	Off	int64		// offset of slot in N
 
-	SplitOf     *LocalSlot // slot is a decomposition of SplitOf
-	SplitOffset int64      // .. at this offset.
+	SplitOf		*LocalSlot	// slot is a decomposition of SplitOf
+	SplitOffset	int64		// .. at this offset.
 }
 
 func (s LocalSlot) String() string {
@@ -103,7 +103,7 @@ func (t LocResults) String() string {
 }
 
 type Spill struct {
-	Type   *types.Type
-	Offset int64
-	Reg    int16
+	Type	*types.Type
+	Offset	int64
+	Reg	int16
 }

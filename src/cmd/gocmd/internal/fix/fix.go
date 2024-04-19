@@ -19,8 +19,8 @@ import (
 )
 
 var CmdFix = &base.Command{
-	UsageLine: "go fix [-fix list] [packages]",
-	Short:     "update packages to use new APIs",
+	UsageLine:	"go fix [-fix list] [packages]",
+	Short:		"update packages to use new APIs",
 	Long: `
 Fix runs the Go fix command on the packages named by the import paths.
 
@@ -41,7 +41,7 @@ var fixes = CmdFix.Flag.String("fix", "", "comma-separated list of fixes to appl
 
 func init() {
 	work.AddBuildFlags(CmdFix, work.DefaultBuildFlags)
-	CmdFix.Run = runFix // fix cycle
+	CmdFix.Run = runFix	// fix cycle
 }
 
 func runFix(ctx context.Context, cmd *base.Command, args []string) {

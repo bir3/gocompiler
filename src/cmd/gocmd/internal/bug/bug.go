@@ -12,11 +12,10 @@ import (
 	"io"
 	urlpkg "net/url"
 	"os"
-	"os/exec"
+	"github.com/bir3/gocompiler/exec"
 	"path/filepath"
 	"regexp"
 	"runtime"
-"github.com/bir3/gocompiler/vfs"
 	"strings"
 
 	"github.com/bir3/gocompiler/src/cmd/gocmd/internal/base"
@@ -27,9 +26,9 @@ import (
 )
 
 var CmdBug = &base.Command{
-	Run:       runBug,
-	UsageLine: "go bug",
-	Short:     "start a bug report",
+	Run:		runBug,
+	UsageLine:	"go bug",
+	Short:		"start a bug report",
 	Long: `
 Bug opens the default browser and starts a new bug report.
 The report includes useful system information.
@@ -111,7 +110,7 @@ func printGoEnv(w io.Writer) {
 }
 
 func printGoDetails(w io.Writer) {
-	gocmd := filepath.Join(vfs.GOROOT, "bin/go")
+	gocmd := filepath.Join(runtime.GOROOT(), "bin/go")
 	printCmdOut(w, "GOROOT/bin/go version: ", gocmd, "version")
 	printCmdOut(w, "GOROOT/bin/go tool compile -V: ", gocmd, "tool", "compile", "-V")
 }

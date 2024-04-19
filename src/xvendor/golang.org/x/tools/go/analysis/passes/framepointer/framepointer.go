@@ -18,20 +18,21 @@ import (
 const Doc = "report assembly that clobbers the frame pointer before saving it"
 
 var Analyzer = &analysis.Analyzer{
-	Name: "framepointer",
-	Doc:  Doc,
-	Run:  run,
+	Name:	"framepointer",
+	Doc:	Doc,
+	URL:	"https://pkg.go.dev/golang.org/x/tools/go/analysis/passes/framepointer",
+	Run:	run,
 }
 
 var (
-	re             = regexp.MustCompile
-	asmWriteBP     = re(`,\s*BP$`) // TODO: can have false positive, e.g. for TESTQ BP,BP. Seems unlikely.
-	asmMentionBP   = re(`\bBP\b`)
-	asmControlFlow = re(`^(J|RET)`)
+	re		= regexp.MustCompile
+	asmWriteBP	= re(`,\s*BP$`)	// TODO: can have false positive, e.g. for TESTQ BP,BP. Seems unlikely.
+	asmMentionBP	= re(`\bBP\b`)
+	asmControlFlow	= re(`^(J|RET)`)
 )
 
 func run(pass *analysis.Pass) (interface{}, error) {
-	if build.Default.GOARCH != "amd64" { // TODO: arm64 also?
+	if build.Default.GOARCH != "amd64" {	// TODO: arm64 also?
 		return nil, nil
 	}
 	if build.Default.GOOS != "linux" && build.Default.GOOS != "darwin" {
@@ -72,16 +73,16 @@ func run(pass *analysis.Pass) (interface{}, error) {
 				continue
 			}
 
-			if asmWriteBP.MatchString(line) { // clobber of BP, function is not OK
+			if asmWriteBP.MatchString(line) {	// clobber of BP, function is not OK
 				pass.Reportf(analysisutil.LineStart(tf, lineno), "frame pointer is clobbered before saving")
 				active = false
 				continue
 			}
-			if asmMentionBP.MatchString(line) { // any other use of BP might be a read, so function is OK
+			if asmMentionBP.MatchString(line) {	// any other use of BP might be a read, so function is OK
 				active = false
 				continue
 			}
-			if asmControlFlow.MatchString(line) { // give up after any branch instruction
+			if asmControlFlow.MatchString(line) {	// give up after any branch instruction
 				active = false
 				continue
 			}

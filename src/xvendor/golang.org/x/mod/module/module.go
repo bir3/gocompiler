@@ -4,7 +4,7 @@
 
 // Package module defines the module.Version type along with support code.
 //
-// The module.Version type is a simple Path, Version pair:
+// The [module.Version] type is a simple Path, Version pair:
 //
 //	type Version struct {
 //		Path string
@@ -12,7 +12,7 @@
 //	}
 //
 // There are no restrictions imposed directly by use of this structure,
-// but additional checking functions, most notably Check, verify that
+// but additional checking functions, most notably [Check], verify that
 // a particular path, version pair is valid.
 //
 // # Escaped Paths
@@ -111,7 +111,7 @@ import (
 // These are stored in their plain (unescaped) form.
 type Version struct {
 	// Path is a module path, like "golang.org/x/text" or "rsc.io/quote/v2".
-	Path string
+	Path	string
 
 	// Version is usually a semantic version in canonical form.
 	// There are three exceptions to this general rule.
@@ -121,7 +121,7 @@ type Version struct {
 	// to represent the decision to take no version of a given module.
 	// Third, filesystem paths found in "replace" directives are
 	// represented by a path with an empty version.
-	Version string `json:",omitempty"`
+	Version	string	`json:",omitempty"`
 }
 
 // String returns a representation of the Version suitable for logging
@@ -135,12 +135,12 @@ func (m Version) String() string {
 
 // A ModuleError indicates an error specific to a module.
 type ModuleError struct {
-	Path    string
-	Version string
-	Err     error
+	Path	string
+	Version	string
+	Err	error
 }
 
-// VersionError returns a ModuleError derived from a Version and error,
+// VersionError returns a [ModuleError] derived from a [Version] and error,
 // or err itself if it is already such an error.
 func VersionError(v Version, err error) error {
 	var mErr *ModuleError
@@ -148,9 +148,9 @@ func VersionError(v Version, err error) error {
 		return err
 	}
 	return &ModuleError{
-		Path:    v.Path,
-		Version: v.Version,
-		Err:     err,
+		Path:		v.Path,
+		Version:	v.Version,
+		Err:		err,
 	}
 }
 
@@ -164,17 +164,17 @@ func (e *ModuleError) Error() string {
 	return fmt.Sprintf("module %s: %v", e.Path, e.Err)
 }
 
-func (e *ModuleError) Unwrap() error { return e.Err }
+func (e *ModuleError) Unwrap() error	{ return e.Err }
 
 // An InvalidVersionError indicates an error specific to a version, with the
 // module path unknown or specified externally.
 //
-// A ModuleError may wrap an InvalidVersionError, but an InvalidVersionError
+// A [ModuleError] may wrap an InvalidVersionError, but an InvalidVersionError
 // must not wrap a ModuleError.
 type InvalidVersionError struct {
-	Version string
-	Pseudo  bool
-	Err     error
+	Version	string
+	Pseudo	bool
+	Err	error
 }
 
 // noun returns either "version" or "pseudo-version", depending on whether
@@ -190,22 +190,22 @@ func (e *InvalidVersionError) Error() string {
 	return fmt.Sprintf("%s %q invalid: %s", e.noun(), e.Version, e.Err)
 }
 
-func (e *InvalidVersionError) Unwrap() error { return e.Err }
+func (e *InvalidVersionError) Unwrap() error	{ return e.Err }
 
 // An InvalidPathError indicates a module, import, or file path doesn't
-// satisfy all naming constraints. See CheckPath, CheckImportPath,
-// and CheckFilePath for specific restrictions.
+// satisfy all naming constraints. See [CheckPath], [CheckImportPath],
+// and [CheckFilePath] for specific restrictions.
 type InvalidPathError struct {
-	Kind string // "module", "import", or "file"
-	Path string
-	Err  error
+	Kind	string	// "module", "import", or "file"
+	Path	string
+	Err	error
 }
 
 func (e *InvalidPathError) Error() string {
 	return fmt.Sprintf("malformed %s path %q: %v", e.Kind, e.Path, e.Err)
 }
 
-func (e *InvalidPathError) Unwrap() error { return e.Err }
+func (e *InvalidPathError) Unwrap() error	{ return e.Err }
 
 // Check checks that a given module path, version pair is valid.
 // In addition to the path being a valid module path
@@ -219,8 +219,8 @@ func Check(path, version string) error {
 	}
 	if !semver.IsValid(version) {
 		return &ModuleError{
-			Path: path,
-			Err:  &InvalidVersionError{Version: version, Err: errors.New("not a semantic version")},
+			Path:	path,
+			Err:	&InvalidVersionError{Version: version, Err: errors.New("not a semantic version")},
 		}
 	}
 	_, pathMajor, _ := SplitPathVersion(path)
@@ -294,7 +294,7 @@ func fileNameOK(r rune) bool {
 }
 
 // CheckPath checks that a module path is valid.
-// A valid module path is a valid import path, as checked by CheckImportPath,
+// A valid module path is a valid import path, as checked by [CheckImportPath],
 // with three additional constraints.
 // First, the leading path element (up to the first slash, if any),
 // by convention a domain name, must contain only lower-case ASCII letters,
@@ -369,7 +369,7 @@ func CheckImportPath(path string) error {
 type pathKind int
 
 const (
-	modulePath pathKind = iota
+	modulePath	pathKind	= iota
 	importPath
 	filePath
 )
@@ -380,7 +380,7 @@ const (
 // checkPath returns an error describing why the path is not valid.
 // Because these checks apply to module, import, and file paths,
 // and because other checks may be applied, the caller is expected to wrap
-// this error with InvalidPathError.
+// this error with [InvalidPathError].
 func checkPath(path string, kind pathKind) error {
 	if !utf8.ValidString(path) {
 		return fmt.Errorf("invalid UTF-8")
@@ -532,7 +532,7 @@ var badWindowsNames = []string{
 // they require ".vN" instead of "/vN", and for all N, not just N >= 2.
 // SplitPathVersion returns with ok = false when presented with
 // a path whose last path element does not satisfy the constraints
-// applied by CheckPath, such as "example.com/pkg/v1" or "example.com/pkg/v1.2".
+// applied by [CheckPath], such as "example.com/pkg/v1" or "example.com/pkg/v1.2".
 func SplitPathVersion(path string) (prefix, pathMajor string, ok bool) {
 	if strings.HasPrefix(path, "gopkg.in/") {
 		return splitGopkgIn(path)
@@ -582,7 +582,7 @@ func splitGopkgIn(path string) (prefix, pathMajor string, ok bool) {
 // MatchPathMajor reports whether the semantic version v
 // matches the path major version pathMajor.
 //
-// MatchPathMajor returns true if and only if CheckPathMajor returns nil.
+// MatchPathMajor returns true if and only if [CheckPathMajor] returns nil.
 func MatchPathMajor(v, pathMajor string) bool {
 	return CheckPathMajor(v, pathMajor) == nil
 }
@@ -614,15 +614,15 @@ func CheckPathMajor(v, pathMajor string) error {
 		pathMajor = pathMajor[1:]
 	}
 	return &InvalidVersionError{
-		Version: v,
-		Err:     fmt.Errorf("should be %s, not %s", pathMajor, semver.Major(v)),
+		Version:	v,
+		Err:		fmt.Errorf("should be %s, not %s", pathMajor, semver.Major(v)),
 	}
 }
 
 // PathMajorPrefix returns the major-version tag prefix implied by pathMajor.
 // An empty PathMajorPrefix allows either v0 or v1.
 //
-// Note that MatchPathMajor may accept some versions that do not actually begin
+// Note that [MatchPathMajor] may accept some versions that do not actually begin
 // with this prefix: namely, it accepts a 'v0.0.0-' prefix for a '.v1'
 // pathMajor, even though that pathMajor implies 'v1' tagging.
 func PathMajorPrefix(pathMajor string) string {
@@ -643,7 +643,7 @@ func PathMajorPrefix(pathMajor string) string {
 }
 
 // CanonicalVersion returns the canonical form of the version string v.
-// It is the same as semver.Canonical(v) except that it preserves the special build suffix "+incompatible".
+// It is the same as [semver.Canonical] except that it preserves the special build suffix "+incompatible".
 func CanonicalVersion(v string) string {
 	cv := semver.Canonical(v)
 	if semver.Build(v) == "+incompatible" {
@@ -652,8 +652,8 @@ func CanonicalVersion(v string) string {
 	return cv
 }
 
-// Sort sorts the list by Path, breaking ties by comparing Version fields.
-// The Version fields are interpreted as semantic versions (using semver.Compare)
+// Sort sorts the list by Path, breaking ties by comparing [Version] fields.
+// The Version fields are interpreted as semantic versions (using [semver.Compare])
 // optionally followed by a tie-breaking suffix introduced by a slash character,
 // like in "v0.0.1/go.mod".
 func Sort(list []Version) {
@@ -698,8 +698,8 @@ func EscapePath(path string) (escaped string, err error) {
 func EscapeVersion(v string) (escaped string, err error) {
 	if err := checkElem(v, filePath); err != nil || strings.Contains(v, "!") {
 		return "", &InvalidVersionError{
-			Version: v,
-			Err:     fmt.Errorf("disallowed version string"),
+			Version:	v,
+			Err:		fmt.Errorf("disallowed version string"),
 		}
 	}
 	return escapeString(v)
@@ -793,7 +793,7 @@ func unescapeString(escaped string) (string, bool) {
 }
 
 // MatchPrefixPatterns reports whether any path prefix of target matches one of
-// the glob patterns (as defined by path.Match) in the comma-separated globs
+// the glob patterns (as defined by [path.Match]) in the comma-separated globs
 // list. This implements the algorithm used when matching a module path to the
 // GOPRIVATE environment variable, as described by 'go help module-private'.
 //

@@ -15,42 +15,42 @@ import (
 )
 
 var arm64LS = map[string]uint8{
-	"P": arm64.C_XPOST,
-	"W": arm64.C_XPRE,
+	"P":	arm64.C_XPOST,
+	"W":	arm64.C_XPRE,
 }
 
 var arm64Jump = map[string]bool{
-	"B":     true,
-	"BL":    true,
-	"BEQ":   true,
-	"BNE":   true,
-	"BCS":   true,
-	"BHS":   true,
-	"BCC":   true,
-	"BLO":   true,
-	"BMI":   true,
-	"BPL":   true,
-	"BVS":   true,
-	"BVC":   true,
-	"BHI":   true,
-	"BLS":   true,
-	"BGE":   true,
-	"BLT":   true,
-	"BGT":   true,
-	"BLE":   true,
-	"CALL":  true,
-	"CBZ":   true,
-	"CBZW":  true,
-	"CBNZ":  true,
-	"CBNZW": true,
-	"JMP":   true,
-	"TBNZ":  true,
-	"TBZ":   true,
+	"B":		true,
+	"BL":		true,
+	"BEQ":		true,
+	"BNE":		true,
+	"BCS":		true,
+	"BHS":		true,
+	"BCC":		true,
+	"BLO":		true,
+	"BMI":		true,
+	"BPL":		true,
+	"BVS":		true,
+	"BVC":		true,
+	"BHI":		true,
+	"BLS":		true,
+	"BGE":		true,
+	"BLT":		true,
+	"BGT":		true,
+	"BLE":		true,
+	"CALL":		true,
+	"CBZ":		true,
+	"CBZW":		true,
+	"CBNZ":		true,
+	"CBNZW":	true,
+	"JMP":		true,
+	"TBNZ":		true,
+	"TBZ":		true,
 
 	// ADR isn't really a jump, but it takes a PC or label reference,
 	// which needs to patched like a jump.
-	"ADR":  true,
-	"ADRP": true,
+	"ADR":	true,
+	"ADRP":	true,
 }
 
 func jumpArm64(word string) bool {
@@ -71,8 +71,8 @@ func GetARM64SpecialOperand(name string) arm64.SpecialOperand {
 		// Handle some special cases.
 		specialMapping := map[string]arm64.SpecialOperand{
 			// The internal representation of CS(CC) and HS(LO) are the same.
-			"CS": arm64.SPOP_HS,
-			"CC": arm64.SPOP_LO,
+			"CS":	arm64.SPOP_HS,
+			"CC":	arm64.SPOP_LO,
 		}
 		for s, opd := range specialMapping {
 			arm64SpecialOperand[s] = opd
@@ -175,7 +175,7 @@ func arm64RegisterNumber(name string, n int16) (int16, bool) {
 			return arm64.REG_F0 + n, true
 		}
 	case "R":
-		if 0 <= n && n <= 30 { // not 31
+		if 0 <= n && n <= 30 {	// not 31
 			return arm64.REG_R0 + n, true
 		}
 	case "V":

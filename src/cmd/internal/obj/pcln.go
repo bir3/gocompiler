@@ -26,8 +26,8 @@ func funcpctab(ctxt *Link, func_ *LSym, desc string, valfunc func(*Link, *LSym, 
 	dbg := desc == ctxt.Debugpcln
 	dst := []byte{}
 	sym := &LSym{
-		Type:      objabi.SRODATA,
-		Attribute: AttrContentAddressable | AttrPcdata,
+		Type:		objabi.SRODATA,
+		Attribute:	AttrContentAddressable | AttrPcdata,
 	}
 
 	if dbg {
@@ -154,8 +154,8 @@ func pctofileline(ctxt *Link, sym *LSym, oldval int32, p *Prog, phase int32, arg
 // pcinlineState holds the state used to create a function's inlining
 // tree and the PC-value table that maps PCs to nodes in that tree.
 type pcinlineState struct {
-	globalToLocal map[int]int
-	localTree     InlTree
+	globalToLocal	map[int]int
+	localTree	InlTree
 }
 
 // addBranch adds a branch from the global inlining tree in ctxt to
@@ -225,7 +225,7 @@ func (s *pcinlineState) pctoinline(ctxt *Link, sym *LSym, oldval int32, p *Prog,
 // The adjustment by p takes effect only after p, so we
 // apply the change during phase == 1.
 func pctospadj(ctxt *Link, sym *LSym, oldval int32, p *Prog, phase int32, arg interface{}) int32 {
-	if oldval == -1 { // starting
+	if oldval == -1 {	// starting
 		oldval = 0
 	}
 	if phase == 0 {
@@ -269,7 +269,7 @@ func linkpcln(ctxt *Link, cursym *LSym) {
 		// that consist entirely of "-1", since that's the assumed default value.
 		//   From.Offset is table ID
 		//   To.Offset is data
-		if p.As == APCDATA && p.From.Offset >= int64(npcdata) && p.To.Offset != -1 { // ignore -1 as we start at -1, if we only see -1, nothing changed
+		if p.As == APCDATA && p.From.Offset >= int64(npcdata) && p.To.Offset != -1 {	// ignore -1 as we start at -1, if we only see -1, nothing changed
 			npcdata = int(p.From.Offset + 1)
 		}
 		// Find the highest ID of any FUNCDATA table.
@@ -333,8 +333,8 @@ func linkpcln(ctxt *Link, cursym *LSym) {
 		if (havepc[i/32]>>uint(i%32))&1 == 0 {
 			// use an empty symbol.
 			pcln.Pcdata[i] = &LSym{
-				Type:      objabi.SRODATA,
-				Attribute: AttrContentAddressable | AttrPcdata,
+				Type:		objabi.SRODATA,
+				Attribute:	AttrContentAddressable | AttrPcdata,
 			}
 		} else {
 			pcln.Pcdata[i] = funcpctab(ctxt, cursym, "pctopcdata", pctopcdata, interface{}(uint32(i)))
@@ -358,13 +358,13 @@ func linkpcln(ctxt *Link, cursym *LSym) {
 
 // PCIter iterates over encoded pcdata tables.
 type PCIter struct {
-	p       []byte
-	PC      uint32
-	NextPC  uint32
-	PCScale uint32
-	Value   int32
-	start   bool
-	Done    bool
+	p	[]byte
+	PC	uint32
+	NextPC	uint32
+	PCScale	uint32
+	Value	int32
+	start	bool
+	Done	bool
 }
 
 // NewPCIter creates a PCIter with a scale factor for the PC step size.

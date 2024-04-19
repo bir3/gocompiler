@@ -21,18 +21,18 @@ import (
 // meta-data blobs emitted by the compiler, one per Go package).
 
 type CoverageMetaFileWriter struct {
-	stab   stringtab.Writer
-	mfname string
-	w      *bufio.Writer
-	tmp    []byte
-	debug  bool
+	stab	stringtab.Writer
+	mfname	string
+	w	*bufio.Writer
+	tmp	[]byte
+	debug	bool
 }
 
 func NewCoverageMetaFileWriter(mfname string, w io.Writer) *CoverageMetaFileWriter {
 	r := &CoverageMetaFileWriter{
-		mfname: mfname,
-		w:      bufio.NewWriter(w),
-		tmp:    make([]byte, 64),
+		mfname:	mfname,
+		w:	bufio.NewWriter(w),
+		tmp:	make([]byte, 64),
 	}
 	r.stab.InitWriter()
 	r.stab.Lookup("")
@@ -58,15 +58,15 @@ func (m *CoverageMetaFileWriter) Write(finalHash [16]byte, blobs [][]byte, mode 
 
 	// Emit header
 	mh := coverage.MetaFileHeader{
-		Magic:        coverage.CovMetaMagic,
-		Version:      coverage.MetaFileVersion,
-		TotalLength:  tlen,
-		Entries:      uint64(len(blobs)),
-		MetaFileHash: finalHash,
-		StrTabOffset: uint32(stOffset),
-		StrTabLength: stSize,
-		CMode:        mode,
-		CGranularity: granularity,
+		Magic:		coverage.CovMetaMagic,
+		Version:	coverage.MetaFileVersion,
+		TotalLength:	tlen,
+		Entries:	uint64(len(blobs)),
+		MetaFileHash:	finalHash,
+		StrTabOffset:	uint32(stOffset),
+		StrTabLength:	stSize,
+		CMode:		mode,
+		CGranularity:	granularity,
 	}
 	var err error
 	if err = binary.Write(m.w, binary.LittleEndian, mh); err != nil {

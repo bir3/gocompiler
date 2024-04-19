@@ -44,13 +44,13 @@ func Trace(op, path string) {
 }
 
 var (
-	doTrace   bool
-	traceFile *os.File
-	traceMu   sync.Mutex
+	doTrace		bool
+	traceFile	*os.File
+	traceMu		sync.Mutex
 
-	gofsystrace      = godebug.New("gofsystrace")
-	gofsystracelog   = godebug.New("gofsystracelog")
-	gofsystracestack = godebug.New("gofsystracestack")
+	gofsystrace		= godebug.New("#gofsystrace")
+	gofsystracelog		= godebug.New("#gofsystracelog")
+	gofsystracestack	= godebug.New("#gofsystracestack")
 )
 
 func init() {
@@ -84,8 +84,8 @@ type OverlayJSON struct {
 }
 
 type node struct {
-	actualFilePath string           // empty if a directory
-	children       map[string]*node // path element → file or directory
+	actualFilePath	string			// empty if a directory
+	children	map[string]*node	// path element → file or directory
 }
 
 func (n *node) isDir() bool {
@@ -97,8 +97,8 @@ func (n *node) isDeleted() bool {
 }
 
 // TODO(matloob): encapsulate these in an io/fs-like interface
-var overlay map[string]*node // path -> file or directory node
-var cwd string               // copy of base.Cwd() to avoid dependency
+var overlay map[string]*node	// path -> file or directory node
+var cwd string			// copy of base.Cwd() to avoid dependency
 
 // canonicalize a path for looking it up in the overlay.
 // Important: filepath.Join(cwd, path) doesn't always produce
@@ -159,7 +159,7 @@ func initFromJSON(overlayJSON OverlayJSON) error {
 	// Use reverseCanonicalized to check for collisions:
 	// no two 'from' paths should canonicalize to the same path.
 	overlay = make(map[string]*node)
-	reverseCanonicalized := make(map[string]string) // inverse of canonicalize operation, to check for duplicates
+	reverseCanonicalized := make(map[string]string)	// inverse of canonicalize operation, to check for duplicates
 	// Build a table of file and directory nodes from the replacement map.
 
 	// Remove any potential non-determinism from iterating over map by sorting it.
@@ -233,7 +233,7 @@ func initFromJSON(overlayJSON OverlayJSON) error {
 			dirNode.children[base] = childNode
 			parent := filepath.Dir(dir)
 			if parent == dir {
-				break // reached the top; there is no parent
+				break	// reached the top; there is no parent
 			}
 			dir, base = parent, filepath.Base(dir)
 			childNode = dirNode
@@ -295,6 +295,10 @@ func parentIsOverlayFile(name string) (string, bool) {
 // return an error.
 var errNotDir = errors.New("not a directory")
 
+func nonFileInOverlayError(overlayPath string) error {
+	return fmt.Errorf("replacement path %q is a directory, not a file", overlayPath)
+}
+
 // readDir reads a dir on disk, returning an error that is errNotDir if the dir is not a directory.
 // Unfortunately, the error returned by os.ReadDir if dir is not a directory
 // can vary depending on the OS (Linux, Mac, Windows return ENOTDIR; BSD returns EINVAL).
@@ -354,18 +358,21 @@ func ReadDir(dir string) ([]fs.FileInfo, error) {
 		case to.isDeleted():
 			delete(files, name)
 		default:
-			// This is a regular file.
-			f, err := os.Lstat(to.actualFilePath)
+			// To keep the data model simple, if the overlay contains a symlink we
+			// always stat through it (using Stat, not Lstat). That way we don't need
+			// to worry about the interaction between Lstat and directories: if a
+			// symlink in the overlay points to a directory, we reject it like an
+			// ordinary directory.
+			fi, err := os.Stat(to.actualFilePath)
 			if err != nil {
 				files[name] = missingFile(name)
 				continue
-			} else if f.IsDir() {
-				return nil, fmt.Errorf("for overlay of %q to %q: overlay Replace entries can't point to directories",
-					filepath.Join(dir, name), to.actualFilePath)
+			} else if fi.IsDir() {
+				return nil, &fs.PathError{Op: "Stat", Path: filepath.Join(dir, name), Err: nonFileInOverlayError(to.actualFilePath)}
 			}
 			// Add a fileinfo for the overlaid file, so that it has
 			// the original file's name, but the overlaid file's metadata.
-			files[name] = fakeFile{name, f}
+			files[name] = fakeFile{name, fi}
 		}
 	}
 	sortedFiles := diskfis[:0]
@@ -420,9 +427,9 @@ func openFile(path string, flag int, perm os.FileMode) (*os.File, error) {
 		// or implicitly because one of its parent directories was
 		// replaced by a file.
 		return nil, &fs.PathError{
-			Op:   "Open",
-			Path: path,
-			Err:  fmt.Errorf("file %s does not exist: parent directory %s is replaced by a file in overlay", path, parent),
+			Op:	"Open",
+			Path:	path,
+			Err:	fmt.Errorf("file %s does not exist: parent directory %s is replaced by a file in overlay", path, parent),
 		}
 	}
 	return os.OpenFile(cpath, flag, perm)
@@ -541,13 +548,21 @@ func overlayStat(path string, osStat func(string) (fs.FileInfo, error), opName s
 
 	switch {
 	case node.isDeleted():
-		return nil, &fs.PathError{Op: "lstat", Path: cpath, Err: fs.ErrNotExist}
+		return nil, &fs.PathError{Op: opName, Path: cpath, Err: fs.ErrNotExist}
 	case node.isDir():
 		return fakeDir(filepath.Base(path)), nil
 	default:
-		fi, err := osStat(node.actualFilePath)
+		// To keep the data model simple, if the overlay contains a symlink we
+		// always stat through it (using Stat, not Lstat). That way we don't need to
+		// worry about the interaction between Lstat and directories: if a symlink
+		// in the overlay points to a directory, we reject it like an ordinary
+		// directory.
+		fi, err := os.Stat(node.actualFilePath)
 		if err != nil {
 			return nil, err
+		}
+		if fi.IsDir() {
+			return nil, &fs.PathError{Op: opName, Path: cpath, Err: nonFileInOverlayError(node.actualFilePath)}
 		}
 		return fakeFile{name: filepath.Base(path), real: fi}, nil
 	}
@@ -557,16 +572,20 @@ func overlayStat(path string, osStat func(string) (fs.FileInfo, error), opName s
 // so that the file has the name of the overlaid file, but takes all
 // other characteristics of the replacement file.
 type fakeFile struct {
-	name string
-	real fs.FileInfo
+	name	string
+	real	fs.FileInfo
 }
 
-func (f fakeFile) Name() string       { return f.name }
-func (f fakeFile) Size() int64        { return f.real.Size() }
-func (f fakeFile) Mode() fs.FileMode  { return f.real.Mode() }
-func (f fakeFile) ModTime() time.Time { return f.real.ModTime() }
-func (f fakeFile) IsDir() bool        { return f.real.IsDir() }
-func (f fakeFile) Sys() any           { return f.real.Sys() }
+func (f fakeFile) Name() string		{ return f.name }
+func (f fakeFile) Size() int64		{ return f.real.Size() }
+func (f fakeFile) Mode() fs.FileMode	{ return f.real.Mode() }
+func (f fakeFile) ModTime() time.Time	{ return f.real.ModTime() }
+func (f fakeFile) IsDir() bool		{ return f.real.IsDir() }
+func (f fakeFile) Sys() any		{ return f.real.Sys() }
+
+func (f fakeFile) String() string {
+	return fs.FormatFileInfo(f)
+}
 
 // missingFile provides an fs.FileInfo for an overlaid file where the
 // destination file in the overlay doesn't exist. It returns zero values
@@ -574,24 +593,32 @@ func (f fakeFile) Sys() any           { return f.real.Sys() }
 // set to ModeIrregular.
 type missingFile string
 
-func (f missingFile) Name() string       { return string(f) }
-func (f missingFile) Size() int64        { return 0 }
-func (f missingFile) Mode() fs.FileMode  { return fs.ModeIrregular }
-func (f missingFile) ModTime() time.Time { return time.Unix(0, 0) }
-func (f missingFile) IsDir() bool        { return false }
-func (f missingFile) Sys() any           { return nil }
+func (f missingFile) Name() string		{ return string(f) }
+func (f missingFile) Size() int64		{ return 0 }
+func (f missingFile) Mode() fs.FileMode		{ return fs.ModeIrregular }
+func (f missingFile) ModTime() time.Time	{ return time.Unix(0, 0) }
+func (f missingFile) IsDir() bool		{ return false }
+func (f missingFile) Sys() any			{ return nil }
+
+func (f missingFile) String() string {
+	return fs.FormatFileInfo(f)
+}
 
 // fakeDir provides an fs.FileInfo implementation for directories that are
 // implicitly created by overlaid files. Each directory in the
 // path of an overlaid file is considered to exist in the overlay filesystem.
 type fakeDir string
 
-func (f fakeDir) Name() string       { return string(f) }
-func (f fakeDir) Size() int64        { return 0 }
-func (f fakeDir) Mode() fs.FileMode  { return fs.ModeDir | 0500 }
-func (f fakeDir) ModTime() time.Time { return time.Unix(0, 0) }
-func (f fakeDir) IsDir() bool        { return true }
-func (f fakeDir) Sys() any           { return nil }
+func (f fakeDir) Name() string		{ return string(f) }
+func (f fakeDir) Size() int64		{ return 0 }
+func (f fakeDir) Mode() fs.FileMode	{ return fs.ModeDir | 0500 }
+func (f fakeDir) ModTime() time.Time	{ return time.Unix(0, 0) }
+func (f fakeDir) IsDir() bool		{ return true }
+func (f fakeDir) Sys() any		{ return nil }
+
+func (f fakeDir) String() string {
+	return fs.FormatFileInfo(f)
+}
 
 // Glob is like filepath.Glob but uses the overlay file system.
 func Glob(pattern string) (matches []string, err error) {
@@ -647,7 +674,7 @@ func cleanGlobPath(path string) string {
 		// do nothing to the path
 		return path
 	default:
-		return path[0 : len(path)-1] // chop off trailing separator
+		return path[0 : len(path)-1]	// chop off trailing separator
 	}
 }
 
@@ -663,7 +690,7 @@ func volumeNameLen(path string) int {
 	if path[1] == ':' && ('a' <= c && c <= 'z' || 'A' <= c && c <= 'Z') {
 		return 2
 	}
-	// is it UNC? https://msdn.microsoft.com/en-us/library/windows/desktop/aa365247(v=vs.85).aspx
+	// is it UNC? https://learn.microsoft.com/en-us/windows/win32/fileio/naming-a-file
 	if l := len(path); l >= 5 && isSlash(path[0]) && isSlash(path[1]) &&
 		!isSlash(path[2]) && path[2] != '.' {
 		// first, leading `\\` and next shouldn't be `\`. its server name.
@@ -696,16 +723,16 @@ func cleanGlobPathWindows(path string) (prefixLen int, cleaned string) {
 	switch {
 	case path == "":
 		return 0, "."
-	case vollen+1 == len(path) && os.IsPathSeparator(path[len(path)-1]): // /, \, C:\ and C:/
+	case vollen+1 == len(path) && os.IsPathSeparator(path[len(path)-1]):	// /, \, C:\ and C:/
 		// do nothing to the path
 		return vollen + 1, path
-	case vollen == len(path) && len(path) == 2: // C:
-		return vollen, path + "." // convert C: into C:.
+	case vollen == len(path) && len(path) == 2:	// C:
+		return vollen, path + "."	// convert C: into C:.
 	default:
 		if vollen >= len(path) {
 			vollen = len(path) - 1
 		}
-		return vollen, path[0 : len(path)-1] // chop off trailing separator
+		return vollen, path[0 : len(path)-1]	// chop off trailing separator
 	}
 }
 
@@ -717,15 +744,15 @@ func glob(dir, pattern string, matches []string) (m []string, e error) {
 	m = matches
 	fi, err := Stat(dir)
 	if err != nil {
-		return // ignore I/O error
+		return	// ignore I/O error
 	}
 	if !fi.IsDir() {
-		return // ignore I/O error
+		return	// ignore I/O error
 	}
 
 	list, err := ReadDir(dir)
 	if err != nil {
-		return // ignore I/O error
+		return	// ignore I/O error
 	}
 
 	var names []string

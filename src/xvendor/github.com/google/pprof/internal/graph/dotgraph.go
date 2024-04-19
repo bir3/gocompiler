@@ -27,30 +27,30 @@ import (
 // DotAttributes contains details about the graph itself, giving
 // insight into how its elements should be rendered.
 type DotAttributes struct {
-	Nodes map[*Node]*DotNodeAttributes // A map allowing each Node to have its own visualization option
+	Nodes map[*Node]*DotNodeAttributes	// A map allowing each Node to have its own visualization option
 }
 
 // DotNodeAttributes contains Node specific visualization options.
 type DotNodeAttributes struct {
-	Shape       string                 // The optional shape of the node when rendered visually
-	Bold        bool                   // If the node should be bold or not
-	Peripheries int                    // An optional number of borders to place around a node
-	URL         string                 // An optional url link to add to a node
-	Formatter   func(*NodeInfo) string // An optional formatter for the node's label
+	Shape		string			// The optional shape of the node when rendered visually
+	Bold		bool			// If the node should be bold or not
+	Peripheries	int			// An optional number of borders to place around a node
+	URL		string			// An optional url link to add to a node
+	Formatter	func(*NodeInfo) string	// An optional formatter for the node's label
 }
 
 // DotConfig contains attributes about how a graph should be
 // constructed and how it should look.
 type DotConfig struct {
-	Title     string   // The title of the DOT graph
-	LegendURL string   // The URL to link to from the legend.
-	Labels    []string // The labels for the DOT's legend
+	Title		string		// The title of the DOT graph
+	LegendURL	string		// The URL to link to from the legend.
+	Labels		[]string	// The labels for the DOT's legend
 
-	FormatValue func(int64) string // A formatting function for values
-	Total       int64              // The total weight of the graph, used to compute percentages
+	FormatValue	func(int64) string	// A formatting function for values
+	Total		int64			// The total weight of the graph, used to compute percentages
 }
 
-const maxNodelets = 4 // Number of nodelets for labels (both numeric and non)
+const maxNodelets = 4	// Number of nodelets for labels (both numeric and non)
 
 // ComposeDot creates and writes a in the DOT format to the writer, using
 // the configurations given.
@@ -100,8 +100,8 @@ func ComposeDot(w io.Writer, g *Graph, a *DotAttributes, c *DotConfig) {
 // builder wraps an io.Writer and understands how to compose DOT formatted elements.
 type builder struct {
 	io.Writer
-	attributes *DotAttributes
-	config     *DotConfig
+	attributes	*DotAttributes
+	config		*DotConfig
 }
 
 // start generates a title and initial node in DOT format.
@@ -369,7 +369,7 @@ func dotColor(score float64, isBackground bool) string {
 		score = -math.Pow(-score, (1.0 - shift))
 	}
 
-	var r, g, b float64 // red, green, blue
+	var r, g, b float64	// red, green, blue
 	if score < 0.0 {
 		g = value
 		r = value * (1 + saturation*score)
@@ -420,9 +420,9 @@ func (b *builder) collapsedTags(ts []*Tag, count int, flatTags bool) []*Tag {
 	for _, g := range tagGroups {
 		l, w, c := b.tagGroupLabel(g)
 		nts = append(nts, &Tag{
-			Name: l,
-			Flat: w,
-			Cum:  c,
+			Name:	l,
+			Flat:	w,
+			Cum:	c,
 		})
 	}
 	return SortTags(nts, flatTags)

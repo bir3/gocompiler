@@ -60,16 +60,16 @@ const outbufMode = 0775
 //	  wg.Wait()
 //	}
 type OutBuf struct {
-	arch *sys.Arch
-	off  int64
+	arch	*sys.Arch
+	off	int64
 
-	buf  []byte // backing store of mmap'd output file
-	heap []byte // backing store for non-mmapped data
+	buf	[]byte	// backing store of mmap'd output file
+	heap	[]byte	// backing store for non-mmapped data
 
-	name   string
-	f      *os.File
-	encbuf [8]byte // temp buffer used by WriteN methods
-	isView bool    // true if created from View()
+	name	string
+	f	*os.File
+	encbuf	[8]byte	// temp buffer used by WriteN methods
+	isView	bool	// true if created from View()
 }
 
 func (out *OutBuf) Open(name string) error {
@@ -96,12 +96,12 @@ var viewError = errors.New("output not mmapped")
 
 func (out *OutBuf) View(start uint64) (*OutBuf, error) {
 	return &OutBuf{
-		arch:   out.arch,
-		name:   out.name,
-		buf:    out.buf,
-		heap:   out.heap,
-		off:    int64(start),
-		isView: true,
+		arch:	out.arch,
+		name:	out.name,
+		buf:	out.buf,
+		heap:	out.heap,
+		off:	int64(start),
+		isView:	true,
 	}, nil
 }
 
@@ -141,7 +141,7 @@ func (out *OutBuf) ErrorClose() {
 	if out.f == nil {
 		return
 	}
-	out.f.Close() // best effort, ignore error
+	out.f.Close()	// best effort, ignore error
 	out.f = nil
 }
 
@@ -162,7 +162,7 @@ func (out *OutBuf) Data() []byte {
 // copyHeap copies the heap to the mmapped section of memory, returning true if
 // a copy takes place.
 func (out *OutBuf) copyHeap() bool {
-	if !out.isMmapped() { // only valuable for mmapped OutBufs.
+	if !out.isMmapped() {	// only valuable for mmapped OutBufs.
 		return false
 	}
 	if out.isView {
@@ -173,7 +173,7 @@ func (out *OutBuf) copyHeap() bool {
 	heapLen := len(out.heap)
 	total := uint64(bufLen + heapLen)
 	if heapLen != 0 {
-		if err := out.Mmap(total); err != nil { // Mmap will copy out.heap over to out.buf
+		if err := out.Mmap(total); err != nil {	// Mmap will copy out.heap over to out.buf
 			Exitf("mapping output file failed: %v", err)
 		}
 	}
@@ -198,7 +198,7 @@ func (out *OutBuf) writeLoc(lenToWrite int64) (int64, []byte) {
 	heapPos := out.off - bufLen
 	heapLen := int64(len(out.heap))
 	lenNeeded := heapPos + lenToWrite
-	if lenNeeded > heapLen { // do we need to grow the heap storage?
+	if lenNeeded > heapLen {	// do we need to grow the heap storage?
 		// The heap variables aren't protected by a mutex. For now, just bomb if you
 		// try to use OutBuf in parallel. (Note this probably could be fixed.)
 		if out.isView {

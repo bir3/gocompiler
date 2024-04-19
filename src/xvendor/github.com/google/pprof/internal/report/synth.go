@@ -6,8 +6,8 @@ import (
 
 // synthCode assigns addresses to locations without an address.
 type synthCode struct {
-	next uint64
-	addr map[*profile.Location]uint64 // Synthesized address assigned to a location
+	next	uint64
+	addr	map[*profile.Location]uint64	// Synthesized address assigned to a location
 }
 
 func newSynthCode(mappings []*profile.Mapping) *synthCode {

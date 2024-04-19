@@ -28,10 +28,10 @@ import (
 // The ProcessIDs field will be populated with the process ID of each
 // data file in the CounterDataFiles slice.
 type Pod struct {
-	MetaFile         string
-	CounterDataFiles []string
-	Origins          []int
-	ProcessIDs       []int
+	MetaFile		string
+	CounterDataFiles	[]string
+	Origins			[]int
+	ProcessIDs		[]int
 }
 
 // CollectPods visits the files contained within the directories in
@@ -73,14 +73,14 @@ func CollectPodsFromFiles(files []string, warn bool) []Pod {
 }
 
 type fileWithAnnotations struct {
-	file   string
-	origin int
-	pid    int
+	file	string
+	origin	int
+	pid	int
 }
 
 type protoPod struct {
-	mf       string
-	elements []fileWithAnnotations
+	mf		string
+	elements	[]fileWithAnnotations
 }
 
 // collectPodsImpl examines the specified list of files and picks out
@@ -137,7 +137,7 @@ func collectPodsImpl(files []string, dirIndices []int, warn bool) []Pod {
 	for k, f := range files {
 		base := filepath.Base(f)
 		if m := counterRE.FindStringSubmatch(base); m != nil {
-			tag := m[1] // meta hash
+			tag := m[1]	// meta hash
 			pid, err := strconv.Atoi(m[2])
 			if err != nil {
 				continue
@@ -166,13 +166,16 @@ func collectPodsImpl(files []string, dirIndices []int, warn bool) []Pod {
 	pods := make([]Pod, 0, len(mm))
 	for _, p := range mm {
 		sort.Slice(p.elements, func(i, j int) bool {
+			if p.elements[i].origin != p.elements[j].origin {
+				return p.elements[i].origin < p.elements[j].origin
+			}
 			return p.elements[i].file < p.elements[j].file
 		})
 		pod := Pod{
-			MetaFile:         p.mf,
-			CounterDataFiles: make([]string, 0, len(p.elements)),
-			Origins:          make([]int, 0, len(p.elements)),
-			ProcessIDs:       make([]int, 0, len(p.elements)),
+			MetaFile:		p.mf,
+			CounterDataFiles:	make([]string, 0, len(p.elements)),
+			Origins:		make([]int, 0, len(p.elements)),
+			ProcessIDs:		make([]int, 0, len(p.elements)),
 		}
 		for _, e := range p.elements {
 			pod.CounterDataFiles = append(pod.CounterDataFiles, e.file)

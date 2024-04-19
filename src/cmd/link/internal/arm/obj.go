@@ -40,35 +40,38 @@ func Init() (*sys.Arch, ld.Arch) {
 	arch := sys.ArchARM
 
 	theArch := ld.Arch{
-		Funcalign:  funcAlign,
-		Maxalign:   maxAlign,
-		Minalign:   minAlign,
-		Dwarfregsp: dwarfRegSP,
-		Dwarfreglr: dwarfRegLR,
-		TrampLimit: 0x1c00000, // 24-bit signed offset * 4, leave room for PLT etc.
+		Funcalign:	funcAlign,
+		Maxalign:	maxAlign,
+		Minalign:	minAlign,
+		Dwarfregsp:	dwarfRegSP,
+		Dwarfreglr:	dwarfRegLR,
+		TrampLimit:	0x1c00000,	// 24-bit signed offset * 4, leave room for PLT etc.
 
-		Plan9Magic: 0x647,
+		Plan9Magic:	0x647,
 
-		Adddynrel:        adddynrel,
-		Archinit:         archinit,
-		Archreloc:        archreloc,
-		Archrelocvariant: archrelocvariant,
-		Extreloc:         extreloc,
-		Trampoline:       trampoline,
-		Elfreloc1:        elfreloc1,
-		ElfrelocSize:     8,
-		Elfsetupplt:      elfsetupplt,
-		Gentext:          gentext,
-		Machoreloc1:      machoreloc1,
-		PEreloc1:         pereloc1,
+		Adddynrel:		adddynrel,
+		Archinit:		archinit,
+		Archreloc:		archreloc,
+		Archrelocvariant:	archrelocvariant,
+		Extreloc:		extreloc,
+		Trampoline:		trampoline,
+		Gentext:		gentext,
+		Machoreloc1:		machoreloc1,
+		PEreloc1:		pereloc1,
 
-		Linuxdynld:     "/lib/ld-linux.so.3", // 2 for OABI, 3 for EABI
-		LinuxdynldMusl: "/lib/ld-musl-arm.so.1",
-		Freebsddynld:   "/usr/libexec/ld-elf.so.1",
-		Openbsddynld:   "/usr/libexec/ld.so",
-		Netbsddynld:    "/libexec/ld.elf_so",
-		Dragonflydynld: "XXX",
-		Solarisdynld:   "XXX",
+		ELF: ld.ELFArch{
+			Linuxdynld:	"/lib/ld-linux.so.3",	// 2 for OABI, 3 for EABI
+			LinuxdynldMusl:	"/lib/ld-musl-arm.so.1",
+			Freebsddynld:	"/usr/libexec/ld-elf.so.1",
+			Openbsddynld:	"/usr/libexec/ld.so",
+			Netbsddynld:	"/libexec/ld.elf_so",
+			Dragonflydynld:	"XXX",
+			Solarisdynld:	"XXX",
+
+			Reloc1:		elfreloc1,
+			RelocSize:	8,
+			SetupPLT:	elfsetupplt,
+		},
 	}
 
 	return arch, theArch
@@ -79,17 +82,16 @@ func archinit(ctxt *ld.Link) {
 	default:
 		ld.Exitf("unknown -H option: %v", ctxt.HeadType)
 
-	case objabi.Hplan9: /* plan 9 */
+	case objabi.Hplan9:	/* plan 9 */
 		ld.HEADR = 32
-
-		if *ld.FlagTextAddr == -1 {
-			*ld.FlagTextAddr = 4128
-		}
 		if *ld.FlagRound == -1 {
 			*ld.FlagRound = 4096
 		}
+		if *ld.FlagTextAddr == -1 {
+			*ld.FlagTextAddr = ld.Rnd(4096, *ld.FlagRound) + int64(ld.HEADR)
+		}
 
-	case objabi.Hlinux, /* arm elf */
+	case objabi.Hlinux,	/* arm elf */
 		objabi.Hfreebsd,
 		objabi.Hnetbsd,
 		objabi.Hopenbsd:
@@ -97,14 +99,14 @@ func archinit(ctxt *ld.Link) {
 		// with dynamic linking
 		ld.Elfinit(ctxt)
 		ld.HEADR = ld.ELFRESERVE
-		if *ld.FlagTextAddr == -1 {
-			*ld.FlagTextAddr = 0x10000 + int64(ld.HEADR)
-		}
 		if *ld.FlagRound == -1 {
 			*ld.FlagRound = 0x10000
 		}
+		if *ld.FlagTextAddr == -1 {
+			*ld.FlagTextAddr = ld.Rnd(0x10000, *ld.FlagRound) + int64(ld.HEADR)
+		}
 
-	case objabi.Hwindows: /* PE executable */
+	case objabi.Hwindows:	/* PE executable */
 		// ld.HEADR, ld.FlagTextAddr, ld.FlagRound are set in ld.Peinit
 		return
 	}

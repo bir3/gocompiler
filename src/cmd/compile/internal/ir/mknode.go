@@ -42,7 +42,7 @@ var mini = map[string]*ast.TypeSpec{}
 func implementsNode(t ast.Expr) bool {
 	id, ok := t.(*ast.Ident)
 	if !ok {
-		return false // only named types
+		return false	// only named types
 	}
 	for _, ts := range interfaceNodes {
 		if ts.Name.Name == id.Name {
@@ -228,7 +228,7 @@ func processType(t *ast.TypeSpec) {
 	for i := 0; i < len(fields); i++ {
 		f := fields[i]
 		if len(f.Names) != 0 {
-			continue // not embedded
+			continue	// not embedded
 		}
 		if isMini(f.Type) {
 			// Insert the fields of the embedded type into the main type.
@@ -335,10 +335,10 @@ func processType(t *ast.TypeSpec) {
 }
 
 func generateHelpers() {
-	for _, typ := range []string{"CaseClause", "CommClause", "Name", "Node", "Ntype"} {
+	for _, typ := range []string{"CaseClause", "CommClause", "Name", "Node"} {
 		ptr := "*"
-		if typ == "Node" || typ == "Ntype" {
-			ptr = "" // interfaces don't need *
+		if typ == "Node" {
+			ptr = ""	// interfaces don't need *
 		}
 		fmt.Fprintf(&buf, "\n")
 		fmt.Fprintf(&buf, "func copy%ss(list []%s%s) []%s%s {\n", typ, ptr, typ, ptr, typ)

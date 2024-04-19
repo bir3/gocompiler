@@ -5,10 +5,10 @@
 package trace
 
 import (
-	"github.com/bir3/gocompiler/src/cmd/internal/traceviewer"
 	"context"
 	"encoding/json"
 	"errors"
+	"github.com/bir3/gocompiler/src/internal/trace/traceviewer/format"
 	"os"
 	"strings"
 	"sync/atomic"
@@ -19,12 +19,12 @@ import (
 // See https://docs.google.com/document/d/1CvAClvFfyA5R-PhYUmn5OOQtYMH4h6I0nSsKchNAySU
 // for more details.
 const (
-	phaseDurationBegin = "B"
-	phaseDurationEnd   = "E"
-	phaseFlowStart     = "s"
-	phaseFlowEnd       = "f"
+	phaseDurationBegin	= "B"
+	phaseDurationEnd	= "E"
+	phaseFlowStart		= "s"
+	phaseFlowEnd		= "f"
 
-	bindEnclosingSlice = "e"
+	bindEnclosingSlice	= "e"
 )
 
 var traceStarted atomic.Bool
@@ -47,11 +47,11 @@ func StartSpan(ctx context.Context, name string) (context.Context, *Span) {
 		return ctx, nil
 	}
 	childSpan := &Span{t: tc.t, name: name, tid: tc.tid, start: time.Now()}
-	tc.t.writeEvent(&traceviewer.Event{
-		Name:  childSpan.name,
-		Time:  float64(childSpan.start.UnixNano()) / float64(time.Microsecond),
-		TID:   childSpan.tid,
-		Phase: phaseDurationBegin,
+	tc.t.writeEvent(&format.Event{
+		Name:	childSpan.name,
+		Time:	float64(childSpan.start.UnixNano()) / float64(time.Microsecond),
+		TID:	childSpan.tid,
+		Phase:	phaseDurationBegin,
 	})
 	ctx = context.WithValue(ctx, traceKey{}, traceContext{tc.t, tc.tid})
 	return ctx, childSpan
@@ -77,32 +77,32 @@ func Flow(ctx context.Context, from *Span, to *Span) {
 	}
 
 	id := tc.t.getNextFlowID()
-	tc.t.writeEvent(&traceviewer.Event{
-		Name:     from.name + " -> " + to.name,
-		Category: "flow",
-		ID:       id,
-		Time:     float64(from.end.UnixNano()) / float64(time.Microsecond),
-		Phase:    phaseFlowStart,
-		TID:      from.tid,
+	tc.t.writeEvent(&format.Event{
+		Name:		from.name + " -> " + to.name,
+		Category:	"flow",
+		ID:		id,
+		Time:		float64(from.end.UnixNano()) / float64(time.Microsecond),
+		Phase:		phaseFlowStart,
+		TID:		from.tid,
 	})
-	tc.t.writeEvent(&traceviewer.Event{
-		Name:      from.name + " -> " + to.name,
-		Category:  "flow", // TODO(matloob): Add Category to Flow?
-		ID:        id,
-		Time:      float64(to.start.UnixNano()) / float64(time.Microsecond),
-		Phase:     phaseFlowEnd,
-		TID:       to.tid,
-		BindPoint: bindEnclosingSlice,
+	tc.t.writeEvent(&format.Event{
+		Name:		from.name + " -> " + to.name,
+		Category:	"flow",	// TODO(matloob): Add Category to Flow?
+		ID:		id,
+		Time:		float64(to.start.UnixNano()) / float64(time.Microsecond),
+		Phase:		phaseFlowEnd,
+		TID:		to.tid,
+		BindPoint:	bindEnclosingSlice,
 	})
 }
 
 type Span struct {
-	t *tracer
+	t	*tracer
 
-	name  string
-	tid   uint64
-	start time.Time
-	end   time.Time
+	name	string
+	tid	uint64
+	start	time.Time
+	end	time.Time
 }
 
 func (s *Span) Done() {
@@ -110,22 +110,22 @@ func (s *Span) Done() {
 		return
 	}
 	s.end = time.Now()
-	s.t.writeEvent(&traceviewer.Event{
-		Name:  s.name,
-		Time:  float64(s.end.UnixNano()) / float64(time.Microsecond),
-		TID:   s.tid,
-		Phase: phaseDurationEnd,
+	s.t.writeEvent(&format.Event{
+		Name:	s.name,
+		Time:	float64(s.end.UnixNano()) / float64(time.Microsecond),
+		TID:	s.tid,
+		Phase:	phaseDurationEnd,
 	})
 }
 
 type tracer struct {
-	file chan traceFile // 1-buffered
+	file	chan traceFile	// 1-buffered
 
-	nextTID    uint64
-	nextFlowID uint64
+	nextTID		atomic.Uint64
+	nextFlowID	atomic.Uint64
 }
 
-func (t *tracer) writeEvent(ev *traceviewer.Event) error {
+func (t *tracer) writeEvent(ev *format.Event) error {
 	f := <-t.file
 	defer func() { t.file <- f }()
 	var err error
@@ -161,11 +161,11 @@ func (t *tracer) Close() error {
 }
 
 func (t *tracer) getNextTID() uint64 {
-	return atomic.AddUint64(&t.nextTID, 1)
+	return t.nextTID.Add(1)
 }
 
 func (t *tracer) getNextFlowID() uint64 {
-	return atomic.AddUint64(&t.nextFlowID, 1)
+	return t.nextFlowID.Add(1)
 }
 
 // traceKey is the context key for tracing information. It is unexported to prevent collisions with context keys defined in
@@ -173,8 +173,8 @@ func (t *tracer) getNextFlowID() uint64 {
 type traceKey struct{}
 
 type traceContext struct {
-	t   *tracer
-	tid uint64
+	t	*tracer
+	tid	uint64
 }
 
 // Start starts a trace which writes to the given file.
@@ -190,17 +190,17 @@ func Start(ctx context.Context, file string) (context.Context, func() error, err
 	t := &tracer{file: make(chan traceFile, 1)}
 	sb := new(strings.Builder)
 	t.file <- traceFile{
-		f:   f,
-		sb:  sb,
-		enc: json.NewEncoder(sb),
+		f:	f,
+		sb:	sb,
+		enc:	json.NewEncoder(sb),
 	}
 	ctx = context.WithValue(ctx, traceKey{}, traceContext{t: t})
 	return ctx, t.Close, nil
 }
 
 type traceFile struct {
-	f       *os.File
-	sb      *strings.Builder
-	enc     *json.Encoder
-	entries int64
+	f	*os.File
+	sb	*strings.Builder
+	enc	*json.Encoder
+	entries	int64
 }

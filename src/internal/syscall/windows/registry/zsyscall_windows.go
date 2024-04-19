@@ -17,8 +17,8 @@ const (
 )
 
 var (
-	errERROR_IO_PENDING error = syscall.Errno(errnoERROR_IO_PENDING)
-	errERROR_EINVAL     error = syscall.EINVAL
+	errERROR_IO_PENDING	error	= syscall.Errno(errnoERROR_IO_PENDING)
+	errERROR_EINVAL		error	= syscall.EINVAL
 )
 
 // errnoErr returns common boxed Errno values, to prevent
@@ -37,16 +37,16 @@ func errnoErr(e syscall.Errno) error {
 }
 
 var (
-	modadvapi32 = syscall.NewLazyDLL(sysdll.Add("advapi32.dll"))
-	modkernel32 = syscall.NewLazyDLL(sysdll.Add("kernel32.dll"))
+	modadvapi32	= syscall.NewLazyDLL(sysdll.Add("advapi32.dll"))
+	modkernel32	= syscall.NewLazyDLL(sysdll.Add("kernel32.dll"))
 
-	procRegCreateKeyExW           = modadvapi32.NewProc("RegCreateKeyExW")
-	procRegDeleteKeyW             = modadvapi32.NewProc("RegDeleteKeyW")
-	procRegDeleteValueW           = modadvapi32.NewProc("RegDeleteValueW")
-	procRegEnumValueW             = modadvapi32.NewProc("RegEnumValueW")
-	procRegLoadMUIStringW         = modadvapi32.NewProc("RegLoadMUIStringW")
-	procRegSetValueExW            = modadvapi32.NewProc("RegSetValueExW")
-	procExpandEnvironmentStringsW = modkernel32.NewProc("ExpandEnvironmentStringsW")
+	procRegCreateKeyExW		= modadvapi32.NewProc("RegCreateKeyExW")
+	procRegDeleteKeyW		= modadvapi32.NewProc("RegDeleteKeyW")
+	procRegDeleteValueW		= modadvapi32.NewProc("RegDeleteValueW")
+	procRegEnumValueW		= modadvapi32.NewProc("RegEnumValueW")
+	procRegLoadMUIStringW		= modadvapi32.NewProc("RegLoadMUIStringW")
+	procRegSetValueExW		= modadvapi32.NewProc("RegSetValueExW")
+	procExpandEnvironmentStringsW	= modkernel32.NewProc("ExpandEnvironmentStringsW")
 )
 
 func regCreateKeyEx(key syscall.Handle, subkey *uint16, reserved uint32, class *uint16, options uint32, desired uint32, sa *syscall.SecurityAttributes, result *syscall.Handle, disposition *uint32) (regerrno error) {

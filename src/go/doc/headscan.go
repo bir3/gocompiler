@@ -25,13 +25,13 @@ import (
 	"os"
 	"path/filepath"
 	"regexp"
-	"github.com/bir3/gocompiler/vfs"
+	"runtime"
 	"strings"
 )
 
 var (
-	root    = flag.String("root", filepath.Join(vfs.GOROOT, "src"), "root of filesystem tree to scan")
-	verbose = flag.Bool("v", false, "verbose mode")
+	root	= flag.String("root", filepath.Join(runtime.GOROOT(), "src"), "root of filesystem tree to scan")
+	verbose	= flag.Bool("v", false, "verbose mode")
 )
 
 // ToHTML in comment.go assigns a (possibly blank) ID to each heading

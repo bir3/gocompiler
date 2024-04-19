@@ -17,18 +17,18 @@ import (
 )
 
 // A Qualifier controls how named package-level objects are printed in
-// calls to TypeString, ObjectString, and SelectionString.
+// calls to [TypeString], [ObjectString], and [SelectionString].
 //
 // These three formatting routines call the Qualifier for each
 // package-level object O, and if the Qualifier returns a non-empty
 // string p, the object is printed in the form p.O.
 // If it returns an empty string, only the object name O is printed.
 //
-// Using a nil Qualifier is equivalent to using (*Package).Path: the
+// Using a nil Qualifier is equivalent to using (*[Package]).Path: the
 // object is qualified by the import path, e.g., "encoding/json.Marshal".
 type Qualifier func(*Package) string
 
-// RelativeTo returns a Qualifier that fully qualifies members of
+// RelativeTo returns a [Qualifier] that fully qualifies members of
 // all packages other than pkg.
 func RelativeTo(pkg *Package) Qualifier {
 	if pkg == nil {
@@ -36,14 +36,14 @@ func RelativeTo(pkg *Package) Qualifier {
 	}
 	return func(other *Package) string {
 		if pkg == other {
-			return "" // same package; unqualified
+			return ""	// same package; unqualified
 		}
 		return other.Path()
 	}
 }
 
 // TypeString returns the string representation of typ.
-// The Qualifier controls the printing of
+// The [Qualifier] controls the printing of
 // package-level objects, and may be nil.
 func TypeString(typ Type, qf Qualifier) string {
 	var buf bytes.Buffer
@@ -52,28 +52,28 @@ func TypeString(typ Type, qf Qualifier) string {
 }
 
 // WriteType writes the string representation of typ to buf.
-// The Qualifier controls the printing of
+// The [Qualifier] controls the printing of
 // package-level objects, and may be nil.
 func WriteType(buf *bytes.Buffer, typ Type, qf Qualifier) {
 	newTypeWriter(buf, qf).typ(typ)
 }
 
 // WriteSignature writes the representation of the signature sig to buf,
-// without a leading "func" keyword. The Qualifier controls the printing
+// without a leading "func" keyword. The [Qualifier] controls the printing
 // of package-level objects, and may be nil.
 func WriteSignature(buf *bytes.Buffer, sig *Signature, qf Qualifier) {
 	newTypeWriter(buf, qf).signature(sig)
 }
 
 type typeWriter struct {
-	buf          *bytes.Buffer
-	seen         map[Type]bool
-	qf           Qualifier
-	ctxt         *Context       // if non-nil, we are type hashing
-	tparams      *TypeParamList // local type parameters
-	paramNames   bool           // if set, write function parameter names, otherwise, write types only
-	tpSubscripts bool           // if set, write type parameter indices as subscripts
-	pkgInfo      bool           // package-annotate first unexported-type field to avoid confusing type description
+	buf		*bytes.Buffer
+	seen		map[Type]bool
+	qf		Qualifier
+	ctxt		*Context	// if non-nil, we are type hashing
+	tparams		*TypeParamList	// local type parameters
+	paramNames	bool		// if set, write function parameter names, otherwise, write types only
+	tpSubscripts	bool		// if set, write type parameter indices as subscripts
+	pkgInfo		bool		// package-annotate first unexported-type field to avoid confusing type description
 }
 
 func newTypeWriter(buf *bytes.Buffer, qf Qualifier) *typeWriter {
@@ -156,12 +156,12 @@ func (w *typeWriter) typ(typ Type) {
 			if w.qf == nil && w.pkgInfo && !token.IsExported(f.name) {
 				// note for embedded types, type name is field name, and "string" etc are lower case hence unexported.
 				pkgAnnotate = true
-				w.pkgInfo = false // only tag once
+				w.pkgInfo = false	// only tag once
 			}
 
 			// This doesn't do the right thing for embedded type
 			// aliases where we should print the alias name, not
-			// the aliased type (see issue #44410).
+			// the aliased type (see go.dev/issue/44410).
 			if !f.embedded {
 				w.string(f.name)
 				w.byte(' ')
@@ -219,7 +219,7 @@ func (w *typeWriter) typ(typ Type) {
 				w.string("any")
 				break
 			}
-			if t == universeComparable.Type().(*Named).underlying {
+			if t == asNamed(universeComparable.Type()).underlying {
 				w.string("interface{comparable}")
 				break
 			}
@@ -294,11 +294,11 @@ func (w *typeWriter) typ(typ Type) {
 		if w.ctxt != nil {
 			w.string(strconv.Itoa(w.ctxt.getID(t)))
 		}
-		w.typeName(t.obj) // when hashing written for readability of the hash only
+		w.typeName(t.obj)	// when hashing written for readability of the hash only
 		if t.inst != nil {
 			// instantiated type
 			w.typeList(t.inst.targs.list())
-		} else if w.ctxt == nil && t.TypeParams().Len() != 0 { // For type hashing, don't need to format the TypeParams
+		} else if w.ctxt == nil && t.TypeParams().Len() != 0 {	// For type hashing, don't need to format the TypeParams
 			// parameterized type
 			w.tParamList(t.TypeParams().list())
 		}
@@ -318,6 +318,22 @@ func (w *typeWriter) typ(typ Type) {
 			if w.tpSubscripts || w.ctxt != nil {
 				w.string(subscript(t.id))
 			}
+			// If the type parameter name is the same as a predeclared object
+			// (say int), point out where it is declared to avoid confusing
+			// error messages. This doesn't need to be super-elegant; we just
+			// need a clear indication that this is not a predeclared name.
+			// Note: types2 prints position information here - we can't do
+			//       that because we don't have a token.FileSet accessible.
+			if w.ctxt == nil && Universe.Lookup(t.obj.name) != nil {
+				w.string("/* type parameter */")
+			}
+		}
+
+	case *Alias:
+		w.typeName(t.obj)
+		if w.ctxt != nil {
+			// TODO(gri) do we need to print the alias type name, too?
+			w.typ(Unalias(t.obj.typ))
 		}
 
 	default:
@@ -476,12 +492,12 @@ func (w *typeWriter) signature(sig *Signature) {
 
 // subscript returns the decimal (utf8) representation of x using subscript digits.
 func subscript(x uint64) string {
-	const w = len("₀") // all digits 0...9 have the same utf8 width
+	const w = len("₀")	// all digits 0...9 have the same utf8 width
 	var buf [32 * w]byte
 	i := len(buf)
 	for {
 		i -= w
-		utf8.EncodeRune(buf[i:], '₀'+rune(x%10)) // '₀' == U+2080
+		utf8.EncodeRune(buf[i:], '₀'+rune(x%10))	// '₀' == U+2080
 		x /= 10
 		if x == 0 {
 			break

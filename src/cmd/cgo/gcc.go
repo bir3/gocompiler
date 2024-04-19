@@ -23,7 +23,7 @@ import (
 	"github.com/bir3/gocompiler/src/internal/xcoff"
 	"math"
 	"os"
-	"os/exec"
+	"github.com/bir3/gocompiler/exec"
 	"strconv"
 	"strings"
 	"unicode"
@@ -36,15 +36,15 @@ var debugDefine = flag.Bool("debug-define", false, "print relevant #defines")
 var debugGcc = flag.Bool("debug-gcc", false, "print gcc invocations")
 
 var nameToC = map[string]string{
-	"schar":         "signed char",
-	"uchar":         "unsigned char",
-	"ushort":        "unsigned short",
-	"uint":          "unsigned int",
-	"ulong":         "unsigned long",
-	"longlong":      "long long",
-	"ulonglong":     "unsigned long long",
-	"complexfloat":  "float _Complex",
-	"complexdouble": "double _Complex",
+	"schar":		"signed char",
+	"uchar":		"unsigned char",
+	"ushort":		"unsigned short",
+	"uint":			"unsigned int",
+	"ulong":		"unsigned long",
+	"longlong":		"long long",
+	"ulonglong":		"unsigned long long",
+	"complexfloat":		"float _Complex",
+	"complexdouble":	"double _Complex",
 }
 
 var incomplete = "_cgopackage.Incomplete"
@@ -73,27 +73,41 @@ func cname(s string) string {
 	return s
 }
 
-// DiscardCgoDirectives processes the import C preamble, and discards
-// all #cgo CFLAGS and LDFLAGS directives, so they don't make their
-// way into _cgo_export.h.
-func (f *File) DiscardCgoDirectives() {
+// ProcessCgoDirectives processes the import C preamble:
+//  1. discards all #cgo CFLAGS, LDFLAGS, nocallback and noescape directives,
+//     so they don't make their way into _cgo_export.h.
+//  2. parse the nocallback and noescape directives.
+func (f *File) ProcessCgoDirectives() {
 	linesIn := strings.Split(f.Preamble, "\n")
 	linesOut := make([]string, 0, len(linesIn))
+	f.NoCallbacks = make(map[string]bool)
+	f.NoEscapes = make(map[string]bool)
 	for _, line := range linesIn {
 		l := strings.TrimSpace(line)
 		if len(l) < 5 || l[:4] != "#cgo" || !unicode.IsSpace(rune(l[4])) {
 			linesOut = append(linesOut, line)
 		} else {
 			linesOut = append(linesOut, "")
+
+			// #cgo (nocallback|noescape) <function name>
+			if fields := strings.Fields(l); len(fields) == 3 {
+				directive := fields[1]
+				funcName := fields[2]
+				if directive == "nocallback" {
+					fatalf("#cgo nocallback disabled until Go 1.23")
+					f.NoCallbacks[funcName] = true
+				} else if directive == "noescape" {
+					fatalf("#cgo noescape disabled until Go 1.23")
+					f.NoEscapes[funcName] = true
+				}
+			}
 		}
 	}
 	f.Preamble = strings.Join(linesOut, "\n")
 }
 
-// addToFlag appends args to flag. All flags are later written out onto the
-// _cgo_flags file for the build system to use.
+// addToFlag appends args to flag.
 func (p *Package) addToFlag(flag string, args []string) {
-	p.CgoFlags[flag] = append(p.CgoFlags[flag], args...)
 	if flag == "CFLAGS" {
 		// We'll also need these when preprocessing for dwarf information.
 		// However, discard any -g options: we need to be able
@@ -103,6 +117,9 @@ func (p *Package) addToFlag(flag string, args []string) {
 				p.GccOptions = append(p.GccOptions, arg)
 			}
 		}
+	}
+	if flag == "LDFLAGS" {
+		p.LdFlags = append(p.LdFlags, args...)
 	}
 }
 
@@ -190,8 +207,8 @@ func (p *Package) Translate(f *File) {
 				continue
 			}
 			n := &Name{
-				Go: info.typedef,
-				C:  info.typedef,
+				Go:	info.typedef,
+				C:	info.typedef,
 			}
 			f.Name[info.typedef] = n
 			f.NamePos[n] = info.pos
@@ -392,7 +409,7 @@ func (p *Package) guessKinds(f *File) []*Name {
 	completed := false
 	sniff := make([]int, len(names))
 	const (
-		notType = 1 << iota
+		notType	= 1 << iota
 		notIntConst
 		notNumConst
 		notStrLiteral
@@ -581,7 +598,7 @@ func (p *Package) loadDWARF(f *File, conv *typeConv, names []*Name) {
 			// As of https://reviews.llvm.org/D123534, clang
 			// now emits DW_TAG_variable DIEs that have
 			// no name (so as to be able to describe the
-			// type and source locations of constant strings
+			// type and source locations of constant strings)
 			// like the second arg in the call below:
 			//
 			//     myfunction(42, "foo")
@@ -735,7 +752,7 @@ func (p *Package) prepareNames(f *File) {
 			} else {
 				n.Kind = "macro"
 				n.FuncType = &FuncType{
-					Result: n.Type,
+					Result:	n.Type,
 					Go: &ast.FuncType{
 						Results: &ast.FieldList{List: []*ast.Field{{Type: n.Type.Go}}},
 					},
@@ -938,7 +955,7 @@ func (p *Package) rewriteCall(f *File, call *Call) (string, bool) {
 		// constants to the parameter type, to avoid a type mismatch.
 		ptype := p.rewriteUnsafe(param.Go)
 
-		if !p.needsPointerCheck(f, param.Go, args[i]) || param.BadPointer {
+		if !p.needsPointerCheck(f, param.Go, args[i]) || param.BadPointer || p.checkUnsafeStringData(args[i]) {
 			if ptype != param.Go {
 				needsUnsafe = true
 			}
@@ -954,6 +971,11 @@ func (p *Package) rewriteCall(f *File, call *Call) (string, bool) {
 
 		// Check for &x.
 		if p.checkAddr(&sb, &sbCheck, arg, i) {
+			continue
+		}
+
+		// Check for a[:].
+		if p.checkSlice(&sb, &sbCheck, arg, i) {
 			continue
 		}
 
@@ -1034,7 +1056,7 @@ func (p *Package) hasPointer(f *File, t ast.Expr, top bool) bool {
 			}
 		}
 		return false
-	case *ast.StarExpr: // Pointer type.
+	case *ast.StarExpr:	// Pointer type.
 		if !top {
 			return true
 		}
@@ -1178,7 +1200,10 @@ func (p *Package) checkIndex(sb, sbCheck *bytes.Buffer, arg ast.Expr, i int) boo
 	x := arg
 	for {
 		c, ok := x.(*ast.CallExpr)
-		if !ok || len(c.Args) != 1 || !p.isType(c.Fun) {
+		if !ok || len(c.Args) != 1 {
+			break
+		}
+		if !p.isType(c.Fun) && !p.isUnsafeData(c.Fun, false) {
 			break
 		}
 		x = c.Args[0]
@@ -1232,7 +1257,10 @@ func (p *Package) checkAddr(sb, sbCheck *bytes.Buffer, arg ast.Expr, i int) bool
 	px := &arg
 	for {
 		c, ok := (*px).(*ast.CallExpr)
-		if !ok || len(c.Args) != 1 || !p.isType(c.Fun) {
+		if !ok || len(c.Args) != 1 {
+			break
+		}
+		if !p.isType(c.Fun) && !p.isUnsafeData(c.Fun, false) {
 			break
 		}
 		px = &c.Args[0]
@@ -1253,6 +1281,71 @@ func (p *Package) checkAddr(sb, sbCheck *bytes.Buffer, arg ast.Expr, i int) bool
 	fmt.Fprintf(sbCheck, "_cgoCheckPointer(_cgoBase%d, 0 == 0); ", i)
 
 	return true
+}
+
+// checkSlice checks whether arg has the form x[i:j], possibly inside
+// type conversions. If so, it writes
+//
+//	_cgoSliceNN := x[i:j]
+//	_cgoNN := _cgoSliceNN // with type conversions, if any
+//
+// to sb, and writes
+//
+//	_cgoCheckPointer(_cgoSliceNN, true)
+//
+// to sbCheck, and returns true. This tells _cgoCheckPointer to check
+// just the contents of the slice being passed, not any other part
+// of the memory allocation.
+func (p *Package) checkSlice(sb, sbCheck *bytes.Buffer, arg ast.Expr, i int) bool {
+	// Strip type conversions.
+	px := &arg
+	for {
+		c, ok := (*px).(*ast.CallExpr)
+		if !ok || len(c.Args) != 1 {
+			break
+		}
+		if !p.isType(c.Fun) && !p.isUnsafeData(c.Fun, false) {
+			break
+		}
+		px = &c.Args[0]
+	}
+	if _, ok := (*px).(*ast.SliceExpr); !ok {
+		return false
+	}
+
+	fmt.Fprintf(sb, "_cgoSlice%d := %s; ", i, gofmtPos(*px, (*px).Pos()))
+
+	origX := *px
+	*px = ast.NewIdent(fmt.Sprintf("_cgoSlice%d", i))
+	fmt.Fprintf(sb, "_cgo%d := %s; ", i, gofmtPos(arg, arg.Pos()))
+	*px = origX
+
+	// Use 0 == 0 to do the right thing in the unlikely event
+	// that "true" is shadowed.
+	fmt.Fprintf(sbCheck, "_cgoCheckPointer(_cgoSlice%d, 0 == 0); ", i)
+
+	return true
+}
+
+// checkUnsafeStringData checks for a call to unsafe.StringData.
+// The result of that call can't contain a pointer so there is
+// no need to call _cgoCheckPointer.
+func (p *Package) checkUnsafeStringData(arg ast.Expr) bool {
+	x := arg
+	for {
+		c, ok := x.(*ast.CallExpr)
+		if !ok || len(c.Args) != 1 {
+			break
+		}
+		if p.isUnsafeData(c.Fun, true) {
+			return true
+		}
+		if !p.isType(c.Fun) {
+			break
+		}
+		x = c.Args[0]
+	}
+	return false
 }
 
 // isType reports whether the expression is definitely a type.
@@ -1297,6 +1390,28 @@ func (p *Package) isType(t ast.Expr) bool {
 		return true
 	}
 	return false
+}
+
+// isUnsafeData reports whether the expression is unsafe.StringData
+// or unsafe.SliceData. We can ignore these when checking for pointers
+// because they don't change whether or not their argument contains
+// any Go pointers. If onlyStringData is true we only check for StringData.
+func (p *Package) isUnsafeData(x ast.Expr, onlyStringData bool) bool {
+	st, ok := x.(*ast.SelectorExpr)
+	if !ok {
+		return false
+	}
+	id, ok := st.X.(*ast.Ident)
+	if !ok {
+		return false
+	}
+	if id.Name != "unsafe" {
+		return false
+	}
+	if !onlyStringData && st.Sel.Name == "SliceData" {
+		return true
+	}
+	return st.Sel.Name == "StringData"
 }
 
 // isVariable reports whether x is a variable, possibly with field references.
@@ -1349,7 +1464,7 @@ func (p *Package) rewriteUnsafe(t ast.Expr) ast.Expr {
 			r.Fields = &fields
 			return &r
 		}
-	case *ast.StarExpr: // Pointer type.
+	case *ast.StarExpr:	// Pointer type.
 		x1 := p.rewriteUnsafe(t.X)
 		if x1 != t.X {
 			r := *t
@@ -1471,7 +1586,7 @@ func (p *Package) rewriteName(f *File, r *Ref, addPosition bool) ast.Expr {
 			return ast.NewIdent(fmt.Sprintf("%s /*line :%d:%d*/", newName, p.Line, p.Column))
 		}
 	}
-	var expr ast.Expr = getNewIdent(r.Name.Mangle) // default
+	var expr ast.Expr = getNewIdent(r.Name.Mangle)	// default
 	switch r.Context {
 	case ctxCall, ctxCall2:
 		if r.Name.Kind != "func" {
@@ -1516,10 +1631,10 @@ func (p *Package) rewriteName(f *File, r *Ref, addPosition bool) ast.Expr {
 			name := f.Name[fpName]
 			if name == nil {
 				name = &Name{
-					Go:   fpName,
-					C:    r.Name.C,
-					Kind: "fpvar",
-					Type: &Type{Size: p.PtrSize, Align: p.PtrSize, C: c("void*"), Go: ast.NewIdent("unsafe.Pointer")},
+					Go:	fpName,
+					C:	r.Name.C,
+					Kind:	"fpvar",
+					Type:	&Type{Size: p.PtrSize, Align: p.PtrSize, C: c("void*"), Go: ast.NewIdent("unsafe.Pointer")},
 				}
 				p.mangleName(name)
 				f.Name[fpName] = name
@@ -1529,8 +1644,8 @@ func (p *Package) rewriteName(f *File, r *Ref, addPosition bool) ast.Expr {
 			// function is defined in out.go and simply returns its argument. See
 			// issue 7757.
 			expr = &ast.CallExpr{
-				Fun:  &ast.Ident{NamePos: (*r.Expr).Pos(), Name: "_Cgo_ptr"},
-				Args: []ast.Expr{getNewIdent(name.Mangle)},
+				Fun:	&ast.Ident{NamePos: (*r.Expr).Pos(), Name: "_Cgo_ptr"},
+				Args:	[]ast.Expr{getNewIdent(name.Mangle)},
 			}
 		case "type":
 			// Okay - might be new(T), T(x), Generic[T], etc.
@@ -1623,7 +1738,7 @@ func (p *Package) gccMachine() []string {
 	case "386":
 		return []string{"-m32"}
 	case "arm":
-		return []string{"-marm"} // not thumb
+		return []string{"-marm"}	// not thumb
 	case "s390":
 		return []string{"-m31"}
 	case "s390x":
@@ -1654,12 +1769,12 @@ func gccTmp() string {
 // the input.
 func (p *Package) gccCmd() []string {
 	c := append(gccBaseCmd,
-		"-w",          // no warnings
-		"-Wno-error",  // warnings are not errors
-		"-o"+gccTmp(), // write object to tmp
-		"-gdwarf-2",   // generate DWARF v2 debugging symbols
-		"-c",          // do not link
-		"-xc",         // input language is C
+		"-w",		// no warnings
+		"-Wno-error",	// warnings are not errors
+		"-o"+gccTmp(),	// write object to tmp
+		"-gdwarf-2",	// generate DWARF v2 debugging symbols
+		"-c",		// do not link
+		"-xc",		// input language is C
 	)
 	if p.GccIsClang {
 		c = append(c,
@@ -1689,7 +1804,7 @@ func (p *Package) gccCmd() []string {
 	}
 	// disable LTO so we get an object whose symbols we can read
 	c = append(c, "-fno-lto")
-	c = append(c, "-") //read input from standard input
+	c = append(c, "-")	//read input from standard input
 	return c
 }
 
@@ -1807,7 +1922,7 @@ func (p *Package) gccDebug(stdin []byte, nnames int) (d *dwarf.Data, ints []int6
 								if sdat, err := sect.Data(); err == nil {
 									data := sdat[s.Value-sect.Addr:]
 									strlen := bo.Uint64(data[:8])
-									if strlen > (1<<(uint(p.IntSize*8)-1) - 1) { // greater than MaxInt?
+									if strlen > (1<<(uint(p.IntSize*8)-1) - 1) {	// greater than MaxInt?
 										fatalf("string literal too big")
 									}
 									strlens[n] = int(strlen)
@@ -1907,7 +2022,7 @@ func (p *Package) gccDebug(stdin []byte, nnames int) (d *dwarf.Data, ints []int6
 								if sdat, err := sect.Data(); err == nil {
 									data := sdat[val-sect.Addr:]
 									strlen := bo.Uint64(data[:8])
-									if strlen > (1<<(uint(p.IntSize*8)-1) - 1) { // greater than MaxInt?
+									if strlen > (1<<(uint(p.IntSize*8)-1) - 1) {	// greater than MaxInt?
 										fatalf("string literal too big")
 									}
 									strlens[n] = int(strlen)
@@ -1979,7 +2094,7 @@ func (p *Package) gccDebug(stdin []byte, nnames int) (d *dwarf.Data, ints []int6
 							if sdat, err := sect.Data(); err == nil {
 								data := sdat[s.Value:]
 								strlen := bo.Uint64(data[:8])
-								if strlen > (1<<(uint(p.IntSize*8)-1) - 1) { // greater than MaxInt?
+								if strlen > (1<<(uint(p.IntSize*8)-1) - 1) {	// greater than MaxInt?
 									fatalf("string literal too big")
 								}
 								strlens[n] = int(strlen)
@@ -2051,7 +2166,7 @@ func (p *Package) gccDebug(stdin []byte, nnames int) (d *dwarf.Data, ints []int6
 							if sdat, err := sect.Data(); err == nil {
 								data := sdat[s.Value:]
 								strlen := bo.Uint64(data[:8])
-								if strlen > (1<<(uint(p.IntSize*8)-1) - 1) { // greater than MaxInt?
+								if strlen > (1<<(uint(p.IntSize*8)-1) - 1) {	// greater than MaxInt?
 									fatalf("string literal too big")
 								}
 								strlens[n] = int(strlen)
@@ -2145,34 +2260,34 @@ func runGcc(stdin []byte, args []string) (string, string) {
 // with equivalent memory layout.
 type typeConv struct {
 	// Cache of already-translated or in-progress types.
-	m map[string]*Type
+	m	map[string]*Type
 
 	// Map from types to incomplete pointers to those types.
-	ptrs map[string][]*Type
+	ptrs	map[string][]*Type
 	// Keys of ptrs in insertion order (deterministic worklist)
 	// ptrKeys contains exactly the keys in ptrs.
-	ptrKeys []dwarf.Type
+	ptrKeys	[]dwarf.Type
 
 	// Type names X for which there exists an XGetTypeID function with type func() CFTypeID.
-	getTypeIDs map[string]bool
+	getTypeIDs	map[string]bool
 
 	// incompleteStructs contains C structs that should be marked Incomplete.
-	incompleteStructs map[string]bool
+	incompleteStructs	map[string]bool
 
 	// Predeclared types.
-	bool                                   ast.Expr
-	byte                                   ast.Expr // denotes padding
-	int8, int16, int32, int64              ast.Expr
-	uint8, uint16, uint32, uint64, uintptr ast.Expr
-	float32, float64                       ast.Expr
-	complex64, complex128                  ast.Expr
-	void                                   ast.Expr
-	string                                 ast.Expr
-	goVoid                                 ast.Expr // _Ctype_void, denotes C's void
-	goVoidPtr                              ast.Expr // unsafe.Pointer or *byte
+	bool					ast.Expr
+	byte					ast.Expr	// denotes padding
+	int8, int16, int32, int64		ast.Expr
+	uint8, uint16, uint32, uint64, uintptr	ast.Expr
+	float32, float64			ast.Expr
+	complex64, complex128			ast.Expr
+	void					ast.Expr
+	string					ast.Expr
+	goVoid					ast.Expr	// _Ctype_void, denotes C's void
+	goVoidPtr				ast.Expr	// unsafe.Pointer or *byte
 
-	ptrSize int64
-	intSize int64
+	ptrSize	int64
+	intSize	int64
 }
 
 var tagGen int
@@ -2253,18 +2368,18 @@ func unqual(dt dwarf.Type) dwarf.Type {
 
 // Map from dwarf text names to aliases we use in package "C".
 var dwarfToName = map[string]string{
-	"long int":               "long",
-	"long unsigned int":      "ulong",
-	"unsigned int":           "uint",
-	"short unsigned int":     "ushort",
-	"unsigned short":         "ushort", // Used by Clang; issue 13129.
-	"short int":              "short",
-	"long long int":          "longlong",
-	"long long unsigned int": "ulonglong",
-	"signed char":            "schar",
-	"unsigned char":          "uchar",
-	"unsigned long":          "ulong",     // Used by Clang 14; issue 53013.
-	"unsigned long long":     "ulonglong", // Used by Clang 14; issue 53013.
+	"long int":			"long",
+	"long unsigned int":		"ulong",
+	"unsigned int":			"uint",
+	"short unsigned int":		"ushort",
+	"unsigned short":		"ushort",	// Used by Clang; issue 13129.
+	"short int":			"short",
+	"long long int":		"longlong",
+	"long long unsigned int":	"ulonglong",
+	"signed char":			"schar",
+	"unsigned char":		"uchar",
+	"unsigned long":		"ulong",	// Used by Clang 14; issue 53013.
+	"unsigned long long":		"ulonglong",	// Used by Clang 14; issue 53013.
 }
 
 const signedDelta = 64
@@ -2345,7 +2460,7 @@ func (c *typeConv) loadType(dtype dwarf.Type, pos token.Pos, parent string) *Typ
 	}
 
 	t := new(Type)
-	t.Size = dtype.Size() // note: wrong for array of pointers, corrected below
+	t.Size = dtype.Size()	// note: wrong for array of pointers, corrected below
 	t.Align = -1
 	t.C = &TypeRepr{Repr: dtype.Common().Name}
 	c.m[key] = t
@@ -2376,8 +2491,8 @@ func (c *typeConv) loadType(dtype dwarf.Type, pos token.Pos, parent string) *Typ
 		sub := c.Type(dt.Type, pos)
 		t.Align = sub.Align
 		t.Go = &ast.ArrayType{
-			Len: c.intExpr(count),
-			Elt: sub.Go,
+			Len:	c.intExpr(count),
+			Elt:	sub.Go,
 		}
 		// Recalculate t.Size now that we know sub.Size.
 		t.Size = count * sub.Size
@@ -2477,8 +2592,8 @@ func (c *typeConv) loadType(dtype dwarf.Type, pos token.Pos, parent string) *Typ
 			t.Go = c.int64
 		case 16:
 			t.Go = &ast.ArrayType{
-				Len: c.intExpr(t.Size),
-				Elt: c.uint8,
+				Len:	c.intExpr(t.Size),
+				Elt:	c.uint8,
 			}
 		}
 		if t.Align = t.Size; t.Align >= c.ptrSize {
@@ -2534,7 +2649,7 @@ func (c *typeConv) loadType(dtype dwarf.Type, pos token.Pos, parent string) *Typ
 		// Convert to Go struct, being careful about alignment.
 		// Have to give it a name to simulate C "struct foo" references.
 		tag := dt.StructName
-		if dt.ByteSize < 0 && tag == "" { // opaque unnamed struct - should not be possible
+		if dt.ByteSize < 0 && tag == "" {	// opaque unnamed struct - should not be possible
 			break
 		}
 		if tag == "" {
@@ -2548,7 +2663,7 @@ func (c *typeConv) loadType(dtype dwarf.Type, pos token.Pos, parent string) *Typ
 			t.C.Set(dt.Kind + " " + tag)
 		}
 		name := c.Ident("_Ctype_" + dt.Kind + "_" + tag)
-		t.Go = name // publish before recursive calls
+		t.Go = name	// publish before recursive calls
 		goIdent[name.Name] = name
 		if dt.ByteSize < 0 {
 			// Don't override old type
@@ -2580,7 +2695,7 @@ func (c *typeConv) loadType(dtype dwarf.Type, pos token.Pos, parent string) *Typ
 			if t.C.Empty() {
 				t.C.Set("__typeof__(unsigned char[%d])", t.Size)
 			}
-			t.Align = 1 // TODO: should probably base this on field alignment.
+			t.Align = 1	// TODO: should probably base this on field alignment.
 			typedef[name.Name] = t
 		case "struct":
 			g, csyntax, align := c.Struct(dt, pos)
@@ -2724,8 +2839,8 @@ func (c *typeConv) loadType(dtype dwarf.Type, pos token.Pos, parent string) *Typ
 			t.Go = c.uint64
 		case 16:
 			t.Go = &ast.ArrayType{
-				Len: c.intExpr(t.Size),
-				Elt: c.uint8,
+				Len:	c.intExpr(t.Size),
+				Elt:	c.uint8,
 			}
 		}
 		if t.Align = t.Size; t.Align >= c.ptrSize {
@@ -2807,10 +2922,10 @@ func (c *typeConv) FuncArg(dtype dwarf.Type, pos token.Pos) *Type {
 		tr := &TypeRepr{}
 		tr.Set("%s*", t.C)
 		return &Type{
-			Size:  c.ptrSize,
-			Align: c.ptrSize,
-			Go:    &ast.StarExpr{X: t.Go},
-			C:     tr,
+			Size:	c.ptrSize,
+			Align:	c.ptrSize,
+			Go:	&ast.StarExpr{X: t.Go},
+			C:	tr,
 		}
 	case *dwarf.TypedefType:
 		// C has much more relaxed rules than Go for
@@ -2872,11 +2987,11 @@ func (c *typeConv) FuncType(dtype *dwarf.FuncType, pos token.Pos) *FuncType {
 		gr = []*ast.Field{{Type: r.Go}}
 	}
 	return &FuncType{
-		Params: p,
-		Result: r,
+		Params:	p,
+		Result:	r,
 		Go: &ast.FuncType{
-			Params:  &ast.FieldList{List: gp},
-			Results: &ast.FieldList{List: gr},
+			Params:		&ast.FieldList{List: gp},
+			Results:	&ast.FieldList{List: gr},
 		},
 	}
 }
@@ -2889,16 +3004,16 @@ func (c *typeConv) Ident(s string) *ast.Ident {
 // Opaque type of n bytes.
 func (c *typeConv) Opaque(n int64) ast.Expr {
 	return &ast.ArrayType{
-		Len: c.intExpr(n),
-		Elt: c.byte,
+		Len:	c.intExpr(n),
+		Elt:	c.byte,
 	}
 }
 
 // Expr for integer n.
 func (c *typeConv) intExpr(n int64) ast.Expr {
 	return &ast.BasicLit{
-		Kind:  token.INT,
-		Value: strconv.FormatInt(n, 10),
+		Kind:	token.INT,
+		Value:	strconv.FormatInt(n, 10),
 	}
 }
 
@@ -2919,7 +3034,7 @@ func (c *typeConv) Struct(dt *dwarf.StructType, pos token.Pos) (expr *ast.Struct
 
 	var buf strings.Builder
 	buf.WriteString("struct {")
-	fld := make([]*ast.Field, 0, 2*len(dt.Field)+1) // enough for padding around every field
+	fld := make([]*ast.Field, 0, 2*len(dt.Field)+1)	// enough for padding around every field
 	sizes := make([]int64, 0, 2*len(dt.Field)+1)
 	off := int64(0)
 
@@ -3227,7 +3342,7 @@ func (c *typeConv) badVoidPointerTypedef(dt *dwarf.TypedefType) bool {
 	return false
 }
 
-// badStructPointerTypedef is like badVoidPointerTypedefs but for structs.
+// badStructPointerTypedef is like badVoidPointerTypedef but for structs.
 func (c *typeConv) badStructPointerTypedef(name string, dt *dwarf.StructType) bool {
 	// Windows handle types can all potentially contain non-pointers.
 	// badVoidPointerTypedef handles the "void *" HANDLE type, but other
@@ -3403,19 +3518,19 @@ func (c *typeConv) badEGLType(dt *dwarf.TypedefType) bool {
 // jniTypes maps from JNI types that we want to be uintptrs, to the underlying type to which
 // they are mapped. The base "jobject" maps to the empty string.
 var jniTypes = map[string]string{
-	"jobject":       "",
-	"jclass":        "jobject",
-	"jthrowable":    "jobject",
-	"jstring":       "jobject",
-	"jarray":        "jobject",
-	"jbooleanArray": "jarray",
-	"jbyteArray":    "jarray",
-	"jcharArray":    "jarray",
-	"jshortArray":   "jarray",
-	"jintArray":     "jarray",
-	"jlongArray":    "jarray",
-	"jfloatArray":   "jarray",
-	"jdoubleArray":  "jarray",
-	"jobjectArray":  "jarray",
-	"jweak":         "jobject",
+	"jobject":		"",
+	"jclass":		"jobject",
+	"jthrowable":		"jobject",
+	"jstring":		"jobject",
+	"jarray":		"jobject",
+	"jbooleanArray":	"jarray",
+	"jbyteArray":		"jarray",
+	"jcharArray":		"jarray",
+	"jshortArray":		"jarray",
+	"jintArray":		"jarray",
+	"jlongArray":		"jarray",
+	"jfloatArray":		"jarray",
+	"jdoubleArray":		"jarray",
+	"jobjectArray":		"jarray",
+	"jweak":		"jobject",
 }

@@ -282,18 +282,18 @@ func ssaGenValue(s *ssagen.State, v *ssa.Value) {
 		p := s.Prog(v.Op.Asm())
 		p.From.Type = obj.TYPE_CONST
 		p.From.Offset = v.AuxInt >> 8
-		p.SetFrom3Const(v.AuxInt & 0xff)
+		p.AddRestSourceConst(v.AuxInt & 0xff)
 		p.Reg = v.Args[0].Reg()
 		p.To.Type = obj.TYPE_REG
 		p.To.Reg = v.Reg()
 	case ssa.OpARMANDconst, ssa.OpARMBICconst:
 		// try to optimize ANDconst and BICconst to BFC, which saves bytes and ticks
 		// BFC is only available on ARMv7, and its result and source are in the same register
-		if buildcfg.GOARM == 7 && v.Reg() == v.Args[0].Reg() {
+		if buildcfg.GOARM.Version == 7 && v.Reg() == v.Args[0].Reg() {
 			var val uint32
 			if v.Op == ssa.OpARMANDconst {
 				val = ^uint32(v.AuxInt)
-			} else { // BICconst
+			} else {	// BICconst
 				val = uint32(v.AuxInt)
 			}
 			lsb, width := getBFC(val)
@@ -302,7 +302,7 @@ func ssaGenValue(s *ssagen.State, v *ssa.Value) {
 				p := s.Prog(arm.ABFC)
 				p.From.Type = obj.TYPE_CONST
 				p.From.Offset = int64(width)
-				p.SetFrom3Const(int64(lsb))
+				p.AddRestSourceConst(int64(lsb))
 				p.To.Type = obj.TYPE_REG
 				p.To.Reg = v.Reg()
 				break
@@ -458,7 +458,7 @@ func ssaGenValue(s *ssagen.State, v *ssa.Value) {
 		p.Reg = v.Args[1].Reg()
 		p.To.Type = obj.TYPE_REGREG
 		p.To.Reg = v.Reg()
-		p.To.Offset = arm.REGTMP // throw away low 32-bit into tmp register
+		p.To.Offset = arm.REGTMP	// throw away low 32-bit into tmp register
 	case ssa.OpARMMULLU:
 		// 32-bit multiplication, results 64-bit, high 32-bit in out0, low 32-bit in out1
 		p := s.Prog(v.Op.Asm())
@@ -466,16 +466,16 @@ func ssaGenValue(s *ssagen.State, v *ssa.Value) {
 		p.From.Reg = v.Args[0].Reg()
 		p.Reg = v.Args[1].Reg()
 		p.To.Type = obj.TYPE_REGREG
-		p.To.Reg = v.Reg0()           // high 32-bit
-		p.To.Offset = int64(v.Reg1()) // low 32-bit
+		p.To.Reg = v.Reg0()		// high 32-bit
+		p.To.Offset = int64(v.Reg1())	// low 32-bit
 	case ssa.OpARMMULA, ssa.OpARMMULS:
 		p := s.Prog(v.Op.Asm())
 		p.From.Type = obj.TYPE_REG
 		p.From.Reg = v.Args[0].Reg()
 		p.Reg = v.Args[1].Reg()
 		p.To.Type = obj.TYPE_REGREG2
-		p.To.Reg = v.Reg()                   // result
-		p.To.Offset = int64(v.Args[2].Reg()) // addend
+		p.To.Reg = v.Reg()			// result
+		p.To.Offset = int64(v.Args[2].Reg())	// addend
 	case ssa.OpARMMOVWconst:
 		p := s.Prog(v.Op.Asm())
 		p.From.Type = obj.TYPE_CONST
@@ -646,7 +646,7 @@ func ssaGenValue(s *ssagen.State, v *ssa.Value) {
 			default:
 			}
 		}
-		if buildcfg.GOARM >= 6 {
+		if buildcfg.GOARM.Version >= 6 {
 			// generate more efficient "MOVB/MOVBU/MOVH/MOVHU Reg@>0, Reg" on ARMv6 & ARMv7
 			genshift(s, v, v.Op.Asm(), 0, v.Args[0].Reg(), v.Reg(), arm.SHIFT_RR, 0)
 			return
@@ -710,19 +710,20 @@ func ssaGenValue(s *ssagen.State, v *ssa.Value) {
 		p := s.Prog(obj.ACALL)
 		p.To.Type = obj.TYPE_MEM
 		p.To.Name = obj.NAME_EXTERN
-		p.To.Sym = v.Aux.(*obj.LSym)
+		// AuxInt encodes how many buffer entries we need.
+		p.To.Sym = ir.Syms.GCWriteBarrier[v.AuxInt-1]
 	case ssa.OpARMLoweredPanicBoundsA, ssa.OpARMLoweredPanicBoundsB, ssa.OpARMLoweredPanicBoundsC:
 		p := s.Prog(obj.ACALL)
 		p.To.Type = obj.TYPE_MEM
 		p.To.Name = obj.NAME_EXTERN
 		p.To.Sym = ssagen.BoundsCheckFunc[v.AuxInt]
-		s.UseArgs(8) // space used in callee args area by assembly stubs
+		s.UseArgs(8)	// space used in callee args area by assembly stubs
 	case ssa.OpARMLoweredPanicExtendA, ssa.OpARMLoweredPanicExtendB, ssa.OpARMLoweredPanicExtendC:
 		p := s.Prog(obj.ACALL)
 		p.To.Type = obj.TYPE_MEM
 		p.To.Name = obj.NAME_EXTERN
 		p.To.Sym = ssagen.ExtendCheckFunc[v.AuxInt]
-		s.UseArgs(12) // space used in callee args area by assembly stubs
+		s.UseArgs(12)	// space used in callee args area by assembly stubs
 	case ssa.OpARMDUFFZERO:
 		p := s.Prog(obj.ADUFFZERO)
 		p.To.Type = obj.TYPE_MEM
@@ -746,7 +747,7 @@ func ssaGenValue(s *ssagen.State, v *ssa.Value) {
 		if logopt.Enabled() {
 			logopt.LogOpt(v.Pos, "nilcheck", "genssa", v.Block.Func.Name)
 		}
-		if base.Debug.Nil != 0 && v.Pos.Line() > 1 { // v.Pos.Line()==1 in generated wrappers
+		if base.Debug.Nil != 0 && v.Pos.Line() > 1 {	// v.Pos.Line()==1 in generated wrappers
 			base.WarnfAt(v.Pos, "generated nil check")
 		}
 	case ssa.OpARMLoweredZero:
@@ -874,45 +875,45 @@ func ssaGenValue(s *ssagen.State, v *ssa.Value) {
 }
 
 var condBits = map[ssa.Op]uint8{
-	ssa.OpARMEqual:         arm.C_SCOND_EQ,
-	ssa.OpARMNotEqual:      arm.C_SCOND_NE,
-	ssa.OpARMLessThan:      arm.C_SCOND_LT,
-	ssa.OpARMLessThanU:     arm.C_SCOND_LO,
-	ssa.OpARMLessEqual:     arm.C_SCOND_LE,
-	ssa.OpARMLessEqualU:    arm.C_SCOND_LS,
-	ssa.OpARMGreaterThan:   arm.C_SCOND_GT,
-	ssa.OpARMGreaterThanU:  arm.C_SCOND_HI,
-	ssa.OpARMGreaterEqual:  arm.C_SCOND_GE,
-	ssa.OpARMGreaterEqualU: arm.C_SCOND_HS,
+	ssa.OpARMEqual:		arm.C_SCOND_EQ,
+	ssa.OpARMNotEqual:	arm.C_SCOND_NE,
+	ssa.OpARMLessThan:	arm.C_SCOND_LT,
+	ssa.OpARMLessThanU:	arm.C_SCOND_LO,
+	ssa.OpARMLessEqual:	arm.C_SCOND_LE,
+	ssa.OpARMLessEqualU:	arm.C_SCOND_LS,
+	ssa.OpARMGreaterThan:	arm.C_SCOND_GT,
+	ssa.OpARMGreaterThanU:	arm.C_SCOND_HI,
+	ssa.OpARMGreaterEqual:	arm.C_SCOND_GE,
+	ssa.OpARMGreaterEqualU:	arm.C_SCOND_HS,
 }
 
 var blockJump = map[ssa.BlockKind]struct {
 	asm, invasm obj.As
 }{
-	ssa.BlockARMEQ:     {arm.ABEQ, arm.ABNE},
-	ssa.BlockARMNE:     {arm.ABNE, arm.ABEQ},
-	ssa.BlockARMLT:     {arm.ABLT, arm.ABGE},
-	ssa.BlockARMGE:     {arm.ABGE, arm.ABLT},
-	ssa.BlockARMLE:     {arm.ABLE, arm.ABGT},
-	ssa.BlockARMGT:     {arm.ABGT, arm.ABLE},
-	ssa.BlockARMULT:    {arm.ABLO, arm.ABHS},
-	ssa.BlockARMUGE:    {arm.ABHS, arm.ABLO},
-	ssa.BlockARMUGT:    {arm.ABHI, arm.ABLS},
-	ssa.BlockARMULE:    {arm.ABLS, arm.ABHI},
-	ssa.BlockARMLTnoov: {arm.ABMI, arm.ABPL},
-	ssa.BlockARMGEnoov: {arm.ABPL, arm.ABMI},
+	ssa.BlockARMEQ:		{arm.ABEQ, arm.ABNE},
+	ssa.BlockARMNE:		{arm.ABNE, arm.ABEQ},
+	ssa.BlockARMLT:		{arm.ABLT, arm.ABGE},
+	ssa.BlockARMGE:		{arm.ABGE, arm.ABLT},
+	ssa.BlockARMLE:		{arm.ABLE, arm.ABGT},
+	ssa.BlockARMGT:		{arm.ABGT, arm.ABLE},
+	ssa.BlockARMULT:	{arm.ABLO, arm.ABHS},
+	ssa.BlockARMUGE:	{arm.ABHS, arm.ABLO},
+	ssa.BlockARMUGT:	{arm.ABHI, arm.ABLS},
+	ssa.BlockARMULE:	{arm.ABLS, arm.ABHI},
+	ssa.BlockARMLTnoov:	{arm.ABMI, arm.ABPL},
+	ssa.BlockARMGEnoov:	{arm.ABPL, arm.ABMI},
 }
 
 // To model a 'LEnoov' ('<=' without overflow checking) branching.
 var leJumps = [2][2]ssagen.IndexJump{
-	{{Jump: arm.ABEQ, Index: 0}, {Jump: arm.ABPL, Index: 1}}, // next == b.Succs[0]
-	{{Jump: arm.ABMI, Index: 0}, {Jump: arm.ABEQ, Index: 0}}, // next == b.Succs[1]
+	{{Jump: arm.ABEQ, Index: 0}, {Jump: arm.ABPL, Index: 1}},	// next == b.Succs[0]
+	{{Jump: arm.ABMI, Index: 0}, {Jump: arm.ABEQ, Index: 0}},	// next == b.Succs[1]
 }
 
 // To model a 'GTnoov' ('>' without overflow checking) branching.
 var gtJumps = [2][2]ssagen.IndexJump{
-	{{Jump: arm.ABMI, Index: 1}, {Jump: arm.ABEQ, Index: 1}}, // next == b.Succs[0]
-	{{Jump: arm.ABEQ, Index: 1}, {Jump: arm.ABPL, Index: 0}}, // next == b.Succs[1]
+	{{Jump: arm.ABMI, Index: 1}, {Jump: arm.ABEQ, Index: 1}},	// next == b.Succs[0]
+	{{Jump: arm.ABEQ, Index: 1}, {Jump: arm.ABPL, Index: 0}},	// next == b.Succs[1]
 }
 
 func ssaGenBlock(s *ssagen.State, b, next *ssa.Block) {

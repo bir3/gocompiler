@@ -152,13 +152,13 @@ var gofmtLineReplacer = strings.NewReplacer(
 	"<\n", "< ",
 	">\n", "> ",
 	"=\n", "= ",
-	"!\n", "! ", // not possible in gofmt today
+	"!\n", "! ",	// not possible in gofmt today
 	"(\n", "(",
-	"[\n", "[", // not possible in gofmt today
+	"[\n", "[",	// not possible in gofmt today
 	"{\n", "{",
 	",\n", ",",
 	".\n", ". ",
-	":\n", ": ", // not possible in gofmt today
+	":\n", ": ",	// not possible in gofmt today
 
 	"\n", ";",
 )

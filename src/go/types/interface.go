@@ -15,18 +15,18 @@ import (
 
 // An Interface represents an interface type.
 type Interface struct {
-	check     *Checker     // for error reporting; nil once type set is computed
-	methods   []*Func      // ordered list of explicitly declared methods
-	embeddeds []Type       // ordered list of explicitly embedded elements
-	embedPos  *[]token.Pos // positions of embedded elements; or nil (for error messages) - use pointer to save space
-	implicit  bool         // interface is wrapper for type set literal (non-interface T, ~T, or A|B)
-	complete  bool         // indicates that obj, methods, and embeddeds are set and type set can be computed
+	check		*Checker	// for error reporting; nil once type set is computed
+	methods		[]*Func		// ordered list of explicitly declared methods
+	embeddeds	[]Type		// ordered list of explicitly embedded elements
+	embedPos	*[]token.Pos	// positions of embedded elements; or nil (for error messages) - use pointer to save space
+	implicit	bool		// interface is wrapper for type set literal (non-interface T, ~T, or A|B)
+	complete	bool		// indicates that obj, methods, and embeddeds are set and type set can be computed
 
-	tset *_TypeSet // type set described by this interface, computed lazily
+	tset	*_TypeSet	// type set described by this interface, computed lazily
 }
 
 // typeSet returns the type set for interface t.
-func (t *Interface) typeSet() *_TypeSet { return computeInterfaceTypeSet(t.check, token.NoPos, t) }
+func (t *Interface) typeSet() *_TypeSet	{ return computeInterfaceTypeSet(t.check, nopos, t) }
 
 // emptyInterface represents the empty (completed) interface
 var emptyInterface = Interface{complete: true, tset: &topTypeSet}
@@ -91,46 +91,46 @@ func (t *Interface) MarkImplicit() {
 }
 
 // NumExplicitMethods returns the number of explicitly declared methods of interface t.
-func (t *Interface) NumExplicitMethods() int { return len(t.methods) }
+func (t *Interface) NumExplicitMethods() int	{ return len(t.methods) }
 
 // ExplicitMethod returns the i'th explicitly declared method of interface t for 0 <= i < t.NumExplicitMethods().
-// The methods are ordered by their unique Id.
-func (t *Interface) ExplicitMethod(i int) *Func { return t.methods[i] }
+// The methods are ordered by their unique [Id].
+func (t *Interface) ExplicitMethod(i int) *Func	{ return t.methods[i] }
 
 // NumEmbeddeds returns the number of embedded types in interface t.
-func (t *Interface) NumEmbeddeds() int { return len(t.embeddeds) }
+func (t *Interface) NumEmbeddeds() int	{ return len(t.embeddeds) }
 
-// Embedded returns the i'th embedded defined (*Named) type of interface t for 0 <= i < t.NumEmbeddeds().
+// Embedded returns the i'th embedded defined (*[Named]) type of interface t for 0 <= i < t.NumEmbeddeds().
 // The result is nil if the i'th embedded type is not a defined type.
 //
-// Deprecated: Use EmbeddedType which is not restricted to defined (*Named) types.
-func (t *Interface) Embedded(i int) *Named { tname, _ := t.embeddeds[i].(*Named); return tname }
+// Deprecated: Use [Interface.EmbeddedType] which is not restricted to defined (*[Named]) types.
+func (t *Interface) Embedded(i int) *Named	{ return asNamed(t.embeddeds[i]) }
 
 // EmbeddedType returns the i'th embedded type of interface t for 0 <= i < t.NumEmbeddeds().
-func (t *Interface) EmbeddedType(i int) Type { return t.embeddeds[i] }
+func (t *Interface) EmbeddedType(i int) Type	{ return t.embeddeds[i] }
 
 // NumMethods returns the total number of methods of interface t.
-func (t *Interface) NumMethods() int { return t.typeSet().NumMethods() }
+func (t *Interface) NumMethods() int	{ return t.typeSet().NumMethods() }
 
 // Method returns the i'th method of interface t for 0 <= i < t.NumMethods().
 // The methods are ordered by their unique Id.
-func (t *Interface) Method(i int) *Func { return t.typeSet().Method(i) }
+func (t *Interface) Method(i int) *Func	{ return t.typeSet().Method(i) }
 
 // Empty reports whether t is the empty interface.
-func (t *Interface) Empty() bool { return t.typeSet().IsAll() }
+func (t *Interface) Empty() bool	{ return t.typeSet().IsAll() }
 
 // IsComparable reports whether each type in interface t's type set is comparable.
-func (t *Interface) IsComparable() bool { return t.typeSet().IsComparable(nil) }
+func (t *Interface) IsComparable() bool	{ return t.typeSet().IsComparable(nil) }
 
 // IsMethodSet reports whether the interface t is fully described by its method
 // set.
-func (t *Interface) IsMethodSet() bool { return t.typeSet().IsMethodSet() }
+func (t *Interface) IsMethodSet() bool	{ return t.typeSet().IsMethodSet() }
 
 // IsImplicit reports whether the interface t is a wrapper for a type set literal.
-func (t *Interface) IsImplicit() bool { return t.implicit }
+func (t *Interface) IsImplicit() bool	{ return t.implicit }
 
 // Complete computes the interface's type set. It must be called by users of
-// NewInterfaceType and NewInterface after the interface's embedded types are
+// [NewInterfaceType] and [NewInterface] after the interface's embedded types are
 // fully defined and before using the interface type in any way other than to
 // form other types. The interface must not contain duplicate methods or a
 // panic occurs. Complete returns the receiver.
@@ -140,22 +140,23 @@ func (t *Interface) Complete() *Interface {
 	if !t.complete {
 		t.complete = true
 	}
-	t.typeSet() // checks if t.tset is already set
+	t.typeSet()	// checks if t.tset is already set
 	return t
 }
 
-func (t *Interface) Underlying() Type { return t }
-func (t *Interface) String() string   { return TypeString(t, nil) }
+func (t *Interface) Underlying() Type	{ return t }
+func (t *Interface) String() string	{ return TypeString(t, nil) }
 
 // ----------------------------------------------------------------------------
 // Implementation
 
 func (t *Interface) cleanup() {
+	t.typeSet()	// any interface that escapes type checking must be safe for concurrent use
 	t.check = nil
 	t.embedPos = nil
 }
 
-func (check *Checker) interfaceType(ityp *Interface, iface *ast.InterfaceType, def *Named) {
+func (check *Checker) interfaceType(ityp *Interface, iface *ast.InterfaceType, def *TypeName) {
 	addEmbedded := func(pos token.Pos, typ Type) {
 		ityp.embeddeds = append(ityp.embeddeds, typ)
 		if ityp.embedPos == nil {
@@ -175,33 +176,33 @@ func (check *Checker) interfaceType(ityp *Interface, iface *ast.InterfaceType, d
 		name := f.Names[0]
 		if name.Name == "_" {
 			check.error(name, BlankIfaceMethod, "methods must have a unique non-blank name")
-			continue // ignore
+			continue	// ignore
 		}
 
 		typ := check.typ(f.Type)
 		sig, _ := typ.(*Signature)
 		if sig == nil {
-			if typ != Typ[Invalid] {
+			if isValid(typ) {
 				check.errorf(f.Type, InvalidSyntaxTree, "%s is not a method signature", typ)
 			}
-			continue // ignore
+			continue	// ignore
 		}
 
-		// Always type-check method type parameters but complain if they are not enabled.
-		// (This extra check is needed here because interface method signatures don't have
-		// a receiver specification.)
+		// The go/parser doesn't accept method type parameters but an ast.FuncType may have them.
 		if sig.tparams != nil {
 			var at positioner = f.Type
 			if ftyp, _ := f.Type.(*ast.FuncType); ftyp != nil && ftyp.TypeParams != nil {
 				at = ftyp.TypeParams
 			}
-			check.error(at, InvalidMethodTypeParams, "methods cannot have type parameters")
+			check.error(at, InvalidSyntaxTree, "methods cannot have type parameters")
 		}
 
 		// use named receiver type if available (for better error messages)
 		var recvTyp Type = ityp
 		if def != nil {
-			recvTyp = def
+			if named := asNamed(def.typ); named != nil {
+				recvTyp = named
+			}
 		}
 		sig.recv = NewVar(name.Pos(), check.pkg, "", recvTyp)
 

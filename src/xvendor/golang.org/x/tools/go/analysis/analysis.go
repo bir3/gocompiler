@@ -17,17 +17,21 @@ import (
 type Analyzer struct {
 	// The Name of the analyzer must be a valid Go identifier
 	// as it may appear in command-line flags, URLs, and so on.
-	Name string
+	Name	string
 
 	// Doc is the documentation for the analyzer.
 	// The part before the first "\n\n" is the title
 	// (no capital or period, max ~60 letters).
-	Doc string
+	Doc	string
+
+	// URL holds an optional link to a web page with additional
+	// documentation for this analyzer.
+	URL	string
 
 	// Flags defines any flags accepted by the analyzer.
 	// The manner in which these flags are exposed to the user
 	// depends on the driver which runs the analyzer.
-	Flags flag.FlagSet
+	Flags	flag.FlagSet
 
 	// Run applies the analyzer to a package.
 	// It returns an error if the analyzer failed.
@@ -41,13 +45,13 @@ type Analyzer struct {
 	// To pass analysis results between packages (and thus
 	// potentially between address spaces), use Facts, which are
 	// serializable.
-	Run func(*Pass) (interface{}, error)
+	Run	func(*Pass) (interface{}, error)
 
 	// RunDespiteErrors allows the driver to invoke
 	// the Run method of this analyzer even on a
 	// package that contains parse or type errors.
 	// The Pass.TypeErrors field may consequently be non-empty.
-	RunDespiteErrors bool
+	RunDespiteErrors	bool
 
 	// Requires is a set of analyzers that must run successfully
 	// before this one on a given package. This analyzer may inspect
@@ -56,10 +60,10 @@ type Analyzer struct {
 	//
 	// Requires establishes a "horizontal" dependency between
 	// analysis passes (different analyzers, same package).
-	Requires []*Analyzer
+	Requires	[]*Analyzer
 
 	// ResultType is the type of the optional result of the Run function.
-	ResultType reflect.Type
+	ResultType	reflect.Type
 
 	// FactTypes indicates that this analyzer imports and exports
 	// Facts of the specified concrete types.
@@ -69,10 +73,10 @@ type Analyzer struct {
 	//
 	// FactTypes establishes a "vertical" dependency between
 	// analysis passes (same analyzer, different packages).
-	FactTypes []Fact
+	FactTypes	[]Fact
 }
 
-func (a *Analyzer) String() string { return a.Name }
+func (a *Analyzer) String() string	{ return a.Name }
 
 // A Pass provides information to the Run function that
 // applies a specific analyzer to a single Go package.
@@ -84,29 +88,29 @@ func (a *Analyzer) String() string { return a.Name }
 //
 // The Run function should not call any of the Pass functions concurrently.
 type Pass struct {
-	Analyzer *Analyzer // the identity of the current analyzer
+	Analyzer	*Analyzer	// the identity of the current analyzer
 
 	// syntax and type information
-	Fset         *token.FileSet // file position information
-	Files        []*ast.File    // the abstract syntax tree of each file
-	OtherFiles   []string       // names of non-Go files of this package
-	IgnoredFiles []string       // names of ignored source files in this package
-	Pkg          *types.Package // type information about the package
-	TypesInfo    *types.Info    // type information about the syntax trees
-	TypesSizes   types.Sizes    // function for computing sizes of types
-	TypeErrors   []types.Error  // type errors (only if Analyzer.RunDespiteErrors)
+	Fset		*token.FileSet	// file position information
+	Files		[]*ast.File	// the abstract syntax tree of each file
+	OtherFiles	[]string	// names of non-Go files of this package
+	IgnoredFiles	[]string	// names of ignored source files in this package
+	Pkg		*types.Package	// type information about the package
+	TypesInfo	*types.Info	// type information about the syntax trees
+	TypesSizes	types.Sizes	// function for computing sizes of types
+	TypeErrors	[]types.Error	// type errors (only if Analyzer.RunDespiteErrors)
 
 	// Report reports a Diagnostic, a finding about a specific location
 	// in the analyzed source code such as a potential mistake.
 	// It may be called by the Run function.
-	Report func(Diagnostic)
+	Report	func(Diagnostic)
 
 	// ResultOf provides the inputs to this analysis pass, which are
 	// the corresponding results of its prerequisite analyzers.
 	// The map keys are the elements of Analysis.Required,
 	// and the type of each corresponding value is the required
 	// analysis's ResultType.
-	ResultOf map[*Analyzer]interface{}
+	ResultOf	map[*Analyzer]interface{}
 
 	// -- facts --
 
@@ -116,12 +120,12 @@ type Pass struct {
 	//
 	// ImportObjectFact panics if called after the pass is complete.
 	// ImportObjectFact is not concurrency-safe.
-	ImportObjectFact func(obj types.Object, fact Fact) bool
+	ImportObjectFact	func(obj types.Object, fact Fact) bool
 
 	// ImportPackageFact retrieves a fact associated with package pkg,
 	// which must be this package or one of its dependencies.
 	// See comments for ImportObjectFact.
-	ImportPackageFact func(pkg *types.Package, fact Fact) bool
+	ImportPackageFact	func(pkg *types.Package, fact Fact) bool
 
 	// ExportObjectFact associates a fact of type *T with the obj,
 	// replacing any previous fact of that type.
@@ -129,41 +133,33 @@ type Pass struct {
 	// ExportObjectFact panics if it is called after the pass is
 	// complete, or if obj does not belong to the package being analyzed.
 	// ExportObjectFact is not concurrency-safe.
-	ExportObjectFact func(obj types.Object, fact Fact)
+	ExportObjectFact	func(obj types.Object, fact Fact)
 
 	// ExportPackageFact associates a fact with the current package.
 	// See comments for ExportObjectFact.
-	ExportPackageFact func(fact Fact)
+	ExportPackageFact	func(fact Fact)
 
-	// AllPackageFacts returns a new slice containing all package facts of the analysis's FactTypes
-	// in unspecified order.
-	// WARNING: This is an experimental API and may change in the future.
-	AllPackageFacts func() []PackageFact
+	// AllPackageFacts returns a new slice containing all package
+	// facts of the analysis's FactTypes in unspecified order.
+	AllPackageFacts	func() []PackageFact
 
-	// AllObjectFacts returns a new slice containing all object facts of the analysis's FactTypes
-	// in unspecified order.
-	// WARNING: This is an experimental API and may change in the future.
-	AllObjectFacts func() []ObjectFact
-
-	// typeErrors contains types.Errors that are associated with the pkg.
-	typeErrors []types.Error
+	// AllObjectFacts returns a new slice containing all object
+	// facts of the analysis's FactTypes in unspecified order.
+	AllObjectFacts	func() []ObjectFact
 
 	/* Further fields may be added in future. */
-	// For example, suggested or applied refactorings.
 }
 
 // PackageFact is a package together with an associated fact.
-// WARNING: This is an experimental API and may change in the future.
 type PackageFact struct {
-	Package *types.Package
-	Fact    Fact
+	Package	*types.Package
+	Fact	Fact
 }
 
 // ObjectFact is an object together with an associated fact.
-// WARNING: This is an experimental API and may change in the future.
 type ObjectFact struct {
-	Object types.Object
-	Fact   Fact
+	Object	types.Object
+	Fact	Fact
 }
 
 // Reportf is a helper function that reports a Diagnostic using the
@@ -176,8 +172,8 @@ func (pass *Pass) Reportf(pos token.Pos, format string, args ...interface{}) {
 // The Range interface provides a range. It's equivalent to and satisfied by
 // ast.Node.
 type Range interface {
-	Pos() token.Pos // position of first character belonging to the node
-	End() token.Pos // position of first character immediately after the node
+	Pos() token.Pos	// position of first character belonging to the node
+	End() token.Pos	// position of first character immediately after the node
 }
 
 // ReportRangef is a helper function that reports a Diagnostic using the
@@ -227,5 +223,5 @@ func (pass *Pass) String() string {
 //
 // A Fact should not be modified once exported.
 type Fact interface {
-	AFact() // dummy method to avoid type errors
+	AFact()	// dummy method to avoid type errors
 }

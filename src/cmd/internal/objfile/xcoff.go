@@ -30,9 +30,9 @@ func (f *xcoffFile) symbols() ([]Sym, error) {
 	var syms []Sym
 	for _, s := range f.xcoff.Symbols {
 		const (
-			N_UNDEF = 0  // An undefined (extern) symbol
-			N_ABS   = -1 // An absolute symbol (e_value is a constant, not an address)
-			N_DEBUG = -2 // A debugging symbol
+			N_UNDEF	= 0	// An undefined (extern) symbol
+			N_ABS	= -1	// An absolute symbol (e_value is a constant, not an address)
+			N_DEBUG	= -2	// A debugging symbol
 		)
 		sym := Sym{Name: s.Name, Addr: s.Value, Code: '?'}
 
@@ -94,7 +94,7 @@ func (f *xcoffFile) pcln() (textStart uint64, symtab, pclntab []byte, err error)
 	if pclntab, err = loadXCOFFTable(f.xcoff, "runtime.pclntab", "runtime.epclntab"); err != nil {
 		return 0, nil, nil, err
 	}
-	symtab, _ = loadXCOFFTable(f.xcoff, "runtime.symtab", "runtime.esymtab") // ignore error, this symbol is not useful anyway
+	symtab, _ = loadXCOFFTable(f.xcoff, "runtime.symtab", "runtime.esymtab")	// ignore error, this symbol is not useful anyway
 	return textStart, symtab, pclntab, nil
 }
 

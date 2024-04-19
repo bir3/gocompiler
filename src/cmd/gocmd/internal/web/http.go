@@ -15,6 +15,7 @@ import (
 	"crypto/tls"
 	"errors"
 	"fmt"
+	"io"
 	"mime"
 	"net"
 	"net/http"
@@ -24,6 +25,7 @@ import (
 	"time"
 
 	"github.com/bir3/gocompiler/src/cmd/gocmd/internal/auth"
+	"github.com/bir3/gocompiler/src/cmd/gocmd/internal/base"
 	"github.com/bir3/gocompiler/src/cmd/gocmd/internal/cfg"
 	"github.com/bir3/gocompiler/src/cmd/internal/browser"
 )
@@ -32,10 +34,10 @@ import (
 // when we're connecting to https servers that might not be there
 // or might be using self-signed certificates.
 var impatientInsecureHTTPClient = &http.Client{
-	CheckRedirect: checkRedirect,
-	Timeout:       5 * time.Second,
+	CheckRedirect:	checkRedirect,
+	Timeout:	5 * time.Second,
 	Transport: &http.Transport{
-		Proxy: http.ProxyFromEnvironment,
+		Proxy:	http.ProxyFromEnvironment,
 		TLSClientConfig: &tls.Config{
 			InsecureSkipVerify: true,
 		},
@@ -44,7 +46,7 @@ var impatientInsecureHTTPClient = &http.Client{
 
 var securityPreservingDefaultClient = securityPreservingHTTPClient(http.DefaultClient)
 
-// securityPreservingDefaultClient returns a client that is like the original
+// securityPreservingHTTPClient returns a client that is like the original
 // but rejects redirects to plain-HTTP URLs if the original URL was secure.
 func securityPreservingHTTPClient(original *http.Client) *http.Client {
 	c := new(http.Client)
@@ -71,10 +73,10 @@ func checkRedirect(req *http.Request, via []*http.Request) error {
 }
 
 type Interceptor struct {
-	Scheme   string
-	FromHost string
-	ToHost   string
-	Client   *http.Client
+	Scheme		string
+	FromHost	string
+	ToHost		string
+	Client		*http.Client
 }
 
 func EnableTestHooks(interceptors []Interceptor) error {
@@ -105,8 +107,8 @@ func DisableTestHooks() {
 }
 
 var (
-	enableTestHooks  = false
-	testInterceptors []Interceptor
+	enableTestHooks		= false
+	testInterceptors	[]Interceptor
 )
 
 func interceptURL(u *urlpkg.URL) (*Interceptor, bool) {
@@ -114,7 +116,7 @@ func interceptURL(u *urlpkg.URL) (*Interceptor, bool) {
 		return nil, false
 	}
 	for i, t := range testInterceptors {
-		if u.Host == t.FromHost && (t.Scheme == "" || u.Scheme == t.Scheme) {
+		if u.Host == t.FromHost && (u.Scheme == "" || u.Scheme == t.Scheme) {
 			return &testInterceptors[i], true
 		}
 	}
@@ -140,11 +142,11 @@ func get(security SecurityMode, url *urlpkg.URL) (*Response, error) {
 		case "proxy.golang.org":
 			if os.Getenv("TESTGOPROXY404") == "1" {
 				res := &Response{
-					URL:        url.Redacted(),
-					Status:     "404 testing",
-					StatusCode: 404,
-					Header:     make(map[string][]string),
-					Body:       http.NoBody,
+					URL:		url.Redacted(),
+					Status:		"404 testing",
+					StatusCode:	404,
+					Header:		make(map[string][]string),
+					Body:		http.NoBody,
 				}
 				if cfg.BuildX {
 					fmt.Fprintf(os.Stderr, "# get %s: %v (%.3fs)\n", url.Redacted(), res.Status, time.Since(start).Seconds())
@@ -171,7 +173,7 @@ func get(security SecurityMode, url *urlpkg.URL) (*Response, error) {
 		}
 	}
 
-	fetch := func(url *urlpkg.URL) (*urlpkg.URL, *http.Response, error) {
+	fetch := func(url *urlpkg.URL) (*http.Response, error) {
 		// Note: The -v build flag does not mean "print logging information",
 		// despite its historical misuse for this in GOPATH-based go get.
 		// We print extra logging in -x mode instead, which traces what
@@ -182,7 +184,7 @@ func get(security SecurityMode, url *urlpkg.URL) (*Response, error) {
 
 		req, err := http.NewRequest("GET", url.String(), nil)
 		if err != nil {
-			return nil, nil, err
+			return nil, err
 		}
 		if url.Scheme == "https" {
 			auth.AddCredentials(req)
@@ -193,8 +195,13 @@ func get(security SecurityMode, url *urlpkg.URL) (*Response, error) {
 			req.URL.Host = t.ToHost
 		}
 
+		release, err := base.AcquireNet()
+		if err != nil {
+			return nil, err
+		}
+
 		var res *http.Response
-		if security == Insecure && url.Scheme == "https" { // fail earlier
+		if security == Insecure && url.Scheme == "https" {	// fail earlier
 			res, err = impatientInsecureHTTPClient.Do(req)
 		} else {
 			if intercepted && t.Client != nil {
@@ -204,21 +211,40 @@ func get(security SecurityMode, url *urlpkg.URL) (*Response, error) {
 				res, err = securityPreservingDefaultClient.Do(req)
 			}
 		}
-		return url, res, err
+
+		if err != nil {
+			// Per the docs for [net/http.Client.Do], “On error, any Response can be
+			// ignored. A non-nil Response with a non-nil error only occurs when
+			// CheckRedirect fails, and even then the returned Response.Body is
+			// already closed.”
+			release()
+			return nil, err
+		}
+
+		// “If the returned error is nil, the Response will contain a non-nil Body
+		// which the user is expected to close.”
+		body := res.Body
+		res.Body = hookCloser{
+			ReadCloser:	body,
+			afterClose:	release,
+		}
+		return res, err
 	}
 
 	var (
-		fetched *urlpkg.URL
-		res     *http.Response
-		err     error
+		fetched	*urlpkg.URL
+		res	*http.Response
+		err	error
 	)
 	if url.Scheme == "" || url.Scheme == "https" {
 		secure := new(urlpkg.URL)
 		*secure = *url
 		secure.Scheme = "https"
 
-		fetched, res, err = fetch(secure)
-		if err != nil {
+		res, err = fetch(secure)
+		if err == nil {
+			fetched = secure
+		} else {
 			if cfg.BuildX {
 				fmt.Fprintf(os.Stderr, "# get %s: %v\n", secure.Redacted(), err)
 			}
@@ -260,8 +286,10 @@ func get(security SecurityMode, url *urlpkg.URL) (*Response, error) {
 			return nil, fmt.Errorf("refusing to pass credentials to insecure URL: %s", insecure.Redacted())
 		}
 
-		fetched, res, err = fetch(insecure)
-		if err != nil {
+		res, err = fetch(insecure)
+		if err == nil {
+			fetched = insecure
+		} else {
 			if cfg.BuildX {
 				fmt.Fprintf(os.Stderr, "# get %s: %v\n", insecure.Redacted(), err)
 			}
@@ -278,11 +306,11 @@ func get(security SecurityMode, url *urlpkg.URL) (*Response, error) {
 	}
 
 	r := &Response{
-		URL:        fetched.Redacted(),
-		Status:     res.Status,
-		StatusCode: res.StatusCode,
-		Header:     map[string][]string(res.Header),
-		Body:       res.Body,
+		URL:		fetched.Redacted(),
+		Status:		res.Status,
+		StatusCode:	res.StatusCode,
+		Header:		map[string][]string(res.Header),
+		Body:		res.Body,
 	}
 
 	if res.StatusCode != http.StatusOK {
@@ -310,21 +338,21 @@ func getFile(u *urlpkg.URL) (*Response, error) {
 
 	if os.IsNotExist(err) {
 		return &Response{
-			URL:        u.Redacted(),
-			Status:     http.StatusText(http.StatusNotFound),
-			StatusCode: http.StatusNotFound,
-			Body:       http.NoBody,
-			fileErr:    err,
+			URL:		u.Redacted(),
+			Status:		http.StatusText(http.StatusNotFound),
+			StatusCode:	http.StatusNotFound,
+			Body:		http.NoBody,
+			fileErr:	err,
 		}, nil
 	}
 
 	if os.IsPermission(err) {
 		return &Response{
-			URL:        u.Redacted(),
-			Status:     http.StatusText(http.StatusForbidden),
-			StatusCode: http.StatusForbidden,
-			Body:       http.NoBody,
-			fileErr:    err,
+			URL:		u.Redacted(),
+			Status:		http.StatusText(http.StatusForbidden),
+			StatusCode:	http.StatusForbidden,
+			Body:		http.NoBody,
+			fileErr:	err,
 		}, nil
 	}
 
@@ -333,14 +361,14 @@ func getFile(u *urlpkg.URL) (*Response, error) {
 	}
 
 	return &Response{
-		URL:        u.Redacted(),
-		Status:     http.StatusText(http.StatusOK),
-		StatusCode: http.StatusOK,
-		Body:       f,
+		URL:		u.Redacted(),
+		Status:		http.StatusText(http.StatusOK),
+		StatusCode:	http.StatusOK,
+		Body:		f,
 	}, nil
 }
 
-func openBrowser(url string) bool { return browser.Open(url) }
+func openBrowser(url string) bool	{ return browser.Open(url) }
 
 func isLocalHost(u *urlpkg.URL) bool {
 	// VCSTestRepoURL itself is secure, and it may redirect requests to other
@@ -357,4 +385,15 @@ func isLocalHost(u *urlpkg.URL) bool {
 		return true
 	}
 	return false
+}
+
+type hookCloser struct {
+	io.ReadCloser
+	afterClose	func()
+}
+
+func (c hookCloser) Close() error {
+	err := c.ReadCloser.Close()
+	c.afterClose()
+	return err
 }

@@ -1,5 +1,5 @@
 // cmd/7l/noop.c, cmd/7l/obj.c, cmd/ld/pass.c from Vita Nuova.
-// https://code.google.com/p/ken-cc/source/browse/
+// https://bitbucket.org/plan9-from-bell-labs/9-cc/src/master/
 //
 // 	Copyright © 1994-1999 Lucent Technologies Inc. All rights reserved.
 // 	Portions Copyright © 1995-1997 C H Forsyth (forsyth@terzarima.net)
@@ -35,6 +35,7 @@ import (
 	"github.com/bir3/gocompiler/src/cmd/internal/objabi"
 	"github.com/bir3/gocompiler/src/cmd/internal/src"
 	"github.com/bir3/gocompiler/src/cmd/internal/sys"
+	"github.com/bir3/gocompiler/src/internal/abi"
 	"github.com/bir3/gocompiler/src/internal/buildcfg"
 	"log"
 	"math"
@@ -43,24 +44,24 @@ import (
 // zrReplace is the set of instructions for which $0 in the From operand
 // should be replaced with REGZERO.
 var zrReplace = map[obj.As]bool{
-	AMOVD:  true,
-	AMOVW:  true,
-	AMOVWU: true,
-	AMOVH:  true,
-	AMOVHU: true,
-	AMOVB:  true,
-	AMOVBU: true,
-	ASBC:   true,
-	ASBCW:  true,
-	ASBCS:  true,
-	ASBCSW: true,
-	AADC:   true,
-	AADCW:  true,
-	AADCS:  true,
-	AADCSW: true,
-	AFMOVD: true,
-	AFMOVS: true,
-	AMSR:   true,
+	AMOVD:	true,
+	AMOVW:	true,
+	AMOVWU:	true,
+	AMOVH:	true,
+	AMOVHU:	true,
+	AMOVB:	true,
+	AMOVBU:	true,
+	ASBC:	true,
+	ASBCW:	true,
+	ASBCS:	true,
+	ASBCSW:	true,
+	AADC:	true,
+	AADCW:	true,
+	AADCS:	true,
+	AADCSW:	true,
+	AFMOVD:	true,
+	AFMOVS:	true,
+	AMSR:	true,
 }
 
 func (c *ctxt7) stacksplit(p *obj.Prog, framesize int32) *obj.Prog {
@@ -155,9 +156,9 @@ func (c *ctxt7) stacksplit(p *obj.Prog, framesize int32) *obj.Prog {
 	p.As = AMOVD
 	p.From.Type = obj.TYPE_MEM
 	p.From.Reg = REGG
-	p.From.Offset = 2 * int64(c.ctxt.Arch.PtrSize) // G.stackguard0
+	p.From.Offset = 2 * int64(c.ctxt.Arch.PtrSize)	// G.stackguard0
 	if c.cursym.CFunc() {
-		p.From.Offset = 3 * int64(c.ctxt.Arch.PtrSize) // G.stackguard1
+		p.From.Offset = 3 * int64(c.ctxt.Arch.PtrSize)	// G.stackguard1
 	}
 	p.To.Type = obj.TYPE_REG
 	p.To.Reg = REGRT1
@@ -169,7 +170,7 @@ func (c *ctxt7) stacksplit(p *obj.Prog, framesize int32) *obj.Prog {
 	p = c.ctxt.StartUnsafePoint(p, c.newprog)
 
 	q := (*obj.Prog)(nil)
-	if framesize <= objabi.StackSmall {
+	if framesize <= abi.StackSmall {
 		// small stack: SP < stackguard
 		//	CMP	stackguard, SP
 
@@ -178,7 +179,7 @@ func (c *ctxt7) stacksplit(p *obj.Prog, framesize int32) *obj.Prog {
 		p.From.Type = obj.TYPE_REG
 		p.From.Reg = REGRT1
 		p.Reg = REGSP
-	} else if framesize <= objabi.StackBig {
+	} else if framesize <= abi.StackBig {
 		// large stack: SP-framesize < stackguard-StackSmall
 		//	SUB	$(framesize-StackSmall), SP, RT2
 		//	CMP	stackguard, RT2
@@ -186,7 +187,7 @@ func (c *ctxt7) stacksplit(p *obj.Prog, framesize int32) *obj.Prog {
 
 		p.As = ASUB
 		p.From.Type = obj.TYPE_CONST
-		p.From.Offset = int64(framesize) - objabi.StackSmall
+		p.From.Offset = int64(framesize) - abi.StackSmall
 		p.Reg = REGSP
 		p.To.Type = obj.TYPE_REG
 		p.To.Reg = REGRT2
@@ -212,7 +213,7 @@ func (c *ctxt7) stacksplit(p *obj.Prog, framesize int32) *obj.Prog {
 		p = obj.Appendp(p, c.newprog)
 		p.As = ASUBS
 		p.From.Type = obj.TYPE_CONST
-		p.From.Offset = int64(framesize) - objabi.StackSmall
+		p.From.Offset = int64(framesize) - abi.StackSmall
 		p.Reg = REGSP
 		p.To.Type = obj.TYPE_REG
 		p.To.Reg = REGRT2
@@ -288,11 +289,12 @@ func (c *ctxt7) stacksplit(p *obj.Prog, framesize int32) *obj.Prog {
 	}
 	call.To.Sym = c.ctxt.Lookup(morestack)
 
-	unspill := c.cursym.Func().UnspillRegisterArgs(call, c.newprog)
-	pcdata = c.ctxt.EndUnsafePoint(unspill, c.newprog, -1)
+	// The instructions which unspill regs should be preemptible.
+	pcdata = c.ctxt.EndUnsafePoint(call, c.newprog, -1)
+	unspill := c.cursym.Func().UnspillRegisterArgs(pcdata, c.newprog)
 
 	// B	start
-	jmp := obj.Appendp(pcdata, c.newprog)
+	jmp := obj.Appendp(unspill, c.newprog)
 	jmp.As = AB
 	jmp.To.Type = obj.TYPE_BRANCH
 	jmp.To.SetTarget(startPred.Link)
@@ -328,8 +330,33 @@ func progedit(ctxt *obj.Link, p *obj.Prog, newprog obj.ProgAlloc) {
 		break
 	}
 
-	// Rewrite float constants to values stored in memory.
+	// Rewrite float and vector constants to values stored in memory.
 	switch p.As {
+	case AVMOVS:
+		if p.From.Type == obj.TYPE_CONST {
+			p.From.Type = obj.TYPE_MEM
+			p.From.Sym = c.ctxt.Int32Sym(p.From.Offset)
+			p.From.Name = obj.NAME_EXTERN
+			p.From.Offset = 0
+		}
+
+	case AVMOVD:
+		if p.From.Type == obj.TYPE_CONST {
+			p.From.Type = obj.TYPE_MEM
+			p.From.Sym = c.ctxt.Int64Sym(p.From.Offset)
+			p.From.Name = obj.NAME_EXTERN
+			p.From.Offset = 0
+		}
+
+	case AVMOVQ:
+		if p.From.Type == obj.TYPE_CONST {
+			p.From.Type = obj.TYPE_MEM
+			p.From.Sym = c.ctxt.Int128Sym(p.GetFrom3().Offset, p.From.Offset)
+			p.From.Name = obj.NAME_EXTERN
+			p.From.Offset = 0
+			p.RestArgs = nil
+		}
+
 	case AFMOVS:
 		if p.From.Type == obj.TYPE_FCONST {
 			f64 := p.From.Val.(float64)
@@ -364,8 +391,6 @@ func progedit(ctxt *obj.Link, p *obj.Prog, newprog obj.ProgAlloc) {
 			p.From.Name = obj.NAME_EXTERN
 			p.From.Offset = 0
 		}
-
-		break
 	}
 
 	if c.ctxt.Flag_dynlink {
@@ -582,14 +607,14 @@ func preprocess(ctxt *obj.Link, cursym *obj.LSym, newprog obj.ProgAlloc) {
 				}
 			}
 
-			if p.Mark&LEAF != 0 && c.autosize < objabi.StackSmall {
+			if p.Mark&LEAF != 0 && c.autosize < abi.StackSmall {
 				// A leaf function with a small stack can be marked
 				// NOSPLIT, avoiding a stack check.
 				p.From.Sym.Set(obj.AttrNoSplit, true)
 			}
 
 			if !p.From.Sym.NoSplit() {
-				p = c.stacksplit(p, c.autosize) // emit split check
+				p = c.stacksplit(p, c.autosize)	// emit split check
 			}
 
 			var prologueEnd *obj.Prog
@@ -735,7 +760,7 @@ func preprocess(ctxt *obj.Link, cursym *obj.LSym, newprog obj.ProgAlloc) {
 				q.As = AMOVD
 				q.From.Type = obj.TYPE_MEM
 				q.From.Reg = REGG
-				q.From.Offset = 4 * int64(c.ctxt.Arch.PtrSize) // G.panic
+				q.From.Offset = 4 * int64(c.ctxt.Arch.PtrSize)	// G.panic
 				q.To.Type = obj.TYPE_REG
 				q.To.Reg = REGRT1
 
@@ -760,7 +785,7 @@ func preprocess(ctxt *obj.Link, cursym *obj.LSym, newprog obj.ProgAlloc) {
 				mov.As = AMOVD
 				mov.From.Type = obj.TYPE_MEM
 				mov.From.Reg = REGRT1
-				mov.From.Offset = 0 // Panic.argp
+				mov.From.Offset = 0	// Panic.argp
 				mov.To.Type = obj.TYPE_REG
 				mov.To.Reg = REGRT2
 
@@ -805,7 +830,7 @@ func preprocess(ctxt *obj.Link, cursym *obj.LSym, newprog obj.ProgAlloc) {
 				q.From.Reg = REG_R20
 				q.To.Type = obj.TYPE_MEM
 				q.To.Reg = REGRT1
-				q.To.Offset = 0 // Panic.argp
+				q.To.Offset = 0	// Panic.argp
 
 				// B end
 				q = obj.Appendp(q, c.newprog)
@@ -825,21 +850,24 @@ func preprocess(ctxt *obj.Link, cursym *obj.LSym, newprog obj.ProgAlloc) {
 			p.To = obj.Addr{}
 			if c.cursym.Func().Text.Mark&LEAF != 0 {
 				if c.autosize != 0 {
+					// Restore frame pointer.
+					// ADD $framesize-8, RSP, R29
+					p.As = AADD
+					p.From.Type = obj.TYPE_CONST
+					p.From.Offset = int64(c.autosize) - 8
+					p.Reg = REGSP
+					p.To.Type = obj.TYPE_REG
+					p.To.Reg = REGFP
+
+					// Pop stack frame.
+					// ADD $framesize, RSP, RSP
+					p = obj.Appendp(p, c.newprog)
 					p.As = AADD
 					p.From.Type = obj.TYPE_CONST
 					p.From.Offset = int64(c.autosize)
 					p.To.Type = obj.TYPE_REG
 					p.To.Reg = REGSP
 					p.Spadj = -c.autosize
-
-					// Frame pointer.
-					p = obj.Appendp(p, c.newprog)
-					p.As = ASUB
-					p.From.Type = obj.TYPE_CONST
-					p.From.Offset = 8
-					p.Reg = REGSP
-					p.To.Type = obj.TYPE_REG
-					p.To.Reg = REGFP
 				}
 			} else {
 				aoffset := c.autosize
@@ -896,7 +924,7 @@ func preprocess(ctxt *obj.Link, cursym *obj.LSym, newprog obj.ProgAlloc) {
 				p = q
 			}
 
-			if retjmp != nil { // retjmp
+			if retjmp != nil {	// retjmp
 				p.As = AB
 				p.To.Type = obj.TYPE_BRANCH
 				p.To.Sym = retjmp
@@ -1037,8 +1065,8 @@ func preprocess(ctxt *obj.Link, cursym *obj.LSym, newprog obj.ProgAlloc) {
 
 		if p.To.Type == obj.TYPE_REG && p.To.Reg == REGSP && p.Spadj == 0 {
 			f := c.cursym.Func()
-			if f.FuncFlag&objabi.FuncFlag_SPWRITE == 0 {
-				c.cursym.Func().FuncFlag |= objabi.FuncFlag_SPWRITE
+			if f.FuncFlag&abi.FuncFlagSPWrite == 0 {
+				c.cursym.Func().FuncFlag |= abi.FuncFlagSPWrite
 				if ctxt.Debugvlog || !ctxt.IsAsm {
 					ctxt.Logf("auto-SPWRITE: %s %v\n", c.cursym.Name, p)
 					if !ctxt.IsAsm {
@@ -1077,19 +1105,19 @@ func nocache(p *obj.Prog) {
 }
 
 var unaryDst = map[obj.As]bool{
-	AWORD:  true,
-	ADWORD: true,
-	ABL:    true,
-	AB:     true,
-	ACLREX: true,
+	AWORD:	true,
+	ADWORD:	true,
+	ABL:	true,
+	AB:	true,
+	ACLREX:	true,
 }
 
 var Linkarm64 = obj.LinkArch{
-	Arch:           sys.ArchARM64,
-	Init:           buildop,
-	Preprocess:     preprocess,
-	Assemble:       span7,
-	Progedit:       progedit,
-	UnaryDst:       unaryDst,
-	DWARFRegisters: ARM64DWARFRegisters,
+	Arch:		sys.ArchARM64,
+	Init:		buildop,
+	Preprocess:	preprocess,
+	Assemble:	span7,
+	Progedit:	progedit,
+	UnaryDst:	unaryDst,
+	DWARFRegisters:	ARM64DWARFRegisters,
 }

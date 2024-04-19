@@ -29,48 +29,48 @@ import (
 type CoordinateFuzzingOpts struct {
 	// Log is a writer for logging progress messages and warnings.
 	// If nil, io.Discard will be used instead.
-	Log io.Writer
+	Log	io.Writer
 
 	// Timeout is the amount of wall clock time to spend fuzzing after the corpus
 	// has loaded. If zero, there will be no time limit.
-	Timeout time.Duration
+	Timeout	time.Duration
 
 	// Limit is the number of random values to generate and test. If zero,
 	// there will be no limit on the number of generated values.
-	Limit int64
+	Limit	int64
 
 	// MinimizeTimeout is the amount of wall clock time to spend minimizing
 	// after discovering a crasher. If zero, there will be no time limit. If
 	// MinimizeTimeout and MinimizeLimit are both zero, then minimization will
 	// be disabled.
-	MinimizeTimeout time.Duration
+	MinimizeTimeout	time.Duration
 
 	// MinimizeLimit is the maximum number of calls to the fuzz function to be
 	// made while minimizing after finding a crash. If zero, there will be no
 	// limit. Calls to the fuzz function made when minimizing also count toward
 	// Limit. If MinimizeTimeout and MinimizeLimit are both zero, then
 	// minimization will be disabled.
-	MinimizeLimit int64
+	MinimizeLimit	int64
 
 	// parallel is the number of worker processes to run in parallel. If zero,
 	// CoordinateFuzzing will run GOMAXPROCS workers.
-	Parallel int
+	Parallel	int
 
 	// Seed is a list of seed values added by the fuzz target with testing.F.Add
 	// and in testdata.
-	Seed []CorpusEntry
+	Seed	[]CorpusEntry
 
 	// Types is the list of types which make up a corpus entry.
 	// Types must be set and must match values in Seed.
-	Types []reflect.Type
+	Types	[]reflect.Type
 
 	// CorpusDir is a directory where files containing values that crash the
 	// code being tested may be written. CorpusDir must be set.
-	CorpusDir string
+	CorpusDir	string
 
 	// CacheDir is a directory containing additional "interesting" values.
 	// The fuzzer may derive new values from these, and may write new values here.
-	CacheDir string
+	CacheDir	string
 }
 
 // CoordinateFuzzing creates several worker processes and communicates with
@@ -117,6 +117,15 @@ func CoordinateFuzzing(ctx context.Context, opts CoordinateFuzzingOpts) (err err
 	var fuzzErr error
 	stopping := false
 	stop := func(err error) {
+		if shouldPrintDebugInfo() {
+			_, file, line, ok := runtime.Caller(1)
+			if ok {
+				c.debugLogf("stop called at %s:%d. stopping: %t", file, line, stopping)
+			} else {
+				c.debugLogf("stop called at unknown. stopping: %t", stopping)
+			}
+		}
+
 		if err == fuzzCtx.Err() || isInterruptError(err) {
 			// Suppress cancellation errors and terminations due to SIGINT.
 			// The messages are not helpful since either the user triggered the error
@@ -148,18 +157,18 @@ func CoordinateFuzzing(ctx context.Context, opts CoordinateFuzzingOpts) (err err
 		}
 		if err == nil {
 			err = &crashError{
-				path: c.crashMinimizing.entry.Path,
-				err:  errors.New(c.crashMinimizing.crasherMsg),
+				path:	c.crashMinimizing.entry.Path,
+				err:	errors.New(c.crashMinimizing.crasherMsg),
 			}
 		}
 	}()
 
 	// Start workers.
 	// TODO(jayconrod): do we want to support fuzzing different binaries?
-	dir := "" // same as self
+	dir := ""	// same as self
 	binPath := os.Args[0]
 	args := append([]string{"-test.fuzzworker"}, os.Args[1:]...)
-	env := os.Environ() // same as self
+	env := os.Environ()	// same as self
 
 	errC := make(chan error)
 	workers := make([]*worker, opts.Parallel)
@@ -195,6 +204,11 @@ func CoordinateFuzzing(ctx context.Context, opts CoordinateFuzzingOpts) (err err
 
 	c.logStats()
 	for {
+		// If there is an execution limit, and we've reached it, stop.
+		if c.opts.Limit > 0 && c.count >= c.opts.Limit {
+			stop(nil)
+		}
+
 		var inputC chan fuzzInput
 		input, ok := c.peekInput()
 		if ok && c.crashMinimizing == nil && !stopping {
@@ -239,6 +253,9 @@ func CoordinateFuzzing(ctx context.Context, opts CoordinateFuzzingOpts) (err err
 					if c.crashMinimizing != nil {
 						// This crash is not minimized, and another crash is being minimized.
 						// Ignore this one and wait for the other one to finish.
+						if shouldPrintDebugInfo() {
+							c.debugLogf("found unminimized crasher, skipping in favor of minimizable crasher")
+						}
 						break
 					}
 					// Found a crasher but haven't yet attempted to minimize it.
@@ -254,15 +271,13 @@ func CoordinateFuzzing(ctx context.Context, opts CoordinateFuzzingOpts) (err err
 					if err == nil {
 						crashWritten = true
 						err = &crashError{
-							path: result.entry.Path,
-							err:  errors.New(result.crasherMsg),
+							path:	result.entry.Path,
+							err:	errors.New(result.crasherMsg),
 						}
 					}
 					if shouldPrintDebugInfo() {
-						fmt.Fprintf(
-							c.opts.Log,
-							"DEBUG new crasher, elapsed: %s, id: %s, parent: %s, gen: %d, size: %d, exec time: %s\n",
-							c.elapsed(),
+						c.debugLogf(
+							"found crasher, id: %s, parent: %s, gen: %d, size: %d, exec time: %s",
 							result.entry.Path,
 							result.entry.Parent,
 							result.entry.Generation,
@@ -275,10 +290,8 @@ func CoordinateFuzzing(ctx context.Context, opts CoordinateFuzzingOpts) (err err
 			} else if result.coverageData != nil {
 				if c.warmupRun() {
 					if shouldPrintDebugInfo() {
-						fmt.Fprintf(
-							c.opts.Log,
-							"DEBUG processed an initial input, elapsed: %s, id: %s, new bits: %d, size: %d, exec time: %s\n",
-							c.elapsed(),
+						c.debugLogf(
+							"processed an initial input, id: %s, new bits: %d, size: %d, exec time: %s",
 							result.entry.Parent,
 							countBits(diffCoverage(c.coverageMask, result.coverageData)),
 							len(result.entry.Data),
@@ -290,10 +303,8 @@ func CoordinateFuzzing(ctx context.Context, opts CoordinateFuzzingOpts) (err err
 					if c.warmupInputLeft == 0 {
 						fmt.Fprintf(c.opts.Log, "fuzz: elapsed: %s, gathering baseline coverage: %d/%d completed, now fuzzing with %d workers\n", c.elapsed(), c.warmupInputCount, c.warmupInputCount, c.opts.Parallel)
 						if shouldPrintDebugInfo() {
-							fmt.Fprintf(
-								c.opts.Log,
-								"DEBUG finished processing input corpus, elapsed: %s, entries: %d, initial coverage bits: %d\n",
-								c.elapsed(),
+							c.debugLogf(
+								"finished processing input corpus, entries: %d, initial coverage bits: %d",
 								len(c.corpus.entries),
 								countBits(c.coverageMask),
 							)
@@ -321,16 +332,20 @@ func CoordinateFuzzing(ctx context.Context, opts CoordinateFuzzingOpts) (err err
 							break
 						}
 						if !entryNew {
-							continue
+							if shouldPrintDebugInfo() {
+								c.debugLogf(
+									"ignoring duplicate input which increased coverage, id: %s",
+									result.entry.Path,
+								)
+							}
+							break
 						}
 						c.updateCoverage(keepCoverage)
 						c.inputQueue.enqueue(result.entry)
 						c.interestingCount++
 						if shouldPrintDebugInfo() {
-							fmt.Fprintf(
-								c.opts.Log,
-								"DEBUG new interesting input, elapsed: %s, id: %s, parent: %s, gen: %d, new bits: %d, total bits: %d, size: %d, exec time: %s\n",
-								c.elapsed(),
+							c.debugLogf(
+								"new interesting input, id: %s, parent: %s, gen: %d, new bits: %d, total bits: %d, size: %d, exec time: %s",
 								result.entry.Path,
 								result.entry.Parent,
 								result.entry.Generation,
@@ -343,10 +358,8 @@ func CoordinateFuzzing(ctx context.Context, opts CoordinateFuzzingOpts) (err err
 					}
 				} else {
 					if shouldPrintDebugInfo() {
-						fmt.Fprintf(
-							c.opts.Log,
-							"DEBUG worker reported interesting input that doesn't expand coverage, elapsed: %s, id: %s, parent: %s, canMinimize: %t\n",
-							c.elapsed(),
+						c.debugLogf(
+							"worker reported interesting input that doesn't expand coverage, id: %s, parent: %s, canMinimize: %t",
 							result.entry.Path,
 							result.entry.Parent,
 							result.canMinimize,
@@ -360,20 +373,12 @@ func CoordinateFuzzing(ctx context.Context, opts CoordinateFuzzingOpts) (err err
 				if c.warmupInputLeft == 0 {
 					fmt.Fprintf(c.opts.Log, "fuzz: elapsed: %s, testing seed corpus: %d/%d completed, now fuzzing with %d workers\n", c.elapsed(), c.warmupInputCount, c.warmupInputCount, c.opts.Parallel)
 					if shouldPrintDebugInfo() {
-						fmt.Fprintf(
-							c.opts.Log,
-							"DEBUG finished testing-only phase, elapsed: %s, entries: %d\n",
-							time.Since(c.startTime),
+						c.debugLogf(
+							"finished testing-only phase, entries: %d",
 							len(c.corpus.entries),
 						)
 					}
 				}
-			}
-
-			// Once the result has been processed, stop the worker if we
-			// have reached the fuzzing limit.
-			if c.opts.Limit > 0 && c.count >= c.opts.Limit {
-				stop(nil)
 			}
 
 		case inputC <- input:
@@ -397,8 +402,8 @@ func CoordinateFuzzing(ctx context.Context, opts CoordinateFuzzingOpts) (err err
 // of the file where the input causing the crasher was saved. The testing
 // framework uses this to report a command to re-run that specific input.
 type crashError struct {
-	path string
-	err  error
+	path	string
+	err	error
 }
 
 func (e *crashError) Error() string {
@@ -414,8 +419,8 @@ func (e *crashError) CrashPath() string {
 }
 
 type corpus struct {
-	entries []CorpusEntry
-	hashes  map[[sha256.Size]byte]bool
+	entries	[]CorpusEntry
+	hashes	map[[sha256.Size]byte]bool
 }
 
 // addCorpusEntries adds entries to the corpus, and optionally writes the entries
@@ -456,25 +461,25 @@ func (c *coordinator) addCorpusEntries(addToCache bool, entries ...CorpusEntry) 
 // to export this type from testing. Instead, we use the same struct type and
 // use a type alias (not a defined type) for convenience.
 type CorpusEntry = struct {
-	Parent string
+	Parent	string
 
 	// Path is the path of the corpus file, if the entry was loaded from disk.
 	// For other entries, including seed values provided by f.Add, Path is the
 	// name of the test, e.g. seed#0 or its hash.
-	Path string
+	Path	string
 
 	// Data is the raw input data. Data should only be populated for seed
 	// values. For on-disk corpus files, Data will be nil, as it will be loaded
 	// from disk using Path.
-	Data []byte
+	Data	[]byte
 
 	// Values is the unmarshaled values from a corpus file.
-	Values []any
+	Values	[]any
 
-	Generation int
+	Generation	int
 
 	// IsSeed indicates whether this entry is part of the seed corpus.
-	IsSeed bool
+	IsSeed	bool
 }
 
 // corpusEntryData returns the raw input bytes, either from the data struct
@@ -490,153 +495,153 @@ func corpusEntryData(ce CorpusEntry) ([]byte, error) {
 type fuzzInput struct {
 	// entry is the value to test initially. The worker will randomly mutate
 	// values from this starting point.
-	entry CorpusEntry
+	entry	CorpusEntry
 
 	// timeout is the time to spend fuzzing variations of this input,
 	// not including starting or cleaning up.
-	timeout time.Duration
+	timeout	time.Duration
 
 	// limit is the maximum number of calls to the fuzz function the worker may
 	// make. The worker may make fewer calls, for example, if it finds an
 	// error early. If limit is zero, there is no limit on calls to the
 	// fuzz function.
-	limit int64
+	limit	int64
 
 	// warmup indicates whether this is a warmup input before fuzzing begins. If
 	// true, the input should not be fuzzed.
-	warmup bool
+	warmup	bool
 
 	// coverageData reflects the coordinator's current coverageMask.
-	coverageData []byte
+	coverageData	[]byte
 }
 
 type fuzzResult struct {
 	// entry is an interesting value or a crasher.
-	entry CorpusEntry
+	entry	CorpusEntry
 
 	// crasherMsg is an error message from a crash. It's "" if no crash was found.
-	crasherMsg string
+	crasherMsg	string
 
 	// canMinimize is true if the worker should attempt to minimize this result.
 	// It may be false because an attempt has already been made.
-	canMinimize bool
+	canMinimize	bool
 
 	// coverageData is set if the worker found new coverage.
-	coverageData []byte
+	coverageData	[]byte
 
 	// limit is the number of values the coordinator asked the worker
 	// to test. 0 if there was no limit.
-	limit int64
+	limit	int64
 
 	// count is the number of values the worker actually tested.
-	count int64
+	count	int64
 
 	// totalDuration is the time the worker spent testing inputs.
-	totalDuration time.Duration
+	totalDuration	time.Duration
 
 	// entryDuration is the time the worker spent execution an interesting result
-	entryDuration time.Duration
+	entryDuration	time.Duration
 }
 
 type fuzzMinimizeInput struct {
 	// entry is an interesting value or crasher to minimize.
-	entry CorpusEntry
+	entry	CorpusEntry
 
 	// crasherMsg is an error message from a crash. It's "" if no crash was found.
 	// If set, the worker will attempt to find a smaller input that also produces
 	// an error, though not necessarily the same error.
-	crasherMsg string
+	crasherMsg	string
 
 	// limit is the maximum number of calls to the fuzz function the worker may
 	// make. The worker may make fewer calls, for example, if it can't reproduce
 	// an error. If limit is zero, there is no limit on calls to the fuzz function.
-	limit int64
+	limit	int64
 
 	// timeout is the time to spend minimizing this input.
 	// A zero timeout means no limit.
-	timeout time.Duration
+	timeout	time.Duration
 
 	// keepCoverage is a set of coverage bits that entry found that were not in
 	// the coordinator's combined set. When minimizing, the worker should find an
 	// input that preserves at least one of these bits. keepCoverage is nil for
 	// crashing inputs.
-	keepCoverage []byte
+	keepCoverage	[]byte
 }
 
 // coordinator holds channels that workers can use to communicate with
 // the coordinator.
 type coordinator struct {
-	opts CoordinateFuzzingOpts
+	opts	CoordinateFuzzingOpts
 
 	// startTime is the time we started the workers after loading the corpus.
 	// Used for logging.
-	startTime time.Time
+	startTime	time.Time
 
 	// inputC is sent values to fuzz by the coordinator. Any worker may receive
 	// values from this channel. Workers send results to resultC.
-	inputC chan fuzzInput
+	inputC	chan fuzzInput
 
 	// minimizeC is sent values to minimize by the coordinator. Any worker may
 	// receive values from this channel. Workers send results to resultC.
-	minimizeC chan fuzzMinimizeInput
+	minimizeC	chan fuzzMinimizeInput
 
 	// resultC is sent results of fuzzing by workers. The coordinator
 	// receives these. Multiple types of messages are allowed.
-	resultC chan fuzzResult
+	resultC	chan fuzzResult
 
 	// count is the number of values fuzzed so far.
-	count int64
+	count	int64
 
 	// countLastLog is the number of values fuzzed when the output was last
 	// logged.
-	countLastLog int64
+	countLastLog	int64
 
 	// timeLastLog is the time at which the output was last logged.
-	timeLastLog time.Time
+	timeLastLog	time.Time
 
 	// interestingCount is the number of unique interesting values which have
 	// been found this execution.
-	interestingCount int
+	interestingCount	int
 
 	// warmupInputCount is the count of all entries in the corpus which will
 	// need to be received from workers to run once during warmup, but not fuzz.
 	// This could be for coverage data, or only for the purposes of verifying
 	// that the seed corpus doesn't have any crashers. See warmupRun.
-	warmupInputCount int
+	warmupInputCount	int
 
 	// warmupInputLeft is the number of entries in the corpus which still need
 	// to be received from workers to run once during warmup, but not fuzz.
 	// See warmupInputLeft.
-	warmupInputLeft int
+	warmupInputLeft	int
 
 	// duration is the time spent fuzzing inside workers, not counting time
 	// starting up or tearing down.
-	duration time.Duration
+	duration	time.Duration
 
 	// countWaiting is the number of fuzzing executions the coordinator is
 	// waiting on workers to complete.
-	countWaiting int64
+	countWaiting	int64
 
 	// corpus is a set of interesting values, including the seed corpus and
 	// generated values that workers reported as interesting.
-	corpus corpus
+	corpus	corpus
 
 	// minimizationAllowed is true if one or more of the types of fuzz
 	// function's parameters can be minimized.
-	minimizationAllowed bool
+	minimizationAllowed	bool
 
 	// inputQueue is a queue of inputs that workers should try fuzzing. This is
 	// initially populated from the seed corpus and cached inputs. More inputs
 	// may be added as new coverage is discovered.
-	inputQueue queue
+	inputQueue	queue
 
 	// minimizeQueue is a queue of inputs that caused errors or exposed new
 	// coverage. Workers should attempt to find smaller inputs that do the
 	// same thing.
-	minimizeQueue queue
+	minimizeQueue	queue
 
 	// crashMinimizing is the crash that is currently being minimized.
-	crashMinimizing *fuzzResult
+	crashMinimizing	*fuzzResult
 
 	// coverageMask aggregates coverage that was found for all inputs in the
 	// corpus. Each byte represents a single basic execution block. Each set bit
@@ -644,7 +649,7 @@ type coordinator struct {
 	// 1 << n times, where n is the position of the bit in the byte. For example, a
 	// value of 12 indicates that separate inputs have triggered this block
 	// between 4-7 times and 8-15 times.
-	coverageMask []byte
+	coverageMask	[]byte
 }
 
 func newCoordinator(opts CoordinateFuzzingOpts) (*coordinator, error) {
@@ -655,13 +660,13 @@ func newCoordinator(opts CoordinateFuzzingOpts) (*coordinator, error) {
 		}
 	}
 	c := &coordinator{
-		opts:        opts,
-		startTime:   time.Now(),
-		inputC:      make(chan fuzzInput),
-		minimizeC:   make(chan fuzzMinimizeInput),
-		resultC:     make(chan fuzzResult),
-		timeLastLog: time.Now(),
-		corpus:      corpus{hashes: make(map[[sha256.Size]byte]bool)},
+		opts:		opts,
+		startTime:	time.Now(),
+		inputC:		make(chan fuzzInput),
+		minimizeC:	make(chan fuzzMinimizeInput),
+		resultC:	make(chan fuzzResult),
+		timeLastLog:	time.Now(),
+		corpus:		corpus{hashes: make(map[[sha256.Size]byte]bool)},
 	}
 	if err := c.readCache(); err != nil {
 		return nil, err
@@ -770,9 +775,9 @@ func (c *coordinator) peekInput() (fuzzInput, bool) {
 		panic("input queue empty after refill")
 	}
 	input := fuzzInput{
-		entry:   entry.(CorpusEntry),
-		timeout: workerFuzzDuration,
-		warmup:  c.warmupRun(),
+		entry:		entry.(CorpusEntry),
+		timeout:	workerFuzzDuration,
+		warmup:		c.warmupRun(),
 	}
 	if c.coverageMask != nil {
 		input.coverageData = bytes.Clone(c.coverageMask)
@@ -814,14 +819,23 @@ func (c *coordinator) refillInputQueue() {
 // queueForMinimization creates a fuzzMinimizeInput from result and adds it
 // to the minimization queue to be sent to workers.
 func (c *coordinator) queueForMinimization(result fuzzResult, keepCoverage []byte) {
+	if shouldPrintDebugInfo() {
+		c.debugLogf(
+			"queueing input for minimization, id: %s, parent: %s, keepCoverage: %t, crasher: %t",
+			result.entry.Path,
+			result.entry.Parent,
+			keepCoverage != nil,
+			result.crasherMsg != "",
+		)
+	}
 	if result.crasherMsg != "" {
 		c.minimizeQueue.clear()
 	}
 
 	input := fuzzMinimizeInput{
-		entry:        result.entry,
-		crasherMsg:   result.crasherMsg,
-		keepCoverage: keepCoverage,
+		entry:		result.entry,
+		crasherMsg:	result.crasherMsg,
+		keepCoverage:	keepCoverage,
 	}
 	c.minimizeQueue.enqueue(input)
 }
@@ -963,7 +977,7 @@ func (e *MalformedCorpusError) Error() string {
 func ReadCorpus(dir string, types []reflect.Type) ([]CorpusEntry, error) {
 	files, err := os.ReadDir(dir)
 	if os.IsNotExist(err) {
-		return nil, nil // No corpus to read
+		return nil, nil	// No corpus to read
 	} else if err != nil {
 		return nil, fmt.Errorf("reading seed corpus from testdata: %v", err)
 	}
@@ -1037,7 +1051,7 @@ func writeToCorpus(entry *CorpusEntry, dir string) (err error) {
 		return err
 	}
 	if err := os.WriteFile(entry.Path, entry.Data, 0666); err != nil {
-		os.Remove(entry.Path) // remove partially written file
+		os.Remove(entry.Path)	// remove partially written file
 		return err
 	}
 	return nil
@@ -1076,8 +1090,13 @@ var zeroVals []any = []any{
 	uint64(0),
 }
 
-var debugInfo = godebug.New("fuzzdebug").Value() == "1"
+var debugInfo = godebug.New("#fuzzdebug").Value() == "1"
 
 func shouldPrintDebugInfo() bool {
 	return debugInfo
+}
+
+func (c *coordinator) debugLogf(format string, args ...any) {
+	t := time.Now().Format("2006-01-02 15:04:05.999999999")
+	fmt.Fprintf(c.opts.Log, t+" DEBUG "+format+"\n", args...)
 }

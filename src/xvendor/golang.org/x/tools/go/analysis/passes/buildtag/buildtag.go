@@ -20,12 +20,13 @@ import (
 	"github.com/bir3/gocompiler/src/xvendor/golang.org/x/tools/go/analysis/passes/internal/analysisutil"
 )
 
-const Doc = "check that +build tags are well-formed and correctly located"
+const Doc = "check //go:build and // +build directives"
 
 var Analyzer = &analysis.Analyzer{
-	Name: "buildtag",
-	Doc:  Doc,
-	Run:  runBuildTag,
+	Name:	"buildtag",
+	Doc:	Doc,
+	URL:	"https://pkg.go.dev/golang.org/x/tools/go/analysis/passes/buildtag",
+	Run:	runBuildTag,
 }
 
 func runBuildTag(pass *analysis.Pass) (interface{}, error) {
@@ -39,7 +40,7 @@ func runBuildTag(pass *analysis.Pass) (interface{}, error) {
 	}
 	for _, name := range pass.IgnoredFiles {
 		if strings.HasSuffix(name, ".go") {
-			f, err := parser.ParseFile(pass.Fset, name, nil, parser.ParseComments)
+			f, err := parser.ParseFile(pass.Fset, name, nil, parser.ParseComments|parser.SkipObjectResolution)
 			if err != nil {
 				// Not valid Go source code - not our job to diagnose, so ignore.
 				return nil, nil
@@ -98,15 +99,15 @@ func checkOtherFile(pass *analysis.Pass, filename string) error {
 }
 
 type checker struct {
-	pass         *analysis.Pass
-	plusBuildOK  bool            // "+build" lines still OK
-	goBuildOK    bool            // "go:build" lines still OK
-	crossCheck   bool            // cross-check go:build and +build lines when done reading file
-	inStar       bool            // currently in a /* */ comment
-	goBuildPos   token.Pos       // position of first go:build line found
-	plusBuildPos token.Pos       // position of first "+build" line found
-	goBuild      constraint.Expr // go:build constraint found
-	plusBuild    constraint.Expr // AND of +build constraints found
+	pass		*analysis.Pass
+	plusBuildOK	bool		// "+build" lines still OK
+	goBuildOK	bool		// "go:build" lines still OK
+	crossCheck	bool		// cross-check go:build and +build lines when done reading file
+	inStar		bool		// currently in a /* */ comment
+	goBuildPos	token.Pos	// position of first go:build line found
+	plusBuildPos	token.Pos	// position of first "+build" line found
+	goBuild		constraint.Expr	// go:build constraint found
+	plusBuild	constraint.Expr	// AND of +build constraints found
 }
 
 func (check *checker) init(pass *analysis.Pass) {
@@ -281,7 +282,7 @@ func (check *checker) plusBuildLine(pos token.Pos, line string) {
 		}
 		return
 	}
-	if !check.plusBuildOK { // inStar implies !plusBuildOK
+	if !check.plusBuildOK {	// inStar implies !plusBuildOK
 		check.pass.Reportf(pos, "misplaced +build comment")
 		check.crossCheck = false
 	}

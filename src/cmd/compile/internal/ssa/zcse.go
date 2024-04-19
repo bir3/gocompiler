@@ -32,7 +32,7 @@ func zcse(f *Func) {
 						b.Values[last] = nil
 						b.Values = b.Values[:last]
 
-						i-- // process b.Values[i] again
+						i--	// process b.Values[i] again
 					}
 				}
 			}
@@ -55,10 +55,10 @@ func zcse(f *Func) {
 
 // vkey is a type used to uniquely identify a zero arg value.
 type vkey struct {
-	op Op
-	ai int64       // aux int
-	ax Aux         // aux
-	t  *types.Type // type
+	op	Op
+	ai	int64		// aux int
+	ax	Aux		// aux
+	t	*types.Type	// type
 }
 
 // keyFor returns the AuxInt portion of a  key structure uniquely identifying a

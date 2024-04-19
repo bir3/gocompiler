@@ -36,10 +36,10 @@ func ExtractStdlib(file fs.File, dir string) error {
 
 	lockfile := path.Join(dir, "done.lock")
 	lf, err := lockedfile.Create(lockfile)
-	defer lf.Close()
 	if err != nil {
 		return fmt.Errorf("Error creating lockfile: %w", err)
 	}
+	defer lf.Close()
 
 	zstdReader, err := zstd.NewReader(file)
 	if err != nil {

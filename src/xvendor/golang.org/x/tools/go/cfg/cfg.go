@@ -50,7 +50,7 @@ import (
 //
 // The entry point is Blocks[0]; there may be multiple return blocks.
 type CFG struct {
-	Blocks []*Block // block[0] is entry; order otherwise undefined
+	Blocks []*Block	// block[0] is entry; order otherwise undefined
 }
 
 // A Block represents a basic block: a list of statements and
@@ -60,13 +60,13 @@ type CFG struct {
 // that calls a function such as panic that never returns; one for a
 // normal (jump) block; and two for a conditional (if) block.
 type Block struct {
-	Nodes []ast.Node // statements, expressions, and ValueSpecs
-	Succs []*Block   // successor nodes in the graph
-	Index int32      // index within CFG.Blocks
-	Live  bool       // block is reachable from entry
+	Nodes	[]ast.Node	// statements, expressions, and ValueSpecs
+	Succs	[]*Block	// successor nodes in the graph
+	Index	int32		// index within CFG.Blocks
+	Live	bool		// block is reachable from entry
 
-	comment string    // for debugging
-	succs2  [2]*Block // underlying array for Succs
+	comment	string		// for debugging
+	succs2	[2]*Block	// underlying array for Succs
 }
 
 // New returns a new control-flow graph for the specified function body,
@@ -79,15 +79,15 @@ type Block struct {
 // CallExpr beneath an ExprStmt.
 func New(body *ast.BlockStmt, mayReturn func(*ast.CallExpr) bool) *CFG {
 	b := builder{
-		mayReturn: mayReturn,
-		cfg:       new(CFG),
+		mayReturn:	mayReturn,
+		cfg:		new(CFG),
 	}
 	b.current = b.newBlock("entry")
 	b.stmt(body)
 
 	// Compute liveness (reachability from entry point), breadth-first.
 	q := make([]*Block, 0, len(b.cfg.Blocks))
-	q = append(q, b.cfg.Blocks[0]) // entry point
+	q = append(q, b.cfg.Blocks[0])	// entry point
 	for len(q) > 0 {
 		b := q[len(q)-1]
 		q = q[:len(q)-1]

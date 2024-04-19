@@ -16,13 +16,13 @@ import (
 // Information about a specific installation of gccgo.
 type GccgoInstallation struct {
 	// Version of gcc (e.g. 4.8.0).
-	GccVersion string
+	GccVersion	string
 
 	// Target triple (e.g. x86_64-unknown-linux-gnu).
-	TargetTriple string
+	TargetTriple	string
 
 	// Built-in library paths used by this installation.
-	LibPaths []string
+	LibPaths	[]string
 }
 
 // Ask the driver at the given path for information for this GccgoInstallation.

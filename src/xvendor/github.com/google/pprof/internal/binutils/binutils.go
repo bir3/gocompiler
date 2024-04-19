@@ -38,34 +38,34 @@ import (
 
 // A Binutils implements plugin.ObjTool by invoking the GNU binutils.
 type Binutils struct {
-	mu  sync.Mutex
-	rep *binrep
+	mu	sync.Mutex
+	rep	*binrep
 }
 
 var (
-	objdumpLLVMVerRE = regexp.MustCompile(`LLVM version (?:(\d*)\.(\d*)\.(\d*)|.*(trunk).*)`)
+	objdumpLLVMVerRE	= regexp.MustCompile(`LLVM version (?:(\d*)\.(\d*)\.(\d*)|.*(trunk).*)`)
 
 	// Defined for testing
-	elfOpen = elf.Open
+	elfOpen	= elf.Open
 )
 
 // binrep is an immutable representation for Binutils.  It is atomically
 // replaced on every mutation to provide thread-safe access.
 type binrep struct {
 	// Commands to invoke.
-	llvmSymbolizer      string
-	llvmSymbolizerFound bool
-	addr2line           string
-	addr2lineFound      bool
-	nm                  string
-	nmFound             bool
-	objdump             string
-	objdumpFound        bool
-	isLLVMObjdump       bool
+	llvmSymbolizer		string
+	llvmSymbolizerFound	bool
+	addr2line		string
+	addr2lineFound		bool
+	nm			string
+	nmFound			bool
+	objdump			string
+	objdumpFound		bool
+	isLLVMObjdump		bool
 
 	// if fast, perform symbolization using nm (symbol names only),
 	// instead of file-line detail from the slower addr2line.
-	fast bool
+	fast	bool
 }
 
 // get returns the current representation for bu, initializing it if necessary.
@@ -440,8 +440,8 @@ func (b *binrep) openELF(name string, start, limit, offset uint64, relocationSym
 	}
 
 	var (
-		kernelOffset *uint64
-		pageAligned  = func(addr uint64) bool { return addr%4096 == 0 }
+		kernelOffset	*uint64
+		pageAligned	= func(addr uint64) bool { return addr%4096 == 0 }
 	)
 	if strings.Contains(name, "vmlinux") || !pageAligned(start) || !pageAligned(limit) || !pageAligned(offset) {
 		// Reading all Symbols is expensive, and we only rarely need it so
@@ -483,17 +483,17 @@ func (b *binrep) openELF(name string, start, limit, offset uint64, relocationSym
 
 	if b.fast || (!b.addr2lineFound && !b.llvmSymbolizerFound) {
 		return &fileNM{file: file{
-			b:       b,
-			name:    name,
-			buildID: buildID,
-			m:       &elfMapping{start: start, limit: limit, offset: offset, kernelOffset: kernelOffset},
+			b:		b,
+			name:		name,
+			buildID:	buildID,
+			m:		&elfMapping{start: start, limit: limit, offset: offset, kernelOffset: kernelOffset},
 		}}, nil
 	}
 	return &fileAddr2Line{file: file{
-		b:       b,
-		name:    name,
-		buildID: buildID,
-		m:       &elfMapping{start: start, limit: limit, offset: offset, kernelOffset: kernelOffset},
+		b:		b,
+		name:		name,
+		buildID:	buildID,
+		m:		&elfMapping{start: start, limit: limit, offset: offset, kernelOffset: kernelOffset},
 	}}, nil
 }
 
@@ -528,9 +528,9 @@ func (b *binrep) openPE(name string, start, limit, offset uint64) (plugin.ObjFil
 // identify the ELF segment associated with a mapping.
 type elfMapping struct {
 	// Runtime mapping parameters.
-	start, limit, offset uint64
+	start, limit, offset	uint64
 	// Offset of kernel relocation symbol. Only defined for kernel images, nil otherwise.
-	kernelOffset *uint64
+	kernelOffset	*uint64
 }
 
 // findProgramHeader returns the program segment that matches the current
@@ -576,16 +576,16 @@ func (m *elfMapping) findProgramHeader(ef *elf.File, addr uint64) (*elf.ProgHead
 
 // file implements the binutils.ObjFile interface.
 type file struct {
-	b       *binrep
-	name    string
-	buildID string
+	b	*binrep
+	name	string
+	buildID	string
 
-	baseOnce sync.Once // Ensures the base, baseErr and isData are computed once.
-	base     uint64
-	baseErr  error // Any eventual error while computing the base.
-	isData   bool
+	baseOnce	sync.Once	// Ensures the base, baseErr and isData are computed once.
+	base		uint64
+	baseErr		error	// Any eventual error while computing the base.
+	isData		bool
 	// Mapping information. Relevant only for ELF files, nil otherwise.
-	m *elfMapping
+	m	*elfMapping
 }
 
 // computeBase computes the relocation base for the given binary file only if
@@ -662,7 +662,7 @@ func (f *file) Symbols(r *regexp.Regexp, addr uint64) ([]*plugin.Sym, error) {
 // faster than fileAddr2Line.
 type fileNM struct {
 	file
-	addr2linernm *addr2LinerNM
+	addr2linernm	*addr2LinerNM
 }
 
 func (f *fileNM) SourceLine(addr uint64) ([]plugin.Frame, error) {
@@ -685,11 +685,11 @@ func (f *fileNM) SourceLine(addr uint64) ([]plugin.Frame, error) {
 // symbols (with file/line number information). It can be slow for large
 // binaries with debug information.
 type fileAddr2Line struct {
-	once sync.Once
+	once	sync.Once
 	file
-	addr2liner     *addr2Liner
-	llvmSymbolizer *llvmSymbolizer
-	isData         bool
+	addr2liner	*addr2Liner
+	llvmSymbolizer	*llvmSymbolizer
+	isData		bool
 }
 
 func (f *fileAddr2Line) SourceLine(addr uint64) ([]plugin.Frame, error) {

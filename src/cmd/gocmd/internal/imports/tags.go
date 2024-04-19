@@ -10,8 +10,8 @@ import (
 )
 
 var (
-	tags     map[string]bool
-	tagsOnce sync.Once
+	tags		map[string]bool
+	tagsOnce	sync.Once
 )
 
 // Tags returns a set of build tags that are true for the target platform.
@@ -26,9 +26,9 @@ func Tags() map[string]bool {
 
 func loadTags() map[string]bool {
 	tags := map[string]bool{
-		cfg.BuildContext.GOOS:     true,
-		cfg.BuildContext.GOARCH:   true,
-		cfg.BuildContext.Compiler: true,
+		cfg.BuildContext.GOOS:		true,
+		cfg.BuildContext.GOARCH:	true,
+		cfg.BuildContext.Compiler:	true,
 	}
 	if cfg.BuildContext.CgoEnabled {
 		tags["cgo"] = true
@@ -46,8 +46,8 @@ func loadTags() map[string]bool {
 }
 
 var (
-	anyTags     map[string]bool
-	anyTagsOnce sync.Once
+	anyTags		map[string]bool
+	anyTagsOnce	sync.Once
 )
 
 // AnyTags returns a special set of build tags that satisfy nearly all

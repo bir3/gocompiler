@@ -30,10 +30,10 @@ var Hosts = []string{
 }
 
 type Server struct {
-	vcweb   *vcweb.Server
-	workDir string
-	HTTP    *httptest.Server
-	HTTPS   *httptest.Server
+	vcweb	*vcweb.Server
+	workDir	string
+	HTTP	*httptest.Server
+	HTTPS	*httptest.Server
 }
 
 // NewServer returns a new test-local vcweb server that serves VCS requests
@@ -93,10 +93,10 @@ func NewServer() (srv *Server, err error) {
 	}()
 
 	srv = &Server{
-		vcweb:   handler,
-		workDir: workDir,
-		HTTP:    srvHTTP,
-		HTTPS:   srvHTTPS,
+		vcweb:		handler,
+		workDir:	workDir,
+		HTTP:		srvHTTP,
+		HTTPS:		srvHTTPS,
 	}
 	vcs.VCSTestRepoURL = srv.HTTP.URL
 	vcs.VCSTestHosts = Hosts
@@ -134,8 +134,8 @@ func (srv *Server) Close() error {
 
 func (srv *Server) WriteCertificateFile() (string, error) {
 	b := pem.EncodeToMemory(&pem.Block{
-		Type:  "CERTIFICATE",
-		Bytes: srv.HTTPS.Certificate().Raw,
+		Type:	"CERTIFICATE",
+		Bytes:	srv.HTTPS.Certificate().Raw,
 	})
 
 	filename := filepath.Join(srv.workDir, "cert.pem")

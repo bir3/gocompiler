@@ -40,10 +40,10 @@ import (
 )
 
 type Shlib struct {
-	Path string
-	Hash []byte
-	Deps []string
-	File *elf.File
+	Path	string
+	Hash	[]byte
+	Deps	[]string
+	File	*elf.File
 }
 
 // Link holds the context for writing object code from a compiler
@@ -53,53 +53,53 @@ type Link struct {
 	ErrorReporter
 	ArchSyms
 
-	outSem chan int // limits the number of output writers
-	Out    *OutBuf
+	outSem	chan int	// limits the number of output writers
+	Out	*OutBuf
 
-	version int // current version number for static/file-local symbols
+	version	int	// current version number for static/file-local symbols
 
-	Debugvlog int
-	Bso       *bufio.Writer
+	Debugvlog	int
+	Bso		*bufio.Writer
 
-	Loaded bool // set after all inputs have been loaded as symbols
+	Loaded	bool	// set after all inputs have been loaded as symbols
 
-	compressDWARF bool
+	compressDWARF	bool
 
-	Libdir       []string
-	Library      []*sym.Library
-	LibraryByPkg map[string]*sym.Library
-	Shlibs       []Shlib
-	Textp        []loader.Sym
-	Moduledata   loader.Sym
+	Libdir		[]string
+	Library		[]*sym.Library
+	LibraryByPkg	map[string]*sym.Library
+	Shlibs		[]Shlib
+	Textp		[]loader.Sym
+	Moduledata	loader.Sym
 
-	PackageFile  map[string]string
-	PackageShlib map[string]string
+	PackageFile	map[string]string
+	PackageShlib	map[string]string
 
-	tramps []loader.Sym // trampolines
+	tramps	[]loader.Sym	// trampolines
 
-	compUnits []*sym.CompilationUnit // DWARF compilation units
-	runtimeCU *sym.CompilationUnit   // One of the runtime CUs, the last one seen.
+	compUnits	[]*sym.CompilationUnit	// DWARF compilation units
+	runtimeCU	*sym.CompilationUnit	// One of the runtime CUs, the last one seen.
 
-	loader  *loader.Loader
-	cgodata []cgodata // cgo directives to load, three strings are args for loadcgo
+	loader	*loader.Loader
+	cgodata	[]cgodata	// cgo directives to load, three strings are args for loadcgo
 
-	datap  []loader.Sym
-	dynexp []loader.Sym
+	datap	[]loader.Sym
+	dynexp	[]loader.Sym
 
 	// Elf symtab variables.
-	numelfsym int // starts at 0, 1 is reserved
+	numelfsym	int	// starts at 0, 1 is reserved
 
 	// These are symbols that created and written by the linker.
 	// Rather than creating a symbol, and writing all its data into the heap,
 	// you can create a symbol, and just a generation function will be called
 	// after the symbol's been created in the output mmap.
-	generatorSyms map[loader.Sym]generatorFunc
+	generatorSyms	map[loader.Sym]generatorFunc
 }
 
 type cgodata struct {
-	file       string
-	pkg        string
-	directives [][]string
+	file		string
+	pkg		string
+	directives	[][]string
 }
 
 func (ctxt *Link) Logf(format string, args ...interface{}) {

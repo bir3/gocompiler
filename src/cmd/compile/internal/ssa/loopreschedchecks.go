@@ -13,8 +13,8 @@ import (
 // phi functions at the target of the backedge that must
 // be updated when a rescheduling check replaces the backedge.
 type edgeMem struct {
-	e Edge
-	m *Value // phi for memory at dest of e
+	e	Edge
+	m	*Value	// phi for memory at dest of e
 }
 
 // a rewriteTarget is a value-argindex pair indicating
@@ -22,13 +22,13 @@ type edgeMem struct {
 // not for block controls, because block controls are not targets
 // for the rewrites performed in inserting rescheduling checks.
 type rewriteTarget struct {
-	v *Value
-	i int
+	v	*Value
+	i	int
 }
 
 type rewrite struct {
-	before, after *Value          // before is the expected value before rewrite, after is the new value installed.
-	rewrites      []rewriteTarget // all the targets for this rewrite.
+	before, after	*Value		// before is the expected value before rewrite, after is the new value installed.
+	rewrites	[]rewriteTarget	// all the targets for this rewrite.
 }
 
 func (r *rewrite) String() string {
@@ -61,12 +61,12 @@ func insertLoopReschedChecks(f *Func) {
 	//    and modify destination phi function appropriately with new
 	//    definitions for mem.
 
-	if f.NoSplit { // nosplit functions don't reschedule.
+	if f.NoSplit {	// nosplit functions don't reschedule.
 		return
 	}
 
 	backedges := backedges(f)
-	if len(backedges) == 0 { // no backedges means no rescheduling checks.
+	if len(backedges) == 0 {	// no backedges means no rescheduling checks.
 		return
 	}
 
@@ -85,7 +85,7 @@ func insertLoopReschedChecks(f *Func) {
 
 	tofixBackedges := []edgeMem{}
 
-	for _, e := range backedges { // TODO: could filter here by calls in loops, if declared and inferred nosplit are recorded in export data.
+	for _, e := range backedges {	// TODO: could filter here by calls in loops, if declared and inferred nosplit are recorded in export data.
 		tofixBackedges = append(tofixBackedges, edgeMem{e, nil})
 	}
 
@@ -94,14 +94,14 @@ func insertLoopReschedChecks(f *Func) {
 		lastMems[f.Entry.ID] = f.Entry.NewValue0(f.Entry.Pos, OpInitMem, types.TypeMem)
 	}
 
-	memDefsAtBlockEnds := f.Cache.allocValueSlice(f.NumBlocks()) // For each block, the mem def seen at its bottom. Could be from earlier block.
+	memDefsAtBlockEnds := f.Cache.allocValueSlice(f.NumBlocks())	// For each block, the mem def seen at its bottom. Could be from earlier block.
 	defer f.Cache.freeValueSlice(memDefsAtBlockEnds)
 
 	// Propagate last mem definitions forward through successor blocks.
 	for i := len(po) - 1; i >= 0; i-- {
 		b := po[i]
 		mem := lastMems[b.ID]
-		for j := 0; mem == nil; j++ { // if there's no def, then there's no phi, so the visible mem is identical in all predecessors.
+		for j := 0; mem == nil; j++ {	// if there's no def, then there's no phi, so the visible mem is identical in all predecessors.
 			// loop because there might be backedges that haven't been visited yet.
 			mem = memDefsAtBlockEnds[b.Preds[j].b.ID]
 		}
@@ -120,7 +120,7 @@ func insertLoopReschedChecks(f *Func) {
 		h := e.b
 
 		// find the phi function for the memory input at "h", if there is one.
-		var headerMemPhi *Value // look for header mem phi
+		var headerMemPhi *Value	// look for header mem phi
 
 		for _, v := range h.Values {
 			if v.Op == OpPhi && v.Type.IsMemory() {
@@ -180,7 +180,7 @@ func insertLoopReschedChecks(f *Func) {
 		if p.i != 0 {
 			likely = BranchUnlikely
 		}
-		if bb.Kind != BlockPlain { // backedges can be unconditional. e.g., if x { something; continue }
+		if bb.Kind != BlockPlain {	// backedges can be unconditional. e.g., if x { something; continue }
 			bb.Likely = likely
 		}
 
@@ -247,7 +247,7 @@ func insertLoopReschedChecks(f *Func) {
 		//    mem1 := call resched (mem0)
 		//    goto header
 		resched := f.fe.Syslook("goschedguarded")
-		call := sched.NewValue1A(bb.Pos, OpStaticCall, types.TypeResultMem, StaticAuxCall(resched, bb.Func.ABIDefault.ABIAnalyzeTypes(nil, nil, nil)), mem0)
+		call := sched.NewValue1A(bb.Pos, OpStaticCall, types.TypeResultMem, StaticAuxCall(resched, bb.Func.ABIDefault.ABIAnalyzeTypes(nil, nil)), mem0)
 		mem1 := sched.NewValue1I(bb.Pos, OpSelectN, types.TypeMem, 0, call)
 		sched.AddEdgeTo(h)
 		headerMemPhi.AddArg(mem1)
@@ -302,10 +302,10 @@ func rewriteNewPhis(h, b *Block, f *Func, defsForUses []*Value, newphis map[*Blo
 	y := change.after
 
 	// Apply rewrites to this block
-	if x != nil { // don't waste time on the common case of no definition.
+	if x != nil {	// don't waste time on the common case of no definition.
 		p := &change.rewrites
 		for _, v := range b.Values {
-			if v == y { // don't rewrite self -- phi inputs are handled below.
+			if v == y {	// don't rewrite self -- phi inputs are handled below.
 				continue
 			}
 			for i, w := range v.Args {
@@ -355,7 +355,7 @@ func rewriteNewPhis(h, b *Block, f *Func, defsForUses []*Value, newphis map[*Blo
 	}
 
 	for c := sdom[b.ID].child; c != nil; c = sdom[c.ID].sibling {
-		rewriteNewPhis(h, c, f, defsForUses, newphis, dfPhiTargets, sdom) // TODO: convert to explicit stack from recursion.
+		rewriteNewPhis(h, c, f, defsForUses, newphis, dfPhiTargets, sdom)	// TODO: convert to explicit stack from recursion.
 	}
 }
 
@@ -368,7 +368,7 @@ func rewriteNewPhis(h, b *Block, f *Func, defsForUses []*Value, newphis map[*Blo
 // own trivial phi functions in their own dominance frontier, and this is handled recursively.
 func addDFphis(x *Value, h, b *Block, f *Func, defForUses []*Value, newphis map[*Block]rewrite, sdom SparseTree) {
 	oldv := defForUses[b.ID]
-	if oldv != x { // either a new definition replacing x, or nil if it is proven that there are no uses reachable from b
+	if oldv != x {	// either a new definition replacing x, or nil if it is proven that there are no uses reachable from b
 		return
 	}
 	idom := f.Idom()
@@ -377,27 +377,27 @@ outer:
 		s := e.b
 		// check phi functions in the dominance frontier
 		if sdom.isAncestor(h, s) {
-			continue // h dominates s, successor of b, therefore s is not in the frontier.
+			continue	// h dominates s, successor of b, therefore s is not in the frontier.
 		}
 		if _, ok := newphis[s]; ok {
-			continue // successor s of b already has a new phi function, so there is no need to add another.
+			continue	// successor s of b already has a new phi function, so there is no need to add another.
 		}
 		if x != nil {
 			for _, v := range s.Values {
 				if v.Op == OpPhi && v.Args[e.i] == x {
-					continue outer // successor s of b has an old phi function, so there is no need to add another.
+					continue outer	// successor s of b has an old phi function, so there is no need to add another.
 				}
 			}
 		}
 
-		old := defForUses[idom[s.ID].ID] // new phi function is correct-but-redundant, combining value "old" on all inputs.
+		old := defForUses[idom[s.ID].ID]	// new phi function is correct-but-redundant, combining value "old" on all inputs.
 		headerPhi := newPhiFor(s, old)
 		// the new phi will replace "old" in block s and all blocks dominated by s.
-		newphis[s] = rewrite{before: old, after: headerPhi} // record new phi, to have inputs labeled "old" rewritten to "headerPhi"
-		addDFphis(old, s, s, f, defForUses, newphis, sdom)  // the new definition may also create new phi functions.
+		newphis[s] = rewrite{before: old, after: headerPhi}	// record new phi, to have inputs labeled "old" rewritten to "headerPhi"
+		addDFphis(old, s, s, f, defForUses, newphis, sdom)	// the new definition may also create new phi functions.
 	}
 	for c := sdom[b.ID].child; c != nil; c = sdom[c.ID].sibling {
-		addDFphis(x, h, c, f, defForUses, newphis, sdom) // TODO: convert to explicit stack from recursion.
+		addDFphis(x, h, c, f, defForUses, newphis, sdom)	// TODO: convert to explicit stack from recursion.
 	}
 }
 
@@ -469,15 +469,15 @@ func findLastMems(f *Func) []*Value {
 type markKind uint8
 
 const (
-	notFound    markKind = iota // block has not been discovered yet
-	notExplored                 // discovered and in queue, outedges not processed yet
-	explored                    // discovered and in queue, outedges processed
-	done                        // all done, in output ordering
+	notFound	markKind	= iota	// block has not been discovered yet
+	notExplored				// discovered and in queue, outedges not processed yet
+	explored				// discovered and in queue, outedges processed
+	done					// all done, in output ordering
 )
 
 type backedgesState struct {
-	b *Block
-	i int
+	b	*Block
+	i	int
 }
 
 // backedges returns a slice of successor edges that are back

@@ -26,7 +26,7 @@ func (check *Checker) labels(body *syntax.BlockStmt) {
 		name := jmp.Label.Value
 		if alt := all.Lookup(name); alt != nil {
 			msg = "goto %s jumps into block"
-			alt.(*Label).used = true // avoid another error
+			alt.(*Label).used = true	// avoid another error
 			code = JumpIntoBlock
 		} else {
 			msg = "label %s not declared"
@@ -46,9 +46,9 @@ func (check *Checker) labels(body *syntax.BlockStmt) {
 
 // A block tracks label declarations in a block and its enclosing blocks.
 type block struct {
-	parent *block                         // enclosing block
-	lstmt  *syntax.LabeledStmt            // labeled statement to which this block belongs, or nil
-	labels map[string]*syntax.LabeledStmt // allocated lazily
+	parent	*block				// enclosing block
+	lstmt	*syntax.LabeledStmt		// labeled statement to which this block belongs, or nil
+	labels	map[string]*syntax.LabeledStmt	// allocated lazily
 }
 
 // insert records a new label declaration for the current block.
@@ -95,8 +95,8 @@ func (check *Checker) blockBranches(all *Scope, parent *block, lstmt *syntax.Lab
 	b := &block{parent, lstmt, nil}
 
 	var (
-		varDeclPos         syntax.Pos
-		fwdJumps, badJumps []*syntax.BranchStmt
+		varDeclPos		syntax.Pos
+		fwdJumps, badJumps	[]*syntax.BranchStmt
 	)
 
 	// All forward jumps jumping over a variable declaration are possibly
@@ -104,7 +104,7 @@ func (check *Checker) blockBranches(all *Scope, parent *block, lstmt *syntax.Lab
 	// recordVarDecl records them for the given position.
 	recordVarDecl := func(pos syntax.Pos) {
 		varDeclPos = pos
-		badJumps = append(badJumps[:0], fwdJumps...) // copy fwdJumps to badJumps
+		badJumps = append(badJumps[:0], fwdJumps...)	// copy fwdJumps to badJumps
 	}
 
 	jumpsOverVarDecl := func(jmp *syntax.BranchStmt) bool {
@@ -174,7 +174,7 @@ func (check *Checker) blockBranches(all *Scope, parent *block, lstmt *syntax.Lab
 
 		case *syntax.BranchStmt:
 			if s.Label == nil {
-				return // checked in 1st pass (check.stmt)
+				return	// checked in 1st pass (check.stmt)
 			}
 
 			// determine and validate target

@@ -7,8 +7,8 @@ package help
 import "github.com/bir3/gocompiler/src/cmd/gocmd/internal/base"
 
 var HelpC = &base.Command{
-	UsageLine: "c",
-	Short:     "calling between Go and C",
+	UsageLine:	"c",
+	Short:		"calling between Go and C",
 	Long: `
 There are two different ways to call between Go and C/C++ code.
 
@@ -29,12 +29,12 @@ the C or C++ compiler, respectively, to use.
 }
 
 var HelpPackages = &base.Command{
-	UsageLine: "packages",
-	Short:     "package lists and patterns",
+	UsageLine:	"packages",
+	Short:		"package lists and patterns",
 	Long: `
 Many commands apply to a set of packages:
 
-	go action [packages]
+	go <action> [packages]
 
 Usually, [packages] is a list of import paths.
 
@@ -116,8 +116,8 @@ by the go tool, as are directories named "testdata".
 }
 
 var HelpImportPath = &base.Command{
-	UsageLine: "importpath",
-	Short:     "import path syntax",
+	UsageLine:	"importpath",
+	Short:		"import path syntax",
 	Long: `
 
 An import path (see 'go help packages') denotes a package stored in the local
@@ -308,8 +308,8 @@ See https://golang.org/s/go14customimport for details.
 }
 
 var HelpGopath = &base.Command{
-	UsageLine: "gopath",
-	Short:     "GOPATH environment variable",
+	UsageLine:	"gopath",
+	Short:		"GOPATH environment variable",
 	Long: `
 The Go path is used to resolve import statements.
 It is implemented by and documented in the go/build package.
@@ -466,14 +466,14 @@ See https://golang.org/s/go15vendor for details.
 }
 
 var HelpEnvironment = &base.Command{
-	UsageLine: "environment",
-	Short:     "environment variables",
+	UsageLine:	"environment",
+	Short:		"environment variables",
 	Long: `
 
 The go command and the tools it invokes consult environment variables
-for configuration. If an environment variable is unset, the go command
-uses a sensible default setting. To see the effective setting of the
-variable <NAME>, run 'go env <NAME>'. To change the default setting,
+for configuration. If an environment variable is unset or empty, the go
+command uses a sensible default setting. To see the effective setting of
+the variable <NAME>, run 'go env <NAME>'. To change the default setting,
 run 'go env -w <NAME>=<VALUE>'. Defaults changed using 'go env -w'
 are recorded in a Go environment configuration file stored in the
 per-user configuration directory, as reported by os.UserConfigDir.
@@ -501,7 +501,7 @@ General-purpose environment variables:
 	GOMODCACHE
 		The directory where the go command will store downloaded modules.
 	GODEBUG
-		Enable various debugging facilities. See 'go doc runtime'
+		Enable various debugging facilities. See https://go.dev/doc/godebug
 		for details.
 	GOENV
 		The location of the Go environment configuration file.
@@ -525,7 +525,7 @@ General-purpose environment variables:
 		The operating system for which to compile code.
 		Examples are linux, darwin, windows, netbsd.
 	GOPATH
-		For more details see: 'go help gopath'.
+		Controls where various files are stored. See: 'go help gopath'.
 	GOPROXY
 		URL of Go module proxy. See https://golang.org/ref/mod#environment-variables
 		and https://golang.org/ref/mod#module-proxy for details.
@@ -539,6 +539,8 @@ General-purpose environment variables:
 	GOSUMDB
 		The name of checksum database to use and optionally its public key and
 		URL. See https://golang.org/ref/mod#authenticating.
+	GOTOOLCHAIN
+		Controls which Go toolchain is used. See https://go.dev/doc/toolchain.
 	GOTMPDIR
 		The directory where the go command will write
 		temporary source files, packages, and binaries.
@@ -599,6 +601,8 @@ Architecture-specific environment variables:
 	GOARM
 		For GOARCH=arm, the ARM architecture for which to compile.
 		Valid values are 5, 6, 7.
+		The value can be followed by an option specifying how to implement floating point instructions.
+		Valid options are ,softfloat (default for 5) and ,hardfloat (default for 6 and 7).
 	GO386
 		For GOARCH=386, how to implement floating point instructions.
 		Valid values are sse2 (default), softfloat.
@@ -676,8 +680,8 @@ Additional information available from 'go env' but not read from the environment
 }
 
 var HelpFileType = &base.Command{
-	UsageLine: "filetype",
-	Short:     "file types",
+	UsageLine:	"filetype",
+	Short:		"file types",
 	Long: `
 The go command examines the contents of a restricted set of files
 in each directory. It identifies which files to examine based on
@@ -715,8 +719,8 @@ more details.
 }
 
 var HelpBuildmode = &base.Command{
-	UsageLine: "buildmode",
-	Short:     "build modes",
+	UsageLine:	"buildmode",
+	Short:		"build modes",
 	Long: `
 The 'go build' and 'go install' commands take a -buildmode argument which
 indicates which kind of object file is to be built. Currently supported values
@@ -767,8 +771,8 @@ On AIX, when linking a C program that uses a Go archive built with
 }
 
 var HelpCache = &base.Command{
-	UsageLine: "cache",
-	Short:     "build and test caching",
+	UsageLine:	"cache",
+	Short:		"build and test caching",
 	Long: `
 The go command caches build outputs for reuse in future builds.
 The default location for cache data is a subdirectory named go-build
@@ -816,8 +820,8 @@ decisions about whether to reuse a cached test result.
 }
 
 var HelpBuildConstraint = &base.Command{
-	UsageLine: "buildconstraint",
-	Short:     "build constraints",
+	UsageLine:	"buildconstraint",
+	Short:		"build constraints",
 	Long: `
 A build constraint, also known as a build tag, is a condition under which a
 file should be included in the package. Build constraints are given by a
@@ -827,7 +831,7 @@ line comment that begins
 
 Constraints may appear in any kind of source file (not just Go), but
 they must appear near the top of the file, preceded
-only by blank lines and other line comments. These rules mean that in Go
+only by blank lines and other comments. These rules mean that in Go
 files a build constraint must appear before the package clause.
 
 To distinguish build constraints from package documentation,

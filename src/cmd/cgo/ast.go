@@ -9,6 +9,7 @@ package cgo
 import (
 	"fmt"
 	"github.com/bir3/gocompiler/src/go/ast"
+	"github.com/bir3/gocompiler/src/go/format"
 	"github.com/bir3/gocompiler/src/go/parser"
 	"github.com/bir3/gocompiler/src/go/scanner"
 	"github.com/bir3/gocompiler/src/go/token"
@@ -62,34 +63,53 @@ func (f *File) ParseGo(abspath string, src []byte) {
 	// In ast1, find the import "C" line and get any extra C preamble.
 	sawC := false
 	for _, decl := range ast1.Decls {
-		d, ok := decl.(*ast.GenDecl)
-		if !ok {
-			continue
-		}
-		for _, spec := range d.Specs {
-			s, ok := spec.(*ast.ImportSpec)
-			if !ok || s.Path.Value != `"C"` {
-				continue
-			}
-			sawC = true
-			if s.Name != nil {
-				error_(s.Path.Pos(), `cannot rename import "C"`)
-			}
-			cg := s.Doc
-			if cg == nil && len(d.Specs) == 1 {
-				cg = d.Doc
-			}
-			if cg != nil {
-				if strings.ContainsAny(abspath, "\r\n") {
-					// This should have been checked when the file path was first resolved,
-					// but we double check here just to be sure.
-					fatalf("internal error: ParseGo: abspath contains unexpected newline character: %q", abspath)
+		switch decl := decl.(type) {
+		case *ast.GenDecl:
+			for _, spec := range decl.Specs {
+				s, ok := spec.(*ast.ImportSpec)
+				if !ok || s.Path.Value != `"C"` {
+					continue
 				}
-				f.Preamble += fmt.Sprintf("#line %d %q\n", sourceLine(cg), abspath)
-				f.Preamble += commentText(cg) + "\n"
-				f.Preamble += "#line 1 \"cgo-generated-wrapper\"\n"
+				sawC = true
+				if s.Name != nil {
+					error_(s.Path.Pos(), `cannot rename import "C"`)
+				}
+				cg := s.Doc
+				if cg == nil && len(decl.Specs) == 1 {
+					cg = decl.Doc
+				}
+				if cg != nil {
+					if strings.ContainsAny(abspath, "\r\n") {
+						// This should have been checked when the file path was first resolved,
+						// but we double check here just to be sure.
+						fatalf("internal error: ParseGo: abspath contains unexpected newline character: %q", abspath)
+					}
+					f.Preamble += fmt.Sprintf("#line %d %q\n", sourceLine(cg), abspath)
+					f.Preamble += commentText(cg) + "\n"
+					f.Preamble += "#line 1 \"cgo-generated-wrapper\"\n"
+				}
+			}
+
+		case *ast.FuncDecl:
+			// Also, reject attempts to declare methods on C.T or *C.T.
+			// (The generated code would otherwise accept this
+			// invalid input; see issue #57926.)
+			if decl.Recv != nil && len(decl.Recv.List) > 0 {
+				recvType := decl.Recv.List[0].Type
+				if recvType != nil {
+					t := recvType
+					if star, ok := unparen(t).(*ast.StarExpr); ok {
+						t = star.X
+					}
+					if sel, ok := unparen(t).(*ast.SelectorExpr); ok {
+						var buf strings.Builder
+						format.Node(&buf, fset, recvType)
+						error_(sel.Pos(), `cannot define new methods on non-local type %s`, &buf)
+					}
+				}
 			}
 		}
+
 	}
 	if !sawC {
 		error_(ast1.Package, `cannot find import "C"`)
@@ -238,9 +258,9 @@ func (f *File) saveRef(n *ast.Expr, context astContext) {
 		f.NamePos[name] = sel.Pos()
 	}
 	f.Ref = append(f.Ref, &Ref{
-		Name:    name,
-		Expr:    n,
-		Context: context,
+		Name:		name,
+		Expr:		n,
+		Context:	context,
 	})
 }
 
@@ -289,9 +309,9 @@ func (f *File) saveExport(x interface{}, context astContext) {
 		}
 
 		f.ExpFunc = append(f.ExpFunc, &ExpFunc{
-			Func:    n,
-			ExpName: name,
-			Doc:     doc,
+			Func:		n,
+			ExpName:	name,
+			Doc:		doc,
 		})
 		break
 	}
@@ -315,22 +335,22 @@ func (f *File) saveExport2(x interface{}, context astContext) {
 type astContext int
 
 const (
-	ctxProg astContext = iota
+	ctxProg	astContext	= iota
 	ctxEmbedType
 	ctxType
 	ctxStmt
 	ctxExpr
 	ctxField
 	ctxParam
-	ctxAssign2 // assignment of a single expression to two variables
+	ctxAssign2	// assignment of a single expression to two variables
 	ctxSwitch
 	ctxTypeSwitch
 	ctxFile
 	ctxDecl
 	ctxSpec
 	ctxDefer
-	ctxCall  // any function call other than ctxCall2
-	ctxCall2 // function call whose result is assigned to two variables
+	ctxCall		// any function call other than ctxCall2
+	ctxCall2	// function call whose result is assigned to two variables
 	ctxSelector
 )
 
@@ -546,4 +566,12 @@ func (f *File) walk(x interface{}, context astContext, visit func(*File, interfa
 			f.walk(s, context, visit)
 		}
 	}
+}
+
+// If x is of the form (T), unparen returns unparen(T), otherwise it returns x.
+func unparen(x ast.Expr) ast.Expr {
+	if p, isParen := x.(*ast.ParenExpr); isParen {
+		x = unparen(p.X)
+	}
+	return x
 }

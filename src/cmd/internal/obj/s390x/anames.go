@@ -5,7 +5,7 @@ package s390x
 import "github.com/bir3/gocompiler/src/cmd/internal/obj"
 
 var Anames = []string{
-	obj.A_ARCHSPECIFIC: "ADD",
+	obj.A_ARCHSPECIFIC:	"ADD",
 	"ADDC",
 	"ADDE",
 	"ADDW",
@@ -207,6 +207,13 @@ var Anames = []string{
 	"STCKE",
 	"STCKF",
 	"CLEAR",
+	"KM",
+	"KMC",
+	"KLMD",
+	"KIMD",
+	"KDSA",
+	"KMA",
+	"KMCTR",
 	"VA",
 	"VAB",
 	"VAH",
@@ -716,5 +723,6 @@ var Anames = []string{
 	"BYTE",
 	"WORD",
 	"DWORD",
+	"BRRK",
 	"LAST",
 }

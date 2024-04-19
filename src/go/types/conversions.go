@@ -12,7 +12,7 @@ import (
 	"unicode"
 )
 
-// Conversion type-checks the conversion T(x).
+// conversion type-checks the conversion T(x).
 // The result is in x.
 func (check *Checker) conversion(x *operand, T Type) {
 	constArg := x.mode == constant_
@@ -42,6 +42,14 @@ func (check *Checker) conversion(x *operand, T Type) {
 	case constArg && isConstType(T):
 		// constant conversion
 		ok = constConvertibleTo(T, &x.val)
+		// A conversion from an integer constant to an integer type
+		// can only fail if there's overflow. Give a concise error.
+		// (go.dev/issue/63563)
+		if !ok && isInteger(x.typ) && isInteger(T) {
+			check.errorf(x, InvalidConversion, "constant %s overflows %s", x.val, T)
+			x.mode = invalid
+			return
+		}
 	case constArg && isTypeParam(T):
 		// x is convertible to T if it is convertible
 		// to each specific type in the type set of T.
@@ -58,12 +66,17 @@ func (check *Checker) conversion(x *operand, T Type) {
 				return true
 			}
 			if !constConvertibleTo(u, nil) {
-				cause = check.sprintf("cannot convert %s to type %s (in %s)", x, u, T)
+				if isInteger(x.typ) && isInteger(u) {
+					// see comment above on constant conversion
+					cause = check.sprintf("constant %s overflows %s (in %s)", x.val, u, T)
+				} else {
+					cause = check.sprintf("cannot convert %s to type %s (in %s)", x, u, T)
+				}
 				return false
 			}
 			return true
 		})
-		x.mode = value // type parameters are not constants
+		x.mode = value	// type parameters are not constants
 	case x.convertibleTo(check, T, &cause):
 		// non-constant conversion
 		ok = true
@@ -93,7 +106,7 @@ func (check *Checker) conversion(x *operand, T Type) {
 		// - For constant integer to string conversions, keep the argument type.
 		//   (See also the TODO below.)
 		if isNonTypeParamInterface(T) || constArg && !isConstType(T) || x.isNil() {
-			final = Default(x.typ) // default type of untyped nil is untyped nil
+			final = Default(x.typ)	// default type of untyped nil is untyped nil
 		} else if x.mode == constant_ && isInteger(x.typ) && allString(T) {
 			final = x.typ
 		}
@@ -111,7 +124,7 @@ func (check *Checker) conversion(x *operand, T Type) {
 // the spec) is that we cannot shift a floating-point value: 1 in 1<<s should
 // be converted to UntypedFloat because of the addition of 1.0. Fixing this
 // is tricky because we'd have to run updateExprType on the argument first.
-// (Issue #21982.)
+// (go.dev/issue/21982.)
 
 // convertibleTo reports whether T(x) is valid. In the failure case, *cause
 // may be set to the cause for the failure.
@@ -181,7 +194,7 @@ func (x *operand) convertibleTo(check *Checker, T Type, cause *string) bool {
 		switch a := Tu.(type) {
 		case *Array:
 			if Identical(s.Elem(), a.Elem()) {
-				if check == nil || check.allowVersion(check.pkg, 1, 20) {
+				if check == nil || check.allowVersion(check.pkg, x, go1_20) {
 					return true
 				}
 				// check != nil
@@ -194,7 +207,7 @@ func (x *operand) convertibleTo(check *Checker, T Type, cause *string) bool {
 		case *Pointer:
 			if a, _ := under(a.Elem()).(*Array); a != nil {
 				if Identical(s.Elem(), a.Elem()) {
-					if check == nil || check.allowVersion(check.pkg, 1, 17) {
+					if check == nil || check.allowVersion(check.pkg, x, go1_17) {
 						return true
 					}
 					// check != nil
@@ -226,15 +239,15 @@ func (x *operand) convertibleTo(check *Checker, T Type, cause *string) bool {
 	// (generic operands cannot be constants, so we can ignore x.val)
 	switch {
 	case Vp != nil && Tp != nil:
-		x := *x // don't clobber outer x
+		x := *x	// don't clobber outer x
 		return Vp.is(func(V *term) bool {
 			if V == nil {
-				return false // no specific types
+				return false	// no specific types
 			}
 			x.typ = V.typ
 			return Tp.is(func(T *term) bool {
 				if T == nil {
-					return false // no specific types
+					return false	// no specific types
 				}
 				if !x.convertibleTo(check, T.typ, cause) {
 					errorf("cannot convert %s (in %s) to type %s (in %s)", V.typ, Vp, T.typ, Tp)
@@ -244,10 +257,10 @@ func (x *operand) convertibleTo(check *Checker, T Type, cause *string) bool {
 			})
 		})
 	case Vp != nil:
-		x := *x // don't clobber outer x
+		x := *x	// don't clobber outer x
 		return Vp.is(func(V *term) bool {
 			if V == nil {
-				return false // no specific types
+				return false	// no specific types
 			}
 			x.typ = V.typ
 			if !x.convertibleTo(check, T, cause) {
@@ -259,7 +272,7 @@ func (x *operand) convertibleTo(check *Checker, T Type, cause *string) bool {
 	case Tp != nil:
 		return Tp.is(func(T *term) bool {
 			if T == nil {
-				return false // no specific types
+				return false	// no specific types
 			}
 			if !x.convertibleTo(check, T.typ, cause) {
 				errorf("cannot convert %s to type %s (in %s)", x.typ, T.typ, Tp)

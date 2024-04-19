@@ -26,12 +26,12 @@ import (
 )
 
 type treeNode struct {
-	Name      string      `json:"n"`
-	FullName  string      `json:"f"`
-	Cum       int64       `json:"v"`
-	CumFormat string      `json:"l"`
-	Percent   string      `json:"p"`
-	Children  []*treeNode `json:"c"`
+	Name		string		`json:"n"`
+	FullName	string		`json:"f"`
+	Cum		int64		`json:"v"`
+	CumFormat	string		`json:"l"`
+	Percent		string		`json:"p"`
+	Children	[]*treeNode	`json:"c"`
 }
 
 // flamegraph generates a web page containing a flamegraph.
@@ -43,7 +43,7 @@ func (ui *webInterface) flamegraph(w http.ResponseWriter, req *http.Request) {
 		cfg.Trim = false
 	})
 	if rpt == nil {
-		return // error already reported
+		return	// error already reported
 	}
 
 	// Generate dot graph.
@@ -58,11 +58,11 @@ func (ui *webInterface) flamegraph(w http.ResponseWriter, req *http.Request) {
 		v := n.CumValue()
 		fullName := n.Info.PrintableName()
 		node := &treeNode{
-			Name:      graph.ShortenFunctionName(fullName),
-			FullName:  fullName,
-			Cum:       v,
-			CumFormat: config.FormatValue(v),
-			Percent:   strings.TrimSpace(measurement.Percentage(v, config.Total)),
+			Name:		graph.ShortenFunctionName(fullName),
+			FullName:	fullName,
+			Cum:		v,
+			CumFormat:	config.FormatValue(v),
+			Percent:	strings.TrimSpace(measurement.Percentage(v, config.Total)),
 		}
 		nodes = append(nodes, node)
 		if len(n.In) == 0 {
@@ -83,12 +83,12 @@ func (ui *webInterface) flamegraph(w http.ResponseWriter, req *http.Request) {
 	}
 
 	rootNode := &treeNode{
-		Name:      "root",
-		FullName:  "root",
-		Cum:       rootValue,
-		CumFormat: config.FormatValue(rootValue),
-		Percent:   strings.TrimSpace(measurement.Percentage(rootValue, config.Total)),
-		Children:  nodes[0:nroots],
+		Name:		"root",
+		FullName:	"root",
+		Cum:		rootValue,
+		CumFormat:	config.FormatValue(rootValue),
+		Percent:	strings.TrimSpace(measurement.Percentage(rootValue, config.Total)),
+		Children:	nodes[0:nroots],
 	}
 
 	// JSON marshalling flame graph
@@ -100,7 +100,7 @@ func (ui *webInterface) flamegraph(w http.ResponseWriter, req *http.Request) {
 	}
 
 	ui.render(w, req, "flamegraph", rpt, errList, config.Labels, webArgs{
-		FlameGraph: template.JS(b),
-		Nodes:      nodeArr,
+		FlameGraph:	template.JS(b),
+		Nodes:		nodeArr,
 	})
 }

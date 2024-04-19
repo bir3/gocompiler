@@ -22,39 +22,39 @@ import (
 type Op int32
 
 type opInfo struct {
-	name              string
-	reg               regInfo
-	auxType           auxType
-	argLen            int32 // the number of arguments, -1 if variable length
-	asm               obj.As
-	generic           bool      // this is a generic (arch-independent) opcode
-	rematerializeable bool      // this op is rematerializeable
-	commutative       bool      // this operation is commutative (e.g. addition)
-	resultInArg0      bool      // (first, if a tuple) output of v and v.Args[0] must be allocated to the same register
-	resultNotInArgs   bool      // outputs must not be allocated to the same registers as inputs
-	clobberFlags      bool      // this op clobbers flags register
-	needIntTemp       bool      // need a temporary free integer register
-	call              bool      // is a function call
-	tailCall          bool      // is a tail call
-	nilCheck          bool      // this op is a nil check on arg0
-	faultOnNilArg0    bool      // this op will fault if arg0 is nil (and aux encodes a small offset)
-	faultOnNilArg1    bool      // this op will fault if arg1 is nil (and aux encodes a small offset)
-	usesScratch       bool      // this op requires scratch memory space
-	hasSideEffects    bool      // for "reasons", not to be eliminated.  E.g., atomic store, #19182.
-	zeroWidth         bool      // op never translates into any machine code. example: copy, which may sometimes translate to machine code, is not zero-width.
-	unsafePoint       bool      // this op is an unsafe point, i.e. not safe for async preemption
-	symEffect         SymEffect // effect this op has on symbol in aux
-	scale             uint8     // amd64/386 indexed load scale
+	name			string
+	reg			regInfo
+	auxType			auxType
+	argLen			int32	// the number of arguments, -1 if variable length
+	asm			obj.As
+	generic			bool		// this is a generic (arch-independent) opcode
+	rematerializeable	bool		// this op is rematerializeable
+	commutative		bool		// this operation is commutative (e.g. addition)
+	resultInArg0		bool		// (first, if a tuple) output of v and v.Args[0] must be allocated to the same register
+	resultNotInArgs		bool		// outputs must not be allocated to the same registers as inputs
+	clobberFlags		bool		// this op clobbers flags register
+	needIntTemp		bool		// need a temporary free integer register
+	call			bool		// is a function call
+	tailCall		bool		// is a tail call
+	nilCheck		bool		// this op is a nil check on arg0
+	faultOnNilArg0		bool		// this op will fault if arg0 is nil (and aux encodes a small offset)
+	faultOnNilArg1		bool		// this op will fault if arg1 is nil (and aux encodes a small offset)
+	usesScratch		bool		// this op requires scratch memory space
+	hasSideEffects		bool		// for "reasons", not to be eliminated.  E.g., atomic store, #19182.
+	zeroWidth		bool		// op never translates into any machine code. example: copy, which may sometimes translate to machine code, is not zero-width.
+	unsafePoint		bool		// this op is an unsafe point, i.e. not safe for async preemption
+	symEffect		SymEffect	// effect this op has on symbol in aux
+	scale			uint8		// amd64/386 indexed load scale
 }
 
 type inputInfo struct {
-	idx  int     // index in Args array
-	regs regMask // allowed input registers
+	idx	int	// index in Args array
+	regs	regMask	// allowed input registers
 }
 
 type outputInfo struct {
-	idx  int     // index in output tuple
-	regs regMask // allowed output registers
+	idx	int	// index in output tuple
+	regs	regMask	// allowed output registers
 }
 
 type regInfo struct {
@@ -63,12 +63,12 @@ type regInfo struct {
 	// They are listed in the order in which regalloc should pick a register
 	// from the register set (most constrained first).
 	// Inputs which do not need registers are not listed.
-	inputs []inputInfo
+	inputs	[]inputInfo
 	// clobbers encodes the set of registers that are overwritten by
 	// the instruction (other than the output registers).
-	clobbers regMask
+	clobbers	regMask
 	// outputs is the same as inputs, but for the outputs of the instruction.
-	outputs []outputInfo
+	outputs	[]outputInfo
 }
 
 func (r *regInfo) String() string {
@@ -95,11 +95,11 @@ func (r *regInfo) String() string {
 type auxType int8
 
 type AuxNameOffset struct {
-	Name   *ir.Name
-	Offset int64
+	Name	*ir.Name
+	Offset	int64
 }
 
-func (a *AuxNameOffset) CanBeAnSSAAux() {}
+func (a *AuxNameOffset) CanBeAnSSAAux()	{}
 func (a *AuxNameOffset) String() string {
 	return fmt.Sprintf("%s+%d", a.Name.Sym().Name, a.Offset)
 }
@@ -109,9 +109,9 @@ func (a *AuxNameOffset) FrameOffset() int64 {
 }
 
 type AuxCall struct {
-	Fn      *obj.LSym
-	reg     *regInfo // regInfo for this call
-	abiInfo *abi.ABIParamResultInfo
+	Fn	*obj.LSym
+	reg	*regInfo	// regInfo for this call
+	abiInfo	*abi.ABIParamResultInfo
 }
 
 // Reg returns the regInfo for a given call, combining the derived in/out register masks
@@ -143,7 +143,7 @@ func (a *AuxCall) Reg(i *regInfo, c *Config) *regInfo {
 			k++
 		}
 	}
-	a.reg.inputs = append(a.reg.inputs, i.inputs...) // These are less constrained, thus should come last
+	a.reg.inputs = append(a.reg.inputs, i.inputs...)	// These are less constrained, thus should come last
 	k = len(i.outputs)
 	for _, p := range a.abiInfo.OutParams() {
 		for _, r := range p.Registers {
@@ -238,13 +238,9 @@ func (a *AuxCall) RegsOfArg(which int64) []abi.RegIndex {
 	return a.abiInfo.InParam(int(which)).Registers
 }
 
-// NameOfResult returns the type of result which (indexed 0, 1, etc).
+// NameOfResult returns the ir.Name of result which (indexed 0, 1, etc).
 func (a *AuxCall) NameOfResult(which int64) *ir.Name {
-	name := a.abiInfo.OutParam(int(which)).Name
-	if name == nil {
-		return nil
-	}
-	return name.(*ir.Name)
+	return a.abiInfo.OutParam(int(which)).Name
 }
 
 // TypeOfResult returns the type of result which (indexed 0, 1, etc).
@@ -294,7 +290,7 @@ func (a *AuxCall) NArgs() int64 {
 func (a *AuxCall) String() string {
 	var fn string
 	if a.Fn == nil {
-		fn = "AuxCall{nil" // could be interface/closure etc.
+		fn = "AuxCall{nil"	// could be interface/closure etc.
 	} else {
 		fn = fmt.Sprintf("AuxCall{%v", a.Fn)
 	}
@@ -333,7 +329,7 @@ func ClosureAuxCall(paramResultInfo *abi.ABIParamResultInfo) *AuxCall {
 	return &AuxCall{Fn: nil, abiInfo: paramResultInfo, reg: reg}
 }
 
-func (*AuxCall) CanBeAnSSAAux() {}
+func (*AuxCall) CanBeAnSSAAux()	{}
 
 // OwnAuxCall returns a function's own AuxCall.
 func OwnAuxCall(fn *obj.LSym, paramResultInfo *abi.ABIParamResultInfo) *AuxCall {
@@ -346,34 +342,34 @@ func OwnAuxCall(fn *obj.LSym, paramResultInfo *abi.ABIParamResultInfo) *AuxCall 
 }
 
 const (
-	auxNone           auxType = iota
-	auxBool                   // auxInt is 0/1 for false/true
-	auxInt8                   // auxInt is an 8-bit integer
-	auxInt16                  // auxInt is a 16-bit integer
-	auxInt32                  // auxInt is a 32-bit integer
-	auxInt64                  // auxInt is a 64-bit integer
-	auxInt128                 // auxInt represents a 128-bit integer.  Always 0.
-	auxUInt8                  // auxInt is an 8-bit unsigned integer
-	auxFloat32                // auxInt is a float32 (encoded with math.Float64bits)
-	auxFloat64                // auxInt is a float64 (encoded with math.Float64bits)
-	auxFlagConstant           // auxInt is a flagConstant
-	auxNameOffsetInt8         // aux is a &struct{Name ir.Name, Offset int64}; auxInt is index in parameter registers array
-	auxString                 // aux is a string
-	auxSym                    // aux is a symbol (a *gc.Node for locals, an *obj.LSym for globals, or nil for none)
-	auxSymOff                 // aux is a symbol, auxInt is an offset
-	auxSymValAndOff           // aux is a symbol, auxInt is a ValAndOff
-	auxTyp                    // aux is a type
-	auxTypSize                // aux is a type, auxInt is a size, must have Aux.(Type).Size() == AuxInt
-	auxCCop                   // aux is a ssa.Op that represents a flags-to-bool conversion (e.g. LessThan)
-	auxCall                   // aux is a *ssa.AuxCall
-	auxCallOff                // aux is a *ssa.AuxCall, AuxInt is int64 param (in+out) size
+	auxNone			auxType	= iota
+	auxBool				// auxInt is 0/1 for false/true
+	auxInt8				// auxInt is an 8-bit integer
+	auxInt16			// auxInt is a 16-bit integer
+	auxInt32			// auxInt is a 32-bit integer
+	auxInt64			// auxInt is a 64-bit integer
+	auxInt128			// auxInt represents a 128-bit integer.  Always 0.
+	auxUInt8			// auxInt is an 8-bit unsigned integer
+	auxFloat32			// auxInt is a float32 (encoded with math.Float64bits)
+	auxFloat64			// auxInt is a float64 (encoded with math.Float64bits)
+	auxFlagConstant			// auxInt is a flagConstant
+	auxNameOffsetInt8		// aux is a &struct{Name ir.Name, Offset int64}; auxInt is index in parameter registers array
+	auxString			// aux is a string
+	auxSym				// aux is a symbol (a *gc.Node for locals, an *obj.LSym for globals, or nil for none)
+	auxSymOff			// aux is a symbol, auxInt is an offset
+	auxSymValAndOff			// aux is a symbol, auxInt is a ValAndOff
+	auxTyp				// aux is a type
+	auxTypSize			// aux is a type, auxInt is a size, must have Aux.(Type).Size() == AuxInt
+	auxCCop				// aux is a ssa.Op that represents a flags-to-bool conversion (e.g. LessThan)
+	auxCall				// aux is a *ssa.AuxCall
+	auxCallOff			// aux is a *ssa.AuxCall, AuxInt is int64 param (in+out) size
 
 	// architecture specific aux types
-	auxARM64BitField     // aux is an arm64 bitfield lsb and width packed into auxInt
-	auxS390XRotateParams // aux is a s390x rotate parameters object encoding start bit, end bit and rotate amount
-	auxS390XCCMask       // aux is a s390x 4-bit condition code mask
-	auxS390XCCMaskInt8   // aux is a s390x 4-bit condition code mask, auxInt is a int8 immediate
-	auxS390XCCMaskUint8  // aux is a s390x 4-bit condition code mask, auxInt is a uint8 immediate
+	auxARM64BitField	// aux is an arm64 bitfield lsb and width packed into auxInt
+	auxS390XRotateParams	// aux is a s390x rotate parameters object encoding start bit, end bit and rotate amount
+	auxS390XCCMask		// aux is a s390x 4-bit condition code mask
+	auxS390XCCMaskInt8	// aux is a s390x 4-bit condition code mask, auxInt is an int8 immediate
+	auxS390XCCMaskUint8	// aux is a s390x 4-bit condition code mask, auxInt is a uint8 immediate
 )
 
 // A SymEffect describes the effect that an SSA Value has on the variable
@@ -381,13 +377,13 @@ const (
 type SymEffect int8
 
 const (
-	SymRead SymEffect = 1 << iota
+	SymRead	SymEffect	= 1 << iota
 	SymWrite
 	SymAddr
 
-	SymRdWr = SymRead | SymWrite
+	SymRdWr	= SymRead | SymWrite
 
-	SymNone SymEffect = 0
+	SymNone	SymEffect	= 0
 )
 
 // A Sym represents a symbolic offset from a base register.
@@ -408,13 +404,13 @@ type Sym interface {
 // The low 32 bits hold a pointer offset.
 type ValAndOff int64
 
-func (x ValAndOff) Val() int32   { return int32(int64(x) >> 32) }
-func (x ValAndOff) Val64() int64 { return int64(x) >> 32 }
-func (x ValAndOff) Val16() int16 { return int16(int64(x) >> 32) }
-func (x ValAndOff) Val8() int8   { return int8(int64(x) >> 32) }
+func (x ValAndOff) Val() int32		{ return int32(int64(x) >> 32) }
+func (x ValAndOff) Val64() int64	{ return int64(x) >> 32 }
+func (x ValAndOff) Val16() int16	{ return int16(int64(x) >> 32) }
+func (x ValAndOff) Val8() int8		{ return int8(int64(x) >> 32) }
 
-func (x ValAndOff) Off64() int64 { return int64(int32(x)) }
-func (x ValAndOff) Off() int32   { return int32(x) }
+func (x ValAndOff) Off64() int64	{ return int64(int32(x)) }
+func (x ValAndOff) Off() int32		{ return int32(x) }
 
 func (x ValAndOff) String() string {
 	return fmt.Sprintf("val=%d,off=%d", x.Val(), x.Off())
@@ -459,23 +455,23 @@ type int128 int64
 type BoundsKind uint8
 
 const (
-	BoundsIndex       BoundsKind = iota // indexing operation, 0 <= idx < len failed
-	BoundsIndexU                        // ... with unsigned idx
-	BoundsSliceAlen                     // 2-arg slicing operation, 0 <= high <= len failed
-	BoundsSliceAlenU                    // ... with unsigned high
-	BoundsSliceAcap                     // 2-arg slicing operation, 0 <= high <= cap failed
-	BoundsSliceAcapU                    // ... with unsigned high
-	BoundsSliceB                        // 2-arg slicing operation, 0 <= low <= high failed
-	BoundsSliceBU                       // ... with unsigned low
-	BoundsSlice3Alen                    // 3-arg slicing operation, 0 <= max <= len failed
-	BoundsSlice3AlenU                   // ... with unsigned max
-	BoundsSlice3Acap                    // 3-arg slicing operation, 0 <= max <= cap failed
-	BoundsSlice3AcapU                   // ... with unsigned max
-	BoundsSlice3B                       // 3-arg slicing operation, 0 <= high <= max failed
-	BoundsSlice3BU                      // ... with unsigned high
-	BoundsSlice3C                       // 3-arg slicing operation, 0 <= low <= high failed
-	BoundsSlice3CU                      // ... with unsigned low
-	BoundsConvert                       // conversion to array pointer failed
+	BoundsIndex		BoundsKind	= iota	// indexing operation, 0 <= idx < len failed
+	BoundsIndexU					// ... with unsigned idx
+	BoundsSliceAlen					// 2-arg slicing operation, 0 <= high <= len failed
+	BoundsSliceAlenU				// ... with unsigned high
+	BoundsSliceAcap					// 2-arg slicing operation, 0 <= high <= cap failed
+	BoundsSliceAcapU				// ... with unsigned high
+	BoundsSliceB					// 2-arg slicing operation, 0 <= low <= high failed
+	BoundsSliceBU					// ... with unsigned low
+	BoundsSlice3Alen				// 3-arg slicing operation, 0 <= max <= len failed
+	BoundsSlice3AlenU				// ... with unsigned max
+	BoundsSlice3Acap				// 3-arg slicing operation, 0 <= max <= cap failed
+	BoundsSlice3AcapU				// ... with unsigned max
+	BoundsSlice3B					// 3-arg slicing operation, 0 <= high <= max failed
+	BoundsSlice3BU					// ... with unsigned high
+	BoundsSlice3C					// 3-arg slicing operation, 0 <= low <= high failed
+	BoundsSlice3CU					// ... with unsigned low
+	BoundsConvert					// conversion to array pointer failed
 	BoundsKindCount
 )
 

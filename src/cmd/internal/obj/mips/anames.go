@@ -5,7 +5,7 @@ package mips
 import "github.com/bir3/gocompiler/src/cmd/internal/obj"
 
 var Anames = []string{
-	obj.A_ARCHSPECIFIC: "ABSD",
+	obj.A_ARCHSPECIFIC:	"ABSD",
 	"ABSF",
 	"ABSW",
 	"ADD",
@@ -82,6 +82,8 @@ var Anames = []string{
 	"ROTRV",
 	"SC",
 	"SCV",
+	"SEB",
+	"SEH",
 	"SGT",
 	"SGTU",
 	"SLL",
@@ -103,6 +105,7 @@ var Anames = []string{
 	"TLBWR",
 	"TNE",
 	"WORD",
+	"WSBH",
 	"XOR",
 	"MOVV",
 	"MOVVL",
@@ -120,6 +123,8 @@ var Anames = []string{
 	"ADDVU",
 	"SUBV",
 	"SUBVU",
+	"DSBH",
+	"DSHD",
 	"TRUNCFV",
 	"TRUNCDV",
 	"TRUNCFW",

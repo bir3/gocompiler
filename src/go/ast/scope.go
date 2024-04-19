@@ -15,14 +15,16 @@ import (
 // A Scope maintains the set of named language entities declared
 // in the scope and a link to the immediately surrounding (outer)
 // scope.
+//
+// Deprecated: use the type checker [go/types] instead; see [Object].
 type Scope struct {
-	Outer   *Scope
-	Objects map[string]*Object
+	Outer	*Scope
+	Objects	map[string]*Object
 }
 
 // NewScope creates a new scope nested in the outer scope.
 func NewScope(outer *Scope) *Scope {
-	const n = 4 // initial scope capacity
+	const n = 4	// initial scope capacity
 	return &Scope{outer, make(map[string]*Object, n)}
 }
 
@@ -69,12 +71,25 @@ func (s *Scope) String() string {
 //	Kind    Data type         Data value
 //	Pkg     *Scope            package scope
 //	Con     int               iota for the respective declaration
+//
+// Deprecated: The relationship between Idents and Objects cannot be
+// correctly computed without type information. For example, the
+// expression T{K: 0} may denote a struct, map, slice, or array
+// literal, depending on the type of T. If T is a struct, then K
+// refers to a field of T, whereas for the other types it refers to a
+// value in the environment.
+//
+// New programs should set the [parser.SkipObjectResolution] parser
+// flag to disable syntactic object resolution (which also saves CPU
+// and memory), and instead use the type checker [go/types] if object
+// resolution is desired. See the Defs, Uses, and Implicits fields of
+// the [types.Info] struct for details.
 type Object struct {
-	Kind ObjKind
-	Name string // declared name
-	Decl any    // corresponding Field, XxxSpec, FuncDecl, LabeledStmt, AssignStmt, Scope; or nil
-	Data any    // object-specific data; or nil
-	Type any    // placeholder for type information; may be nil
+	Kind	ObjKind
+	Name	string	// declared name
+	Decl	any	// corresponding Field, XxxSpec, FuncDecl, LabeledStmt, AssignStmt, Scope; or nil
+	Data	any	// object-specific data; or nil
+	Type	any	// placeholder for type information; may be nil
 }
 
 // NewObj creates a new object of a given kind and name.
@@ -134,23 +149,23 @@ type ObjKind int
 
 // The list of possible Object kinds.
 const (
-	Bad ObjKind = iota // for error handling
-	Pkg                // package
-	Con                // constant
-	Typ                // type
-	Var                // variable
-	Fun                // function or method
-	Lbl                // label
+	Bad	ObjKind	= iota	// for error handling
+	Pkg			// package
+	Con			// constant
+	Typ			// type
+	Var			// variable
+	Fun			// function or method
+	Lbl			// label
 )
 
 var objKindStrings = [...]string{
-	Bad: "bad",
-	Pkg: "package",
-	Con: "const",
-	Typ: "type",
-	Var: "var",
-	Fun: "func",
-	Lbl: "label",
+	Bad:	"bad",
+	Pkg:	"package",
+	Con:	"const",
+	Typ:	"type",
+	Var:	"var",
+	Fun:	"func",
+	Lbl:	"label",
 }
 
-func (kind ObjKind) String() string { return objKindStrings[kind] }
+func (kind ObjKind) String() string	{ return objKindStrings[kind] }

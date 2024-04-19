@@ -35,11 +35,12 @@ should be replaced by:
 `
 
 var Analyzer = &analysis.Analyzer{
-	Name:             "composites",
-	Doc:              Doc,
-	Requires:         []*analysis.Analyzer{inspect.Analyzer},
-	RunDespiteErrors: true,
-	Run:              run,
+	Name:			"composites",
+	Doc:			Doc,
+	URL:			"https://pkg.go.dev/golang.org/x/tools/go/analysis/passes/composite",
+	Requires:		[]*analysis.Analyzer{inspect.Analyzer},
+	RunDespiteErrors:	true,
+	Run:			run,
 }
 
 var whitelist = true
@@ -71,10 +72,10 @@ func run(pass *analysis.Pass) (interface{}, error) {
 		}
 		var structuralTypes []types.Type
 		switch typ := typ.(type) {
-		case *typeparams.TypeParam:
+		case *types.TypeParam:
 			terms, err := typeparams.StructuralTerms(typ)
 			if err != nil {
-				return // invalid type
+				return	// invalid type
 			}
 			for _, term := range terms {
 				structuralTypes = append(structuralTypes, term.Type())
@@ -112,9 +113,9 @@ func run(pass *analysis.Pass) (interface{}, error) {
 						break
 					}
 					missingKeys = append(missingKeys, analysis.TextEdit{
-						Pos:     e.Pos(),
-						End:     e.Pos(),
-						NewText: []byte(fmt.Sprintf("%s: ", field.Name())),
+						Pos:		e.Pos(),
+						End:		e.Pos(),
+						NewText:	[]byte(fmt.Sprintf("%s: ", field.Name())),
 					})
 				}
 			}
@@ -124,14 +125,14 @@ func run(pass *analysis.Pass) (interface{}, error) {
 			}
 
 			diag := analysis.Diagnostic{
-				Pos:     cl.Pos(),
-				End:     cl.End(),
-				Message: fmt.Sprintf("%s struct literal uses unkeyed fields", typeName),
+				Pos:		cl.Pos(),
+				End:		cl.End(),
+				Message:	fmt.Sprintf("%s struct literal uses unkeyed fields", typeName),
 			}
 			if suggestedFixAvailable {
 				diag.SuggestedFixes = []analysis.SuggestedFix{{
-					Message:   "Add field names to struct literal",
-					TextEdits: missingKeys,
+					Message:	"Add field names to struct literal",
+					TextEdits:	missingKeys,
 				}}
 			}
 			pass.Report(diag)
@@ -162,7 +163,7 @@ func isLocalType(pass *analysis.Pass, typ types.Type) bool {
 	case *types.Named:
 		// names in package foo are local to foo_test too
 		return strings.TrimSuffix(x.Obj().Pkg().Path(), "_test") == strings.TrimSuffix(pass.Pkg.Path(), "_test")
-	case *typeparams.TypeParam:
+	case *types.TypeParam:
 		return strings.TrimSuffix(x.Obj().Pkg().Path(), "_test") == strings.TrimSuffix(pass.Pkg.Path(), "_test")
 	}
 	return false

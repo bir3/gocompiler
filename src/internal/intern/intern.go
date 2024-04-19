@@ -20,26 +20,26 @@ import (
 // A Value pointer is the handle to an underlying comparable value.
 // See func Get for how Value pointers may be used.
 type Value struct {
-	_      [0]func() // prevent people from accidentally using value type as comparable
-	cmpVal any
+	_	[0]func()	// prevent people from accidentally using value type as comparable
+	cmpVal	any
 	// resurrected is guarded by mu (for all instances of Value).
 	// It is set true whenever v is synthesized from a uintptr.
-	resurrected bool
+	resurrected	bool
 }
 
 // Get returns the comparable value passed to the Get func
 // that returned v.
-func (v *Value) Get() any { return v.cmpVal }
+func (v *Value) Get() any	{ return v.cmpVal }
 
 // key is a key in our global value map.
 // It contains type-specialized fields to avoid allocations
 // when converting common types to empty interfaces.
 type key struct {
-	s      string
-	cmpVal any
+	s	string
+	cmpVal	any
 	// isString reports whether key contains a string.
 	// Without it, the zero value of key is ambiguous.
-	isString bool
+	isString	bool
 }
 
 // keyFor returns a key to use with cmpVal.
@@ -61,12 +61,12 @@ func (k key) Value() *Value {
 var (
 	// mu guards valMap, a weakref map of *Value by underlying value.
 	// It also guards the resurrected field of all *Values.
-	mu      sync.Mutex
-	valMap  = map[key]uintptr{} // to uintptr(*Value)
-	valSafe = safeMap()         // non-nil in safe+leaky mode
+	mu	sync.Mutex
+	valMap	= map[key]uintptr{}	// to uintptr(*Value)
+	valSafe	= safeMap()		// non-nil in safe+leaky mode
 )
 
-var intern = godebug.New("intern")
+var intern = godebug.New("#intern")
 
 // safeMap returns a non-nil map if we're in safe-but-leaky mode,
 // as controlled by GODEBUG=intern=leaky

@@ -15,6 +15,7 @@ import (
 	"github.com/bir3/gocompiler/src/cmd/internal/sys"
 	"encoding/binary"
 	"fmt"
+	"github.com/bir3/gocompiler/src/internal/abi"
 	"io"
 	"log"
 	"os"
@@ -23,7 +24,7 @@ import (
 	"strings"
 )
 
-const UnlinkablePkg = "<unlinkable>" // invalid package path, used when compiled without -p flag
+const UnlinkablePkg = "<unlinkable>"	// invalid package path, used when compiled without -p flag
 
 // Entry point of writing new object file.
 func WriteObjFile(ctxt *Link, b *bio.Writer) {
@@ -33,9 +34,9 @@ func WriteObjFile(ctxt *Link, b *bio.Writer) {
 	genFuncInfoSyms(ctxt)
 
 	w := writer{
-		Writer:  goobj.NewWriter(b),
-		ctxt:    ctxt,
-		pkgpath: objabi.PathToPrefix(ctxt.Pkgpath),
+		Writer:		goobj.NewWriter(b),
+		ctxt:		ctxt,
+		pkgpath:	objabi.PathToPrefix(ctxt.Pkgpath),
 	}
 
 	start := b.Offset()
@@ -57,9 +58,9 @@ func WriteObjFile(ctxt *Link, b *bio.Writer) {
 		flags |= goobj.ObjFlagFromAssembly
 	}
 	h := goobj.Header{
-		Magic:       goobj.Magic,
-		Fingerprint: ctxt.Fingerprint,
-		Flags:       flags,
+		Magic:		goobj.Magic,
+		Fingerprint:	ctxt.Fingerprint,
+		Flags:		flags,
 	}
 	h.Write(w.Writer)
 
@@ -173,7 +174,7 @@ func WriteObjFile(ctxt *Link, b *bio.Writer) {
 	h.Offsets[goobj.BlkReloc] = w.Offset()
 	for _, list := range lists {
 		for _, s := range list {
-			sort.Sort(relocByOff(s.R)) // some platforms (e.g. PE) requires relocations in address order
+			sort.Sort(relocByOff(s.R))	// some platforms (e.g. PE) requires relocations in address order
 			for i := range s.R {
 				w.Reloc(&s.R[i])
 			}
@@ -216,26 +217,26 @@ func WriteObjFile(ctxt *Link, b *bio.Writer) {
 
 type writer struct {
 	*goobj.Writer
-	filebuf []byte
-	ctxt    *Link
-	pkgpath string   // the package import path (escaped), "" if unknown
-	pkglist []string // list of packages referenced, indexed by ctxt.pkgIdx
+	filebuf	[]byte
+	ctxt	*Link
+	pkgpath	string		// the package import path (escaped), "" if unknown
+	pkglist	[]string	// list of packages referenced, indexed by ctxt.pkgIdx
 
 	// scratch space for writing (the Write methods escape
 	// as they are interface calls)
-	tmpSym      goobj.Sym
-	tmpReloc    goobj.Reloc
-	tmpAux      goobj.Aux
-	tmpHash64   goobj.Hash64Type
-	tmpHash     goobj.HashType
-	tmpRefFlags goobj.RefFlags
-	tmpRefName  goobj.RefName
+	tmpSym		goobj.Sym
+	tmpReloc	goobj.Reloc
+	tmpAux		goobj.Aux
+	tmpHash64	goobj.Hash64Type
+	tmpHash		goobj.HashType
+	tmpRefFlags	goobj.RefFlags
+	tmpRefName	goobj.RefName
 }
 
 // prepare package index list
 func (w *writer) init() {
 	w.pkglist = make([]string, len(w.ctxt.pkgIdx)+1)
-	w.pkglist[0] = "" // dummy invalid package for index 0
+	w.pkglist[0] = ""	// dummy invalid package for index 0
 	for pkg, i := range w.ctxt.pkgIdx {
 		w.pkglist[i] = pkg
 	}
@@ -291,8 +292,8 @@ func (w *writer) StringTable() {
 			// Don't include them if Flag_noRefName
 			return
 		}
-		if w.pkgpath != "" {
-			s.Name = strings.Replace(s.Name, "\"\".", w.pkgpath+".", -1)
+		if strings.HasPrefix(s.Name, `"".`) {
+			w.ctxt.Diag("unqualified symbol name: %v", s.Name)
 		}
 		w.AddString(s.Name)
 	})
@@ -305,7 +306,7 @@ func (w *writer) StringTable() {
 
 // cutoff is the maximum data section size permitted by the linker
 // (see issue #9862).
-const cutoff = int64(2e9) // 2 GB (or so; looks better in errors than 2^31)
+const cutoff = int64(2e9)	// 2 GB (or so; looks better in errors than 2^31)
 
 func (w *writer) Sym(s *LSym) {
 	abi := uint16(s.ABI())
@@ -344,6 +345,9 @@ func (w *writer) Sym(s *LSym) {
 	if strings.HasPrefix(s.Name, w.ctxt.Pkgpath) && strings.HasPrefix(s.Name[len(w.ctxt.Pkgpath):], ".") && strings.HasPrefix(s.Name[len(w.ctxt.Pkgpath)+1:], objabi.GlobalDictPrefix) {
 		flag2 |= goobj.SymFlagDict
 	}
+	if s.IsPkgInit() {
+		flag2 |= goobj.SymFlagPkgInit
+	}
 	name := s.Name
 	if strings.HasPrefix(name, "gofile..") {
 		name = filepath.ToSlash(name)
@@ -353,7 +357,7 @@ func (w *writer) Sym(s *LSym) {
 		align = uint32(fn.Align)
 	}
 	if s.ContentAddressable() && s.Size != 0 {
-		// We generally assume data symbols are natually aligned
+		// We generally assume data symbols are naturally aligned
 		// (e.g. integer constants), except for strings and a few
 		// compiler-emitted funcdata. If we dedup a string symbol and
 		// a non-string symbol with the same content, we should keep
@@ -419,9 +423,9 @@ func (w *writer) Hash(s *LSym) {
 // contentHashSection returns a mnemonic for s's section.
 // The goal is to prevent content-addressability from moving symbols between sections.
 // contentHashSection only distinguishes between sets of sections for which this matters.
-// Allowing flexibility increases the effectiveness of content-addressibility.
+// Allowing flexibility increases the effectiveness of content-addressability.
 // But in some cases, such as doing addressing based on a base symbol,
-// we need to ensure that a symbol is always in a prticular section.
+// we need to ensure that a symbol is always in a particular section.
 // Some of these conditions are duplicated in cmd/link/internal/ld.(*Link).symtab.
 // TODO: instead of duplicating them, have the compiler decide where symbols go.
 func contentHashSection(s *LSym) byte {
@@ -439,7 +443,7 @@ func contentHashSection(s *LSym) byte {
 		strings.HasSuffix(name, ".wrapinfo") ||
 		strings.HasSuffix(name, ".args_stackmap") ||
 		strings.HasSuffix(name, ".stkobj") {
-		return 'F' // go:func.* or go:funcrel.*
+		return 'F'	// go:func.* or go:funcrel.*
 	}
 	if strings.HasPrefix(name, "type:") {
 		return 'T'
@@ -516,7 +520,7 @@ func (w *writer) contentHash(s *LSym) goobj.HashType {
 			h.Write(t[:])
 		case goobj.PkgIdxNone:
 			h.Write([]byte{2})
-			io.WriteString(h, rs.Name) // name is already expanded at this point
+			io.WriteString(h, rs.Name)	// name is already expanded at this point
 		case goobj.PkgIdxBuiltin:
 			h.Write([]byte{3})
 			binary.LittleEndian.PutUint32(tmp[:4], uint32(rs.SymIdx))
@@ -599,19 +603,31 @@ func (w *writer) Aux(s *LSym) {
 		if fn.Pcln.Pcinline != nil && fn.Pcln.Pcinline.Size != 0 {
 			w.aux1(goobj.AuxPcinline, fn.Pcln.Pcinline)
 		}
+		if fn.sehUnwindInfoSym != nil && fn.sehUnwindInfoSym.Size != 0 {
+			w.aux1(goobj.AuxSehUnwindInfo, fn.sehUnwindInfoSym)
+		}
 		for _, pcSym := range fn.Pcln.Pcdata {
 			w.aux1(goobj.AuxPcdata, pcSym)
 		}
-
+		if fn.WasmImportSym != nil {
+			if fn.WasmImportSym.Size == 0 {
+				panic("wasmimport aux sym must have non-zero size")
+			}
+			w.aux1(goobj.AuxWasmImport, fn.WasmImportSym)
+		}
+	} else if v := s.VarInfo(); v != nil {
+		if v.dwarfInfoSym != nil && v.dwarfInfoSym.Size != 0 {
+			w.aux1(goobj.AuxDwarfInfo, v.dwarfInfoSym)
+		}
 	}
 }
 
 // Emits flags of referenced indexed symbols.
 func (w *writer) refFlags() {
 	seen := make(map[*LSym]bool)
-	w.ctxt.traverseSyms(traverseRefs, func(rs *LSym) { // only traverse refs, not auxs, as tools don't need auxs
+	w.ctxt.traverseSyms(traverseRefs, func(rs *LSym) {	// only traverse refs, not auxs, as tools don't need auxs
 		switch rs.PkgIdx {
-		case goobj.PkgIdxNone, goobj.PkgIdxHashed64, goobj.PkgIdxHashed, goobj.PkgIdxBuiltin, goobj.PkgIdxSelf: // not an external indexed reference
+		case goobj.PkgIdxNone, goobj.PkgIdxHashed64, goobj.PkgIdxHashed, goobj.PkgIdxBuiltin, goobj.PkgIdxSelf:	// not an external indexed reference
 			return
 		case goobj.PkgIdxInvalid:
 			panic("unindexed symbol reference")
@@ -626,7 +642,7 @@ func (w *writer) refFlags() {
 			flag2 |= goobj.SymFlagUsedInIface
 		}
 		if flag2 == 0 {
-			return // no need to write zero flags
+			return	// no need to write zero flags
 		}
 		o := &w.tmpRefFlags
 		o.SetSym(symref)
@@ -642,9 +658,9 @@ func (w *writer) refNames() {
 		return
 	}
 	seen := make(map[*LSym]bool)
-	w.ctxt.traverseSyms(traverseRefs, func(rs *LSym) { // only traverse refs, not auxs, as tools don't need auxs
+	w.ctxt.traverseSyms(traverseRefs, func(rs *LSym) {	// only traverse refs, not auxs, as tools don't need auxs
 		switch rs.PkgIdx {
-		case goobj.PkgIdxNone, goobj.PkgIdxHashed64, goobj.PkgIdxHashed, goobj.PkgIdxBuiltin, goobj.PkgIdxSelf: // not an external indexed reference
+		case goobj.PkgIdxNone, goobj.PkgIdxHashed64, goobj.PkgIdxHashed, goobj.PkgIdxBuiltin, goobj.PkgIdxSelf:	// not an external indexed reference
 			return
 		case goobj.PkgIdxInvalid:
 			panic("unindexed symbol reference")
@@ -699,7 +715,20 @@ func nAuxSym(s *LSym) int {
 		if fn.Pcln.Pcinline != nil && fn.Pcln.Pcinline.Size != 0 {
 			n++
 		}
+		if fn.sehUnwindInfoSym != nil && fn.sehUnwindInfoSym.Size != 0 {
+			n++
+		}
 		n += len(fn.Pcln.Pcdata)
+		if fn.WasmImport != nil {
+			if fn.WasmImportSym == nil || fn.WasmImportSym.Size == 0 {
+				panic("wasmimport aux sym must exist and have non-zero size")
+			}
+			n++
+		}
+	} else if v := s.VarInfo(); v != nil {
+		if v.dwarfInfoSym != nil && v.dwarfInfoSym.Size != 0 {
+			n++
+		}
 	}
 	return n
 }
@@ -715,11 +744,11 @@ func genFuncInfoSyms(ctxt *Link) {
 			continue
 		}
 		o := goobj.FuncInfo{
-			Args:      uint32(fn.Args),
-			Locals:    uint32(fn.Locals),
-			FuncID:    fn.FuncID,
-			FuncFlag:  fn.FuncFlag,
-			StartLine: fn.StartLine,
+			Args:		uint32(fn.Args),
+			Locals:		uint32(fn.Locals),
+			FuncID:		fn.FuncID,
+			FuncFlag:	fn.FuncFlag,
+			StartLine:	fn.StartLine,
 		}
 		pc := &fn.Pcln
 		i := 0
@@ -733,22 +762,22 @@ func genFuncInfoSyms(ctxt *Link) {
 		for i, inl := range pc.InlTree.nodes {
 			f, l := ctxt.getFileIndexAndLine(inl.Pos)
 			o.InlTree[i] = goobj.InlTreeNode{
-				Parent:   int32(inl.Parent),
-				File:     goobj.CUFileIndex(f),
-				Line:     l,
-				Func:     makeSymRef(inl.Func),
-				ParentPC: inl.ParentPC,
+				Parent:		int32(inl.Parent),
+				File:		goobj.CUFileIndex(f),
+				Line:		l,
+				Func:		makeSymRef(inl.Func),
+				ParentPC:	inl.ParentPC,
 			}
 		}
 
 		o.Write(&b)
 		p := b.Bytes()
 		isym := &LSym{
-			Type:   objabi.SDATA, // for now, I don't think it matters
-			PkgIdx: goobj.PkgIdxSelf,
-			SymIdx: symidx,
-			P:      append([]byte(nil), p...),
-			Size:   int64(len(p)),
+			Type:	objabi.SDATA,	// for now, I don't think it matters
+			PkgIdx:	goobj.PkgIdxSelf,
+			SymIdx:	symidx,
+			P:	append([]byte(nil), p...),
+			Size:	int64(len(p)),
 		}
 		isym.Set(AttrIndexed, true)
 		symidx++
@@ -756,8 +785,8 @@ func genFuncInfoSyms(ctxt *Link) {
 		fn.FuncInfoSym = isym
 		b.Reset()
 
-		dwsyms := []*LSym{fn.dwarfRangesSym, fn.dwarfLocSym, fn.dwarfDebugLinesSym, fn.dwarfInfoSym}
-		for _, s := range dwsyms {
+		auxsyms := []*LSym{fn.dwarfRangesSym, fn.dwarfLocSym, fn.dwarfDebugLinesSym, fn.dwarfInfoSym, fn.WasmImportSym, fn.sehUnwindInfoSym}
+		for _, s := range auxsyms {
 			if s == nil || s.Size == 0 {
 				continue
 			}
@@ -774,11 +803,14 @@ func genFuncInfoSyms(ctxt *Link) {
 func writeAuxSymDebug(ctxt *Link, par *LSym, aux *LSym) {
 	// Most aux symbols (ex: funcdata) are not interesting--
 	// pick out just the DWARF ones for now.
-	if aux.Type != objabi.SDWARFLOC &&
-		aux.Type != objabi.SDWARFFCN &&
-		aux.Type != objabi.SDWARFABSFCN &&
-		aux.Type != objabi.SDWARFLINES &&
-		aux.Type != objabi.SDWARFRANGE {
+	switch aux.Type {
+	case objabi.SDWARFLOC,
+		objabi.SDWARFFCN,
+		objabi.SDWARFABSFCN,
+		objabi.SDWARFLINES,
+		objabi.SDWARFRANGE,
+		objabi.SDWARFVAR:
+	default:
 		return
 	}
 	ctxt.writeSymDebugNamed(aux, "aux for "+par.Name)
@@ -821,10 +853,10 @@ func (ctxt *Link) writeSymDebugNamed(s *LSym, name string) {
 	if s.NoSplit() {
 		fmt.Fprintf(ctxt.Bso, "nosplit ")
 	}
-	if s.Func() != nil && s.Func().FuncFlag&objabi.FuncFlag_TOPFRAME != 0 {
+	if s.Func() != nil && s.Func().FuncFlag&abi.FuncFlagTopFrame != 0 {
 		fmt.Fprintf(ctxt.Bso, "topframe ")
 	}
-	if s.Func() != nil && s.Func().FuncFlag&objabi.FuncFlag_ASM != 0 {
+	if s.Func() != nil && s.Func().FuncFlag&abi.FuncFlagAsm != 0 {
 		fmt.Fprintf(ctxt.Bso, "asm ")
 	}
 	fmt.Fprintf(ctxt.Bso, "size=%d", s.Size)
@@ -869,7 +901,7 @@ func (ctxt *Link) writeSymDebugNamed(s *LSym, name string) {
 		fmt.Fprintf(ctxt.Bso, "\n")
 	}
 
-	sort.Sort(relocByOff(s.R)) // generate stable output
+	sort.Sort(relocByOff(s.R))	// generate stable output
 	for _, r := range s.R {
 		name := ""
 		ver := ""
@@ -882,9 +914,9 @@ func (ctxt *Link) writeSymDebugNamed(s *LSym, name string) {
 			name = "TLS"
 		}
 		if ctxt.Arch.InFamily(sys.ARM, sys.PPC64) {
-			fmt.Fprintf(ctxt.Bso, "\trel %d+%d t=%d %s%s+%x\n", int(r.Off), r.Siz, r.Type, name, ver, uint64(r.Add))
+			fmt.Fprintf(ctxt.Bso, "\trel %d+%d t=%v %s%s+%x\n", int(r.Off), r.Siz, r.Type, name, ver, uint64(r.Add))
 		} else {
-			fmt.Fprintf(ctxt.Bso, "\trel %d+%d t=%d %s%s+%d\n", int(r.Off), r.Siz, r.Type, name, ver, r.Add)
+			fmt.Fprintf(ctxt.Bso, "\trel %d+%d t=%v %s%s+%d\n", int(r.Off), r.Siz, r.Type, name, ver, r.Add)
 		}
 	}
 }
@@ -892,6 +924,6 @@ func (ctxt *Link) writeSymDebugNamed(s *LSym, name string) {
 // relocByOff sorts relocations by their offsets.
 type relocByOff []Reloc
 
-func (x relocByOff) Len() int           { return len(x) }
-func (x relocByOff) Less(i, j int) bool { return x[i].Off < x[j].Off }
-func (x relocByOff) Swap(i, j int)      { x[i], x[j] = x[j], x[i] }
+func (x relocByOff) Len() int		{ return len(x) }
+func (x relocByOff) Less(i, j int) bool	{ return x[i].Off < x[j].Off }
+func (x relocByOff) Swap(i, j int)	{ x[i], x[j] = x[j], x[i] }

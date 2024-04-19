@@ -103,7 +103,7 @@ func CommonValueType(ts []*profile.ValueType) (*profile.ValueType, error) {
 
 func compatibleValueTypes(v1, v2 *profile.ValueType) bool {
 	if v1 == nil || v2 == nil {
-		return true // No grounds to disqualify.
+		return true	// No grounds to disqualify.
 	}
 	// Remove trailing 's' to permit minor mismatches.
 	if t1, t2 := strings.TrimSuffix(v1.Type, "s"), strings.TrimSuffix(v2.Type, "s"); t1 != t2 {
@@ -121,7 +121,7 @@ func compatibleValueTypes(v1, v2 *profile.ValueType) bool {
 	return false
 }
 
-// Scale a measurement from an unit to a different unit and returns
+// Scale a measurement from a unit to a different unit and returns
 // the scaled value and the target unit. The returned target unit
 // will be empty if uninteresting (could be skipped).
 func Scale(value int64, fromUnit, toUnit string) (float64, string) {
@@ -181,16 +181,16 @@ func Percentage(value, total int64) string {
 // which one can multiple a value in the specified unit by to get the value
 // in terms of the base unit.
 type unit struct {
-	canonicalName string
-	aliases       []string
-	factor        float64
+	canonicalName	string
+	aliases		[]string
+	factor		float64
 }
 
 // unitType includes a list of units that are within the same category (i.e.
 // memory or time units) and a default unit to use for this type of unit.
 type unitType struct {
-	defaultUnit unit
-	units       []unit
+	defaultUnit	unit
+	units		[]unit
 }
 
 // findByAlias returns the unit associated with the specified alias. It returns
@@ -267,7 +267,7 @@ var unitTypes = []unitType{{
 		{"TB", []string{"tb", "tbyte", "terabyte"}, float64(1 << 40)},
 		{"PB", []string{"pb", "pbyte", "petabyte"}, float64(1 << 50)},
 	},
-	defaultUnit: unit{"B", []string{"b", "byte"}, 1},
+	defaultUnit:	unit{"B", []string{"b", "byte"}, 1},
 }, {
 	units: []unit{
 		{"ns", []string{"ns", "nanosecond"}, float64(time.Nanosecond)},
@@ -276,7 +276,7 @@ var unitTypes = []unitType{{
 		{"s", []string{"s", "sec", "second"}, float64(time.Second)},
 		{"hrs", []string{"hour", "hr"}, float64(time.Hour)},
 	},
-	defaultUnit: unit{"s", []string{}, float64(time.Second)},
+	defaultUnit:	unit{"s", []string{}, float64(time.Second)},
 }, {
 	units: []unit{
 		{"n*GCU", []string{"nanogcu"}, 1e-9},
@@ -289,5 +289,5 @@ var unitTypes = []unitType{{
 		{"T*GCU", []string{"teragcu"}, 1e12},
 		{"P*GCU", []string{"petagcu"}, 1e15},
 	},
-	defaultUnit: unit{"GCU", []string{}, 1.0},
+	defaultUnit:	unit{"GCU", []string{}, 1.0},
 }}

@@ -17,24 +17,9 @@ import (
 //go:embed goroot
 var content embed.FS
 
-/*
-	"vfs2" = historical name, not virtual file system
-*/
-
 var GOROOT = "/github.com/bir3/gocompiler/error-missing-init"
 
-const gorootPrefixLen = len("/_/github.com/bir3/gocompiler/vfs/")
-
-var GorootTool string
-
 func init() {
-	// ; cmd/go/internal/cfg/cfg.go
-
-	/*
-		user-config-dir/bir3-gocompiler/src-xxxx/done
-
-		override with env BIR3_GOCOMPILER_GOROOT
-	*/
 	if os.Getenv("BIR3_GOCOMPILER_TOOL") == "" {
 		return // not in Go toolchain mode
 	}
@@ -44,13 +29,9 @@ func init() {
 		return // compiler will fail due to missing GOROOT
 	}
 	GOROOT = d
-
-	GorootTool = filepath.Join(GOROOT, "pkg", "tool") + string(os.PathSeparator)
-
 }
 
 func SetupStdlib() error {
-	// 1. extract stdlib if needed
 	d, err := PrivateGOROOT()
 	if err != nil {
 		return err
@@ -63,12 +44,12 @@ func SetupStdlib() error {
 }
 
 func PrivateGOROOT() (string, error) {
-	return configDir("bir3-gocompiler/stdlib-go1.20.10-364e") //syncvar:
+	return configDir("bir3-gocompiler/stdlib-go1.22.2-f09a") //syncvar:
 
 }
 
 func extractStdlib(d string) error {
-	f, err := content.Open("goroot/stdlib-go1.20.10-364e.tar.zst") //syncvar:
+	f, err := content.Open("goroot/stdlib-go1.22.2-f09a.tar.zst") //syncvar:
 	if err != nil {
 		panic(fmt.Sprintf("gocompiler stdlib init failed - %s", err))
 	}

@@ -83,7 +83,7 @@ func (check *Checker) isTerminatingList(list []ast.Stmt, label string) bool {
 			return check.isTerminating(list[i], label)
 		}
 	}
-	return false // all statements are empty
+	return false	// all statements are empty
 }
 
 func (check *Checker) isTerminatingSwitch(body *ast.BlockStmt, label string) bool {

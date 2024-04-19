@@ -15,24 +15,24 @@ import (
 )
 
 type stackCheck struct {
-	ctxt      *Link
-	ldr       *loader.Loader
-	morestack loader.Sym
-	callSize  int // The number of bytes added by a CALL
+	ctxt		*Link
+	ldr		*loader.Loader
+	morestack	loader.Sym
+	callSize	int	// The number of bytes added by a CALL
 
 	// height records the maximum number of bytes a function and
 	// its callees can add to the stack without a split check.
-	height map[loader.Sym]int16
+	height	map[loader.Sym]int16
 
 	// graph records the out-edges from each symbol. This is only
 	// populated on a second pass if the first pass reveals an
 	// over-limit function.
-	graph map[loader.Sym][]stackCheckEdge
+	graph	map[loader.Sym][]stackCheckEdge
 }
 
 type stackCheckEdge struct {
-	growth int        // Stack growth in bytes at call to target
-	target loader.Sym // 0 for stack growth without a call
+	growth	int		// Stack growth in bytes at call to target
+	target	loader.Sym	// 0 for stack growth without a call
 }
 
 // stackCheckCycle is a sentinel stored in the height map to detect if
@@ -42,7 +42,7 @@ const stackCheckCycle int16 = 1<<15 - 1
 
 // stackCheckIndirect is a sentinel Sym value used to represent the
 // target of an indirect/closure call.
-const stackCheckIndirect loader.Sym = -1
+const stackCheckIndirect loader.Sym = ^loader.Sym(0)
 
 // doStackCheck walks the call tree to check that there is always
 // enough stack space for call frames, especially for a chain of
@@ -61,7 +61,7 @@ func (ctxt *Link) doStackCheck() {
 	// The call to morestack in every splittable function ensures
 	// that there are at least StackLimit bytes available below SP
 	// when morestack returns.
-	limit := objabi.StackLimit(*flagRace) - sc.callSize
+	limit := objabi.StackNosplit(*flagRace) - sc.callSize
 	if buildcfg.GOARCH == "arm64" {
 		// Need an extra 8 bytes below SP to save FP.
 		limit -= 8
@@ -110,10 +110,10 @@ func (ctxt *Link) doStackCheck() {
 
 func newStackCheck(ctxt *Link, graph bool) *stackCheck {
 	sc := &stackCheck{
-		ctxt:      ctxt,
-		ldr:       ctxt.loader,
-		morestack: ctxt.loader.Lookup("runtime.morestack", 0),
-		height:    make(map[loader.Sym]int16, len(ctxt.Textp)),
+		ctxt:		ctxt,
+		ldr:		ctxt.loader,
+		morestack:	ctxt.loader.Lookup("runtime.morestack", 0),
+		height:		make(map[loader.Sym]int16, len(ctxt.Textp)),
 	}
 	// Compute stack effect of a CALL operation. 0 on LR machines.
 	// 1 register pushed on non-LR machines.
@@ -150,7 +150,7 @@ func (sc *stackCheck) check(sym loader.Sym) int {
 	sc.height[sym] = stackCheckCycle
 	// Compute and record the height and optionally edges.
 	h, edges := sc.computeHeight(sym, *flagDebugNosplit || sc.graph != nil)
-	if h > int(stackCheckCycle) { // Prevent integer overflow
+	if h > int(stackCheckCycle) {	// Prevent integer overflow
 		h = int(stackCheckCycle)
 	}
 	sc.height[sym] = int16(h)
@@ -203,7 +203,7 @@ func (sc *stackCheck) computeHeight(sym loader.Sym, graph bool) (int, []stackChe
 	if ldr.AttrExternal(sym) {
 		return 0, nil
 	}
-	if info := ldr.FuncInfo(sym); !info.Valid() { // also external
+	if info := ldr.FuncInfo(sym); !info.Valid() {	// also external
 		return 0, nil
 	}
 
@@ -220,7 +220,7 @@ func (sc *stackCheck) computeHeight(sym loader.Sym, graph bool) (int, []stackChe
 			edges = append(edges, stackCheckEdge{growth, target})
 		}
 		height := growth
-		if target != 0 { // Don't walk into the leaf "edge"
+		if target != 0 {	// Don't walk into the leaf "edge"
 			height += sc.check(target)
 		}
 		if height > maxHeight {
@@ -357,7 +357,7 @@ func (sc *stackCheck) findRoots() []loader.Sym {
 
 type stackCheckChain struct {
 	stackCheckEdge
-	printed bool
+	printed	bool
 }
 
 func (sc *stackCheck) report(sym loader.Sym, depth int, chain *[]stackCheckChain) {

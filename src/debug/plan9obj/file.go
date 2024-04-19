@@ -26,28 +26,28 @@ import (
 
 // A FileHeader represents a Plan 9 a.out file header.
 type FileHeader struct {
-	Magic       uint32
-	Bss         uint32
-	Entry       uint64
-	PtrSize     int
-	LoadAddress uint64
-	HdrSize     uint64
+	Magic		uint32
+	Bss		uint32
+	Entry		uint64
+	PtrSize		int
+	LoadAddress	uint64
+	HdrSize		uint64
 }
 
 // A File represents an open Plan 9 a.out file.
 type File struct {
 	FileHeader
-	Sections []*Section
-	closer   io.Closer
+	Sections	[]*Section
+	closer		io.Closer
 }
 
 // A SectionHeader represents a single Plan 9 a.out section header.
 // This structure doesn't exist on-disk, but eases navigation
 // through the object file.
 type SectionHeader struct {
-	Name   string
-	Size   uint32
-	Offset uint32
+	Name	string
+	Size	uint32
+	Offset	uint32
 }
 
 // A Section represents a single section in a Plan 9 a.out file.
@@ -61,7 +61,7 @@ type Section struct {
 	// Open() to avoid fighting over the seek offset
 	// with other clients.
 	io.ReaderAt
-	sr *io.SectionReader
+	sr	*io.SectionReader
 }
 
 // Data reads and returns the contents of the Plan 9 a.out section.
@@ -70,13 +70,13 @@ func (s *Section) Data() ([]byte, error) {
 }
 
 // Open returns a new ReadSeeker reading the Plan 9 a.out section.
-func (s *Section) Open() io.ReadSeeker { return io.NewSectionReader(s.sr, 0, 1<<63-1) }
+func (s *Section) Open() io.ReadSeeker	{ return io.NewSectionReader(s.sr, 0, 1<<63-1) }
 
 // A Symbol represents an entry in a Plan 9 a.out symbol table section.
 type Sym struct {
-	Value uint64
-	Type  rune
-	Name  string
+	Value	uint64
+	Type	rune
+	Name	string
 }
 
 /*
@@ -86,9 +86,9 @@ type Sym struct {
 // formatError is returned by some operations if the data does
 // not have the correct format for an object file.
 type formatError struct {
-	off int
-	msg string
-	val any
+	off	int
+	msg	string
+	val	any
 }
 
 func (e *formatError) Error() string {
@@ -100,7 +100,7 @@ func (e *formatError) Error() string {
 	return msg
 }
 
-// Open opens the named file using os.Open and prepares it for use as a Plan 9 a.out binary.
+// Open opens the named file using [os.Open] and prepares it for use as a Plan 9 a.out binary.
 func Open(name string) (*File, error) {
 	f, err := os.Open(name)
 	if err != nil {
@@ -115,8 +115,8 @@ func Open(name string) (*File, error) {
 	return ff, nil
 }
 
-// Close closes the File.
-// If the File was created using NewFile directly instead of Open,
+// Close closes the [File].
+// If the [File] was created using [NewFile] directly instead of [Open],
 // Close has no effect.
 func (f *File) Close() error {
 	var err error
@@ -136,7 +136,7 @@ func parseMagic(magic []byte) (uint32, error) {
 	return 0, &formatError{0, "bad magic number", magic}
 }
 
-// NewFile creates a new File for accessing a Plan 9 binary in an underlying reader.
+// NewFile creates a new [File] for accessing a Plan 9 binary in an underlying reader.
 // The Plan 9 binary is expected to start at position 0 in the ReaderAt.
 func NewFile(r io.ReaderAt) (*File, error) {
 	sr := io.NewSectionReader(r, 0, 1<<63-1)
@@ -156,12 +156,12 @@ func NewFile(r io.ReaderAt) (*File, error) {
 	}
 
 	f := &File{FileHeader: FileHeader{
-		Magic:       ph.Magic,
-		Bss:         ph.Bss,
-		Entry:       uint64(ph.Entry),
-		PtrSize:     4,
-		LoadAddress: 0x1000,
-		HdrSize:     4 * 8,
+		Magic:		ph.Magic,
+		Bss:		ph.Bss,
+		Entry:		uint64(ph.Entry),
+		PtrSize:	4,
+		LoadAddress:	0x1000,
+		HdrSize:	4 * 8,
 	}}
 
 	if ph.Magic&Magic64 != 0 {
@@ -174,8 +174,8 @@ func NewFile(r io.ReaderAt) (*File, error) {
 	}
 
 	var sects = []struct {
-		name string
-		size uint32
+		name	string
+		size	uint32
 	}{
 		{"text", ph.Text},
 		{"data", ph.Data},
@@ -191,9 +191,9 @@ func NewFile(r io.ReaderAt) (*File, error) {
 	for i, sect := range sects {
 		s := new(Section)
 		s.SectionHeader = SectionHeader{
-			Name:   sect.name,
-			Size:   sect.size,
-			Offset: off,
+			Name:	sect.name,
+			Size:	sect.size,
+			Offset:	off,
 		}
 		off += sect.size
 		s.sr = io.NewSectionReader(r, int64(s.Offset), int64(s.Size))
@@ -309,7 +309,7 @@ func newTable(symtab []byte, ptrsz int) ([]Sym, error) {
 	return syms, nil
 }
 
-// ErrNoSymbols is returned by File.Symbols if there is no such section
+// ErrNoSymbols is returned by [File.Symbols] if there is no such section
 // in the File.
 var ErrNoSymbols = errors.New("no symbol section")
 

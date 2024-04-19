@@ -34,6 +34,7 @@ import (
 	"github.com/bir3/gocompiler/src/cmd/internal/objabi"
 	"github.com/bir3/gocompiler/src/cmd/internal/sys"
 	"github.com/bir3/gocompiler/src/cmd/link/internal/ld"
+	"github.com/bir3/gocompiler/src/cmd/link/internal/loader"
 	"github.com/bir3/gocompiler/src/internal/buildcfg"
 )
 
@@ -46,30 +47,38 @@ func Init() (*sys.Arch, ld.Arch) {
 	}
 
 	theArch := ld.Arch{
-		Funcalign:  FuncAlign,
-		Maxalign:   MaxAlign,
-		Minalign:   MinAlign,
-		Dwarfregsp: DWARFREGSP,
-		Dwarfreglr: DWARFREGLR,
+		Funcalign:	FuncAlign,
+		Maxalign:	MaxAlign,
+		Minalign:	MinAlign,
+		Dwarfregsp:	DWARFREGSP,
+		Dwarfreglr:	DWARFREGLR,
 
-		Archinit:         archinit,
-		Archreloc:        archreloc,
-		Archrelocvariant: archrelocvariant,
-		Extreloc:         extreloc,
-		Elfreloc1:        elfreloc1,
-		ElfrelocSize:     8,
-		Elfsetupplt:      elfsetupplt,
-		Gentext:          gentext,
-		Machoreloc1:      machoreloc1,
+		Adddynrel:		adddynrel,
+		Archinit:		archinit,
+		Archreloc:		archreloc,
+		Archrelocvariant:	archrelocvariant,
+		Extreloc:		extreloc,
+		Gentext:		gentext,
+		Machoreloc1:		machoreloc1,
 
-		Linuxdynld:     "/lib/ld.so.1",
-		LinuxdynldMusl: musl,
+		ELF: ld.ELFArch{
+			Linuxdynld:	"/lib/ld.so.1",
+			LinuxdynldMusl:	musl,
 
-		Freebsddynld:   "XXX",
-		Openbsddynld:   "XXX",
-		Netbsddynld:    "XXX",
-		Dragonflydynld: "XXX",
-		Solarisdynld:   "XXX",
+			Freebsddynld:	"XXX",
+			Openbsddynld:	"XXX",
+			Netbsddynld:	"XXX",
+			Dragonflydynld:	"XXX",
+			Solarisdynld:	"XXX",
+
+			Reloc1:		elfreloc1,
+			RelocSize:	8,
+			SetupPLT:	elfsetupplt,
+
+			// Historically GNU ld creates a read-only
+			// .dynamic section.
+			DynamicReadOnly:	true,
+		},
 	}
 
 	return arch, theArch
@@ -79,14 +88,19 @@ func archinit(ctxt *ld.Link) {
 	switch ctxt.HeadType {
 	default:
 		ld.Exitf("unknown -H option: %v", ctxt.HeadType)
-	case objabi.Hlinux: /* mips elf */
+	case objabi.Hlinux:	/* mips elf */
 		ld.Elfinit(ctxt)
 		ld.HEADR = ld.ELFRESERVE
-		if *ld.FlagTextAddr == -1 {
-			*ld.FlagTextAddr = 0x10000 + int64(ld.HEADR)
-		}
 		if *ld.FlagRound == -1 {
 			*ld.FlagRound = 0x10000
 		}
+		if *ld.FlagTextAddr == -1 {
+			*ld.FlagTextAddr = ld.Rnd(0x10000, *ld.FlagRound) + int64(ld.HEADR)
+		}
 	}
+}
+
+func adddynrel(target *ld.Target, ldr *loader.Loader, syms *ld.ArchSyms, s loader.Sym, r loader.Reloc, rIdx int) bool {
+	ld.Exitf("adddynrel currently unimplemented for MIPS")
+	return false
 }

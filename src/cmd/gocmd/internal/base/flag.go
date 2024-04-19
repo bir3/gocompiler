@@ -6,7 +6,7 @@ package base
 
 import (
 	"github.com/bir3/gocompiler/src/cmd/gocmd/flag"
-	"os"
+	"fmt"
 
 	"github.com/bir3/gocompiler/src/cmd/gocmd/internal/cfg"
 	"github.com/bir3/gocompiler/src/cmd/gocmd/internal/fsys"
@@ -33,8 +33,8 @@ func (v *StringsFlag) String() string {
 // explicitStringFlag is like a regular string flag, but it also tracks whether
 // the string was set explicitly to a non-empty value.
 type explicitStringFlag struct {
-	value    *string
-	explicit *bool
+	value		*string
+	explicit	*bool
 }
 
 func (f explicitStringFlag) String() string {
@@ -62,7 +62,7 @@ func AddBuildFlagsNX(flags *flag.FlagSet) {
 func AddChdirFlag(flags *flag.FlagSet) {
 	// The usage message is never printed, but it's used in chdir_test.go
 	// to identify that the -C flag is from AddChdirFlag.
-	flags.Func("C", "AddChdirFlag", os.Chdir)
+	flags.Func("C", "AddChdirFlag", ChdirFlag)
 }
 
 // AddModFlag adds the -mod build flag to the flag set.
@@ -76,4 +76,10 @@ func AddModCommonFlags(flags *flag.FlagSet) {
 	flags.BoolVar(&cfg.ModCacheRW, "modcacherw", false, "")
 	flags.StringVar(&cfg.ModFile, "modfile", "", "")
 	flags.StringVar(&fsys.OverlayFile, "overlay", "", "")
+}
+
+func ChdirFlag(s string) error {
+	// main handles -C by removing it from the command line.
+	// If we see one during flag parsing, that's an error.
+	return fmt.Errorf("-C flag must be first flag on command line")
 }

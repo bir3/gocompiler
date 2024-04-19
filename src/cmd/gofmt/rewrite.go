@@ -18,7 +18,7 @@ import (
 
 func initRewrite() {
 	if *rewriteRule == "" {
-		rewrite = nil // disable any previous rewrite
+		rewrite = nil	// disable any previous rewrite
 		return
 	}
 	f := strings.Split(*rewriteRule, "->")
@@ -69,9 +69,7 @@ func rewriteFile(fileSet *token.FileSet, pattern, replace ast.Expr, p *ast.File)
 			return reflect.Value{}
 		}
 		val = apply(rewriteVal, val)
-		for k := range m {
-			delete(m, k)
-		}
+		clear(m)
 		if match(m, pat, val) {
 			val = subst(m, repl, reflect.ValueOf(val.Interface().(ast.Node).Pos()))
 		}
@@ -79,7 +77,7 @@ func rewriteFile(fileSet *token.FileSet, pattern, replace ast.Expr, p *ast.File)
 	}
 
 	r := apply(rewriteVal, reflect.ValueOf(p)).Interface().(*ast.File)
-	r.Comments = cmap.Filter(r).Comments() // recreate comments list
+	r.Comments = cmap.Filter(r).Comments()	// recreate comments list
 	return r
 }
 
@@ -104,14 +102,14 @@ func set(x, y reflect.Value) {
 
 // Values/types for special cases.
 var (
-	objectPtrNil = reflect.ValueOf((*ast.Object)(nil))
-	scopePtrNil  = reflect.ValueOf((*ast.Scope)(nil))
+	objectPtrNil	= reflect.ValueOf((*ast.Object)(nil))
+	scopePtrNil	= reflect.ValueOf((*ast.Scope)(nil))
 
-	identType     = reflect.TypeOf((*ast.Ident)(nil))
-	objectPtrType = reflect.TypeOf((*ast.Object)(nil))
-	positionType  = reflect.TypeOf(token.NoPos)
-	callExprType  = reflect.TypeOf((*ast.CallExpr)(nil))
-	scopePtrType  = reflect.TypeOf((*ast.Scope)(nil))
+	identType	= reflect.TypeOf((*ast.Ident)(nil))
+	objectPtrType	= reflect.TypeOf((*ast.Object)(nil))
+	positionType	= reflect.TypeOf(token.NoPos)
+	callExprType	= reflect.TypeOf((*ast.CallExpr)(nil))
+	scopePtrType	= reflect.TypeOf((*ast.Scope)(nil))
 )
 
 // apply replaces each AST field x in val with f(x), returning val.

@@ -15,8 +15,8 @@ import (
 )
 
 var cmdWhy = &base.Command{
-	UsageLine: "go mod why [-m] [-vendor] packages...",
-	Short:     "explain why packages or modules are needed",
+	UsageLine:	"go mod why [-m] [-vendor] packages...",
+	Short:		"explain why packages or modules are needed",
 	Long: `
 Why shows a shortest path in the import graph from the main module to
 each of the listed packages. If the -m flag is given, why treats the
@@ -52,12 +52,12 @@ See https://golang.org/ref/mod#go-mod-why for more about 'go mod why'.
 }
 
 var (
-	whyM      = cmdWhy.Flag.Bool("m", false, "")
-	whyVendor = cmdWhy.Flag.Bool("vendor", false, "")
+	whyM		= cmdWhy.Flag.Bool("m", false, "")
+	whyVendor	= cmdWhy.Flag.Bool("vendor", false, "")
 )
 
 func init() {
-	cmdWhy.Run = runWhy // break init cycle
+	cmdWhy.Run = runWhy	// break init cycle
 	base.AddChdirFlag(&cmdWhy.Flag)
 	base.AddModCommonFlags(&cmdWhy.Flag)
 }
@@ -66,14 +66,14 @@ func runWhy(ctx context.Context, cmd *base.Command, args []string) {
 	modload.InitWorkfile()
 	modload.ForceUseModules = true
 	modload.RootMode = modload.NeedRoot
-	modload.ExplicitWriteGoMod = true // don't write go.mod in ListModules
+	modload.ExplicitWriteGoMod = true	// don't write go.mod in ListModules
 
 	loadOpts := modload.PackageOpts{
-		Tags:                     imports.AnyTags(),
-		VendorModulesInGOROOTSrc: true,
-		LoadTests:                !*whyVendor,
-		SilencePackageErrors:     true,
-		UseVendorAll:             *whyVendor,
+		Tags:				imports.AnyTags(),
+		VendorModulesInGOROOTSrc:	true,
+		LoadTests:			!*whyVendor,
+		SilencePackageErrors:		true,
+		UseVendorAll:			*whyVendor,
 	}
 
 	if *whyM {
@@ -85,7 +85,7 @@ func runWhy(ctx context.Context, cmd *base.Command, args []string) {
 
 		mods, err := modload.ListModules(ctx, args, 0, "")
 		if err != nil {
-			base.Fatalf("go: %v", err)
+			base.Fatal(err)
 		}
 
 		byModule := make(map[string][]string)
@@ -122,7 +122,7 @@ func runWhy(ctx context.Context, cmd *base.Command, args []string) {
 		// Resolve to packages.
 		matches, _ := modload.LoadPackages(ctx, loadOpts, args...)
 
-		modload.LoadPackages(ctx, loadOpts, "all") // rebuild graph, from main module (not from named packages)
+		modload.LoadPackages(ctx, loadOpts, "all")	// rebuild graph, from main module (not from named packages)
 
 		sep := ""
 		for _, m := range matches {

@@ -15,10 +15,6 @@ import (
 	"strconv"
 )
 
-// DiagnoseFuzzTests controls whether the 'tests' analyzer diagnoses fuzz tests
-// in Go 1.18+.
-var DiagnoseFuzzTests bool = false
-
 func TypeErrorEndPos(fset *token.FileSet, src []byte, start token.Pos) token.Pos {
 	// Get the end position for the type error.
 	offset, end := fset.PositionFor(start, false).Offset, start
@@ -46,12 +42,12 @@ func ZeroValue(f *ast.File, pkg *types.Package, typ types.Type) ast.Expr {
 		case u.Info()&types.IsString != 0:
 			return &ast.BasicLit{Kind: token.STRING, Value: `""`}
 		default:
-			panic("unknown basic type")
+			panic(fmt.Sprintf("unknown basic type %v", u))
 		}
 	case *types.Chan, *types.Interface, *types.Map, *types.Pointer, *types.Signature, *types.Slice, *types.Array:
 		return ast.NewIdent("nil")
 	case *types.Struct:
-		texpr := TypeExpr(f, pkg, typ) // typ because we want the name here.
+		texpr := TypeExpr(f, pkg, typ)	// typ because we want the name here.
 		if texpr == nil {
 			return nil
 		}
@@ -93,8 +89,8 @@ func TypeExpr(f *ast.File, pkg *types.Package, typ types.Type) ast.Expr {
 			return nil
 		}
 		return &ast.UnaryExpr{
-			Op: token.MUL,
-			X:  x,
+			Op:	token.MUL,
+			X:	x,
 		}
 	case *types.Array:
 		elt := TypeExpr(f, pkg, t.Elem())
@@ -103,10 +99,10 @@ func TypeExpr(f *ast.File, pkg *types.Package, typ types.Type) ast.Expr {
 		}
 		return &ast.ArrayType{
 			Len: &ast.BasicLit{
-				Kind:  token.INT,
-				Value: fmt.Sprintf("%d", t.Len()),
+				Kind:	token.INT,
+				Value:	fmt.Sprintf("%d", t.Len()),
 			},
-			Elt: elt,
+			Elt:	elt,
 		}
 	case *types.Slice:
 		elt := TypeExpr(f, pkg, t.Elem())
@@ -123,8 +119,8 @@ func TypeExpr(f *ast.File, pkg *types.Package, typ types.Type) ast.Expr {
 			return nil
 		}
 		return &ast.MapType{
-			Key:   key,
-			Value: value,
+			Key:	key,
+			Value:	value,
 		}
 	case *types.Chan:
 		dir := ast.ChanDir(t.Dir())
@@ -136,8 +132,8 @@ func TypeExpr(f *ast.File, pkg *types.Package, typ types.Type) ast.Expr {
 			return nil
 		}
 		return &ast.ChanType{
-			Dir:   dir,
-			Value: value,
+			Dir:	dir,
+			Value:	value,
 		}
 	case *types.Signature:
 		var params []*ast.Field
@@ -147,7 +143,7 @@ func TypeExpr(f *ast.File, pkg *types.Package, typ types.Type) ast.Expr {
 				return nil
 			}
 			params = append(params, &ast.Field{
-				Type: p,
+				Type:	p,
 				Names: []*ast.Ident{
 					{
 						Name: t.Params().At(i).Name(),
@@ -194,8 +190,8 @@ func TypeExpr(f *ast.File, pkg *types.Package, typ types.Type) ast.Expr {
 			return ast.NewIdent(t.Obj().Name())
 		}
 		return &ast.SelectorExpr{
-			X:   ast.NewIdent(pkgName),
-			Sel: ast.NewIdent(t.Obj().Name()),
+			X:	ast.NewIdent(pkgName),
+			Sel:	ast.NewIdent(t.Obj().Name()),
 		}
 	case *types.Struct:
 		return ast.NewIdent(t.String())
@@ -309,9 +305,9 @@ func MatchingIdents(typs []types.Type, node ast.Node, pos token.Pos, info *types
 	matches := make(map[types.Type][]string)
 	for _, typ := range typs {
 		if typ == nil {
-			continue // TODO(adonovan): is this reachable?
+			continue	// TODO(adonovan): is this reachable?
 		}
-		matches[typ] = nil // create entry
+		matches[typ] = nil	// create entry
 	}
 
 	seen := map[types.Object]struct{}{}

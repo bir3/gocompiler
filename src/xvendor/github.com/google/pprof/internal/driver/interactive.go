@@ -27,7 +27,7 @@ import (
 	"github.com/bir3/gocompiler/src/xvendor/github.com/google/pprof/profile"
 )
 
-var commentStart = "//:" // Sentinel for comments on options
+var commentStart = "//:"	// Sentinel for comments on options
 var tailDigitsRE = regexp.MustCompile("[0-9]+$")
 
 // interactive starts a shell to read pprof commands.
@@ -121,7 +121,7 @@ func interactive(p *profile.Profile, o *plugin.Options) error {
 	}
 }
 
-var generateReportWrapper = generateReport // For testing purposes.
+var generateReportWrapper = generateReport	// For testing purposes.
 
 // greetings prints a brief welcome and some overall profile
 // information before accepting interactive commands.
