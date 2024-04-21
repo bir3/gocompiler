@@ -174,5 +174,5 @@ func Run(args ...string) (Result, error) {
 }
 
 func GoVersion() string {
-	return "go1.22.2"
+	return "go1.22.0"
 }

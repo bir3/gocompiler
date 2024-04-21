@@ -77,17 +77,29 @@ func (p processState) SystemTime() time.Duration {
 }
 
 func Command(name string, arg ...string) *Cmd {
-	return &Cmd{name: name, arg: arg, isCommand: true,
+	cmd := &Cmd{name: name, arg: arg, isCommand: true,
 		Path: name,
 		Args: append([]string{name}, arg...),
 	}
+	if filepath.Base(name) == name {
+		lp, _ := LookPath(name)
+		if lp != "" {
+			// Update cmd.Path even if err is non-nil.
+			// If err is ErrDot (especially on Windows), lp may include a resolved
+			// extension (like .exe or .bat) that should be preserved.
+			cmd.Path = lp
+		}
+		//if err != nil {
+		//	cmd.Err = err
+		//}
+	}
+	return cmd
 }
 
 func CommandContext(ctx context.Context, name string, arg ...string) *Cmd {
-	return &Cmd{ctx: ctx, name: name, arg: arg, isCommandContext: true,
-		Path: name,
-		Args: append([]string{name}, arg...),
-	}
+	cmd := Command(name, arg...)
+	cmd.ctx = ctx
+	return cmd
 
 }
 
@@ -106,10 +118,14 @@ func isTool(file string) string {
 }
 
 func LookPath(file string) (string, error) {
+
 	if isTool(file) != "" {
+
 		return file, nil
 	}
-	return exec.LookPath(file)
+	path, err := exec.LookPath(file)
+
+	return path, err
 }
 
 func (c *Cmd) Run() error {
@@ -121,6 +137,7 @@ func (c *Cmd) Environ() []string {
 	c.mirror()
 	return c.realCmd.Environ()
 }
+
 func (c *Cmd) mirror() {
 	if c.isCommand {
 		c.realCmd = exec.Command(c.name, c.arg...)
@@ -151,6 +168,9 @@ func (c *Cmd) mirror() {
 
 	if tool != "" {
 		// BUG: could add multiple times since shared var
+		if c.realCmd.Env == nil {
+			c.realCmd.Env = os.Environ()
+		}
 		c.realCmd.Env = append(c.realCmd.Env, fmt.Sprintf("BIR3_GOCOMPILER_TOOL=%s", tool))
 		c.realCmd.Path, _ = os.Executable()
 		c.realCmd.Args[0], _ = os.Executable()
@@ -168,13 +188,16 @@ func (c *Cmd) Wait() error {
 }
 func (c *Cmd) CombinedOutput() ([]byte, error) {
 	c.mirror()
-	return c.realCmd.CombinedOutput()
+	buf, err := c.realCmd.CombinedOutput()
+
+	return buf, err
 
 }
 func (c *Cmd) Output() ([]byte, error) {
 	c.mirror()
-	return c.realCmd.Output()
+	buf, err := c.realCmd.Output()
 
+	return buf, err
 }
 func (c *Cmd) StdoutPipe() (io.ReadCloser, error) {
 	c.mirror()

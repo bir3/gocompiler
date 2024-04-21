@@ -44,12 +44,12 @@ func SetupStdlib() error {
 }
 
 func PrivateGOROOT() (string, error) {
-	return configDir("bir3-gocompiler/stdlib-go1.22.2-f09a") //syncvar:
+	return configDir("bir3-gocompiler/stdlib-go1.22.0-0681") //syncvar:
 
 }
 
 func extractStdlib(d string) error {
-	f, err := content.Open("goroot/stdlib-go1.22.2-f09a.tar.zst") //syncvar:
+	f, err := content.Open("goroot/stdlib-go1.22.0-0681.tar.zst") //syncvar:
 	if err != nil {
 		panic(fmt.Sprintf("gocompiler stdlib init failed - %s", err))
 	}

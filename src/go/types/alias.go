@@ -23,14 +23,11 @@ type Alias struct {
 // NewAlias creates a new Alias type with the given type name and rhs.
 // rhs must not be nil.
 func NewAlias(obj *TypeName, rhs Type) *Alias {
-	alias := (*Checker)(nil).newAlias(obj, rhs)
-	// Ensure that alias.actual is set (#65455).
-	unalias(alias)
-	return alias
+	return (*Checker)(nil).newAlias(obj, rhs)
 }
 
 func (a *Alias) Obj() *TypeName   { return a.obj }
-func (a *Alias) Underlying() Type { return unalias(a).Underlying() }
+func (a *Alias) Underlying() Type { return a.actual.Underlying() }
 func (a *Alias) String() string   { return TypeString(a, nil) }
 
 // Type accessors
@@ -41,23 +38,21 @@ func (a *Alias) String() string   { return TypeString(a, nil) }
 // Consequently, the result is never an alias type.
 func Unalias(t Type) Type {
 	if a0, _ := t.(*Alias); a0 != nil {
-		return unalias(a0)
+		if a0.actual != nil {
+			return a0.actual
+		}
+		for a := a0; ; {
+			t = a.fromRHS
+			a, _ = t.(*Alias)
+			if a == nil {
+				break
+			}
+		}
+		if t == nil {
+			panic(fmt.Sprintf("non-terminated alias %s", a0.obj.name))
+		}
+		a0.actual = t
 	}
-	return t
-}
-
-func unalias(a0 *Alias) Type {
-	if a0.actual != nil {
-		return a0.actual
-	}
-	var t Type
-	for a := a0; a != nil; a, _ = t.(*Alias) {
-		t = a.fromRHS
-	}
-	if t == nil {
-		panic(fmt.Sprintf("non-terminated alias %s", a0.obj.name))
-	}
-	a0.actual = t
 	return t
 }
 

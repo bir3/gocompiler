@@ -4,6 +4,7 @@ import (
 	"os"
 	"os/exec"
 	"path/filepath"
+	"strings"
 	"testing"
 
 	"github.com/bir3/gocompiler"
@@ -22,20 +23,10 @@ func TestMain(m *testing.M) {
 	os.Exit(m.Run())
 }
 
-func TestCompileStdin(t *testing.T) {
-	t.Parallel()
-	goSimple := `
-	package main
-	
-	import "fmt"
-	
-	func main() {
-			fmt.Printf("magic")
-	}`
-
+func compileAndRunString(t *testing.T, code string) string {
 	dir := t.TempDir()
 
-	err := os.WriteFile(filepath.Join(dir, "main.go"), []byte(goSimple), 0666)
+	err := os.WriteFile(filepath.Join(dir, "main.go"), []byte(code), 0666)
 	if err != nil {
 		t.Fatalf("%s", err)
 	}
@@ -47,24 +38,74 @@ func TestCompileStdin(t *testing.T) {
 		}
 		cmd.Dir = dir
 		buf, err := cmd.CombinedOutput()
-		if err != nil {
-			t.Fatalf("%s", err)
-		}
 		s := string(buf)
+		if err != nil {
+			cmd := strings.Join(args, " ")
+			t.Fatalf("cmd %s failed with %s - %s", cmd, err, s)
+		}
 		return s
 	}
 	run("go", "mod", "init", "abc")
 	run("go", "build")
-
 	cmd := exec.Command(filepath.Join(dir, "abc"))
 	buf, err := cmd.CombinedOutput()
-	if err != nil {
-		t.Fatalf("%s", err)
-	}
 	s := string(buf)
+	if err != nil {
+		t.Fatalf("failed to run - %s - %s", s, err)
+	}
+
+	return s
+}
+
+func TestCompile(t *testing.T) {
+	t.Parallel()
+	goCode := `
+	package main
+	
+	import "fmt"
+	
+	func main() {
+			fmt.Printf("magic")
+	}`
+	output := compileAndRunString(t, goCode)
 	exp := "magic"
-	if s != exp {
-		t.Fatalf("expected string %q but got %q", exp, s)
+	if output != exp {
+		t.Fatalf("expected string %q but got %q", exp, output)
+	}
+}
+
+func TestCompileWithC(t *testing.T) {
+	t.Parallel()
+
+	goCode := `
+	package main
+	
+	// typedef int (*intFunc) ();
+	//
+	// int
+	// bridge_int_func(intFunc f)
+	// {
+	//		return f();
+	// }
+	//
+	// int fortytwo()
+	// {
+	//	    return 42;
+	// }
+	import "C"
+	import "fmt"
+	
+	func main() {
+		f := C.intFunc(C.fortytwo)
+		fmt.Println(int(C.bridge_int_func(f)))
+		// Output: 42
+	}
+	
+	`
+	output := compileAndRunString(t, goCode)
+	exp := "42\n"
+	if output != exp {
+		t.Fatalf("expected string %q but got %q", exp, output)
 	}
 }
 
